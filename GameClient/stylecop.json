@@ -1,0 +1,57 @@
+﻿{
+    "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+    "settings": {
+        "indentation": {
+            "indentationSize": 4,
+            "tabSize": 4,
+            "useTabs": false
+        },
+        "readabilityRules": {
+            "allowBuiltInTypeAliases": false
+        },
+        "orderingRules": {
+            "elementOrder": [
+                "kind",
+                "accessibility",
+                "constant",
+                "static",
+                "readonly"
+            ],
+            "systemUsingDirectivesFirst": true,
+            "usingDirectivesPlacement": "preserve",
+            "blankLinesBetweenUsingGroups": "allow"
+        },
+        "namingRules": {
+            "allowCommonHungarianPrefixes": false,
+            "allowedHungarianPrefixes": [],
+            "allowedNamespaceComponents": [],
+            "includeInferredTupleElementNames": false,
+            "tupleElementNameCasing": "PascalCase"
+        },
+        "maintainabilityRules": {
+            "topLevelTypes": [
+                "class",
+                "interface",
+                "enum",
+                "struct"
+            ]
+        },
+        "layoutRules": {
+            "newlineAtEndOfFile": "require",
+            "allowConsecutiveUsings": false,
+            "allowDoWhileOnClosingBrace": true
+        },
+        "documentationRules": {
+            "documentInterfaces": true,
+            "documentExposedElements": true,
+            "documentInternalElements": true,
+            "documentPrivateElements": false,
+            "documentPrivateFields": false,
+            "documentationCulture": "en-US",
+            "fileNamingConvention": "stylecop",
+            "excludeFromPunctuationCheck": [
+                "seealso"
+            ]
+        }
+    }
+}

@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34616.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameClient_Windows", "GameClient\GameClient_Windows.csproj", "{18CA78FA-92E5-4078-A91D-D93F3120EF7A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89} = {F5FB9F27-01FF-42E0-AC8B-D7F834840E89}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameServer", "GameServer\GameServer.csproj", "{EB4626F0-F700-486A-948F-4CE47D3E2D79}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89} = {F5FB9F27-01FF-42E0-AC8B-D7F834840E89}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameLogic", "GameLogic\GameLogic.csproj", "{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementy rozwiązania", "Elementy rozwiązania", "{0CA9D5D0-B34D-49D7-A5C4-45C0C08E4002}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		.gitmodules = .gitmodules
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8989CE2B-E464-491B-BDB9-0743E015C14B}
+	EndGlobalSection
+EndGlobal

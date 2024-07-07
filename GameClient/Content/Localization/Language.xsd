@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="Language"
+           targetNamespace="http://tempuri.org/Language.xsd"
+           elementFormDefault="qualified"
+           xmlns="http://tempuri.org/Language.xsd"
+           xmlns:mstns="http://tempuri.org/Language.xsd"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+	<xs:complexType name="Buttons">
+		<xs:sequence>
+			<xs:element name="CreateGame" type="xs:string"/>
+			<xs:element name="JoinGame" type="xs:string"/>
+			<xs:element name="HowToPlay" type="xs:string"/>
+			<xs:element name="Settings" type="xs:string"/>
+			<xs:element name="Authors" type="xs:string"/>
+			<xs:element name="Exit" type="xs:string"/>
+			<xs:element name="Back" type="xs:string"/>
+			<xs:element name="Close" type="xs:string"/>
+			<xs:element name="Save" type="xs:string"/>
+			<xs:element name="MainMenu" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="Labels">
+		<xs:sequence>
+			<xs:element name="Language" type="xs:string"/>
+			<xs:element name="Resolution" type="xs:string"/>
+			<xs:element name="ScreenType" type="xs:string"/>
+			<xs:element name="ScreenTypeWindowed" type="xs:string"/>
+			<xs:element name="ScreenTypeFullScreen" type="xs:string"/>
+			<xs:element name="ScreenTypeBorderless" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="Other">
+		<xs:sequence>
+			<xs:element name="HowToPlay" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:element name="Content">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Buttons" type="mstns:Buttons"/>
+				<xs:element name="Labels" type="mstns:Labels"/>
+				<xs:element name="Other" type="mstns:Other"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+</xs:schema>

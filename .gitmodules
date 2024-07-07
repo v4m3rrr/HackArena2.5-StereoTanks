@@ -1,0 +1,3 @@
+[submodule "GameClient/Libraries/MonoRivUI"]
+	path = GameClient/Libraries/MonoRivUI
+	url = https://github.com/Rivixer/MonoRivUI
