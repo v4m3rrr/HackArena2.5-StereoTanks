@@ -44,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fastenshtein" Version="1.0.10" />
     <PackageReference Include="FreeTypeSharp" Version="3.0.0" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303" />
@@ -96,10 +97,6 @@
     <None Update="Content\Localization\NativeLanguageNames.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Source\DebugConsoleElements\" />
   </ItemGroup>
 
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">

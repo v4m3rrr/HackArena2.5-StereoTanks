@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
+using Fastenshtein;
+using GameClient.DebugConsoleItems;
 using GameClient.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -12,11 +17,11 @@ namespace GameClient;
 /// <summary>
 /// Represents a debug console scene.
 /// </summary>
+[NoAutoInitialize]
 internal class DebugConsole : Scene, IOverlayScene
 {
     private Frame baseFrame = default!;
     private ScalableFont font = default!;
-    private ScalableFont messageFont = default!;
 
     private TextInput textInput = default!;
     private ListBox messages = default!;
@@ -30,6 +35,7 @@ internal class DebugConsole : Scene, IOverlayScene
         : base()
     {
         Instance = this;
+        CommandInitializer.Initialize();
     }
 
     /// <inheritdoc/>
@@ -47,6 +53,14 @@ internal class DebugConsole : Scene, IOverlayScene
     public IEnumerable<IReadOnlyComponent> OverlayComponents => [this.baseFrame];
 
     /// <summary>
+    /// Clears all messages from the debug console.
+    /// </summary>
+    public static void Clear()
+    {
+        Instance.messages.Clear();
+    }
+
+    /// <summary>
     /// Sends a message to the debug console.
     /// </summary>
     /// <param name="text">The text to be sent.</param>
@@ -59,9 +73,9 @@ internal class DebugConsole : Scene, IOverlayScene
             .Append(DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture))
             .Append(']')
             .Append(spaceAfterTime ? ' ' : char.MinValue)
-            .Append(text);
+            .Append(text.Trim());
 
-        _ = new Text(Instance.messageFont, color ?? Color.White)
+        _ = new WrappedText(Instance.font, color ?? Color.White)
         {
             Parent = Instance.messages.ContentContainer,
             Value = sb.ToString(),
@@ -110,8 +124,7 @@ internal class DebugConsole : Scene, IOverlayScene
             transform.Size = new Point(800, 450).Clamp(new Point(540, 300), ScreenController.CurrentSize - new Point(100, 100));
         };
 
-        this.font = new ScalableFont("Content\\Fonts\\Consolas.ttf", 10);
-        this.messageFont = new ScalableFont("Content\\Fonts\\Consolas.ttf", 7);
+        this.font = new ScalableFont("Content\\Fonts\\Consolas.ttf", 7);
 
         // Background
         _ = new SolidColor(Color.Black * 0.9f) { Parent = this.baseFrame.InnerContainer };
@@ -188,7 +201,7 @@ internal class DebugConsole : Scene, IOverlayScene
             {
                 Parent = messagesFrame.InnerContainer,
                 Orientation = Orientation.Vertical,
-                Spacing = 10,
+                Spacing = 8,
                 IsScrollable = true,
                 DrawContentOnMargin = true,
                 ContentContainerRelativeMargin = new Vector4(0.005f, 0.02f, 0.005f, 0.02f),
@@ -256,7 +269,56 @@ internal class DebugConsole : Scene, IOverlayScene
                     return;
                 }
 
-                SendMessage(">" + e.Value, Color.MediumPurple, spaceAfterTime: false);
+                SendMessage(">" + e.Value.Trim(), Color.MediumPurple, spaceAfterTime: false);
+
+                ICommand? command = GetCommandFromInput(e.Value, out int threshold);
+
+                if (command is null || threshold > 3)
+                {
+                    SendMessage("Command not found.", Color.IndianRed);
+                }
+                else if (threshold == 0 && command is CommandGroupAttribute cg)
+                {
+                    SendMessage($"'{(cg as ICommand).FullName}' is a command group.", Color.Orange);
+                }
+                else if (threshold == 0 && command is CommandAttribute c)
+                {
+                    var args = GetArgsFromInput(c, e.Value);
+                    var parameters = c.Action.Method.GetParameters();
+
+                    var areArgumentsValid = true;
+
+                    var convertedArgs = new object[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        try
+                        {
+                            convertedArgs[i] = ConvertArgument(args[i], parameters[i].ParameterType);
+                        }
+                        catch (ArgumentException)
+                        {
+                            SendMessage($"Invalid argument '{args[i]}'.", Color.IndianRed);
+                            areArgumentsValid = false;
+                            break;
+                        }
+                    }
+
+                    try
+                    {
+                        if (areArgumentsValid)
+                        {
+                            c.Action.DynamicInvoke(convertedArgs);
+                        }
+                    }
+                    catch (TargetParameterCountException)
+                    {
+                        SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
+                    }
+                }
+                else
+                {
+                    SendMessage($"Did you mean '{command.FullName}'?", Color.Orange);
+                }
 
                 if (this.messages.IsScrollBarNeeded)
                 {
@@ -264,6 +326,77 @@ internal class DebugConsole : Scene, IOverlayScene
                 }
             };
         }
+
+#if DEBUG
+        SendMessage("You are running in the DEBUG mode.", Color.Yellow);
+#endif
+
+        SendMessage("Type 'help' to get list of available commands.", Color.White);
+    }
+
+    private static ICommand? GetCommandFromInput(string input, out int threshold)
+    {
+        threshold = int.MaxValue;
+
+        if (string.IsNullOrEmpty(input))
+        {
+            return null;
+        }
+
+        ICommand? foundCommand = null;
+        var lev = new Levenshtein(input);
+        string[] inputParts = Regex.Split(input, @"\s+");
+        int maxDepth = inputParts.Length - 1;
+        foreach (ICommand command in GetAllCommandCombinations(maxDepth))
+        {
+            int levenshteinDistance = int.MaxValue;
+            if (command is CommandAttribute c)
+            {
+                for (int i = 0; i < c.Arguments.Length; i++)
+                {
+                    levenshteinDistance = Math.Min(levenshteinDistance, Levenshtein.Distance(
+                        string.Join(' ', inputParts[..^(i + 1)]), command.FullName));
+                }
+            }
+
+            var fullName = command.CaseSensitive ? command.FullName : command.FullName.ToLower();
+            levenshteinDistance = Math.Min(levenshteinDistance, lev.DistanceFrom(fullName));
+
+            if (threshold > levenshteinDistance)
+            {
+                threshold = levenshteinDistance;
+                foundCommand = command;
+            }
+        }
+
+        return foundCommand;
+    }
+
+    private static List<ICommand> GetAllCommandCombinations(int maxDepth, CommandGroupAttribute? group = null)
+    {
+        var result = new List<ICommand>();
+        foreach (ICommand command in CommandInitializer.GetCommands().Where(x => x.Group == group))
+        {
+            result.Add(command);
+            if (command is CommandGroupAttribute commandGroup && command.Depth < maxDepth)
+            {
+                result.AddRange(GetAllCommandCombinations(maxDepth, commandGroup));
+            }
+        }
+
+        return result;
+    }
+
+    private static string[] GetArgsFromInput(ICommand command, string input)
+    {
+        return input[command.FullName.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static object ConvertArgument(string argument, Type targetType)
+    {
+        return targetType.IsEnum
+            ? Enum.Parse(targetType, argument, ignoreCase: true)
+            : Convert.ChangeType(argument, targetType);
     }
 
     private void Close()

@@ -8,17 +8,19 @@ namespace GameClient;
 /// <summary>
 /// Represents the game client.
 /// </summary>
-public class GameClient : Game
+public class MonoTanks : Game
 {
 #if DEBUG
     private SolidColor fpsInfo = default!;
     private SolidColor runningSlowlyInfo = default!;
 #endif
 
+    public static Point MinWindowSize => new(640, 480);
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="GameClient"/> class.
+    /// Initializes a new instance of the <see cref="MonoTanks"/> class.
     /// </summary>
-    public GameClient()
+    public MonoTanks()
     {
         Instance = this;
 
@@ -32,7 +34,16 @@ public class GameClient : Game
     /// <summary>
     /// Gets the instance of the game client.
     /// </summary>
-    public static GameClient Instance { get; private set; } = default!;
+    public static MonoTanks Instance { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets a value indicating whether the game is in debug mode.
+    /// </summary>
+#if DEBUG
+    public static bool IsDebug => true;
+#else
+    public static bool IsDebug => false;
+#endif
 
     /// <summary>
     /// Initializes the game.
@@ -44,14 +55,16 @@ public class GameClient : Game
         ScreenController.Change(1366, 768, ScreenType.Windowed);
         ScreenController.ApplyChanges();
 
+        var dc = new DebugConsole();
+        dc.Initialize();
+        Scene.AddScene(dc);
+
         Scene.InitializeScenes(typeof(Scene).Assembly);
         Scene.Change<Scenes.MainMenu>();
 
         base.Initialize();
 
 #if DEBUG
-        DebugConsole.SendMessage("You are running the game in DEBUG mode.", Color.Yellow);
-
         this.fpsInfo = new SolidColor(Color.Black * 0.1f)
         {
             Transform =
