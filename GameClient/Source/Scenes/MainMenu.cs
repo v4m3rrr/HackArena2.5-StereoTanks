@@ -44,9 +44,14 @@ public class MainMenu : Scene
             Parent = this.BaseComponent,
             Value = "MONO TANKS",
             TextAlignment = Alignment.TopRight,
+            TextShrink = TextShrinkMode.HeightAndWidth,
             Transform =
             {
-                RelativeOffset = new(-0.06f, 0.06f),
+                Alignment = Alignment.TopRight,
+                RelativeOffset = new Vector2(-0.06f, 0.06f),
+                RelativeSize = new Vector2(0.6f, 0.2f),
+                MinSize = new Point(450, int.MaxValue),
+                MaxSize = new Point(900, int.MaxValue),
             },
         };
 
@@ -63,6 +68,8 @@ public class MainMenu : Scene
                 Alignment = Alignment.BottomLeft,
                 RelativeOffset = new Vector2(0.03f, -0.12f),
                 RelativeSize = new Vector2(0.66f, 0.06f),
+                MinSize = new Point(500, 20),
+                MaxSize = new Point(900, 100),
             },
         };
 
@@ -78,6 +85,8 @@ public class MainMenu : Scene
                 Alignment = Alignment.BottomLeft,
                 RelativeOffset = new Vector2(0.03f, -0.05f),
                 RelativeSize = new Vector2(0.66f, 0.06f),
+                MinSize = new Point(500, 20),
+                MaxSize = new Point(900, 100),
             },
         };
 
@@ -86,7 +95,7 @@ public class MainMenu : Scene
         _ = CreateButton(listBoxTop, new LocalizedString("Buttons.HowToPlay"), (s, e) => Change<HowToPlay>());
         _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.Settings"), (s, e) => Change<Settings>());
         _ = CreateButton(listBoxTop, new LocalizedString("Buttons.Authors"), (s, e) => Change<Authors>());
-        _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.Exit"), (s, e) => GameClient.Instance.Exit());
+        _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.Exit"), (s, e) => MonoTanks.Instance.Exit());
 
 #if DEBUG
         var quickStartBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
@@ -102,7 +111,7 @@ public class MainMenu : Scene
         quickStartBtn.HoverEntered += (s, e) => e.Color = Color.Red;
         quickStartBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
         quickStartBtn.Clicked += (s, e) => Change<Game>();
-        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>(), Color.White)
+        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
         {
             Parent = quickStartBtn.Component,
             Value = "Quick Start",

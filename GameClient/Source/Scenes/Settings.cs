@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -95,9 +94,10 @@ internal class Settings : Scene, IOverlayScene
             selector.ItemSelected += (s, item) =>
             {
                 selector.Close();
-                GameSettings.Language = item.Value;
-                selector.InactiveContainer.GetDescendant<Text>()!.Value = item.Name ?? string.Empty;
+                selector.InactiveContainer.GetDescendant<Text>()!.Value = item?.Name ?? string.Empty;
             };
+
+            GameSettings.LanguageChanged += (s, e) => selector.SelectCurrentItem();
 
             foreach (string languageName in Enum.GetNames(typeof(Language)))
             {
@@ -105,6 +105,7 @@ internal class Settings : Scene, IOverlayScene
                 var nativeName = Localization.GetNativeLanguageName(language);
 
                 var button = new Button<Frame>(new Frame()).ApplyStyle(Styles.Settings.SelectorItem);
+                button.Clicked += (s, e) => GameSettings.Language = language;
                 _ = new Text(Styles.Settings.Font, Color.White)
                 {
                     Parent = button.Component.InnerContainer,
@@ -138,34 +139,40 @@ internal class Settings : Scene, IOverlayScene
             selector.ItemSelected += (s, item) =>
             {
                 selector.Close();
-                GameSettings.SetResolution(item.Value.X, item.Value.Y);
-                selector.InactiveContainer.GetDescendant<Text>()!.Value = item.Name ?? string.Empty;
+                selector.InactiveContainer.GetDescendant<Text>()!.Value = item?.Name
+                    ?? GetResolutionWithAspectRatio(ScreenController.CurrentSize);
             };
 
-            List<Point> resolutions = ScreenController.GraphicsDevice.Adapter.SupportedDisplayModes
-                .Select(x => new Point(x.Width, x.Height)).ToList();
+            GameSettings.ResolutionChanged += (s, e) => selector.SelectCurrentItem();
 
-            if (!resolutions.Contains(ScreenController.CurrentSize))
-            {
-                resolutions.Add(ScreenController.CurrentSize);
-            }
-
-            foreach (Point resolution in resolutions)
+            static string GetResolutionWithAspectRatio(Point resolution)
             {
                 Ratio ratio = (resolution.X / (float)resolution.Y).ToRatio(epsilon: 0.02);
                 string ratioText = ratio.ToString().Replace("8:5", "16:10");
-                string resolutionText = $"{resolution.X}x{resolution.Y} ({ratioText})";
+                return $"{resolution.X}x{resolution.Y} ({ratioText})";
+            }
+
+            List<Point> resolutions = ScreenController.GraphicsDevice.Adapter.SupportedDisplayModes
+                .Select(x => new Point(x.Width, x.Height))
+                .Where(x => x.X >= MonoTanks.MinWindowSize.X)
+                .Where(x => x.Y >= MonoTanks.MinWindowSize.Y)
+                .ToList();
+
+            foreach (Point resolution in resolutions)
+            {
+                string description = GetResolutionWithAspectRatio(resolution);
 
                 var button = new Button<Frame>(new Frame()).ApplyStyle(Styles.Settings.SelectorItem);
+                button.Clicked += (s, e) => GameSettings.SetResolution(resolution.X, resolution.Y);
                 _ = new Text(Styles.Settings.Font, Color.White)
                 {
                     Parent = button.Component.InnerContainer,
-                    Value = resolutionText,
+                    Value = description,
                     TextAlignment = Alignment.Center,
                     TextShrink = TextShrinkMode.HeightAndWidth,
                 };
 
-                var item = new Selector<Point>.Item(button, resolution, resolutionText);
+                var item = new Selector<Point>.Item(button, resolution, description);
                 selector.AddItem(item);
 
                 button.Clicked += (s, e) => selector.SelectItem(item);
@@ -182,15 +189,17 @@ internal class Settings : Scene, IOverlayScene
             selector.ItemSelected += (s, item) =>
             {
                 selector.Close();
-                GameSettings.SetScreenType(item.Value);
-                selector.InactiveContainer.GetDescendant<LocalizedText>()!.Value = new LocalizedString($"Labels.ScreenType{item.Name}");
+                selector.InactiveContainer.GetDescendant<LocalizedText>()!.Value = new LocalizedString($"Labels.ScreenType{item?.Name}");
             };
+
+            GameSettings.ScreenTypeChanged += (s, e) => selector.SelectCurrentItem();
 
             foreach (string screenTypeName in Enum.GetNames(typeof(ScreenType)))
             {
                 ScreenType screenType = (ScreenType)Enum.Parse(typeof(ScreenType), screenTypeName);
 
                 var button = new Button<Frame>(new Frame()).ApplyStyle(Styles.Settings.SelectorItem);
+                button.Clicked += (s, e) => GameSettings.SetScreenType(screenType);
                 _ = new LocalizedText(Styles.Settings.Font, Color.White)
                 {
                     Parent = button.Component.InnerContainer,

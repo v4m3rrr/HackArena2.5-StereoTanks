@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using Microsoft.Xna.Framework;
 using MonoRivUI;
 
 namespace GameClient;
@@ -154,7 +155,7 @@ internal static class GameSettings
         }
         catch (Exception ex)
         {
-            Debug.WriteLine(ex);
+            DebugConsole.SendMessage($"Failed to load settings. Default settings will be used.\n{ex.Message}", Color.Red);
             SetDefaultSettings();
         }
     }
