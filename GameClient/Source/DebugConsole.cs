@@ -375,10 +375,10 @@ internal class DebugConsole : Scene, IOverlayScene
     private static List<ICommand> GetAllCommandCombinations(int maxDepth, CommandGroupAttribute? group = null)
     {
         var result = new List<ICommand>();
-        foreach (ICommand command in CommandInitializer.GetCommands().Where(x => x.Group == group))
+        foreach (ICommand command in CommandInitializer.GetCommands())
         {
             result.Add(command);
-            if (command is CommandGroupAttribute commandGroup && command.Depth < maxDepth)
+            if (command is CommandGroupAttribute commandGroup && commandGroup == group && command.Depth < maxDepth)
             {
                 result.AddRange(GetAllCommandCombinations(maxDepth, commandGroup));
             }

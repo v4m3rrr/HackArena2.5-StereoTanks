@@ -53,6 +53,15 @@ public sealed class ArgumentAttribute : Attribute
                 attribute.Description ??= "No description provided.";
                 result.Add(attribute);
             }
+            else
+            {
+                var argument = new ArgumentAttribute
+                {
+                    Name = parameter.Name,
+                    Description = "No description provided.",
+                };
+                result.Add(argument);
+            }
         }
 
         return result.ToArray();
