@@ -1,150 +1,103 @@
 ﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
 
 namespace GameClient.Sprites;
 
+/// <summary>
+/// Represents a tank sprite.
+/// </summary>
 internal class Tank : Sprite
 {
-    private Direction tankDirection;
-    private Direction barrelDirection;
+    private static readonly Texture2D TankTexture;
+    private static readonly Texture2D TankFillTexture;
+    private static readonly Texture2D TurretTexture;
 
-    private Texture2D tankTexture;
-    private Texture2D barrelTexture;
+    private readonly GridComponent grid;
 
-    private Point position = ScreenController.CurrentSize / new Point(2);
-
-    public Tank(Color color)
+    static Tank()
     {
-        this.tankDirection = Direction.Up;
-        this.barrelDirection = Direction.Up;
-
-        this.tankTexture = ContentController.Content.Load<Texture2D>("Images/Tank");
-        this.barrelTexture = ContentController.Content.Load<Texture2D>("Images/Barrel");
-
-        var colors = new Color[64 * 64];
-        this.tankTexture.GetData(colors);
-        for (int i = 0; i < colors.Length; i++)
-        {
-            if (colors[i] == Color.White)
-            {
-                colors[i] = color;
-            }
-        }
-        this.tankTexture.SetData(colors);
+        TankTexture = ContentController.Content.Load<Texture2D>("Images/Tank");
+        TankFillTexture = ContentController.Content.Load<Texture2D>("Images/TankFill");
+        TurretTexture = ContentController.Content.Load<Texture2D>("Images/TankTurret");
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Tank"/> class.
+    /// </summary>
+    /// <param name="logic">The tank logic.</param>
+    /// <param name="grid">The grid component.</param>
+    public Tank(GameLogic.Tank logic, GridComponent grid)
+    {
+        this.Logic = logic;
+        this.grid = grid;
+    }
+
+    /// <summary>
+    /// Gets the tank logic.
+    /// </summary>
+    public GameLogic.Tank Logic { get; private set; }
+
+    /// <summary>
+    /// Updates the tank logic.
+    /// </summary>
+    /// <param name="logic">The new tank logic.</param>
+    public void UpdateLogic(GameLogic.Tank logic)
+    {
+        this.Logic = logic;
+    }
+
+    /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        if (KeyboardController.IsKeyHit(Keys.A))
-        {
-            this.tankDirection = KeyboardController.IsKeyDown(Keys.S)
-                ? (Direction)(((int)this.tankDirection + 1) % 4)
-                : (Direction)(((int)this.tankDirection - 1 + 4) % 4);
-        }
-
-        if (KeyboardController.IsKeyHit(Keys.D))
-        {
-            this.tankDirection = KeyboardController.IsKeyDown(Keys.S)
-                ? (Direction)(((int)this.tankDirection - 1 + 4) % 4)
-                : (Direction)(((int)this.tankDirection + 1) % 4);
-        }
-
-        if (KeyboardController.IsKeyHit(Keys.Q))
-        {
-            this.barrelDirection = (Direction)(((int)this.barrelDirection - 1 + 4) % 4);
-        }
-
-        if (KeyboardController.IsKeyHit(Keys.E))
-        {
-            this.barrelDirection = (Direction)(((int)this.barrelDirection + 1) % 4);
-        }
-
-        if (KeyboardController.IsKeyDown(Keys.W))
-        {
-            switch (this.tankDirection)
-            {
-                case Direction.Up:
-                    this.position.Y -= 4;
-                    break;
-                case Direction.Left:
-                    this.position.X -= 4;
-                    break;
-                case Direction.Down:
-                    this.position.Y += 4;
-                    break;
-                case Direction.Right:
-                    this.position.X += 4;
-                    break;
-            }
-        }
-
-        if (KeyboardController.IsKeyDown(Keys.S))
-        {
-            switch (this.tankDirection)
-            {
-                case Direction.Up:
-                    this.position.Y += 3;
-                    break;
-                case Direction.Left:
-                    this.position.X += 3;
-                    break;
-                case Direction.Down:
-                    this.position.Y -= 3;
-                    break;
-                case Direction.Right:
-                    this.position.X -= 3;
-                    break;
-            }
-        }
-
-        //this.TransformBarrel();
-        //this.TransformTank();
     }
 
+    /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        float rotation = default;
-        switch (this.tankDirection)
-        {
-            case Direction.Up:
-                rotation = 0;
-                break;
-            case Direction.Right:
-                rotation = MathHelper.PiOver2;
-                break;
-            case Direction.Down:
-                rotation = MathHelper.Pi;
-                break;
-            case Direction.Left:
-                rotation = MathHelper.PiOver2 * 3;
-                break;
-        }
-        SpriteBatchController.SpriteBatch.Draw(
-            this.tankTexture,
-            new Rectangle(this.position + new Point(40, 40), new Point(80, 80)), null, Color.White, rotation, new Vector2(32f, 32f), Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1.0f);
+        int tileSize = this.grid.TileSize;
+        int drawOffset = this.grid.DrawOffset;
+        int gridLeft = this.grid.Transform.DestRectangle.Left;
+        int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        switch (this.barrelDirection)
-        {
-            case Direction.Up:
-                rotation = 0;
-                break;
-            case Direction.Right:
-                rotation = MathHelper.PiOver2;
-                break;
-            case Direction.Down:
-                rotation = MathHelper.Pi;
-                break;
-            case Direction.Left:
-                rotation = MathHelper.PiOver2 * 3;
-                break;
-        }
+        float tankRotation = DirectionUtils.ToRotation(this.Logic.Direction);
+        float turretRotation = DirectionUtils.ToRotation(this.Logic.Turret.Direction);
+
+        var rect = new Rectangle(
+            gridLeft + (this.Logic.X * tileSize) + drawOffset,
+            gridTop + (this.Logic.Y * tileSize) + drawOffset,
+            tileSize,
+            tileSize);
 
         SpriteBatchController.SpriteBatch.Draw(
-            this.barrelTexture,
-            new Rectangle(this.position + new Point(40, 40), new Point(80, 80)), null, Color.White, rotation, new Vector2(32f, 32f), Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1.0f);
+            TankTexture,
+            rect,
+            null,
+            Color.White,
+            tankRotation,
+            TankTexture.Bounds.Size.ToVector2() / 2f,
+            SpriteEffects.None,
+            1.0f);
 
+        SpriteBatchController.SpriteBatch.Draw(
+            TankFillTexture,
+            rect,
+            null,
+            new Color(this.Logic.Color),
+            tankRotation,
+            TankTexture.Bounds.Size.ToVector2() / 2f,
+            SpriteEffects.None,
+            1.0f);
+
+        SpriteBatchController.SpriteBatch.Draw(
+            TurretTexture,
+            rect,
+            null,
+            new Color(this.Logic.Color),
+            turretRotation,
+            TankTexture.Bounds.Size.ToVector2() / 2f,
+            SpriteEffects.None,
+            1.0f);
     }
 }

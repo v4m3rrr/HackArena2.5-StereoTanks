@@ -245,5 +245,19 @@ internal static class CommandInitializer
             DebugConsole.SendMessage(ex.Message, Color.IndianRed);
         }
     }
+
+    [Command("Connect to the server.")]
+    private static void Connect([Argument("A join code.")] string joinCode)
+    {
+        Scenes.Game.ServerUri = new Uri("ws://localhost:5000/?joinCode=" + joinCode);
+        Scene.Change<Scenes.Game>();
+    }
+
+    [Command("Connect to the server.")]
+    private static void Connect2([Argument("ip")] string ip, [Argument("A join code.")] string joinCode)
+    {
+        Scenes.Game.ServerUri = new Uri($"ws://{ip}/?joinCode={joinCode}");
+        Scene.Change<Scenes.Game>();
+    }
 #endif
 }

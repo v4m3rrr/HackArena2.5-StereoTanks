@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿global using System.Diagnostics;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
@@ -15,8 +17,6 @@ public class MonoTanks : Game
     private SolidColor runningSlowlyInfo = default!;
 #endif
 
-    public static Point MinWindowSize => new(640, 480);
-
     /// <summary>
     /// Initializes a new instance of the <see cref="MonoTanks"/> class.
     /// </summary>
@@ -30,6 +30,11 @@ public class MonoTanks : Game
         this.Content.RootDirectory = "Content";
         this.IsMouseVisible = true;
     }
+
+    /// <summary>
+    /// Gets the minimum window size for the game.
+    /// </summary>
+    public static Point MinWindowSize => new(640, 480);
 
     /// <summary>
     /// Gets the instance of the game client.
@@ -120,7 +125,6 @@ public class MonoTanks : Game
         ScreenController.Update();
 
 #if DEBUG
-        this.fpsInfo.GetChild<Text>()!.Value = $"FPS: {1 / gameTime.ElapsedGameTime.TotalSeconds:0}";
         this.runningSlowlyInfo.IsEnabled = gameTime.IsRunningSlowly;
 
         this.fpsInfo.Update(gameTime);
@@ -168,6 +172,7 @@ public class MonoTanks : Game
         Scene.DrawOverlays(gameTime);
 
 #if DEBUG
+        this.fpsInfo.GetChild<Text>()!.Value = $"FPS: {1 / gameTime.ElapsedGameTime.TotalSeconds:0}";
         this.fpsInfo.Draw(gameTime);
         this.runningSlowlyInfo.Draw(gameTime);
 #endif
