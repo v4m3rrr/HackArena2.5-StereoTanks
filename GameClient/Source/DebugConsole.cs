@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -350,7 +349,7 @@ internal class DebugConsole : Scene, IOverlayScene
         foreach (ICommand command in GetAllCommandCombinations(maxDepth))
         {
             int levenshteinDistance = int.MaxValue;
-            if (command is CommandAttribute c)
+            if (command is CommandAttribute c && c.Arguments.Length <= maxDepth)
             {
                 for (int i = 0; i < c.Arguments.Length; i++)
                 {
