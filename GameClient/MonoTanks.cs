@@ -1,5 +1,6 @@
-﻿global using System.Diagnostics;
-
+﻿using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -12,6 +13,10 @@ namespace GameClient;
 /// </summary>
 public class MonoTanks : Game
 {
+    private static readonly ConcurrentQueue<Action> MainThreadActions = new();
+    private static readonly ManualResetEventSlim ActionEvent = new(false);
+    private static Thread mainThread = default!;
+
 #if DEBUG
     private SolidColor fpsInfo = default!;
     private SolidColor runningSlowlyInfo = default!;
@@ -23,6 +28,7 @@ public class MonoTanks : Game
     public MonoTanks()
     {
         Instance = this;
+        mainThread = Thread.CurrentThread;
 
         var graphics = new GraphicsDeviceManager(this);
         ScreenController.Initialize(graphics, this.Window);
@@ -49,6 +55,64 @@ public class MonoTanks : Game
 #else
     public static bool IsDebug => false;
 #endif
+
+    /// <summary>
+    /// Invokes a function on the main thread.
+    /// </summary>
+    /// <typeparam name="T">The type of the result.</typeparam>
+    /// <param name="func">The function to invoke.</param>
+    /// <returns>The result of the function.</returns>
+    /// <remarks>
+    /// If the function is called on the main thread,
+    /// it is executed immediately.
+    /// Otherwise, it is enqueued and executed on
+    /// the main thread at the end of the update loop.
+    /// </remarks>
+    public static T InvokeOnMainThread<T>(Func<T> func)
+    {
+        if (Thread.CurrentThread == mainThread)
+        {
+            return func();
+        }
+
+        T result = default!;
+        var resetEvent = new ManualResetEventSlim(false);
+
+        var action = new Action(() =>
+        {
+            result = func();
+            resetEvent.Set();
+        });
+
+        MainThreadActions.Enqueue(action);
+        ActionEvent.Set();
+
+        resetEvent.Wait();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Invokes an action on the main thread.
+    /// </summary>
+    /// <param name="action">The action to invoke.</param>
+    /// <remarks>
+    /// If the action is called on the main thread,
+    /// it is executed immediately.
+    /// Otherwise, it is enqueued and executed on
+    /// the main thread at the end of the update loop.
+    /// </remarks>
+    public static void InvokeOnMainThread(Action action)
+    {
+        if (Thread.CurrentThread == mainThread)
+        {
+            action();
+            return;
+        }
+
+        MainThreadActions.Enqueue(action);
+        ActionEvent.Set();
+    }
 
     /// <summary>
     /// Initializes the game.
@@ -155,6 +219,11 @@ public class MonoTanks : Game
         Scene.UpdateOverlays(gameTime);
 
         base.Update(gameTime);
+
+        while (MainThreadActions.TryDequeue(out var action))
+        {
+            action();
+        }
     }
 
     /// <summary>
