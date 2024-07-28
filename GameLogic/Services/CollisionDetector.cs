@@ -3,7 +3,7 @@
 /// <summary>
 /// A helper class for detecting collisions.
 /// </summary>
-internal static class CollisionDetector
+public static class CollisionDetector
 {
     /// <summary>
     /// Checks if the tank collides with something.

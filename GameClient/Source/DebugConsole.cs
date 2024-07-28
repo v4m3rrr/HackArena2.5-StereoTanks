@@ -82,6 +82,32 @@ internal class DebugConsole : Scene, IOverlayScene
         };
     }
 
+    /// <summary>
+    /// Throws an error message to the debug console.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    public static void ThrowError(string message)
+    {
+        SendMessage(message, Color.Red);
+
+#if DEBUG
+        if (!Instance.IsDisplayedOverlay)
+        {
+            ShowOverlay<DebugConsole>(default);
+            Instance.textInput.Deselect();
+        }
+#endif
+    }
+
+    /// <summary>
+    /// Throws an error message to the debug console.
+    /// </summary>
+    /// <param name="exception">The exception to be thrown.</param>
+    public static void ThrowError(Exception exception)
+    {
+        ThrowError(exception.Message);
+    }
+
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {

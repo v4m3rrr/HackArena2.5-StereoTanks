@@ -16,6 +16,26 @@ public class Bullet : IEquatable<Bullet>
     private float y;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="Bullet"/> class.
+    /// </summary>
+    /// <param name="shooter">The tank that shot the bullet.</param>
+    internal Bullet(Player shooter)
+    {
+        this.Shooter = shooter;
+        this.ShooterId = shooter.Id;
+    }
+
+    [JsonConstructor]
+    private Bullet()
+    {
+    }
+
+    /// <summary>
+    /// Gets the damage dealt by the bullet.
+    /// </summary>
+    public int Damage { get; private init; } = 20;
+
+    /// <summary>
     /// Gets the x coordinate of the bullet.
     /// </summary>
     public int X
@@ -39,17 +59,32 @@ public class Bullet : IEquatable<Bullet>
     /// <value>
     /// The speed of the bullet per second.
     /// </value>
-    public int Speed { get; init; } = 1;
+    [JsonProperty]
+    public int Speed { get; internal init; } = 1;
 
     /// <summary>
     /// Gets the direction of the bullet.
     /// </summary>
-    public Direction Direction { get; init; }
+    [JsonProperty]
+    public Direction Direction { get; internal init; }
+
+    /// <summary>
+    /// Gets the id of the owner of the bullet.
+    /// </summary>
+    [JsonProperty]
+    public string ShooterId { get; private init; } = default!;
 
     /// <summary>
     /// Gets the tank that shot the bullet.
     /// </summary>
-    public Tank? Shooter { get; init; }
+    /// <remarks>
+    /// This property has <see cref="JsonIgnoreAttribute"/> because it
+    /// is set in the <see cref="Networking.GameStatePayload.GridState"/>
+    /// init property when deserializing the game state,
+    /// based on the <see cref="ShooterId"/> property.
+    /// </remarks>
+    [JsonIgnore]
+    public Player Shooter { get; internal set; } = default!;
 
     /// <summary>
     /// Updates the bullet's position based on the current direction, speed and delta time.
@@ -101,7 +136,7 @@ public class Bullet : IEquatable<Bullet>
     /// </remarks>
     public List<(int X, int Y)> CalculateTrajectory(int startX, int startY)
     {
-        List<(int X, int Y)> coords = new();
+        List<(int X, int Y)> coords = [];
         int dx = Math.Abs(this.X - startX);
         int dy = Math.Abs(this.Y - startY);
         int sx = startX < this.X ? 1 : -1;

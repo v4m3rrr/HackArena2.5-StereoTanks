@@ -5,12 +5,16 @@ namespace GameLogic;
 /// <summary>
 /// Represents a map generator.
 /// </summary>
-internal static class MapGenerator
+/// <remarks>
+/// Initializes a new instance of the <see cref="MapGenerator"/> class.
+/// </remarks>
+/// <param name="seed">The seed for the random number generator.</param>
+internal class MapGenerator(int seed)
 {
     private const int Dim = Grid.Dim;
     private const int InnerWalls = Grid.InnerWalls;
 
-    private static readonly Random Random = new();
+    private readonly Random random = new(seed);
 
     /// <summary>
     /// Generates a new wall grid.
@@ -20,7 +24,7 @@ internal static class MapGenerator
     /// where <c>true</c> means a wall
     /// and <c>false</c> means an empty space.
     /// </returns>
-    public static bool[,] GenerateWalls()
+    public bool[,] GenerateWalls()
     {
         var grid = new bool[Dim, Dim];
 
@@ -37,19 +41,19 @@ internal static class MapGenerator
 
         while (innerWalls < maxInnerWalls)
         {
-            int x = Random.Next(1, Dim - 1);
-            int y = Random.Next(1, Dim - 1);
+            int x = this.random.Next(1, Dim - 1);
+            int y = this.random.Next(1, Dim - 1);
 
             grid[x, y] = true;
             innerWalls++;
         }
 
-        ConnectClosedSpaces(grid);
+        this.ConnectClosedSpaces(grid);
 
         return grid;
     }
 
-    private static void ConnectClosedSpaces(bool[,] grid)
+    private void ConnectClosedSpaces(bool[,] grid)
     {
         var visited = new bool[Dim, Dim];
 
@@ -59,14 +63,14 @@ internal static class MapGenerator
             {
                 if (!visited[i, j] && !grid[i, j])
                 {
-                    var closedSpace = FloodFill(grid, visited, i, j);
-                    RemoveWallToOpenSpace(grid, closedSpace);
+                    var closedSpace = this.FloodFill(grid, visited, i, j);
+                    this.RemoveWallToOpenSpace(grid, closedSpace);
                 }
             }
         }
     }
 
-    private static List<Point> FloodFill(bool[,] grid, bool[,] visited, int startX, int startY)
+    private List<Point> FloodFill(bool[,] grid, bool[,] visited, int startX, int startY)
     {
         var space = new List<Point>();
         var queue = new Queue<Point>();
@@ -95,7 +99,7 @@ internal static class MapGenerator
         return space;
     }
 
-    private static void RemoveWallToOpenSpace(bool[,] grid, List<Point> space)
+    private void RemoveWallToOpenSpace(bool[,] grid, List<Point> space)
     {
         var directions = new Point[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) };
 
@@ -106,7 +110,7 @@ internal static class MapGenerator
 
         while (wallsRemoved < maxWallsToRemove && attemptedRemovals < maxAttempts)
         {
-            var cell = space[Random.Next(space.Count)];
+            var cell = space[this.random.Next(space.Count)];
             foreach (var dir in directions)
             {
                 int newX = cell.X + dir.X;

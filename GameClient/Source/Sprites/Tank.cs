@@ -16,6 +16,10 @@ internal class Tank : Sprite
 
     private readonly GridComponent grid;
 
+    private Rectangle destinationRect;
+    private float tankRotation;
+    private float turretRotation;
+
     static Tank()
     {
         TankTexture = ContentController.Content.Load<Texture2D>("Images/Tank");
@@ -51,51 +55,60 @@ internal class Tank : Sprite
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-    }
+        if (this.Logic.IsDead)
+        {
+            return;
+        }
 
-    /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
-    {
         int tileSize = this.grid.TileSize;
         int drawOffset = this.grid.DrawOffset;
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        float tankRotation = DirectionUtils.ToRotation(this.Logic.Direction);
-        float turretRotation = DirectionUtils.ToRotation(this.Logic.Turret.Direction);
+        this.tankRotation = DirectionUtils.ToRotation(this.Logic.Direction);
+        this.turretRotation = DirectionUtils.ToRotation(this.Logic.Turret.Direction);
 
-        var rect = new Rectangle(
+        this.destinationRect = new Rectangle(
             gridLeft + (this.Logic.X * tileSize) + drawOffset,
             gridTop + (this.Logic.Y * tileSize) + drawOffset,
             tileSize,
             tileSize);
+    }
+
+    /// <inheritdoc/>
+    public override void Draw(GameTime gameTime)
+    {
+        if (this.Logic.IsDead)
+        {
+            return;
+        }
 
         SpriteBatchController.SpriteBatch.Draw(
             TankTexture,
-            rect,
+            this.destinationRect,
             null,
             Color.White,
-            tankRotation,
+            this.tankRotation,
             TankTexture.Bounds.Size.ToVector2() / 2f,
             SpriteEffects.None,
             1.0f);
 
         SpriteBatchController.SpriteBatch.Draw(
             TankFillTexture,
-            rect,
+            this.destinationRect,
             null,
-            new Color(this.Logic.Color),
-            tankRotation,
+            new Color(this.Logic.Owner.Color),
+            this.tankRotation,
             TankTexture.Bounds.Size.ToVector2() / 2f,
             SpriteEffects.None,
             1.0f);
 
         SpriteBatchController.SpriteBatch.Draw(
             TurretTexture,
-            rect,
+            this.destinationRect,
             null,
-            new Color(this.Logic.Color),
-            turretRotation,
+            Color.White,
+            this.turretRotation,
             TankTexture.Bounds.Size.ToVector2() / 2f,
             SpriteEffects.None,
             1.0f);

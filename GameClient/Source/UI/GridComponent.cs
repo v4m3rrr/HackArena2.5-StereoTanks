@@ -13,8 +13,8 @@ namespace GameClient;
 internal class GridComponent : Component
 {
     private readonly Sprites.Wall?[,] walls = new Sprites.Wall[Grid.Dim, Grid.Dim];
-    private readonly List<Sprites.Tank> tanks = new();
-    private readonly List<Sprites.Bullet> bullets = new();
+    private readonly List<Sprites.Tank> tanks = [];
+    private readonly List<Sprites.Bullet> bullets = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
@@ -63,7 +63,7 @@ internal class GridComponent : Component
 
         base.Update(gameTime);
 
-        foreach (Sprite sprite in this.Sprites)
+        foreach (Sprite sprite in this.Sprites.ToList())
         {
             sprite.Update(gameTime);
         }
@@ -79,7 +79,7 @@ internal class GridComponent : Component
 
         base.Draw(gameTime);
 
-        foreach (Sprite sprite in this.Sprites)
+        foreach (Sprite sprite in this.Sprites.ToList())
         {
             sprite.Draw(gameTime);
         }

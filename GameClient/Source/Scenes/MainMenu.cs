@@ -110,7 +110,11 @@ public class MainMenu : Scene
         };
         quickStartBtn.HoverEntered += (s, e) => e.Color = Color.Red;
         quickStartBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
-        quickStartBtn.Clicked += (s, e) => Change<Game>();
+        quickStartBtn.Clicked += (s, e) =>
+        {
+            Game.ServerUri = new Uri("ws://localhost:5000/");
+            Change<Game>();
+        };
         _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
         {
             Parent = quickStartBtn.Component,

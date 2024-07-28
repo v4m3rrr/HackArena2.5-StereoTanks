@@ -1,4 +1,8 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,11 +19,10 @@ namespace GameClient.Scenes;
 /// </summary>
 internal class Game : Scene
 {
-    private readonly ClientWebSocket client = new();
+    private readonly Dictionary<string, Player> players = [];
     private readonly GridComponent grid;
-    private DateTime? lastPingSend;
 
-    private Text pingInfo = default!;
+    private ClientWebSocket client;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Game"/> class.
@@ -31,6 +34,7 @@ internal class Game : Scene
 
         this.grid = new GridComponent(new Grid())
         {
+            IsEnabled = false,
             Parent = this.BaseComponent,
             Transform =
             {
@@ -44,29 +48,22 @@ internal class Game : Scene
     /// <summary>
     /// Gets or sets the server URI.
     /// </summary>
-    public static Uri ServerUri { get; set; } = new("ws://localhost:5000");
+    public static Uri ServerUri { get; set; } = new("ws://127.0.0.1:5000");
 
     /// <summary>
-    /// Gets the server broadcast interval.
+    /// Gets the server broadcast interval in milliseconds.
     /// </summary>
     /// <value>
     /// The server broadcast interval in seconds.
     /// When the value is -1, the server broadcast interval is not received yet.
     /// </value>
-    public static float ServerBroadcastInterval { get; private set; } = -1f;
+    public static int ServerBroadcastInterval { get; private set; } = -1;
 
     /// <inheritdoc/>
-    public override async void Update(GameTime gameTime)
+    public override void Update(GameTime gameTime)
     {
         this.HandleInput();
-
         base.Update(gameTime);
-
-        var shouldSendPing = (this.lastPingSend?.AddSeconds(1) ?? DateTime.UtcNow) <= DateTime.UtcNow;
-        if (this.client.State == WebSocketState.Open && shouldSendPing)
-        {
-            await this.SendPingAsync();
-        }
     }
 
     /// <inheritdoc/>
@@ -74,9 +71,7 @@ internal class Game : Scene
     {
         this.Showing += async (s, e) =>
         {
-            DebugConsole.SendMessage("Connecting to server...");
             await this.ConnectAsync(ServerUri);
-            DebugConsole.SendMessage($"Connected to server {ServerUri}.");
         };
 
         var backBtn = new Button<Frame>(new Frame())
@@ -104,73 +99,126 @@ internal class Game : Scene
         }.ApplyStyle(Styles.UI.ButtonStyle);
         settingsBtn.Clicked += (s, e) => ShowOverlay<Settings>(new OverlayShowOptions(BlockFocusOnUnderlyingScenes: true));
         settingsBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Settings");
-
-        this.pingInfo = new Text(new ScalableFont("Content\\Fonts\\verdana.ttf", 11), Color.Black)
-        {
-            Parent = this.BaseComponent,
-            TextAlignment = Alignment.TopRight,
-            Value = "Ping: 0 ms",
-            AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
-            Transform =
-            {
-                Alignment = Alignment.TopRight,
-                RelativeOffset = new Vector2(-0.04f, 0.04f),
-            },
-        };
     }
 
     private async Task ConnectAsync(Uri server)
     {
-        await this.client.ConnectAsync(server, CancellationToken.None);
-        _ = Task.Run(this.ReceiveMessages);
+        DebugConsole.SendMessage($"Connecting to the server...");
+#if DEBUG
+        DebugConsole.SendMessage($"Server URI: {server}", Color.DarkGray);
+#endif
 
-        await this.RequestGameDataAsync();
-    }
+        int timeout = 5;
+        using (HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(timeout) })
+        {
+            HttpResponseMessage response;
 
-    private async Task RequestGameDataAsync()
-    {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
+                var srvUri = new Uri(server.ToString().Replace("ws://", "http://"));
+                response = await httpClient.GetAsync(srvUri, cts.Token).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException)
+            {
+                DebugConsole.ThrowError("The request timed out.");
+                ChangeToPreviousOr<MainMenu>();
+                return;
+            }
+            catch (Exception ex)
+            {
+                DebugConsole.ThrowError($"An error occurred while sending HTTP request: {ex.Message}");
+                ChangeToPreviousOr<MainMenu>();
+                return;
+            }
+
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.TooManyRequests)
+            {
+                string errorMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                DebugConsole.ThrowError($"Server error: {errorMessage}");
+                ChangeToPreviousOr<MainMenu>();
+                return;
+            }
+            else if (response.StatusCode != HttpStatusCode.OK)
+            {
+                DebugConsole.ThrowError($"Unexpected response from server: {response.StatusCode}");
+                ChangeToPreviousOr<MainMenu>();
+                return;
+            }
+        }
+
+        this.client = new ClientWebSocket();
+
         try
         {
-            var packet = new EmptyPayload() { Type = PacketType.GameData };
-            var buffer = PacketSerializer.ToByteArray(packet);
-            await this.client.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            await this.client.ConnectAsync(server, CancellationToken.None);
         }
-        catch (Exception e)
+        catch (WebSocketException ex)
         {
-            DebugConsole.SendMessage("An error occurred while requesting game data: " + e.Message, Color.Red);
-            throw;
+            DebugConsole.ThrowError($"An error occurred while connecting to the server: {ex.Message}");
+            ChangeToPreviousOr<MainMenu>();
+            return;
         }
+
+        _ = Task.Run(this.ReceiveMessages);
+        DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
     }
 
     private async Task ReceiveMessages()
     {
-        while (this.client.State == WebSocketState.Open)
+        while (this.client.State is WebSocketState.Open or WebSocketState.CloseReceived)
         {
+            WebSocketReceiveResult? result = null;
+            byte[] buffer = new byte[1024 * 32];
             try
             {
-                var buffer = new byte[1024 * 32];
-                WebSocketReceiveResult result = await this.client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                result = await this.client.ReceiveAsync(buffer, CancellationToken.None);
 
-                if (result.MessageType == WebSocketMessageType.Text)
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    WebSocketCloseStatus? status = result.CloseStatus;
+                    string? description = result.CloseStatusDescription;
+
+                    var msg = description is null
+                        ? $"Server status: connection closed ({(int?)status ?? -1})"
+                        : $"Server status: connection closed ({(int?)status ?? -1}) - {description}";
+
+                    if (status == WebSocketCloseStatus.NormalClosure)
+                    {
+                        DebugConsole.SendMessage(msg);
+                    }
+                    else
+                    {
+                        DebugConsole.ThrowError(msg);
+                    }
+
+                    ChangeToPreviousOr<MainMenu>();
+                    await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                    break;
+                }
+                else if (result.MessageType == WebSocketMessageType.Text)
                 {
                     Packet packet = PacketSerializer.Deserialize(buffer);
                     switch (packet.Type)
                     {
                         case PacketType.Ping:
-                            var responseTime = DateTime.UtcNow - this.lastPingSend!.Value;
-                            this.pingInfo.Value = $"Ping: {responseTime.TotalMilliseconds:0.00} ms";
+                            var pong = new EmptyPayload() { Type = PacketType.Pong };
+                            await this.client.SendAsync(PacketSerializer.ToByteArray(pong), WebSocketMessageType.Text, true, CancellationToken.None);
                             break;
 
-                        case PacketType.GridData:
-                            var gridData = packet.GetPayload<GridStatePayload>();
-                            this.grid.Logic.UpdateFromPayload(gridData);
-
+                        case PacketType.GameState:
+                            var gameState = packet.GetPayload<GameStatePayload>();
+                            this.grid.Logic.UpdateFromStatePayload(gameState.GridState);
+                            this.UpdatePlayers(gameState.Players);
+                            this.UpdatePlayerBars();
+                            this.grid.IsEnabled = true;
                             break;
 
                         case PacketType.GameData:
-                            var gameData = packet.GetPayload<GameStatePayload>();
-                            DebugConsole.SendMessage("Game ID: " + gameData.Id);
-                            DebugConsole.SendMessage("Join code: " + gameData.JoinCode);
+                            var gameData = packet.GetPayload<GameDataPayload>();
+                            DebugConsole.SendMessage("Broadcast interval: " + gameData.BroadcastInterval + "ms", Color.DarkGray);
+                            DebugConsole.SendMessage("Player ID: " + gameData.PlayerId, Color.DarkGray);
+                            DebugConsole.SendMessage("Seed: " + gameData.Seed, Color.DarkGray);
                             ServerBroadcastInterval = gameData.BroadcastInterval;
                             break;
                     }
@@ -178,25 +226,14 @@ internal class Game : Scene
             }
             catch (Exception e)
             {
-                DebugConsole.SendMessage("An error occurred while receiving messages: " + e.Message, Color.Red);
-                return;
-            }
-        }
-    }
+                DebugConsole.ThrowError("An error occurred while receiving messages: " + e.Message);
+                DebugConsole.SendMessage("MessageType: " + result?.MessageType, Color.Orange);
 
-    private async Task SendPingAsync()
-    {
-        try
-        {
-            this.lastPingSend = DateTime.UtcNow;
-            var packet = new EmptyPayload() { Type = PacketType.Ping };
-            var buffer = PacketSerializer.ToByteArray(packet);
-            await this.client.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-        }
-        catch (Exception e)
-        {
-            DebugConsole.SendMessage("An error occurred while sending a ping: " + e.Message, Color.Red);
-            throw;
+                if (result?.MessageType == WebSocketMessageType.Text)
+                {
+                    DebugConsole.SendMessage("Message: " + PacketSerializer.FromByteArray(buffer));
+                }
+            }
         }
     }
 

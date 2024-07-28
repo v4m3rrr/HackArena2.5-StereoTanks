@@ -3,7 +3,7 @@
 /// <summary>
 /// An interface for collision.
 /// </summary>
-internal interface ICollision
+public interface ICollision
 {
     /// <summary>
     /// Gets the collision type.

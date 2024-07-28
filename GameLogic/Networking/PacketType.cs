@@ -16,6 +16,11 @@ public enum PacketType
     Ping,
 
     /// <summary>
+    /// The pong packet type.
+    /// </summary>
+    Pong,
+
+    /// <summary>
     /// The tank movement packet type.
     /// </summary>
     /// <remarks>
@@ -48,12 +53,12 @@ public enum PacketType
     GameData,
 
     /// <summary>
-    /// The grid data packet type.
+    /// The game state packet type.
     /// </summary>
     /// <remarks>
-    /// This packet is used to send grid data of the game.
+    /// This packet is used to send the game state.
     /// </remarks>
-    GridData,
+    GameState,
 
 #if DEBUG
     /// <summary>

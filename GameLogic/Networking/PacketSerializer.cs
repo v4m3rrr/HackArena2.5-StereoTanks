@@ -13,11 +13,19 @@ public static class PacketSerializer
     private static readonly JsonSerializerSettings Settings = new()
     {
         ContractResolver = new CamelCasePropertyNamesContractResolver(),
+        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+#if DEBUG
+        Formatting = Formatting.Indented,
+#endif
     };
 
     private static readonly JsonSerializer Serializer = new()
     {
         ContractResolver = new CamelCasePropertyNamesContractResolver(),
+        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+#if DEBUG
+        Formatting = Formatting.Indented,
+#endif
     };
 
     /// <summary>
@@ -81,7 +89,7 @@ public static class PacketSerializer
     /// <summary>
     /// Converts the byte array to a packet.
     /// </summary>
-    /// <param name="buffer">The byte array to convert</param>
+    /// <param name="buffer">The byte array to convert.</param>
     /// <returns>The deserialized packet.</returns>
     public static Packet Deserialize(byte[] buffer)
     {

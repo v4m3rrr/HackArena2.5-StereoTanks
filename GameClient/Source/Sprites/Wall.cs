@@ -12,7 +12,7 @@ namespace GameClient.Sprites;
 /// </summary>
 internal class Wall : Sprite
 {
-    private static readonly Dictionary<string, Texture2D> Textures = new();
+    private static readonly Dictionary<string, Texture2D> Textures = [];
     private static Vector2 origin;
 
     private readonly GridComponent grid;
