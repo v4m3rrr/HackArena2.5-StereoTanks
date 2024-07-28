@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -20,6 +20,7 @@ namespace GameClient.Scenes;
 internal class Game : Scene
 {
     private readonly Dictionary<string, Player> players = [];
+    private readonly List<PlayerBar> playerBars = [];
     private readonly GridComponent grid;
 
     private ClientWebSocket client;
@@ -282,6 +283,44 @@ internal class Game : Scene
         {
             var buffer = PacketSerializer.ToByteArray(payload);
             await this.client.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+    }
+
+    private void UpdatePlayers(IEnumerable<Player> updatedPlayers)
+    {
+        foreach (Player updatedPlayer in updatedPlayers)
+        {
+            if (this.players.TryGetValue(updatedPlayer.Id, out var existingPlayer))
+            {
+                existingPlayer.UpdateFrom(updatedPlayer);
+            }
+            else
+            {
+                this.players[updatedPlayer.Id] = updatedPlayer;
+            }
+        }
+    }
+
+    private void UpdatePlayerBars()
+    {
+        var newPlayerBars = this.players.Values
+            .Where(player => this.playerBars.All(pb => pb.Player != player))
+            .Select(player => new PlayerBar(player)
+            {
+                Parent = this.BaseComponent,
+                Transform =
+                {
+                    RelativeSize = new Vector2(0.2f, 0.13f),
+                },
+            })
+            .ToList();
+
+        this.playerBars.AddRange(newPlayerBars);
+        _ = this.playerBars.RemoveAll(playerBar => !this.players.ContainsValue(playerBar.Player));
+
+        for (int i = 0; i < this.playerBars.Count; i++)
+        {
+            this.playerBars[i].Transform.RelativeOffset = new Vector2(0.02f, 0.06f + (i * 0.15f));
         }
     }
 }
