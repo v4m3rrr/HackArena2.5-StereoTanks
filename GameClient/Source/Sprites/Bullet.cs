@@ -148,8 +148,9 @@ internal class Bullet : Sprite
         // TODO: Add other bullets trajectories.
         // Currently, only collision with walls and tanks is checked.
         // A dictionary below is created to avoid errors in the CollisionDetector.
-        var posX = Math.Clamp((int)(this.position.X + 0.5f), 0, Grid.Dim - 1);
-        var posY = Math.Clamp((int)(this.position.Y + 0.5f), 0, Grid.Dim - 1);
+        var gridDim = this.grid.Logic.Dim;
+        var posX = Math.Clamp((int)(this.position.X + 0.5f), 0, gridDim - 1);
+        var posY = Math.Clamp((int)(this.position.Y + 0.5f), 0, gridDim - 1);
         var trajectories = new Dictionary<GameLogic.Bullet, List<(int X, int Y)>>
         {
             [this.Logic] = [(posX, posY)],

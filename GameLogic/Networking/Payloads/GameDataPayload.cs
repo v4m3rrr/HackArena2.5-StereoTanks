@@ -2,11 +2,12 @@
 
 /// <summary>
 /// Represents a game state payload.
-/// </summary>
-/// <param name="broadcastInterval">The broadcast interval in milliseconds.</param>
+/// </summary
 /// <param name="playerId">The player id.</param>
+/// <param name="dimension">The dimension of the grid.</param>
 /// <param name="seed">The seed of the grid.</param>
-public class GameDataPayload(string playerId, int broadcastInterval, int seed) : IPacketPayload
+/// <param name="broadcastInterval">The broadcast interval in milliseconds.</param>
+public class GameDataPayload(string playerId, int dimension, int seed, int broadcastInterval) : IPacketPayload
 {
     /// <inheritdoc/>
     public PacketType Type => PacketType.GameData;
@@ -17,12 +18,17 @@ public class GameDataPayload(string playerId, int broadcastInterval, int seed) :
     public string PlayerId { get; } = playerId;
 
     /// <summary>
-    /// Gets the broadcast interval in milliseconds.
+    /// Gets the dimension of the grid.
     /// </summary>
-    public int BroadcastInterval { get; } = broadcastInterval;
+    public int Dimension { get; } = dimension;
 
     /// <summary>
     /// Gets the seed of the grid.
     /// </summary>
     public int Seed { get; } = seed;
+
+    /// <summary>
+    /// Gets the broadcast interval in milliseconds.
+    /// </summary>
+    public int BroadcastInterval { get; } = broadcastInterval;
 }

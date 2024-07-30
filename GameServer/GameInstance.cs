@@ -1,4 +1,4 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
 
@@ -113,7 +113,11 @@ internal class GameInstance
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task SendGameData(WebSocket socket)
     {
-        var response = new GameDataPayload(this.players[socket].Id, this.broadcastInterval, this.Grid.Seed);
+        var response = new GameDataPayload(
+            this.players[socket].Id,
+            this.Grid.Dim,
+            this.Grid.Seed,
+            this.broadcastInterval);
         await SendPacketAsync(socket, response);
     }
 

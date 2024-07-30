@@ -8,12 +8,11 @@ namespace GameLogic;
 /// <remarks>
 /// Initializes a new instance of the <see cref="MapGenerator"/> class.
 /// </remarks>
+/// <param name="dimension">The dimension of the grid.</param>
 /// <param name="seed">The seed for the random number generator.</param>
-internal class MapGenerator(int seed)
+internal class MapGenerator(int dimension, int seed)
 {
-    private const int Dim = Grid.Dim;
-    private const int InnerWalls = Grid.InnerWalls;
-
+    private readonly int dim = dimension;
     private readonly Random random = new(seed);
 
     /// <summary>
@@ -26,23 +25,23 @@ internal class MapGenerator(int seed)
     /// </returns>
     public bool[,] GenerateWalls()
     {
-        var grid = new bool[Dim, Dim];
+        var grid = new bool[this.dim, this.dim];
 
-        for (int i = 0; i < Dim; i++)
+        for (int i = 0; i < this.dim; i++)
         {
-            for (int j = 0; j < Dim; j++)
+            for (int j = 0; j < this.dim; j++)
             {
-                grid[i, j] = i == 0 || j == 0 || i == Dim - 1 || j == Dim - 1;
+                grid[i, j] = i == 0 || j == 0 || i == this.dim - 1 || j == this.dim - 1;
             }
         }
 
-        int maxInnerWalls = Math.Min((Dim - 2) * (Dim - 2) * 8 / 10, InnerWalls);
+        int maxInnerWalls = (this.dim - 2) * (this.dim - 2) * 8 / 10;
         int innerWalls = 0;
 
         while (innerWalls < maxInnerWalls)
         {
-            int x = this.random.Next(1, Dim - 1);
-            int y = this.random.Next(1, Dim - 1);
+            int x = this.random.Next(1, this.dim - 1);
+            int y = this.random.Next(1, this.dim - 1);
 
             grid[x, y] = true;
             innerWalls++;
@@ -55,11 +54,11 @@ internal class MapGenerator(int seed)
 
     private void ConnectClosedSpaces(bool[,] grid)
     {
-        var visited = new bool[Dim, Dim];
+        var visited = new bool[this.dim, this.dim];
 
-        for (int i = 1; i < Dim - 1; i++)
+        for (int i = 1; i < this.dim - 1; i++)
         {
-            for (int j = 1; j < Dim - 1; j++)
+            for (int j = 1; j < this.dim - 1; j++)
             {
                 if (!visited[i, j] && !grid[i, j])
                 {
@@ -82,7 +81,7 @@ internal class MapGenerator(int seed)
         {
             var point = queue.Dequeue();
 
-            if (point.X < 0 || point.Y < 0 || point.X >= Dim || point.Y >= Dim || grid[point.X, point.Y] || visited[point.X, point.Y])
+            if (point.X < 0 || point.Y < 0 || point.X >= this.dim || point.Y >= this.dim || grid[point.X, point.Y] || visited[point.X, point.Y])
             {
                 continue;
             }
@@ -116,7 +115,7 @@ internal class MapGenerator(int seed)
                 int newX = cell.X + dir.X;
                 int newY = cell.Y + dir.Y;
 
-                if (newX > 0 && newY > 0 && newX < Dim - 1 && newY < Dim - 1 && grid[newX, newY])
+                if (newX > 0 && newY > 0 && newX < this.dim - 1 && newY < this.dim - 1 && grid[newX, newY])
                 {
                     grid[newX, newY] = false;
                     wallsRemoved++;

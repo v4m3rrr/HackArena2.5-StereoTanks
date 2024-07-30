@@ -12,17 +12,18 @@ namespace GameClient;
 /// </summary>
 internal class GridComponent : Component
 {
-    private readonly Sprites.Wall?[,] walls = new Sprites.Wall[Grid.Dim, Grid.Dim];
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
+    private Sprites.Wall?[,] walls;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
     /// </summary>
-    /// <param name="logic">The grid logic.</param>
-    public GridComponent(Grid logic)
+    public GridComponent()
     {
-        this.Logic = logic;
+        this.Logic = new();
+        this.walls = new Sprites.Wall[this.Logic.Dim, this.Logic.Dim];
+        this.Logic.DimensionsChanged += this.Logic_DimensionsChanged;
         this.Logic.StateUpdated += this.Logic_StateDeserialized;
         this.Transform.SizeChanged += (s, e) => this.UpdateDrawData();
     }
@@ -83,6 +84,21 @@ internal class GridComponent : Component
         {
             sprite.Draw(gameTime);
         }
+    }
+
+    private void Logic_DimensionsChanged(object? sender, EventArgs args)
+    {
+        var walls = new Sprites.Wall?[this.Logic.Dim, this.Logic.Dim];
+        for (int i = 0; i < this.walls.GetLength(0) && i < this.Logic.Dim; i++)
+        {
+            for (int j = 0; j < this.walls.GetLength(1) && i < this.Logic.Dim; j++)
+            {
+                walls[i, j] = this.walls[i, j];
+            }
+        }
+
+        this.walls = walls;
+        this.UpdateDrawData();
     }
 
     private void Logic_StateDeserialized(object? sender, EventArgs args)
@@ -156,8 +172,10 @@ internal class GridComponent : Component
 
     private void UpdateDrawData()
     {
-        this.TileSize = this.Transform.Size.X / Grid.Dim;
-        this.DrawOffset = (int)(((this.Transform.Size.X - (Grid.Dim * this.TileSize)) / 2f) + (this.TileSize / 2f));
+        var gridDim = this.Logic.Dim;
+        var size = this.Transform.Size.X;
+        var tileSize = this.TileSize = size / gridDim;
+        this.DrawOffset = (int)((size - (gridDim * tileSize) + tileSize) / 2f);
         this.DrawDataChanged?.Invoke(this, EventArgs.Empty);
     }
 }

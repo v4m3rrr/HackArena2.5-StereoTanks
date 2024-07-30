@@ -44,6 +44,17 @@ internal class CommandLineOptions
     public int NumberOfPlayers { get; private set; }
 
     /// <summary>
+    /// Gets the grid dimension.
+    /// </summary>
+    [Option(
+        'd',
+        "grid-dimension",
+        Required = false,
+        HelpText = "The dimension of the grid.",
+        Default = 24)]
+    public int GridDimension { get; private set; }
+
+    /// <summary>
     /// Gets the broadcast interval in milliseconds.
     /// </summary>
     [Option(

@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace GameLogic;
 
@@ -8,19 +10,10 @@ namespace GameLogic;
 /// <remarks>
 /// Initializes a new instance of the <see cref="Grid"/> class.
 /// </remarks>
+/// <param name="dimension">The dimension of the grid.</param>
 /// <param name="seed">The seed of the grid.</param>
-public class Grid(int seed)
+public class Grid(int dimension, int seed)
 {
-    /// <summary>
-    /// The dimension of the grid.
-    /// </summary>
-    public const int Dim = 20;
-
-    /// <summary>
-    /// The number of inner walls.
-    /// </summary>
-    public const int InnerWalls = 5000;
-
     private readonly Queue<Bullet> queuedBullets = new();
     private readonly Random random = new(seed);
 
@@ -31,7 +24,7 @@ public class Grid(int seed)
     /// Initializes a new instance of the <see cref="Grid"/> class.
     /// </summary>
     public Grid()
-        : this(new Random().Next())
+        : this(1, new Random().Next())
     {
     }
 
@@ -46,6 +39,21 @@ public class Grid(int seed)
     public event EventHandler? StateUpdated;
 
     /// <summary>
+    /// Occurs when the dimensions are changing.
+    /// </summary>
+    public event EventHandler? DimensionsChanging;
+
+    /// <summary>
+    /// Occurs when the dimensions have changed.
+    /// </summary>
+    public event EventHandler? DimensionsChanged;
+
+    /// <summary>
+    /// Gets the dimension of the grid.
+    /// </summary>
+    public int Dim { get; private set; } = dimension;
+
+    /// <summary>
     /// Gets the seed of the grid.
     /// </summary>
     public int Seed { get; private init; } = seed;
@@ -53,7 +61,7 @@ public class Grid(int seed)
     /// <summary>
     /// Gets the wall grid.
     /// </summary>
-    public Wall?[,] WallGrid { get; private set; } = new Wall?[Dim, Dim];
+    public Wall?[,] WallGrid { get; private set; } = new Wall?[dimension, dimension];
 
     /// <summary>
     /// Gets the tanks.
@@ -73,22 +81,29 @@ public class Grid(int seed)
     {
         this.StateUpdating?.Invoke(this, EventArgs.Empty);
 
-        var wallGrid = new Wall?[Dim, Dim];
-        for (int i = 0; i < Dim; i++)
+        var newDim = payload.WallGrid.GetLength(0);
+        if (newDim != this.Dim)
         {
-            for (int j = 0; j < Dim; j++)
+            this.DimensionsChanging?.Invoke(this, EventArgs.Empty);
+            this.Dim = newDim;
+            this.WallGrid = new Wall?[this.Dim, this.Dim];
+            this.DimensionsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        for (int i = 0; i < this.Dim; i++)
+        {
+            for (int j = 0; j < this.Dim; j++)
             {
                 if (payload.WallGrid[i, j] is { } jObject)
                 {
                     var wall = jObject.ToObject<Wall>()!;
                     wall.X = i;
                     wall.Y = j;
-                    wallGrid[i, j] = wall;
+                    this.WallGrid[i, j] = wall;
                 }
             }
         }
 
-        this.WallGrid = wallGrid;
         this.tanks = payload.Tanks;
         this.bullets = payload.Bullets;
 
@@ -100,12 +115,12 @@ public class Grid(int seed)
     /// </summary>
     public void GenerateWalls()
     {
-        var generator = new MapGenerator(this.Seed);
+        var generator = new MapGenerator(this.Dim, this.Seed);
         var walls = generator.GenerateWalls();
 
-        for (int i = 0; i < Dim; i++)
+        for (int i = 0; i < this.Dim; i++)
         {
-            for (int j = 0; j < Dim; j++)
+            for (int j = 0; j < this.Dim; j++)
             {
                 this.WallGrid[i, j] = walls[i, j] ? new Wall(i, j) : null;
             }
@@ -126,7 +141,7 @@ public class Grid(int seed)
         {
             int x = wall.X - directions[i].Dx;
             int y = wall.Y - directions[i].Dy;
-            if (x >= 0 && x < Dim && y >= 0 && y < Dim && this.WallGrid[x, y] is Wall w)
+            if (x >= 0 && x < this.Dim && y >= 0 && y < this.Dim && this.WallGrid[x, y] is Wall w)
             {
                 neighbors[i] = w;
             }
@@ -273,7 +288,7 @@ public class Grid(int seed)
         switch (collision)
         {
             case TankCollision tankCollision:
-                bullet.Shooter.Score += 10;
+                bullet.Shooter.Score += bullet.Damage / 2;
                 tankCollision.Tank.TakeDamage(bullet.Damage);
                 break;
 
@@ -307,7 +322,7 @@ public class Grid(int seed)
         /// <summary>
         /// Gets the wall grid.
         /// </summary>
-        public JObject?[,] WallGrid { get; init; } = new JObject?[Dim, Dim];
+        public JObject?[,] WallGrid { get; init; } = new JObject?[0, 0];
 
         /// <summary>
         /// Gets the tanks.
