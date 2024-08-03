@@ -1,15 +1,10 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace GameLogic;
 
 /// <summary>
 /// Represents a grid.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="Grid"/> class.
-/// </remarks>
 /// <param name="dimension">The dimension of the grid.</param>
 /// <param name="seed">The seed of the grid.</param>
 public class Grid(int dimension, int seed)
@@ -19,14 +14,6 @@ public class Grid(int dimension, int seed)
 
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Grid"/> class.
-    /// </summary>
-    public Grid()
-        : this(1, new Random().Next())
-    {
-    }
 
     /// <summary>
     /// Occurs when the state is updating.
@@ -47,6 +34,11 @@ public class Grid(int dimension, int seed)
     /// Occurs when the dimensions have changed.
     /// </summary>
     public event EventHandler? DimensionsChanged;
+
+    /// <summary>
+    /// Gets an empty grid.
+    /// </summary>
+    public static Grid Empty => new(0, 0);
 
     /// <summary>
     /// Gets the dimension of the grid.
@@ -77,11 +69,24 @@ public class Grid(int dimension, int seed)
     /// Updates the grid state from a payload.
     /// </summary>
     /// <param name="payload">The payload to update from.</param>
-    public void UpdateFromStatePayload(StatePayload payload)
+    /// <remarks>
+    /// This method also sets properites:
+    /// <list type="bullet">
+    /// <item><description><see cref="Tank.Owner"/></description></item>
+    /// <item><description><see cref="Turret.Tank"/></description></item>
+    /// <item><description><see cref="Bullet.Shooter"/></description></item>
+    /// <item><description><see cref="Player.Tank"/></description></item>
+    /// <item><description><see cref="Player.VisibilityGrid"/></description></item>
+    /// </list>
+    /// </remarks>
+    public void UpdateFromStatePayload(Networking.GameStatePayload payload)
     {
         this.StateUpdating?.Invoke(this, EventArgs.Empty);
 
-        var newDim = payload.WallGrid.GetLength(0);
+        var gridState = payload.GridState;
+
+        // Update the dimensions of the grid.
+        var newDim = gridState.WallGrid.GetLength(0);
         if (newDim != this.Dim)
         {
             this.DimensionsChanging?.Invoke(this, EventArgs.Empty);
@@ -90,22 +95,53 @@ public class Grid(int dimension, int seed)
             this.DimensionsChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        for (int i = 0; i < this.Dim; i++)
+        // Update the walls.
+        this.WallGrid = gridState.WallGrid;
+
+        // Update the tanks.
+        this.tanks = [.. gridState.Tanks];
+
+        if (payload is Networking.GameStatePayload.ForPlayer playerPayload)
         {
-            for (int j = 0; j < this.Dim; j++)
+            // Add the player's tank with regen progress.
+            if (playerPayload.RegenProgress is not null)
             {
-                if (payload.WallGrid[i, j] is { } jObject)
-                {
-                    var wall = jObject.ToObject<Wall>()!;
-                    wall.X = i;
-                    wall.Y = j;
-                    this.WallGrid[i, j] = wall;
-                }
+                var playerId = playerPayload.PlayerId;
+                var regenProgress = playerPayload.RegenProgress.Value;
+                var tank = Tank.OnlyRegenProgress(playerId, regenProgress);
+                this.tanks.Add(tank);
             }
         }
 
-        this.tanks = payload.Tanks;
-        this.bullets = payload.Bullets;
+        // Set the tanks' owners, owners' tanks and turrets' tanks.
+        foreach (Tank tank in this.tanks)
+        {
+            var owner = payload.Players.First(p => p.Id == tank.OwnerId);
+
+            tank.Owner = owner;
+            tank.Turret.Tank = tank;
+            owner.Tank = tank;
+        }
+
+        // Update the bullets.
+        this.bullets = gridState.Bullets;
+
+        // Set the bullets' shooters.
+        foreach (Bullet bullet in this.bullets)
+        {
+            if (bullet.ShooterId is null)
+            {
+                // ShooterId is null for players.
+                // Only spectators have bullets with ShooterId.
+                Debug.Assert(
+                    payload is Networking.GameStatePayload.ForPlayer,
+                    "Bullet shooter ID is null for player payload.");
+                continue;
+            }
+
+            var shooter = payload.Players.First(p => p.Id == bullet.ShooterId);
+            bullet.Shooter = shooter;
+        }
 
         this.StateUpdated?.Invoke(this, EventArgs.Empty);
     }
@@ -122,7 +158,7 @@ public class Grid(int dimension, int seed)
         {
             for (int j = 0; j < this.Dim; j++)
             {
-                this.WallGrid[i, j] = walls[i, j] ? new Wall(i, j) : null;
+                this.WallGrid[i, j] = walls[i, j] ? new Wall() { X = i, Y = j } : null;
             }
         }
     }
@@ -160,6 +196,8 @@ public class Grid(int dimension, int seed)
         var (x, y) = this.GetRandomEmptyCell();
 
         var tank = new Tank(x, y, owner);
+
+        owner.Tank = tank;
         this.tanks.Add(tank);
 
         tank.Turret.Shot += this.queuedBullets.Enqueue;
@@ -168,6 +206,23 @@ public class Grid(int dimension, int seed)
             var (x, y) = this.GetRandomEmptyCell();
             tank.SetPosition(x, y);
         };
+
+        return tank;
+    }
+
+    /// <summary>
+    /// Removes a tank.
+    /// </summary>
+    /// <param name="owner">The owner of the tank to remove.</param>
+    /// <returns>The removed tank if found; otherwise, <c>null</c>.</returns>
+    public Tank? RemoveTank(Player owner)
+    {
+        var tank = this.tanks.FirstOrDefault(t => t.Owner == owner);
+
+        if (tank is not null)
+        {
+            _ = this.tanks.Remove(tank);
+        }
 
         return tank;
     }
@@ -259,17 +314,11 @@ public class Grid(int dimension, int seed)
     /// Converts the grid to a payload.
     /// </summary>
     /// <returns>The payload representing the grid.</returns>
-    public StatePayload ToPayload()
+    public StatePayload ToStatePayload()
     {
-        var wallGrid = new JObject?[Dim, Dim];
-        foreach (Wall? wall in this.WallGrid.Cast<Wall>().Where(w => w is not null))
-        {
-            wallGrid[wall.X, wall.Y] = JObject.FromObject(wall);
-        }
-
         return new StatePayload
         {
-            WallGrid = wallGrid,
+            WallGrid = this.WallGrid,
             Tanks = this.tanks,
             Bullets = this.bullets,
         };
@@ -288,8 +337,8 @@ public class Grid(int dimension, int seed)
         switch (collision)
         {
             case TankCollision tankCollision:
-                bullet.Shooter.Score += bullet.Damage / 2;
-                tankCollision.Tank.TakeDamage(bullet.Damage);
+                bullet.Shooter!.Score += bullet.Damage!.Value / 2;
+                tankCollision.Tank.TakeDamage(bullet.Damage.Value);
                 break;
 
             case BulletCollision bulletCollision:
@@ -306,8 +355,8 @@ public class Grid(int dimension, int seed)
         int x, y;
         do
         {
-            x = this.random.Next(Dim);
-            y = this.random.Next(Dim);
+            x = this.random.Next(this.Dim);
+            y = this.random.Next(this.Dim);
         }
         while (!this.IsCellEmpty(x, y));
 
@@ -315,23 +364,23 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
-    /// Represents the grid state payload.
+    /// Represents a state payload of the grid.
     /// </summary>
     public class StatePayload
     {
         /// <summary>
         /// Gets the wall grid.
         /// </summary>
-        public JObject?[,] WallGrid { get; init; } = new JObject?[0, 0];
-
-        /// <summary>
-        /// Gets the tanks.
-        /// </summary>
-        public List<Tank> Tanks { get; init; } = [];
+        public Wall?[,] WallGrid { get; init; } = new Wall?[0, 0];
 
         /// <summary>
         /// Gets the bullets.
         /// </summary>
         public List<Bullet> Bullets { get; init; } = [];
+
+        /// <summary>
+        /// Gets the tanks.
+        /// </summary>
+        public List<Tank> Tanks { get; init; } = [];
     }
 }

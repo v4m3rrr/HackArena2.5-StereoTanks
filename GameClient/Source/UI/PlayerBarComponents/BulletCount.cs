@@ -9,16 +9,13 @@ namespace GameClient.PlayerBarComponents;
 /// <summary>
 /// Represents the bullet count of a player displayed on a player bar.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="BulletCount"/> class.
-/// </remarks>
 /// <param name="player">The player whose bullet count will be displayed.</param>
 internal class BulletCount(Player player) : PlayerBarComponent(player)
 {
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        if (!this.IsEnabled || this.Player.Tank.IsDead)
+        if (!this.IsEnabled || (this.Player.Tank?.IsDead ?? true))
         {
             return;
         }
@@ -27,7 +24,7 @@ internal class BulletCount(Player player) : PlayerBarComponent(player)
         var centerRect = this.Transform.DestRectangle;
         var bulletCount = this.Player.Tank.Turret.BulletCount;
         var bulletRegenProgress = this.Player.Tank.Turret.BulletRegenProgress;
-        var maxBulletCount = TankTurret.MaxBulletCount;
+        var maxBulletCount = Turret.MaxBulletCount;
 
         var spriteBatch = SpriteBatchController.SpriteBatch;
         var textureWidth = bulletTexture.Width;
@@ -53,10 +50,10 @@ internal class BulletCount(Player player) : PlayerBarComponent(player)
                 SpriteEffects.None,
                 1.0f);
 
-            if (i == bulletCount)
+            if (bulletRegenProgress is not null && i == bulletCount)
             {
-                var regenHeight = (int)Math.Ceiling(textureHeight * bulletRegenProgress);
-                var regenYOffset = (int)Math.Ceiling(destRect.Height * (1 - bulletRegenProgress));
+                var regenHeight = (int)Math.Ceiling(textureHeight * bulletRegenProgress.Value);
+                var regenYOffset = (int)Math.Ceiling(destRect.Height * (1 - bulletRegenProgress.Value));
 
                 var sourceRect = new Rectangle(0, textureHeight - regenHeight, textureWidth, regenHeight);
                 destRect.Y += regenYOffset;

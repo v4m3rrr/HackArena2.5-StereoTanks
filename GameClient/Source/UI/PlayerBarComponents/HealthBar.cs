@@ -30,18 +30,27 @@ internal class HealthBar : PlayerBarComponent
             return;
         }
 
-        var hp = this.Player.Tank.Health;
-        if (hp <= 0)
+        this.bar.IsEnabled = true;
+
+        if (this.Player.Tank?.RegenProgress is not null)
         {
             this.bar.Color = new Color(this.bar.Color, 100);
-            var progress = Math.Max(float.Epsilon, this.Player.Tank.RegenProgress);
+            var progress = Math.Max(float.Epsilon, this.Player.Tank.RegenProgress ?? 0f);
             this.bar.Transform.RelativeSize = new Vector2(progress, 1f);
+            return;
         }
-        else
+
+        var hp = this.Player.Tank?.Health;
+
+        if (hp is null)
         {
-            this.bar.Color = new Color(this.bar.Color, 255);
-            this.bar.Transform.RelativeSize = new Vector2(hp / 100f, 1f);
+            this.bar.IsEnabled = false;
+            return;
         }
+
+
+        this.bar.Color = new Color(this.bar.Color, 255);
+        this.bar.Transform.RelativeSize = new Vector2(hp.Value / 100f, 1f);
 
         base.Update(gameTime);
     }

@@ -10,38 +10,76 @@ namespace GameLogic.Networking;
 /// </summary>
 public static class PacketSerializer
 {
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-#if DEBUG
-        Formatting = Formatting.Indented,
-#endif
-    };
+    private static readonly IContractResolver ContractResolver
+        = new CamelCasePropertyNamesContractResolver();
 
-    private static readonly JsonSerializer Serializer = new()
+    /// <summary>
+    /// Gets the serializer.
+    /// </summary>
+    /// <returns>The serializer.</returns>
+    public static JsonSerializer GetSerializer()
     {
-        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-#if DEBUG
-        Formatting = Formatting.Indented,
-#endif
-    };
+        return new JsonSerializer()
+        {
+            ContractResolver = ContractResolver,
+        };
+    }
+
+    /// <summary>
+    /// Gets the serializer with the specified converters.
+    /// </summary>
+    /// <param name="converters">The converters to use during serialization.</param>
+    /// <returns>The serializer with the specified converters.</returns>
+    public static JsonSerializer GetSerializer(IEnumerable<JsonConverter> converters)
+    {
+        var serializer = GetSerializer();
+
+        foreach (var converter in converters)
+        {
+            serializer.Converters.Add(converter);
+        }
+
+        return serializer;
+    }
 
     /// <summary>
     /// Serializes the specified payload.
     /// </summary>
     /// <param name="payload">The payload to serialize.</param>
+    /// <param name="indented">Whether to indent the output.</param>
     /// <returns>The serialized payload.</returns>
-    public static string Serialize(IPacketPayload payload)
+    public static string Serialize(IPacketPayload payload, bool indented = false)
     {
+        return Serialize(payload, converters: [], indented);
+    }
+
+    /// <summary>
+    /// Serializes the specified payload with the specified converters.
+    /// </summary>
+    /// <param name="payload">The payload to serialize.</param>
+    /// <param name="converters">The converters to use during serialization.</param>
+    /// <param name="indented">Whether to indent the output.</param>
+    /// <returns>The serialized payload.</returns>
+    public static string Serialize(
+        IPacketPayload payload,
+        IEnumerable<JsonConverter> converters,
+        bool indented = false)
+    {
+        var serializer = GetSerializer(converters);
+
         var packet = new Packet()
         {
             Type = payload.Type,
-            Payload = JObject.FromObject(payload, Serializer),
+            Payload = JObject.FromObject(payload, serializer),
         };
 
-        return JsonConvert.SerializeObject(packet, Settings);
+        var settings = new JsonSerializerSettings()
+        {
+            ContractResolver = ContractResolver,
+            Formatting = indented ? Formatting.Indented : Formatting.None,
+        };
+
+        return JsonConvert.SerializeObject(packet, settings);
     }
 
     /// <summary>
@@ -52,6 +90,17 @@ public static class PacketSerializer
     public static byte[] ToByteArray(IPacketPayload payload)
     {
         return ToByteArray(Serialize(payload));
+    }
+
+    /// <summary>
+    /// Converts the specified payload to a byte array.
+    /// </summary>
+    /// <param name="payload">The payload to convert.</param>
+    /// <param name="converters">The converters to use during serialization.</param>
+    /// <returns>The byte array representation of the serialized payload.</returns>
+    public static byte[] ToByteArray(IPacketPayload payload, IEnumerable<JsonConverter> converters)
+    {
+        return ToByteArray(Serialize(payload, converters));
     }
 
     /// <summary>
@@ -79,11 +128,16 @@ public static class PacketSerializer
     /// <summary>
     /// Deserializes the serialized packet.
     /// </summary>
-    /// <param name="serialiedPacket">The serialized packet.</param>
+    /// <param name="serializedPacket">The serialized packet.</param>
     /// <returns>The deserialized packet.</returns>
-    public static Packet Deserialize(string serialiedPacket)
+    public static Packet Deserialize(string serializedPacket)
     {
-        return JsonConvert.DeserializeObject<Packet>(serialiedPacket, Settings)!;
+        var settings = new JsonSerializerSettings()
+        {
+            ContractResolver = ContractResolver,
+        };
+
+        return JsonConvert.DeserializeObject<Packet>(serializedPacket, settings)!;
     }
 
     /// <summary>

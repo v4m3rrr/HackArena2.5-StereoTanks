@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Server \u0026 Client",
+    "Projects": [
+      {
+        "Name": "GameServer\\GameServer.csproj",
+        "Action": "Start",
+        "DebugTarget": "GameServer"
+      },
+      {
+        "Name": "GameClient\\GameClient_Windows.csproj",
+        "Action": "Start",
+        "DebugTarget": "GameClient_Windows"
+      }
+    ]
+  }
+]

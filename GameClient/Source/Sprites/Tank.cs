@@ -65,8 +65,8 @@ internal class Tank : Sprite
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        this.tankRotation = DirectionUtils.ToRotation(this.Logic.Direction);
-        this.turretRotation = DirectionUtils.ToRotation(this.Logic.Turret.Direction);
+        this.tankRotation = DirectionUtils.ToRadians(this.Logic.Direction);
+        this.turretRotation = DirectionUtils.ToRadians(this.Logic.Turret.Direction);
 
         this.destinationRect = new Rectangle(
             gridLeft + (this.Logic.X * tileSize) + drawOffset,

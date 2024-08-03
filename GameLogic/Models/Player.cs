@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace GameLogic;
+﻿namespace GameLogic;
 
 /// <summary>
 /// Represents a player.
@@ -13,11 +11,16 @@ public class Player : IEquatable<Player>
     /// <param name="id">The id of the player.</param>
     /// <param name="nickname">The nickname of the player.</param>
     /// <param name="color">The color of the player.</param>
+    /// <remarks>
+    /// The <see cref="Tank"/> property is set to <see langword="null"/>.
+    /// See its documentation for more information.
+    /// </remarks>
     public Player(string id, string nickname, uint color)
     {
         this.Id = id;
         this.Nickname = nickname;
         this.Color = color;
+        this.Tank = null!;
     }
 
     /// <summary>
@@ -46,16 +49,23 @@ public class Player : IEquatable<Player>
     public int Ping { get; set; }
 
     /// <summary>
+    /// Gets a value indicating whether the player is dead.
+    /// </summary>
+    public bool IsDead => this.Tank is null || this.Tank.IsDead;
+
+    /// <summary>
     /// Gets the tank of the player.
     /// </summary>
     /// <remarks>
-    /// This property has <see cref="JsonIgnoreAttribute"/> because it
-    /// is set in the <see cref="Networking.GameStatePayload.GridState"/>
-    /// init property when deserializing the game state,
-    /// based on the <see cref="Tank.OwnerId"/> property.
+    /// The setter is internal because the owner is set
+    /// in the <see cref="Grid.UpdateFromStatePayload"/> method.
     /// </remarks>
-    [JsonIgnore]
-    public Tank Tank { get; internal set; } = default!;
+    public Tank Tank { get; internal set; }
+
+    /// <summary>
+    /// Gets the visibility grid of the player.
+    /// </summary>
+    public bool[,] VisibilityGrid { get; internal set; } = new bool[0, 0];
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.

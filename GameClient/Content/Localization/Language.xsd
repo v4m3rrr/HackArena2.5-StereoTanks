@@ -35,6 +35,7 @@
 	<xs:complexType name="Other">
 		<xs:sequence>
 			<xs:element name="HowToPlay" type="xs:string"/>
+			<xs:element name="YouAreSpectator" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 

@@ -12,7 +12,7 @@ public static class DirectionUtils
     /// <returns>
     /// The rotation in radians.
     /// </returns>
-    public static float ToRotation(Direction direction)
+    public static float ToRadians(Direction direction)
     {
         return direction switch
         {
@@ -20,6 +20,23 @@ public static class DirectionUtils
             Direction.Right => MathF.PI / 2f,
             Direction.Down => MathF.PI,
             Direction.Left => MathF.PI * 3f / 2f,
+            _ => 0,
+        };
+    }
+
+    /// <summary>
+    /// Converts a direction to a rotation in degrees.
+    /// </summary>
+    /// <param name="direction">The direction to convert.</param>
+    /// <returns>The rotation in degrees.</returns>
+    public static int ToDegrees(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => 0,
+            Direction.Right => 90,
+            Direction.Down => 180,
+            Direction.Left => 270,
             _ => 0,
         };
     }

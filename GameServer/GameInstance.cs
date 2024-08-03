@@ -1,3 +1,4 @@
+﻿using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
@@ -16,12 +17,13 @@ internal class GameInstance
         PacketType.TankShoot,
     ];
 
-    private readonly Dictionary<WebSocket, DateTime> lastActionTime = [];
     private readonly Dictionary<WebSocket, Player> players = [];
     private readonly List<Player> playersWhoSentMovementPacketThisTick = [];
 
-    private readonly Dictionary<Player, DateTime> pingSend = [];
-    private readonly Dictionary<Player, bool> pingReceived = [];
+    private readonly ConcurrentDictionary<Player, DateTime> pingSend = [];
+    private readonly ConcurrentDictionary<Player, bool> pingReceived = [];
+
+    private readonly List<WebSocket> spectators = [];
 
     private readonly int broadcastInterval;
     private readonly bool eagerBroadcast;
@@ -33,7 +35,8 @@ internal class GameInstance
     public GameInstance(CommandLineOptions options)
     {
         int seed = options.Seed!.Value;
-        this.Grid = new Grid(seed);
+        int dimension = options.GridDimension;
+        this.Grid = new Grid(dimension, seed);
 
         this.broadcastInterval = options.BroadcastInterval;
         this.eagerBroadcast = options.EagerBroadcast;
@@ -49,10 +52,10 @@ internal class GameInstance
     public Grid Grid { get; private set; }
 
     /// <summary>
-    /// Adds a client to the game.
+    /// Adds a player to the game.
     /// </summary>
-    /// <param name="socket">The socket of the client to add.</param>
-    public void AddClient(WebSocket socket)
+    /// <param name="socket">The socket of the player to add.</param>
+    public void AddPlayer(WebSocket socket)
     {
         var color = (uint)(255 << 24 | (uint)Random.Next(0xFFFFFF));
 
@@ -66,42 +69,82 @@ internal class GameInstance
 
         _ = this.Grid.GenerateTank(player);
         this.players.Add(socket, player);
-        this.lastActionTime.Add(socket, DateTime.MinValue);
     }
 
     /// <summary>
-    /// Removes a client from the game.
+    /// Removes a player from the game.
     /// </summary>
-    /// <param name="socket">The socket of the client to remove.</param>
-    public void RemoveClient(WebSocket socket)
+    /// <param name="socket">The socket of the player to remove.</param>
+    public void RemovePlayer(WebSocket socket)
     {
-        var player = this.players.Remove(socket);
-        /* Grid.RemoveTank(player.Tank); TODO */
-        _ = this.lastActionTime.Remove(socket);
+        var player = this.players[socket];
+        _ = this.players.Remove(socket);
+        _ = this.Grid.RemoveTank(player);
+    }
+
+    /// <summary>
+    /// Adds a spectator to the game.
+    /// </summary>
+    /// <param name="socket">The socket of the spectator to add.</param>
+    public void AddSpectator(WebSocket socket)
+    {
+        this.spectators.Add(socket);
+    }
+
+    /// <summary>
+    /// Removes a spectator from the game.
+    /// </summary>
+    /// <param name="socket">The socket of the spectator to remove.</param>
+    public void RemoveSpectator(WebSocket socket)
+    {
+        _ = this.spectators.Remove(socket);
     }
 
     /// <summary>
     /// Handles a connection.
     /// </summary>
     /// <param name="socket">The socket of the client to handle.</param>
+    /// <param name="ip">The IP address of the client.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task HandleConnection(WebSocket socket)
+    public async Task HandleConnection(WebSocket socket, string ip)
     {
-        var cancellationTokenSource = new CancellationTokenSource();
-
         while (socket.State == WebSocketState.Open)
         {
+            WebSocketReceiveResult result;
             var buffer = new byte[1024 * 32];
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
-            var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
+            using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30000));
+            try
+            {
+                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", CancellationToken.None);
+                break;
+            }
+            catch (WebSocketException ex)
+            {
+                Console.WriteLine($"WebSocket error: {ex.Message}");
+                await socket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Internal server error", CancellationToken.None);
+                break;
+            }
+
             if (result.MessageType == WebSocketMessageType.Text)
             {
                 await this.HandleBuffer(socket, buffer);
             }
             else if (result.MessageType == WebSocketMessageType.Close)
             {
-                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", CancellationToken.None);
-                this.RemoveClient(socket);
+                Console.WriteLine($"Received close message from client ({ip})");
+
+                if (this.IsSpecator(socket))
+                {
+                    this.RemoveSpectator(socket);
+                }
+                else
+                {
+                    this.RemovePlayer(socket);
+                }
             }
         }
     }
@@ -113,8 +156,9 @@ internal class GameInstance
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task SendGameData(WebSocket socket)
     {
+        _ = this.players.TryGetValue(socket, out var player);
         var response = new GameDataPayload(
-            this.players[socket].Id,
+            player?.Id,
             this.Grid.Dim,
             this.Grid.Seed,
             this.broadcastInterval);
@@ -168,23 +212,22 @@ internal class GameInstance
         }
     }
 
+    private bool IsSpecator(WebSocket socket)
+    {
+        return this.spectators.Contains(socket);
+    }
+
     private async Task GameStateBroadcastLoop()
     {
         while (true)
         {
             var startTime = DateTime.UtcNow;
 
-            var packet = new GameStatePayload
-            {
-                Players = [.. this.players.Values],
-                GridState = this.Grid.ToPayload(),
-            };
-
             this.Grid.UpdateBullets(1f);
             this.RegeneratePlayersBullets();
             this.Grid.RegenerateTanks();
 
-            var broadcastTask = this.Broadcast(packet);
+            var broadcastTask = this.BroadcastGameState();
             this.playersWhoSentMovementPacketThisTick.Clear();
 
             var endTime = DateTime.UtcNow;
@@ -222,26 +265,15 @@ internal class GameInstance
         }
     }
 
-    private async Task HandleBuffer(WebSocket socket, byte[] buffer)
+    private async Task<bool?> HandlePlayerPacket(WebSocket socket, Packet packet)
     {
-        Packet packet;
-        try
-        {
-            packet = PacketSerializer.Deserialize(buffer);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("ERROR WHILE DESERIALIZING PACKET (HandleBuffer): " + e.Message);
-            return;
-        }
-
         Player player = this.players[socket];
         if (MovementRestrictedPacketTypes.Contains(packet.Type))
         {
-            if (this.players[socket].Tank.IsDead
+            if (player.Tank.IsDead
                 || this.playersWhoSentMovementPacketThisTick.Contains(player))
             {
-                return;
+                return true;
             }
             else
             {
@@ -256,39 +288,114 @@ internal class GameInstance
             {
                 case PacketType.TankMovement:
                     var movement = packet.GetPayload<TankMovementPayload>();
-                    this.Grid.TryMoveTank(this.players[socket].Tank, movement.Direction);
+                    this.Grid.TryMoveTank(player.Tank, movement.Direction);
                     break;
 
                 case PacketType.TankRotation:
                     var rotation = packet.GetPayload<TankRotationPayload>();
                     if (rotation.TankRotation is { } tankRotation)
                     {
-                        this.players[socket].Tank.Rotate(tankRotation);
+                        player.Tank.Rotate(tankRotation);
                     }
 
                     if (rotation.TurretRotation is { } turretRotation)
                     {
-                        this.players[socket].Tank.Turret.Rotate(turretRotation);
+                        player.Tank.Turret.Rotate(turretRotation);
                     }
 
                     break;
 
                 case PacketType.TankShoot:
-                    _ = this.players[socket].Tank.Turret.TryShoot();
+                    _ = player.Tank.Turret.TryShoot();
                     break;
 
                 case PacketType.GameData:
                     await this.SendGameData(socket);
                     break;
+
+                case PacketType.Pong:
+                    this.pingReceived[player] = true;
+                    player.Ping = (int)(DateTime.UtcNow - this.pingSend[player])!.TotalMilliseconds;
+                    break;
+
+                default:
+                    return false;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("ERROR WHILE HANDLING PACKET (HandlePlayerPacket): " + e.Message);
+            return null;
+        }
+
+        return true;
+    }
+
+    private async Task<bool?> HandleSpectatorPacket(WebSocket socket, Packet packet)
+    {
+        try
+        {
+            switch (packet.Type)
+            {
+                case PacketType.Ping:
+                    var pongPacket = new EmptyPayload() { Type = PacketType.Pong };
+                    await SendPacketAsync(socket, pongPacket);
+                    break;
+
+                default:
+                    return false;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("ERROR WHILE HANDLING PACKET (HandlePlayerPacket): " + e.Message);
+            return null;
+        }
+
+        return true;
+    }
+
+    private async Task HandleBuffer(WebSocket socket, byte[] buffer)
+    {
+        Packet packet;
+        try
+        {
+            packet = PacketSerializer.Deserialize(buffer);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("ERROR WHILE DESERIALIZING PACKET (HandleBuffer): " + e.Message);
+            return;
+        }
+
+        bool? packetHandled = null;
+        try
+        {
+            bool isSpectator = this.IsSpecator(socket);
+
+            packetHandled = isSpectator
+                ? await this.HandleSpectatorPacket(socket, packet)
+                : await this.HandlePlayerPacket(socket, packet);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("ERROR WHILE HANDLING PACKET 2 (HandleBuffer): " + e.Message);
+        }
+
+        if (packetHandled is true)
+        {
+            return;
+        }
+
+        try
+        {
+            switch (packet.Type)
+            {
 #if DEBUG
                 case PacketType.ShootAll:
                     this.players.Values.ToList().ForEach(x => x.Tank.Turret.TryShoot());
                     break;
 #endif
-                case PacketType.Pong:
-                    this.pingReceived[this.players[socket]] = true;
-                    this.players[socket].Ping = (int)(DateTime.UtcNow - this.pingSend[this.players[socket]])!.TotalMilliseconds;
-                    break;
             }
         }
         catch (Exception e)
@@ -305,24 +412,40 @@ internal class GameInstance
         }
     }
 
-    private async Task Broadcast(IPacketPayload packet)
+    private async Task BroadcastGameState()
     {
-        //var msg = PacketSerializer.Serialize(packet);
-        //Console.WriteLine($"Broadcasting: {msg}\n");
-
         byte[] buffer;
-        try
+        foreach (var client in this.players.Keys.Concat(this.spectators).ToList())
         {
-            buffer = PacketSerializer.ToByteArray(packet);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("ERROR WHILE SERIALIZING PACKET: " + e.Message);
-            return;
-        }
+            GameStatePayload packet;
 
-        foreach (var client in this.players.Keys)
-        {
+            if (this.IsSpecator(client))
+            {
+                packet = new GameStatePayload([.. this.players.Values], this.Grid.ToStatePayload());
+            }
+            else
+            {
+                var player = this.players[client];
+                packet = new GameStatePayload.ForPlayer(player, [.. this.players.Values], this.Grid.ToStatePayload());
+            }
+
+            SerializationContext context = this.IsSpecator(client)
+                ? new SerializationContext.Spectator()
+                : new SerializationContext.Player(this.players[client].Id);
+
+            var converters = GameStatePayload.GetConverters(context);
+            //Console.WriteLine(PacketSerializer.Serialize(packet, converters, indented: true));
+
+            try
+            {
+                buffer = PacketSerializer.ToByteArray(packet, converters);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ERROR WHILE SERIALIZING PACKET: " + e.Message);
+                continue;
+            }
+
             if (client.State == WebSocketState.Open)
             {
                 Monitor.Enter(client);

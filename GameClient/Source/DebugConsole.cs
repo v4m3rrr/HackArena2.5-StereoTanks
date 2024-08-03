@@ -17,7 +17,7 @@ namespace GameClient;
 /// Represents a debug console scene.
 /// </summary>
 [NoAutoInitialize]
-internal class DebugConsole : Scene, IOverlayScene
+internal partial class DebugConsole : Scene, IOverlayScene
 {
     private Frame baseFrame = default!;
     private ScalableFont font = default!;
@@ -332,7 +332,22 @@ internal class DebugConsole : Scene, IOverlayScene
                     {
                         if (areArgumentsValid)
                         {
-                            c.Action.DynamicInvoke(convertedArgs);
+                            // Refactor!!!
+                            var convertedArgs2 = new List<object?>();
+                            int i = 0;
+                            foreach (var parameter in c.Action.Method.GetParameters())
+                            {
+                                if (parameter.HasDefaultValue)
+                                {
+                                    convertedArgs2.Add(parameter.DefaultValue);
+                                }
+                                else
+                                {
+                                    convertedArgs2.Add(convertedArgs[i++]);
+                                }
+                            }
+
+                            c.Action.DynamicInvoke(convertedArgs2.ToArray());
                         }
                     }
                     catch (TargetParameterCountException)
@@ -432,7 +447,7 @@ internal class DebugConsole : Scene, IOverlayScene
         }
         else
         {
-            ChangeToPreviousOr<MainMenu>(addCurrentToStack: false);
+            ChangeToPreviousOrDefaultWithoutStack<MainMenu>();
         }
     }
 }

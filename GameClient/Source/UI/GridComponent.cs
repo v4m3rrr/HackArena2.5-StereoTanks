@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GameLogic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient;
@@ -21,8 +22,8 @@ internal class GridComponent : Component
     /// </summary>
     public GridComponent()
     {
-        this.Logic = new();
-        this.walls = new Sprites.Wall[this.Logic.Dim, this.Logic.Dim];
+        this.Logic = Grid.Empty;
+        this.walls = new Sprites.Wall?[0, 0];
         this.Logic.DimensionsChanged += this.Logic_DimensionsChanged;
         this.Logic.StateUpdated += this.Logic_StateDeserialized;
         this.Transform.SizeChanged += (s, e) => this.UpdateDrawData();
@@ -172,6 +173,11 @@ internal class GridComponent : Component
 
     private void UpdateDrawData()
     {
+        if (this.Logic.Dim == 0)
+        {
+            return;
+        }
+
         var gridDim = this.Logic.Dim;
         var size = this.Transform.Size.X;
         var tileSize = this.TileSize = size / gridDim;

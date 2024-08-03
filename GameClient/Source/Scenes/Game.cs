@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -24,6 +24,9 @@ internal class Game : Scene
     private readonly GridComponent grid;
 
     private ClientWebSocket client;
+    private string? playerId = null;
+
+    private LocalizedText spectatorInfo = default!;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Game"/> class.
@@ -33,7 +36,7 @@ internal class Game : Scene
     {
         this.client = new ClientWebSocket();
 
-        this.grid = new GridComponent(new Grid())
+        this.grid = new GridComponent()
         {
             IsEnabled = false,
             Parent = this.BaseComponent,
@@ -47,11 +50,6 @@ internal class Game : Scene
     }
 
     /// <summary>
-    /// Gets or sets the server URI.
-    /// </summary>
-    public static Uri ServerUri { get; set; } = new("ws://127.0.0.1:5000");
-
-    /// <summary>
     /// Gets the server broadcast interval in milliseconds.
     /// </summary>
     /// <value>
@@ -63,6 +61,7 @@ internal class Game : Scene
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
+        this.spectatorInfo.IsEnabled = (CurrentChangeEventArgs as ChangeEventArgs)?.IsSpectator ?? false;
         this.HandleInput();
         base.Update(gameTime);
     }
@@ -100,10 +99,31 @@ internal class Game : Scene
         }.ApplyStyle(Styles.UI.ButtonStyle);
         settingsBtn.Clicked += (s, e) => ShowOverlay<Settings>(new OverlayShowOptions(BlockFocusOnUnderlyingScenes: true));
         settingsBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Settings");
+
+        this.spectatorInfo = new LocalizedText(Styles.UI.ButtonStyle.GetProperty<ScalableFont>("Font")!, Color.LightYellow)
+        {
+            Parent = this.BaseComponent,
+            Value = new LocalizedString("Other.YouAreSpectator"),
+            TextAlignment = Alignment.BottomRight,
+            Transform =
+            {
+                Alignment = Alignment.BottomRight,
+                RelativeSize = new Vector2(0.2f, 0.05f),
+                RelativeOffset = new Vector2(-0.02f, -0.04f),
+            },
+        };
     }
 
-    private async Task ConnectAsync(Uri server)
+    private async Task ConnectAsync(string? joinCode, bool isSpectator)
     {
+        string server = $"ws://{GameSettings.ServerAddress}:{GameSettings.ServerPort}"
+            + $"/{(isSpectator ? "spectator" : string.Empty)}";
+
+        if (joinCode is not null)
+        {
+            server += $"?joinCode={joinCode}";
+        }
+
         DebugConsole.SendMessage($"Connecting to the server...");
 #if DEBUG
         DebugConsole.SendMessage($"Server URI: {server}", Color.DarkGray);
@@ -200,40 +220,72 @@ internal class Game : Scene
                 else if (result.MessageType == WebSocketMessageType.Text)
                 {
                     Packet packet = PacketSerializer.Deserialize(buffer);
-                    switch (packet.Type)
+                    try
                     {
-                        case PacketType.Ping:
-                            var pong = new EmptyPayload() { Type = PacketType.Pong };
-                            await this.client.SendAsync(PacketSerializer.ToByteArray(pong), WebSocketMessageType.Text, true, CancellationToken.None);
-                            break;
+                        switch (packet.Type)
+                        {
+                            case PacketType.Ping:
+                                var pong = new EmptyPayload() { Type = PacketType.Pong };
+                                await this.client.SendAsync(PacketSerializer.ToByteArray(pong), WebSocketMessageType.Text, true, CancellationToken.None);
+                                break;
 
-                        case PacketType.GameState:
-                            var gameState = packet.GetPayload<GameStatePayload>();
-                            this.grid.Logic.UpdateFromStatePayload(gameState.GridState);
-                            this.UpdatePlayers(gameState.Players);
-                            this.UpdatePlayerBars();
-                            this.grid.IsEnabled = true;
-                            break;
+                            case PacketType.GameState:
 
-                        case PacketType.GameData:
-                            var gameData = packet.GetPayload<GameDataPayload>();
-                            DebugConsole.SendMessage("Broadcast interval: " + gameData.BroadcastInterval + "ms", Color.DarkGray);
-                            DebugConsole.SendMessage("Player ID: " + gameData.PlayerId, Color.DarkGray);
-                            DebugConsole.SendMessage("Seed: " + gameData.Seed, Color.DarkGray);
-                            ServerBroadcastInterval = gameData.BroadcastInterval;
-                            break;
+                                GameStatePayload gameState = null!;
+
+                                bool isSpectator = (CurrentChangeEventArgs as ChangeEventArgs)?.IsSpectator ?? false;
+                                SerializationContext context = isSpectator
+                                    ? new SerializationContext.Spectator()
+                                    : new SerializationContext.Player(this.playerId!);
+
+                                var converters = GameStatePayload.GetConverters(context);
+                                var serializer = PacketSerializer.GetSerializer(converters);
+
+                                try
+                                {
+                                    gameState = isSpectator
+                                        ? packet.GetPayload<GameStatePayload>(serializer)
+                                        : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.WriteLine(e);
+                                    break;
+                                }
+
+                                this.grid.Logic.UpdateFromStatePayload(gameState);
+                                this.UpdatePlayers(gameState.Players);
+                                this.UpdatePlayerBars();
+                                this.grid.IsEnabled = true;
+                                break;
+
+                            case PacketType.GameData:
+                                var gameData = packet.GetPayload<GameDataPayload>();
+                                DebugConsole.SendMessage("Broadcast interval: " + gameData.BroadcastInterval + "ms", Color.DarkGray);
+                                DebugConsole.SendMessage("Player ID: " + gameData.PlayerId, Color.DarkGray);
+                                this.playerId = gameData.PlayerId;
+                                DebugConsole.SendMessage("Seed: " + gameData.Seed, Color.DarkGray);
+                                ServerBroadcastInterval = gameData.BroadcastInterval;
+                                this.grid.IsEnabled = true;
+                                break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        DebugConsole.ThrowError($"An error occurred while processing the packet {packet.Type}: " + e.Message);
                     }
                 }
             }
             catch (Exception e)
             {
-                DebugConsole.ThrowError("An error occurred while receiving messages: " + e.Message);
-                DebugConsole.SendMessage("MessageType: " + result?.MessageType, Color.Orange);
-
-                if (result?.MessageType == WebSocketMessageType.Text)
+                if (this.client.State == WebSocketState.Closed)
                 {
-                    DebugConsole.SendMessage("Message: " + PacketSerializer.FromByteArray(buffer));
+                    // Ignore
+                    break;
                 }
+
+                DebugConsole.ThrowError($"An error occurred while receiving messages: " + e.Message);
+                DebugConsole.SendMessage("MessageType: " + result?.MessageType, Color.Orange);
             }
         }
     }
@@ -299,24 +351,37 @@ internal class Game : Scene
                 this.players[updatedPlayer.Id] = updatedPlayer;
             }
         }
+
+        this.players
+            .Where(x => !updatedPlayers.Contains(x.Value))
+            .ToList()
+            .ForEach(x => this.players.Remove(x.Key));
     }
 
     private void UpdatePlayerBars()
     {
         var newPlayerBars = this.players.Values
-            .Where(player => this.playerBars.All(pb => pb.Player != player))
-            .Select(player => new PlayerBar(player)
+        .Where(player => this.playerBars.All(pb => pb.Player != player))
+        .Select(player => new PlayerBar(player)
+        {
+            Parent = this.BaseComponent,
+            Transform =
             {
-                Parent = this.BaseComponent,
-                Transform =
-                {
-                    RelativeSize = new Vector2(0.2f, 0.13f),
-                },
-            })
-            .ToList();
+                RelativeSize = new Vector2(0.2f, 0.13f),
+            },
+        })
+        .ToList();
 
         this.playerBars.AddRange(newPlayerBars);
-        _ = this.playerBars.RemoveAll(playerBar => !this.players.ContainsValue(playerBar.Player));
+
+        foreach (PlayerBar playerBar in this.playerBars.ToList())
+        {
+            if (!this.players.ContainsValue(playerBar.Player))
+            {
+                playerBar.Parent = null;
+                _ = this.playerBars.Remove(playerBar);
+            }
+        }
 
         for (int i = 0; i < this.playerBars.Count; i++)
         {

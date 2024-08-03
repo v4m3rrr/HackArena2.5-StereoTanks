@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace GameLogic;
+﻿namespace GameLogic;
 
 /// <summary>
 /// Represents a tank.
@@ -17,20 +15,76 @@ public class Tank : IEquatable<Tank>
     /// <param name="y">The y coordinate of the tank.</param>
     /// <param name="owner">The owner of the tank.</param>
     internal Tank(int x, int y, Player owner)
+        : this(x, y, owner.Id)
+    {
+        this.Owner = owner;
+        this.Health = 100;
+        this.Turret = new Turret(this);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Tank"/> class.
+    /// </summary>
+    /// <param name="x">The x coordinate of the tank.</param>
+    /// <param name="y">The y coordinate of the tank.</param>
+    /// <param name="ownerId">The owner ID of the tank.</param>
+    /// <param name="direction">The direction of the tank.</param>
+    /// <param name="turret">The turret of the tank.</param>
+    /// <remarks>
+    /// <para>
+    /// This constructor should be used when creating a tank
+    /// from player perspective, because they shouldn't know
+    /// the <see cref="Health"/>, <see cref="RegenProgress"/>
+    /// (these will be set to <see langword="null"/>).
+    /// </para>
+    /// <para>
+    /// The <see cref="Owner"/> property is set to <see langword="null"/>.
+    /// See its documentation for more information.
+    /// </para>
+    /// </remarks>
+    internal Tank(int x, int y, string ownerId, Direction direction, Turret turret)
+        : this(x, y, ownerId)
+    {
+        this.Direction = direction;
+        this.Turret = turret;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Tank"/> class.
+    /// </summary>
+    /// <param name="x">The x coordinate of the tank.</param>
+    /// <param name="y">The y coordinate of the tank.</param>
+    /// <param name="ownerId">The owner ID of the tank.</param>
+    /// <param name="health">The health of the tank.</param>
+    /// <param name="regenProgress">The regeneration progress of the tank.</param>
+    /// <param name="direction">The direction of the tank.</param>
+    /// <param name="turret">The turret of the tank.</param>
+    /// <remarks>
+    /// <para>
+    /// This constructor should be used when creating a tank
+    /// from the server or spectator perspective, because they know
+    /// all the properties of the tank.
+    /// </para>
+    /// <para>
+    /// The <see cref="Owner"/> property is set to <see langword="null"/>.
+    /// See its documentation for more information.
+    /// </para>
+    /// </remarks>
+    internal Tank(int x, int y, string ownerId, int health, float? regenProgress, Direction direction, Turret turret)
+        : this(x, y, ownerId, direction, turret)
+    {
+        this.Health = health;
+        this.RegenProgress = regenProgress;
+    }
+
+    private Tank(int x, int y, string ownerId)
     {
         this.X = x;
         this.Y = y;
-
-        this.Owner = owner;
-        this.OwnerId = owner.Id;
-        owner.Tank = this;
-
-        this.Turret = new TankTurret(this);
-    }
-
-    [JsonConstructor]
-    private Tank()
-    {
+        this.Owner = null!;
+        this.OwnerId = ownerId;
+        this.Direction = EnumUtils.Random<Direction>();
+        this.Turret = new Turret(this);
     }
 
     /// <summary>
@@ -46,62 +100,51 @@ public class Tank : IEquatable<Tank>
     /// <summary>
     /// Gets the x coordinate of the tank.
     /// </summary>
-    [JsonProperty]
     public int X { get; private set; }
 
     /// <summary>
     /// Gets the y coordinate of the tank.
     /// </summary>
-    [JsonProperty]
     public int Y { get; private set; }
 
     /// <summary>
     /// Gets the health of the tank.
     /// </summary>
-    [JsonProperty]
-    public int Health { get; private set; } = 100;
+    public int? Health { get; private set; }
 
     /// <summary>
     /// Gets the regeneration progress of the tank.
     /// </summary>
-    [JsonProperty]
-    public float RegenProgress { get; private set; }
+    public float? RegenProgress { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether the tank is dead.
     /// </summary>
-    [JsonIgnore]
     public bool IsDead => this.Health <= 0;
 
     /// <summary>
     /// Gets the owner of the tank.
     /// </summary>
     /// <remarks>
-    /// This property has <see cref="JsonIgnoreAttribute"/> because it
-    /// is set in the <see cref="Networking.GameStatePayload.GridState"/>
-    /// init property when deserializing the game state,
-    /// based on the <see cref="OwnerId"/> property.
+    /// The setter is internal because the owner is set
+    /// in the <see cref="Grid.UpdateFromStatePayload"/> method.
     /// </remarks>
-    [JsonIgnore]
-    public Player Owner { get; internal set; } = default!;
+    public Player Owner { get; internal set; }
 
     /// <summary>
     /// Gets the direction of the tank.
     /// </summary>
-    [JsonProperty]
     public Direction Direction { get; private set; } = EnumUtils.Random<Direction>();
 
     /// <summary>
     /// Gets the turret of the tank.
     /// </summary>
-    [JsonProperty]
-    public TankTurret Turret { get; private set; } = default!;
+    public Turret Turret { get; private set; }
 
     /// <summary>
     /// Gets the owner ID of the tank.
     /// </summary>
-    [JsonProperty]
-    internal string OwnerId { get; private init; } = default!;
+    internal string OwnerId { get; private set; }
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.
@@ -142,6 +185,33 @@ public class Tank : IEquatable<Tank>
             Rotation.Left => EnumUtils.Previous(this.Direction),
             Rotation.Right => EnumUtils.Next(this.Direction),
             _ => throw new NotImplementedException(),
+        };
+    }
+
+    /// <summary>
+    /// Creates a tank with only the regeneration progress set.
+    /// </summary>
+    /// <param name="ownerId">The owner ID of the tank.</param>
+    /// <param name="progress">The regeneration progress of the tank.</param>
+    /// <returns>
+    /// A tank with only the regeneration progress set.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// It is used to create a tank with only the regeneration progress set,
+    /// for example, when the tank is dead but GUI still needs to display the
+    /// regeneration progress of the tank.
+    /// </para>
+    /// <para>
+    /// The position of the tank is set to (-1, -1) and the health is set to -1.
+    /// </para>
+    /// </remarks>
+    internal static Tank OnlyRegenProgress(string ownerId, float progress)
+    {
+        return new Tank(-1, -1, ownerId)
+        {
+            Health = -1,
+            RegenProgress = progress,
         };
     }
 
@@ -190,7 +260,7 @@ public class Tank : IEquatable<Tank>
         {
             this.Health = 100;
             this.ticksUntilRegen = RegenTicks;
-            this.RegenProgress = 0;
+            this.RegenProgress = null;
             this.Regenerated?.Invoke(this, EventArgs.Empty);
         }
     }

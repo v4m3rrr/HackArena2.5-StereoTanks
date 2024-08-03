@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -37,12 +36,32 @@ var failedAttempts = new ConcurrentDictionary<string, (int Attempts, DateTime La
 while (true)
 {
     HttpListenerContext context = await listener.GetContextAsync();
-
     string? joinCode = context.Request.QueryString["joinCode"];
+    string absolutePath = context.Request.Url?.AbsolutePath ?? string.Empty;
     string clientIP = context.Request.RemoteEndPoint.Address.ToString();
 
-    var connType = context.Request.IsWebSocketRequest ? "WebSocket" : "HTTP";
-    Console.WriteLine($"Received ({connType}) join code from {clientIP}: {joinCode}");
+    string connType = context.Request.IsWebSocketRequest ? "WebSocket" : "HTTP";
+
+    Console.WriteLine($"Request ({connType}) from {clientIP} for {absolutePath}");
+
+    bool isSpectator = false;
+    if (absolutePath.Equals("/spectator", StringComparison.OrdinalIgnoreCase))
+    {
+        isSpectator = true;
+    }
+    else if (absolutePath.Equals("/", StringComparison.OrdinalIgnoreCase))
+    {
+        isSpectator = false;
+    }
+    else
+    {
+        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+        byte[] buffer = Encoding.UTF8.GetBytes("Invalid path");
+        context.Response.ContentLength64 = buffer.Length;
+        await context.Response.OutputStream.WriteAsync(buffer);
+        context.Response.Close();
+        continue;
+    }
 
     if (IsIpBlocked(clientIP))
     {
@@ -76,9 +95,10 @@ while (true)
     HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(null);
     WebSocket webSocket = webSocketContext.WebSocket;
 
-    game.AddClient(webSocket);
+    Action<WebSocket> addClientMethod = isSpectator ? game.AddSpectator : game.AddPlayer;
+    addClientMethod(webSocket);
 
-    _ = Task.Run(() => game.HandleConnection(webSocket));
+    _ = Task.Run(() => game.HandleConnection(webSocket, clientIP));
     _ = Task.Run(() => game.SendGameData(webSocket));
     _ = Task.Run(() => game.PingClientLoop(webSocket));
 }

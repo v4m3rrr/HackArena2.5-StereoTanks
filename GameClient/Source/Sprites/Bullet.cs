@@ -73,12 +73,7 @@ internal class Bullet : Sprite
     public override void Update(GameTime gameTime)
     {
         this.UpdatePosition(gameTime);
-
-        // If game is running slowly, do not check collision.
-        if (!gameTime.IsRunningSlowly)
-        {
-            this.CheckCollision(gameTime);
-        }
+        this.CheckCollision();
 
         if (this.isCollisionDetected)
         {
@@ -90,7 +85,7 @@ internal class Bullet : Sprite
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        this.rotation = DirectionUtils.ToRotation(this.Logic.Direction);
+        this.rotation = DirectionUtils.ToRadians(this.Logic.Direction);
 
         var rect = this.destinationRect = new Rectangle(
             gridLeft + ((int)(this.position.X * tileSize)) + drawOffset,
@@ -143,7 +138,7 @@ internal class Bullet : Sprite
         this.position += new Vector2(nx, ny) * factor;
     }
 
-    private void CheckCollision(GameTime gameTime)
+    private void CheckCollision()
     {
         // TODO: Add other bullets trajectories.
         // Currently, only collision with walls and tanks is checked.

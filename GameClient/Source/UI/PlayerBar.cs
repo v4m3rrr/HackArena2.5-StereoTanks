@@ -12,7 +12,6 @@ internal class PlayerBar : Component
 {
     private const int Rows = 3;
     private readonly Frame baseFrame;
-    private readonly SolidColor background;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayerBar"/> class.
@@ -28,7 +27,8 @@ internal class PlayerBar : Component
             Transform = { RelativePadding = new Vector4(0.01f, 0.005f, 0.01f, 0.005f) },
         };
 
-        this.background = new SolidColor(Color.Black * 0.15f)
+        // Background
+        _ = new SolidColor(Color.Black * 0.15f)
         {
             Parent = this.baseFrame.InnerContainer,
             Transform = { IgnoreParentPadding = true },

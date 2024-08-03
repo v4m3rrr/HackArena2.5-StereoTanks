@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using Microsoft.Xna.Framework;
@@ -75,6 +74,16 @@ internal static class GameSettings
     }
 
     /// <summary>
+    /// Gets or sets the server address.
+    /// </summary>
+    public static string ServerAddress { get; set; } = "localhost";
+
+    /// <summary>
+    /// Gets or sets the server port.
+    /// </summary>
+    public static int ServerPort { get; set; } = 5000;
+
+    /// <summary>
     /// Sets the resolution of the game.
     /// </summary>
     /// <param name="width">The width of the resolution.</param>
@@ -82,10 +91,8 @@ internal static class GameSettings
     /// <exception cref="ArgumentOutOfRangeException">Width and height must be greater than 0.</exception>
     public static void SetResolution(int width, int height)
     {
-        if (width <= 0 || height <= 0)
-        {
-            throw new ArgumentOutOfRangeException("Width and height must be greater than 0.");
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
 
         if (ScreenController.Width == width && ScreenController.Height == height)
         {

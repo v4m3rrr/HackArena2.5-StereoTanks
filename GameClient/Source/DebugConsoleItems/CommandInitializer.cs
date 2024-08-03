@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -246,18 +246,28 @@ internal static class CommandInitializer
         }
     }
 
-    [Command("Connect to the server.")]
-    private static void Connect([Argument("A join code.")] string joinCode)
+    [Command("Connect to the server as a spectator.")]
+    private static void Connect(
+        [Argument("An address IP to the server.")] string ip,
+        [Argument("A port to the server.")] int port,
+        [Argument("A join code.")] string? joinCode = null)
     {
-        Scenes.Game.ServerUri = new Uri("ws://localhost:5000/?joinCode=" + joinCode);
-        Scene.Change<Scenes.Game>();
+        GameSettings.ServerAddress = ip;
+        GameSettings.ServerPort = port;
+        var args = new Scenes.Game.ChangeEventArgs(joinCode, isSpectator: true);
+        Scene.Change<Scenes.Game>(args);
     }
 
-    [Command("Connect to the server.")]
-    private static void Connect2([Argument("ip")] string ip, [Argument("A join code.")] string joinCode)
+    [Command("Join to the server as a player.")]
+    private static void Join(
+        [Argument("An address IP to the server.")] string ip,
+        [Argument("A port to the server.")] int port,
+        [Argument("A join code.")] string? joinCode = null)
     {
-        Scenes.Game.ServerUri = new Uri($"ws://{ip}/?joinCode={joinCode}");
-        Scene.Change<Scenes.Game>();
+        GameSettings.ServerAddress = ip;
+        GameSettings.ServerPort = port;
+        var args = new Scenes.Game.ChangeEventArgs(joinCode, isSpectator: false);
+        Scene.Change<Scenes.Game>(args);
     }
 #endif
 }

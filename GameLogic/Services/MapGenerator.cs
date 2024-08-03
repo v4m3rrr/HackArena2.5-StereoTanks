@@ -5,9 +5,6 @@ namespace GameLogic;
 /// <summary>
 /// Represents a map generator.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="MapGenerator"/> class.
-/// </remarks>
 /// <param name="dimension">The dimension of the grid.</param>
 /// <param name="seed">The seed for the random number generator.</param>
 internal class MapGenerator(int dimension, int seed)
