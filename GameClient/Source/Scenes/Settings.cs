@@ -239,7 +239,7 @@ internal class Settings : Scene, IOverlayScene
                 }
                 else
                 {
-                    ChangeToPreviousOr<MainMenu>();
+                    ChangeToPreviousOrDefault<MainMenu>();
                 }
             };
             this.overlayComponents.Add(this.backButton);
@@ -267,7 +267,7 @@ internal class Settings : Scene, IOverlayScene
                 }
                 else
                 {
-                    ChangeToPreviousOr<MainMenu>();
+                    ChangeToPreviousOrDefault<MainMenu>();
                 }
             };
             button.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Save");

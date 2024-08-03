@@ -31,7 +31,7 @@ internal class HowToPlay : Scene
                 RelativeSize = new Vector2(0.12f, 0.07f),
             },
         }.ApplyStyle(Styles.UI.ButtonStyle);
-        backBtn.Clicked += (s, e) => ChangeToPreviousOr<MainMenu>();
+        backBtn.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
         backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
 
         var frame = new Frame(Color.Black, 2)

@@ -35,7 +35,7 @@ internal class Authors : Scene
             },
         }.ApplyStyle(Styles.UI.ButtonStyle);
         backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
-        backBtn.Clicked += (s, e) => ChangeToPreviousOr<MainMenu>();
+        backBtn.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
 
         var container = new Container()
         {

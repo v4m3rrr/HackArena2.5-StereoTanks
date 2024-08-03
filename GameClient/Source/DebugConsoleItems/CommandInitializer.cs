@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -228,7 +228,7 @@ internal static class CommandInitializer
     [Command("Change to main menu scene.")]
     private static void MainMenu()
     {
-        Scene.Change<Scenes.MainMenu>(addCurrentToStack: false);
+        Scene.ChangeWithoutStack<Scenes.MainMenu>();
         Scene.ResetSceneStack();
         DebugConsole.SendMessage("Changed to main menu scene.", Color.Green);
     }

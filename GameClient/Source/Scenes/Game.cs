@@ -71,7 +71,33 @@ internal class Game : Scene
     {
         this.Showing += async (s, e) =>
         {
-            await this.ConnectAsync(ServerUri);
+            if (e is not ChangeEventArgs args)
+            {
+                DebugConsole.ThrowError(
+                    $"Game scene requires {nameof(ChangeEventArgs)}.");
+                ChangeToPreviousOrDefault<MainMenu>();
+                return;
+            }
+
+            await this.ConnectAsync(args.JoinCode, args.IsSpectator);
+        };
+
+        this.Hiding += async (s, e) =>
+        {
+            this.players.Clear();
+
+            foreach (var playerBar in this.playerBars)
+            {
+                playerBar.Parent = null;
+            }
+
+            this.playerBars.Clear();
+            this.grid.IsEnabled = false;
+
+            if (this.client.State == WebSocketState.Open)
+            {
+                await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+            }
         };
 
         var backBtn = new Button<Frame>(new Frame())
@@ -84,7 +110,7 @@ internal class Game : Scene
                 RelativeSize = new Vector2(0.12f, 0.07f),
             },
         }.ApplyStyle(Styles.UI.ButtonStyle);
-        backBtn.Clicked += (s, e) => ChangeToPreviousOr<MainMenu>();
+        backBtn.Clicked += (s, e) => Change<MainMenu>();
         backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.MainMenu");
 
         var settingsBtn = new Button<Frame>(new Frame())
@@ -143,13 +169,13 @@ internal class Game : Scene
             catch (TaskCanceledException)
             {
                 DebugConsole.ThrowError("The request timed out.");
-                ChangeToPreviousOr<MainMenu>();
+                ChangeToPreviousOrDefault<MainMenu>();
                 return;
             }
             catch (Exception ex)
             {
                 DebugConsole.ThrowError($"An error occurred while sending HTTP request: {ex.Message}");
-                ChangeToPreviousOr<MainMenu>();
+                ChangeToPreviousOrDefault<MainMenu>();
                 return;
             }
 
@@ -157,13 +183,13 @@ internal class Game : Scene
             {
                 string errorMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 DebugConsole.ThrowError($"Server error: {errorMessage}");
-                ChangeToPreviousOr<MainMenu>();
+                ChangeToPreviousOrDefault<MainMenu>();
                 return;
             }
             else if (response.StatusCode != HttpStatusCode.OK)
             {
                 DebugConsole.ThrowError($"Unexpected response from server: {response.StatusCode}");
-                ChangeToPreviousOr<MainMenu>();
+                ChangeToPreviousOrDefault<MainMenu>();
                 return;
             }
         }
@@ -172,12 +198,12 @@ internal class Game : Scene
 
         try
         {
-            await this.client.ConnectAsync(server, CancellationToken.None);
+            await this.client.ConnectAsync(new Uri(server), CancellationToken.None);
         }
         catch (WebSocketException ex)
         {
             DebugConsole.ThrowError($"An error occurred while connecting to the server: {ex.Message}");
-            ChangeToPreviousOr<MainMenu>();
+            ChangeToPreviousOrDefault<MainMenu>();
             return;
         }
 
@@ -213,7 +239,7 @@ internal class Game : Scene
                         DebugConsole.ThrowError(msg);
                     }
 
-                    ChangeToPreviousOr<MainMenu>();
+                    ChangeToPreviousOrDefault<MainMenu>();
                     await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
                     break;
                 }
@@ -387,5 +413,23 @@ internal class Game : Scene
         {
             this.playerBars[i].Transform.RelativeOffset = new Vector2(0.02f, 0.06f + (i * 0.15f));
         }
+    }
+
+    /// <summary>
+    /// Represents the event arguments for the <see cref="Game"/> scene.
+    /// </summary>
+    /// <param name="joinCode">The join code to join the game.</param>
+    /// <param name="isSpectator">A value indicating whether the player is a spectator.</param>
+    public new class ChangeEventArgs(string? joinCode, bool isSpectator) : Scene.ChangeEventArgs
+    {
+        /// <summary>
+        /// Gets the join code to join the game.
+        /// </summary>
+        public string? JoinCode { get; } = joinCode;
+
+        /// <summary>
+        /// Gets a value indicating whether the player is a spectator.
+        /// </summary>
+        public bool IsSpectator { get; } = isSpectator;
     }
 }

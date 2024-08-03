@@ -98,7 +98,7 @@ public class MainMenu : Scene
         _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.Exit"), (s, e) => MonoTanks.Instance.Exit());
 
 #if DEBUG
-        var quickStartBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+        var quickJoinPlayerBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
         {
             Parent = this.BaseComponent,
             Transform =
@@ -108,18 +108,78 @@ public class MainMenu : Scene
                 RelativeSize = new Vector2(0.15f, 0.06f),
             },
         };
-        quickStartBtn.HoverEntered += (s, e) => e.Color = Color.Red;
-        quickStartBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
-        quickStartBtn.Clicked += (s, e) =>
+        quickJoinPlayerBtn.HoverEntered += (s, e) => e.Color = Color.Red;
+        quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
+        quickJoinPlayerBtn.Clicked += (s, e) =>
         {
-            Game.ServerUri = new Uri("ws://localhost:5000/");
-            Change<Game>();
+            var args = new Game.ChangeEventArgs(joinCode: null, isSpectator: false);
+            Change<Game>(args);
         };
         _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
         {
-            Parent = quickStartBtn.Component,
-            Value = "Quick Start",
+            Parent = quickJoinPlayerBtn.Component,
+            Value = "Quick Join",
+            Scale = 0.7f,
             TextAlignment = Alignment.Center,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Top,
+            },
+        };
+        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        {
+            Parent = quickJoinPlayerBtn.Component,
+            Value = "(player)",
+            Scale = 0.7f,
+            TextAlignment = Alignment.Center,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Bottom,
+            },
+        };
+
+        var quickJoinSpectatorBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+        {
+            Parent = this.BaseComponent,
+            Transform =
+            {
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(-0.12f, -0.12f),
+                RelativeSize = new Vector2(0.15f, 0.06f),
+            },
+        };
+        quickJoinSpectatorBtn.HoverEntered += (s, e) => e.Color = Color.Red;
+        quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
+        quickJoinSpectatorBtn.Clicked += (s, e) =>
+        {
+            var args = new Game.ChangeEventArgs(joinCode: null, isSpectator: true);
+            Change<Game>(args);
+        };
+        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        {
+            Parent = quickJoinSpectatorBtn.Component,
+            Value = "Quick Join",
+            Scale = 0.7f,
+            TextAlignment = Alignment.Center,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Top,
+            },
+        };
+        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        {
+            Parent = quickJoinSpectatorBtn.Component,
+            Value = "(spectator)",
+            Scale = 0.7f,
+            TextAlignment = Alignment.Center,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Bottom,
+            },
         };
 
         this.openDebugConsoleInfo = new Text(new ScalableFont("Content\\Fonts\\Consolas.ttf", 9), Color.LightGray)
