@@ -21,13 +21,45 @@ public abstract class SerializationContext
     /// <summary>
     /// Represents a player serialization context.
     /// </summary>
-    /// <param name="id">The id of the player.</param>
-    public class Player(string id) : SerializationContext
+    public class Player : SerializationContext
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Player"/> class.
+        /// </summary>
+        /// <param name="id">The id of the player.</param>
+        /// <remarks>
+        /// This constructor should be used on the client side.
+        /// </remarks>
+        public Player(string id)
+        {
+            this.Id = id;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Player"/> class.
+        /// </summary>
+        /// <param name="player">The player to create the context for.</param>
+        /// <remarks>
+        /// This constructor should be used on the server side.
+        /// </remarks>
+        public Player(GameLogic.Player player)
+        {
+            this.Id = player.Id;
+            this.VisibilityGrid = player.VisibilityGrid;
+        }
+
         /// <summary>
         /// Gets the id of the player.
         /// </summary>
-        public string Id { get; } = id;
+        public string Id { get; }
+
+        /// <summary>
+        /// Gets the visibility grid of the player.
+        /// </summary>
+        /// <remarks>
+        /// On the client side, this property is always <see langword="null"/>.
+        /// </remarks>
+        public bool[,]? VisibilityGrid { get; }
     }
 
     /// <summary>

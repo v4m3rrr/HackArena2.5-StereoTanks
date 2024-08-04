@@ -65,7 +65,7 @@ public class Player : IEquatable<Player>
     /// <summary>
     /// Gets the visibility grid of the player.
     /// </summary>
-    public bool[,] VisibilityGrid { get; internal set; } = new bool[0, 0];
+    internal bool[,]? VisibilityGrid { get; private set; }
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.
@@ -109,5 +109,30 @@ public class Player : IEquatable<Player>
         this.Score = player.Score;
         this.Ping = player.Ping;
         this.Tank = player.Tank;
+        this.VisibilityGrid = player.VisibilityGrid;
+    }
+
+    /// <summary>
+    /// Calculates the visibility grid for the player.
+    /// </summary>
+    /// <param name="calculator">The fog of war calculator to use.</param>
+    internal void CalculateVisibilityGrid(FogOfWarManager calculator)
+    {
+        const int angle = 150;
+
+        if (this.IsDead)
+        {
+            for (int i = 0; i < this.VisibilityGrid!.GetLength(0); i++)
+            {
+                for (int j = 0; j < this.VisibilityGrid.GetLength(1); j++)
+                {
+                    this.VisibilityGrid[i, j] = false;
+                }
+            }
+        }
+        else
+        {
+            this.VisibilityGrid = calculator.CalculateVisibilityGrid(this.Tank, angle);
+        }
     }
 }

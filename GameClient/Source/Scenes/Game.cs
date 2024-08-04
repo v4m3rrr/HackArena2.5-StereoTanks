@@ -25,6 +25,7 @@ internal class Game : Scene
 
     private ClientWebSocket client;
     private string? playerId = null;
+    private bool isSpectator;
 
     private LocalizedText spectatorInfo = default!;
 
@@ -61,7 +62,6 @@ internal class Game : Scene
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        this.spectatorInfo.IsEnabled = (CurrentChangeEventArgs as ChangeEventArgs)?.IsSpectator ?? false;
         this.HandleInput();
         base.Update(gameTime);
     }
@@ -79,7 +79,10 @@ internal class Game : Scene
                 return;
             }
 
-            await this.ConnectAsync(args.JoinCode, args.IsSpectator);
+            this.isSpectator = args.IsSpectator;
+            this.spectatorInfo.IsEnabled = args.IsSpectator;
+
+            await this.ConnectAsync(args.JoinCode);
         };
 
         this.Hiding += async (s, e) =>
@@ -92,6 +95,7 @@ internal class Game : Scene
             }
 
             this.playerBars.Clear();
+            this.grid.ResetFogOfWar();
             this.grid.IsEnabled = false;
 
             if (this.client.State == WebSocketState.Open)
@@ -140,10 +144,10 @@ internal class Game : Scene
         };
     }
 
-    private async Task ConnectAsync(string? joinCode, bool isSpectator)
+    private async Task ConnectAsync(string? joinCode)
     {
         string server = $"ws://{GameSettings.ServerAddress}:{GameSettings.ServerPort}"
-            + $"/{(isSpectator ? "spectator" : string.Empty)}";
+            + $"/{(this.isSpectator ? "spectator" : string.Empty)}";
 
         if (joinCode is not null)
         {
@@ -259,8 +263,7 @@ internal class Game : Scene
 
                                 GameStatePayload gameState = null!;
 
-                                bool isSpectator = (CurrentChangeEventArgs as ChangeEventArgs)?.IsSpectator ?? false;
-                                SerializationContext context = isSpectator
+                                SerializationContext context = this.isSpectator
                                     ? new SerializationContext.Spectator()
                                     : new SerializationContext.Player(this.playerId!);
 
@@ -269,7 +272,7 @@ internal class Game : Scene
 
                                 try
                                 {
-                                    gameState = isSpectator
+                                    gameState = this.isSpectator
                                         ? packet.GetPayload<GameStatePayload>(serializer)
                                         : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
                                 }
@@ -282,6 +285,12 @@ internal class Game : Scene
                                 this.grid.Logic.UpdateFromStatePayload(gameState);
                                 this.UpdatePlayers(gameState.Players);
                                 this.UpdatePlayerBars();
+
+                                if (gameState is GameStatePayload.ForPlayer playerGameState)
+                                {
+                                    this.grid.UpdateFogOfWar(playerGameState.VisibilityGrid);
+                                }
+
                                 this.grid.IsEnabled = true;
                                 break;
 

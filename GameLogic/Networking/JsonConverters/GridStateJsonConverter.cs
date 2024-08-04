@@ -4,6 +4,8 @@ using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking;
 
+#pragma warning disable CA1822 // Mark members as static
+
 /// <summary>
 /// Represents a grid state json converter.
 /// </summary>
@@ -18,9 +20,9 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         switch (this.context)
         {
             case SerializationContext.Player:
-                return ReadPlayerJson(reader, serializer);
+                return this.ReadPlayerJson(reader, serializer);
             case SerializationContext.Spectator:
-                return ReadSpectatorJson(reader, serializer);
+                return this.ReadSpectatorJson(reader, serializer);
             default:
                 Debug.Fail("Unknown serialization context.");
                 return null;
@@ -33,10 +35,10 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         switch (this.context)
         {
             case SerializationContext.Player:
-                WritePlayerJson(writer, value, serializer);
+                this.WritePlayerJson(writer, value, serializer);
                 break;
             case SerializationContext.Spectator:
-                WriteSpectatorJson(writer, value, serializer);
+                this.WriteSpectatorJson(writer, value, serializer);
                 break;
             default:
                 Debug.Fail("Unknown serialization context.");
@@ -44,7 +46,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         }
     }
 
-    private static Grid.StatePayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
+    private Grid.StatePayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
     {
         var grid = JArray.Load(reader);
 
@@ -94,7 +96,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         };
     }
 
-    private static Grid.StatePayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
+    private Grid.StatePayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
     {
         var jObject = JObject.Load(reader);
 
@@ -116,8 +118,10 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         };
     }
 
-    private static void WritePlayerJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
+    private void WritePlayerJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
     {
+        var visibilityGrid = (this.context as SerializationContext.Player)!.VisibilityGrid!;
+
         var grid = new JArray();
         for (int i = 0; i < value!.WallGrid.GetLength(0); i++)
         {
@@ -145,6 +149,11 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
 
         foreach (Tank tank in value.Tanks.Where(x => !x.IsDead))
         {
+            if (!FogOfWarManager.IsElementVisible(visibilityGrid, tank.X, tank.Y))
+            {
+                continue;
+            }
+
             var obj = JObject.FromObject(tank, serializer);
             (grid[tank.X][tank.Y] as JArray)!.Add(new JObject
             {
@@ -155,6 +164,11 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
 
         foreach (Bullet bullet in value.Bullets)
         {
+            if (!FogOfWarManager.IsElementVisible(visibilityGrid, bullet.X, bullet.Y))
+            {
+                continue;
+            }
+
             var obj = JObject.FromObject(bullet, serializer);
             (grid[bullet.X][bullet.Y] as JArray)!.Add(new JObject
             {
@@ -166,7 +180,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         grid.WriteTo(writer);
     }
 
-    private static void WriteSpectatorJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
+    private void WriteSpectatorJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
     {
         var jObject = new JObject
         {

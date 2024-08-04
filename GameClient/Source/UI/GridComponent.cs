@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GameLogic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient;
@@ -15,6 +14,7 @@ internal class GridComponent : Component
 {
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
+    private Sprites.FogOfWar? fogOfWar;
     private Sprites.Wall?[,] walls;
 
     /// <summary>
@@ -53,7 +53,8 @@ internal class GridComponent : Component
 
     private IEnumerable<Sprite> Sprites => this.tanks.Cast<Sprite>()
         .Concat(this.walls.Cast<Sprite>().Where(x => x is not null))
-        .Concat(this.bullets.Cast<Sprite>());
+        .Concat(this.bullets.Cast<Sprite>())
+        .Concat(this.fogOfWar is null ? new List<Sprite>() : [this.fogOfWar]);
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -85,6 +86,30 @@ internal class GridComponent : Component
         {
             sprite.Draw(gameTime);
         }
+    }
+
+    /// <summary>
+    /// Updates the fog of war.
+    /// </summary>
+    /// <param name="visibilityGrid">The visibility grid.</param>
+    public void UpdateFogOfWar(bool[,] visibilityGrid)
+    {
+        if (this.fogOfWar is null)
+        {
+            this.fogOfWar = new Sprites.FogOfWar(visibilityGrid, this);
+        }
+        else
+        {
+            this.fogOfWar.VisibilityGrid = visibilityGrid;
+        }
+    }
+
+    /// <summary>
+    /// Resets the fog of war.
+    /// </summary>
+    public void ResetFogOfWar()
+    {
+        this.fogOfWar = null;
     }
 
     private void Logic_DimensionsChanged(object? sender, EventArgs args)

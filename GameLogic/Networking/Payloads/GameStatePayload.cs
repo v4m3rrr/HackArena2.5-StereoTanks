@@ -39,7 +39,8 @@ public class GameStatePayload : IPacketPayload
             new TurretJsonConverter(context),
             new GridStateJsonConverter(context),
             new BulletJsonConverter(context),
-            new WallJsonConverter(context)];
+            new WallJsonConverter(context),
+            new PlayerJsonConverter(context)];
     }
 
     /// <summary>

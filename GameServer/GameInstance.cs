@@ -226,8 +226,9 @@ internal class GameInstance
             this.Grid.UpdateBullets(1f);
             this.RegeneratePlayersBullets();
             this.Grid.RegenerateTanks();
+            this.Grid.UpdatePlayersVisibilityGrids([.. this.players.Values]);
 
-            var broadcastTask = this.BroadcastGameState();
+            await this.BroadcastGameState();
             this.playersWhoSentMovementPacketThisTick.Clear();
 
             var endTime = DateTime.UtcNow;
@@ -431,10 +432,9 @@ internal class GameInstance
 
             SerializationContext context = this.IsSpecator(client)
                 ? new SerializationContext.Spectator()
-                : new SerializationContext.Player(this.players[client].Id);
+                : new SerializationContext.Player(this.players[client]);
 
             var converters = GameStatePayload.GetConverters(context);
-            //Console.WriteLine(PacketSerializer.Serialize(packet, converters, indented: true));
 
             try
             {

@@ -15,6 +15,8 @@ public class Grid(int dimension, int seed)
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
 
+    private FogOfWarManager fogOfWarManager = new(new bool[0, 0]);
+
     /// <summary>
     /// Occurs when the state is updating.
     /// </summary>
@@ -70,14 +72,32 @@ public class Grid(int dimension, int seed)
     /// </summary>
     /// <param name="payload">The payload to update from.</param>
     /// <remarks>
-    /// This method also sets properites:
+    /// <para>
+    /// This method performs the following property settings:
     /// <list type="bullet">
-    /// <item><description><see cref="Tank.Owner"/></description></item>
-    /// <item><description><see cref="Turret.Tank"/></description></item>
-    /// <item><description><see cref="Bullet.Shooter"/></description></item>
-    /// <item><description><see cref="Player.Tank"/></description></item>
-    /// <item><description><see cref="Player.VisibilityGrid"/></description></item>
+    /// <item><description>
+    /// <see cref="Player.Tank"/> is set for each player based on the payload.
+    /// </description></item>
+    /// <item><description>
+    /// <see cref="Tank.Owner"/> is set for each tank based on the payload.
+    /// </description></item>
+    /// <item><description>
+    /// <see cref="Turret.Tank"/> is set for each turret based on its associated tank.
+    /// </description></item>
+    /// <item><description>
+    /// <see cref="Bullet.Shooter"/> is set for each bullet based on the payload.
+    /// </description></item>
     /// </list>
+    /// </para>
+    /// <para>
+    /// This method raises the <see cref="StateUpdating"/> event before updating the state,
+    /// and the <see cref="StateUpdated"/> event after updating the state.
+    /// </para>
+    /// <para>
+    /// If the dimensions of the grid have changed, this method raises the
+    /// <see cref="DimensionsChanging"/>  event before updating the dimensions,
+    /// and the <see cref="DimensionsChanged"/> event after updating the dimensions.
+    /// </para>
     /// </remarks>
     public void UpdateFromStatePayload(Networking.GameStatePayload payload)
     {
@@ -153,6 +173,8 @@ public class Grid(int dimension, int seed)
     {
         var generator = new MapGenerator(this.Dim, this.Seed);
         var walls = generator.GenerateWalls();
+
+        this.fogOfWarManager = new FogOfWarManager(walls);
 
         for (int i = 0; i < this.Dim; i++)
         {
@@ -307,6 +329,18 @@ public class Grid(int dimension, int seed)
             {
                 _ = this.HandleBulletCollision(bullet, collision);
             }
+        }
+    }
+
+    /// <summary>
+    /// Updates the players' visibility grids.
+    /// </summary>
+    /// <param name="players">The players for which to update the visibility grids.</param>
+    public void UpdatePlayersVisibilityGrids(List<Player> players)
+    {
+        foreach (Player player in players)
+        {
+            player.CalculateVisibilityGrid(this.fogOfWarManager);
         }
     }
 
