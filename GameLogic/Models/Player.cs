@@ -118,7 +118,7 @@ public class Player : IEquatable<Player>
     /// <param name="calculator">The fog of war calculator to use.</param>
     internal void CalculateVisibilityGrid(FogOfWarManager calculator)
     {
-        const int angle = 150;
+        const int angle = 144;
 
         if (this.IsDead)
         {
