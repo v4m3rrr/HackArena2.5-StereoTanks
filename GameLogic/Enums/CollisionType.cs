@@ -11,6 +11,11 @@ public enum CollisionType
     None,
 
     /// <summary>
+    /// Collision with a border.
+    /// </summary>
+    Border,
+
+    /// <summary>
     /// Collision with a wall.
     /// </summary>
     Wall,

@@ -9,7 +9,7 @@ namespace GameClient.PlayerBarComponents;
 /// </summary>
 internal class Nickname : PlayerBarComponent
 {
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Tiny5-Regular.ttf", 13);
+    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 16);
 
     private readonly Text text;
 
@@ -25,7 +25,7 @@ internal class Nickname : PlayerBarComponent
             Parent = this,
             Value = player.Nickname,
             TextAlignment = Alignment.Left,
-            TextShrink = TextShrinkMode.Height,
+            TextShrink = TextShrinkMode.Width,
         };
     }
 

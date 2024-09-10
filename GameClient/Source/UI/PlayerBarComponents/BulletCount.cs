@@ -20,7 +20,7 @@ internal class BulletCount(Player player) : PlayerBarComponent(player)
             return;
         }
 
-        var bulletTexture = Sprites.Bullet.Texture;
+        var bulletTexture = Sprites.Bullet.StaticTexture.Texture;
         var centerRect = this.Transform.DestRectangle;
         var bulletCount = this.Player.Tank.Turret.BulletCount;
         var bulletRegenProgress = this.Player.Tank.Turret.BulletRegenProgress;
@@ -33,9 +33,9 @@ internal class BulletCount(Player player) : PlayerBarComponent(player)
         for (int i = 0; i < maxBulletCount; i++)
         {
             var destRect = new Rectangle(
-                centerRect.Left + (i * centerRect.Height),
+                centerRect.Left + (i * centerRect.Height / 2),
                 centerRect.Top,
-                centerRect.Height,
+                centerRect.Width / 28,
                 centerRect.Height);
 
             var color = Color.White * (i < bulletCount ? 1.0f : 0.3f);

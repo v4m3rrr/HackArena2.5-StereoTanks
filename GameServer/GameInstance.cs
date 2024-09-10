@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
@@ -11,10 +12,20 @@ namespace GameServer;
 internal class GameInstance
 {
     private static readonly Random Random = new();
+
     private static readonly IEnumerable<PacketType> MovementRestrictedPacketTypes = [
         PacketType.TankMovement,
         PacketType.TankRotation,
         PacketType.TankShoot,
+    ];
+
+    private static readonly uint[] Colors =
+    [
+        /* ABGR */
+        0xFFFFA600,
+        0xFFFF5AF9,
+        0xFF1A9BF9,
+        0xFF3FD47A,
     ];
 
     private readonly Dictionary<WebSocket, Player> players = [];
@@ -57,14 +68,13 @@ internal class GameInstance
     /// <param name="socket">The socket of the player to add.</param>
     public void AddPlayer(WebSocket socket)
     {
-        var color = (uint)(255 << 24 | (uint)Random.Next(0xFFFFFF));
-
         string id;
         do
         {
             id = Guid.NewGuid().ToString();
         } while (this.players.Values.Any(p => p.Id == id));
 
+        var color = this.GetPlayerColor();
         var player = new Player(id, $"Player {this.players.Count + 1}", color);
 
         _ = this.Grid.GenerateTank(player);
@@ -217,6 +227,19 @@ internal class GameInstance
         return this.spectators.Contains(socket);
     }
 
+    private uint GetPlayerColor()
+    {
+        foreach (uint color in Colors)
+        {
+            if (!this.players.Values.Any(p => p.Color == color))
+            {
+                return color;
+            }
+        }
+
+        return (uint)((0xFF << 24) | Random.Next(0xFFFFFF));
+    }
+
     private async Task GameStateBroadcastLoop()
     {
         while (true)
@@ -227,6 +250,7 @@ internal class GameInstance
             this.RegeneratePlayersBullets();
             this.Grid.RegenerateTanks();
             this.Grid.UpdatePlayersVisibilityGrids([.. this.players.Values]);
+            this.Grid.UpdateZones();
 
             await this.BroadcastGameState();
             this.playersWhoSentMovementPacketThisTick.Clear();
@@ -445,6 +469,9 @@ internal class GameInstance
                 Console.WriteLine("ERROR WHILE SERIALIZING PACKET: " + e.Message);
                 continue;
             }
+
+            //var message = PacketSerializer.Serialize(packet, converters, indented: true);
+            //Console.WriteLine(message);
 
             if (client.State == WebSocketState.Open)
             {

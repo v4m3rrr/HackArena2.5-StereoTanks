@@ -29,7 +29,7 @@ Console.WriteLine("Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
 Console.WriteLine("\nPress Ctrl+C to stop the server.\n");
 
 var game = new GameInstance(opts);
-game.Grid.GenerateWalls();
+game.Grid.GenerateMap();
 
 var failedAttempts = new ConcurrentDictionary<string, (int Attempts, DateTime LastAttempt)>();
 

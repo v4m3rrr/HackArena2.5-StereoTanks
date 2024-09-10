@@ -1,5 +1,4 @@
-﻿
-using GameLogic;
+﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -10,7 +9,7 @@ namespace GameClient.PlayerBarComponents;
 /// </summary>
 internal class Score : PlayerBarComponent
 {
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Tiny5-Regular.ttf", 15);
+    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 12);
 
     private readonly Text text;
 

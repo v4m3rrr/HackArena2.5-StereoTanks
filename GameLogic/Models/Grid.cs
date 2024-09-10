@@ -12,6 +12,7 @@ public class Grid(int dimension, int seed)
     private readonly Queue<Bullet> queuedBullets = new();
     private readonly Random random = new(seed);
 
+    private List<Zone> zones = [];
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
 
@@ -56,6 +57,11 @@ public class Grid(int dimension, int seed)
     /// Gets the wall grid.
     /// </summary>
     public Wall?[,] WallGrid { get; private set; } = new Wall?[dimension, dimension];
+
+    /// <summary>
+    /// Gets the zones.
+    /// </summary>
+    public IEnumerable<Zone> Zones => this.zones;
 
     /// <summary>
     /// Gets the tanks.
@@ -163,24 +169,31 @@ public class Grid(int dimension, int seed)
             bullet.Shooter = shooter;
         }
 
+        // Update the zones.
+        this.zones = gridState.Zones;
+
         this.StateUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
-    /// Generates the walls.
+    /// Generates the map.
     /// </summary>
-    public void GenerateWalls()
+    public void GenerateMap()
     {
         var generator = new MapGenerator(this.Dim, this.Seed);
+
         var walls = generator.GenerateWalls();
+        this.zones = generator.GenerateZones();
+
+        generator.RemoveSomeWallsFromZones(walls, this.zones);
 
         this.fogOfWarManager = new FogOfWarManager(walls);
 
-        for (int i = 0; i < this.Dim; i++)
+        for (int x = 0; x < this.Dim; x++)
         {
-            for (int j = 0; j < this.Dim; j++)
+            for (int y = 0; y < this.Dim; y++)
             {
-                this.WallGrid[i, j] = walls[i, j] ? new Wall() { X = i, Y = j } : null;
+                this.WallGrid[x, y] = walls[x, y] ? new Wall() { X = x, Y = y } : null;
             }
         }
     }
@@ -345,6 +358,17 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
+    /// Updates the zones.
+    /// </summary>
+    public void UpdateZones()
+    {
+        foreach (Zone zone in this.zones)
+        {
+            zone.UpdateCapturingStatus(this.tanks);
+        }
+    }
+
+    /// <summary>
     /// Converts the grid to a payload.
     /// </summary>
     /// <returns>The payload representing the grid.</returns>
@@ -353,6 +377,7 @@ public class Grid(int dimension, int seed)
         return new StatePayload
         {
             WallGrid = this.WallGrid,
+            Zones = this.zones,
             Tanks = this.tanks,
             Bullets = this.bullets,
         };
@@ -360,7 +385,9 @@ public class Grid(int dimension, int seed)
 
     private bool IsCellEmpty(int x, int y)
     {
-        return this.WallGrid[x, y] is null && !this.tanks.Any(t => t.X == x && t.Y == y && !t.IsDead);
+        var isWithinBounds = x >= 0 && x < this.Dim && y >= 0 && y < this.Dim;
+        var isNotOccupied = !this.tanks.Any(t => t.X == x && t.Y == y && !t.IsDead);
+        return isWithinBounds && isNotOccupied && this.WallGrid[x, y] is null;
     }
 
     private List<Bullet> HandleBulletCollision(Bullet bullet, ICollision collision)
@@ -406,6 +433,11 @@ public class Grid(int dimension, int seed)
         /// Gets the wall grid.
         /// </summary>
         public Wall?[,] WallGrid { get; init; } = new Wall?[0, 0];
+
+        /// <summary>
+        /// Gets the zones.
+        /// </summary>
+        public List<Zone> Zones { get; init; } = [];
 
         /// <summary>
         /// Gets the bullets.

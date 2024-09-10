@@ -14,8 +14,11 @@ internal class GridComponent : Component
 {
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
+    private readonly List<Sprites.Zone> zones = [];
+
     private Sprites.FogOfWar? fogOfWar;
-    private Sprites.Wall?[,] walls;
+    private Sprites.Wall.Solid?[,] solidWalls;
+    private List<Sprites.Wall.Border> borderWalls = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
@@ -23,7 +26,7 @@ internal class GridComponent : Component
     public GridComponent()
     {
         this.Logic = Grid.Empty;
-        this.walls = new Sprites.Wall?[0, 0];
+        this.solidWalls = new Sprites.Wall.Solid?[0, 0];
         this.Logic.DimensionsChanged += this.Logic_DimensionsChanged;
         this.Logic.StateUpdated += this.Logic_StateDeserialized;
         this.Transform.SizeChanged += (s, e) => this.UpdateDrawData();
@@ -51,10 +54,13 @@ internal class GridComponent : Component
     /// <value>The draw offset in pixels to center the grid.</value>
     public int DrawOffset { get; private set; }
 
-    private IEnumerable<Sprite> Sprites => this.tanks.Cast<Sprite>()
-        .Concat(this.walls.Cast<Sprite>().Where(x => x is not null))
-        .Concat(this.bullets.Cast<Sprite>())
-        .Concat(this.fogOfWar is null ? new List<Sprite>() : [this.fogOfWar]);
+    private IEnumerable<Sprite> Sprites => this.zones.Cast<Sprite>()
+        .Concat(this.tanks)
+        .Concat(this.bullets)
+        .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
+        .Concat(this.borderWalls.Cast<Sprite>())
+        .Concat([this.fogOfWar])
+        .Where(x => x is not null)!;
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -92,11 +98,12 @@ internal class GridComponent : Component
     /// Updates the fog of war.
     /// </summary>
     /// <param name="visibilityGrid">The visibility grid.</param>
-    public void UpdateFogOfWar(bool[,] visibilityGrid)
+    /// <param name="color">The color of the fog of war.</param>
+    public void UpdateFogOfWar(bool[,] visibilityGrid, Color color)
     {
         if (this.fogOfWar is null)
         {
-            this.fogOfWar = new Sprites.FogOfWar(visibilityGrid, this);
+            this.fogOfWar = new Sprites.FogOfWar(visibilityGrid, this, color);
         }
         else
         {
@@ -114,17 +121,25 @@ internal class GridComponent : Component
 
     private void Logic_DimensionsChanged(object? sender, EventArgs args)
     {
-        var walls = new Sprites.Wall?[this.Logic.Dim, this.Logic.Dim];
-        for (int i = 0; i < this.walls.GetLength(0) && i < this.Logic.Dim; i++)
+        this.UpdateDrawData();
+
+        this.solidWalls = new Sprites.Wall.Solid?[this.Logic.Dim, this.Logic.Dim];
+
+        var borderWalls = new List<Sprites.Wall.Border>();
+        for (int i = 0; i < this.Logic.Dim; i++)
         {
-            for (int j = 0; j < this.walls.GetLength(1) && i < this.Logic.Dim; j++)
-            {
-                walls[i, j] = this.walls[i, j];
-            }
+            borderWalls.Add(new Sprites.Wall.Border(i, -1, this));
+            borderWalls.Add(new Sprites.Wall.Border(i, this.Logic.Dim, this));
+            borderWalls.Add(new Sprites.Wall.Border(-1, i, this));
+            borderWalls.Add(new Sprites.Wall.Border(this.Logic.Dim, i, this));
         }
 
-        this.walls = walls;
-        this.UpdateDrawData();
+        borderWalls.Add(new Sprites.Wall.Border(-1, -1, this));
+        borderWalls.Add(new Sprites.Wall.Border(-1, this.Logic.Dim, this));
+        borderWalls.Add(new Sprites.Wall.Border(this.Logic.Dim, -1, this));
+        borderWalls.Add(new Sprites.Wall.Border(this.Logic.Dim, this.Logic.Dim, this));
+
+        this.borderWalls = borderWalls;
     }
 
     private void Logic_StateDeserialized(object? sender, EventArgs args)
@@ -132,6 +147,7 @@ internal class GridComponent : Component
         this.SyncWalls();
         this.SyncTanks();
         this.SyncBullets();
+        this.SyncZones();
     }
 
     private void SyncWalls()
@@ -143,16 +159,16 @@ internal class GridComponent : Component
                 var newWallLogic = this.Logic.WallGrid[i, j];
                 if (newWallLogic is null)
                 {
-                    this.walls[i, j] = null;
+                    this.solidWalls[i, j] = null;
                 }
-                else if (this.walls[i, j] is null)
+                else if (this.solidWalls[i, j] is null)
                 {
-                    var wall = new Sprites.Wall(newWallLogic, this);
-                    this.walls[i, j] = wall;
+                    var wall = new Sprites.Wall.Solid(newWallLogic, this);
+                    this.solidWalls[i, j] = wall;
                 }
                 else
                 {
-                    this.walls[i, j]?.UpdateLogic(newWallLogic);
+                    this.solidWalls[i, j]?.UpdateLogic(newWallLogic);
                 }
             }
         }
@@ -196,6 +212,25 @@ internal class GridComponent : Component
         _ = this.bullets.RemoveAll(b => !this.Logic.Bullets.Any(b2 => b2.Equals(b.Logic)));
     }
 
+    private void SyncZones()
+    {
+        foreach (var zone in this.Logic.Zones)
+        {
+            var zoneSprite = this.zones.FirstOrDefault(z => z.Logic.Equals(zone));
+            if (zoneSprite == null)
+            {
+                zoneSprite = new Sprites.Zone(zone, this);
+                this.zones.Add(zoneSprite);
+            }
+            else
+            {
+                zoneSprite.UpdateLogic(zone);
+            }
+        }
+
+        _ = this.zones.RemoveAll(z => !this.Logic.Zones.Any(z2 => z2.Equals(z.Logic)));
+    }
+
     private void UpdateDrawData()
     {
         if (this.Logic.Dim == 0)
@@ -206,7 +241,7 @@ internal class GridComponent : Component
         var gridDim = this.Logic.Dim;
         var size = this.Transform.Size.X;
         var tileSize = this.TileSize = size / gridDim;
-        this.DrawOffset = (int)((size - (gridDim * tileSize) + tileSize) / 2f);
+        this.DrawOffset = (int)((size - (gridDim * tileSize) + tileSize) / 4f);
         this.DrawDataChanged?.Invoke(this, EventArgs.Empty);
     }
 }

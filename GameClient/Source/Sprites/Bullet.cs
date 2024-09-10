@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using GameLogic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient.Sprites;
@@ -13,23 +12,23 @@ namespace GameClient.Sprites;
 internal class Bullet : Sprite
 {
     /// <summary>
-    /// Gets the bullet texture.
+    /// Gets the static bullet texture.
     /// </summary>
-    public static readonly Texture2D Texture;
+    public static readonly ScalableTexture2D.Static StaticTexture;
 
+    private readonly ScalableTexture2D texture;
     private readonly GridComponent grid;
+
     private Vector2 position;
 
     private bool isCollisionDetected;
     private bool skipNextPositionUpdate;
     private bool isOutOfBounds;
 
-    private Rectangle destinationRect;
-    private float rotation;
-
     static Bullet()
     {
-        Texture = ContentController.Content.Load<Texture2D>("Images/Bullet");
+        StaticTexture = new ScalableTexture2D.Static("Images/Game/bullet.svg");
+        StaticTexture.Load();
     }
 
     /// <summary>
@@ -39,9 +38,18 @@ internal class Bullet : Sprite
     /// <param name="grid">The grid component.</param>
     public Bullet(GameLogic.Bullet logic, GridComponent grid)
     {
+        this.texture = new ScalableTexture2D(StaticTexture)
+        {
+            Transform =
+            {
+                Type = TransformType.Absolute,
+                Size = new Point(grid.TileSize / 8, (int)(grid.TileSize / 2.5f)),
+            },
+        };
+
         this.grid = grid;
         this.UpdateLogic(logic);
-        this.position = new Vector2(this.Logic.X, this.Logic.Y);
+        this.position = new Vector2(this.Logic.X + 0.5f, this.Logic.Y + 0.5f);
         this.skipNextPositionUpdate = true;
     }
 
@@ -64,7 +72,7 @@ internal class Bullet : Sprite
         // If the bullet is not in the correct position, update it.
         if (Math.Abs(this.position.X - this.Logic.X) > 1 || Math.Abs(this.position.Y - this.Logic.Y) > 1)
         {
-            this.position = new Vector2(this.Logic.X, this.Logic.Y);
+            this.position = new Vector2(this.Logic.X + 0.5f, this.Logic.Y + 0.5f);
             this.skipNextPositionUpdate = true;
         }
     }
@@ -85,19 +93,19 @@ internal class Bullet : Sprite
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        this.rotation = DirectionUtils.ToRadians(this.Logic.Direction);
-
-        var rect = this.destinationRect = new Rectangle(
+        var location = new Point(
             gridLeft + ((int)(this.position.X * tileSize)) + drawOffset,
-            gridTop + ((int)(this.position.Y * tileSize)) + drawOffset,
-            tileSize,
-            tileSize);
+            gridTop + ((int)(this.position.Y * tileSize)) + drawOffset);
+        var size = new Point(tileSize / 8, (int)(tileSize / 2.5f));
 
-        this.isOutOfBounds =
-            rect.Left < gridLeft ||
-            rect.Right > gridLeft + this.grid.Transform.DestRectangle.Width ||
-            rect.Top < gridTop ||
-            rect.Bottom > gridTop + this.grid.Transform.DestRectangle.Height;
+        this.texture.Transform.Location = location;
+        this.texture.Transform.Size = size;
+        this.texture.Rotation = DirectionUtils.ToRadians(this.Logic.Direction);
+
+        this.isOutOfBounds = this.position.X < 0
+            || this.position.Y < 0
+            || this.position.X >= this.grid.Logic.Dim
+            || this.position.Y >= this.grid.Logic.Dim;
     }
 
     /// <inheritdoc/>
@@ -108,15 +116,7 @@ internal class Bullet : Sprite
             return;
         }
 
-        SpriteBatchController.SpriteBatch.Draw(
-            Texture,
-            this.destinationRect,
-            null,
-            Color.White,
-            this.rotation,
-            Texture.Bounds.Size.ToVector2() / 2f,
-            SpriteEffects.None,
-            1.0f);
+        this.texture.Draw(gameTime);
     }
 
     private void UpdatePosition(GameTime gameTime)
@@ -144,8 +144,8 @@ internal class Bullet : Sprite
         // Currently, only collision with walls and tanks is checked.
         // A dictionary below is created to avoid errors in the CollisionDetector.
         var gridDim = this.grid.Logic.Dim;
-        var posX = Math.Clamp((int)(this.position.X + 0.5f), 0, gridDim - 1);
-        var posY = Math.Clamp((int)(this.position.Y + 0.5f), 0, gridDim - 1);
+        var posX = Math.Clamp((int)this.position.X, 0, gridDim - 1);
+        var posY = Math.Clamp((int)this.position.Y, 0, gridDim - 1);
         var trajectories = new Dictionary<GameLogic.Bullet, List<(int X, int Y)>>
         {
             [this.Logic] = [(posX, posY)],

@@ -1,7 +1,7 @@
-﻿using GameLogic;
+﻿using System;
+using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
-using System;
 
 namespace GameClient.PlayerBarComponents;
 
@@ -10,6 +10,7 @@ namespace GameClient.PlayerBarComponents;
 /// </summary>
 internal class HealthBar : PlayerBarComponent
 {
+    private const float RelativeHeight = 0.5f;
     private readonly SolidColor bar;
 
     /// <summary>
@@ -19,7 +20,15 @@ internal class HealthBar : PlayerBarComponent
     public HealthBar(Player player)
         : base(player)
     {
-        this.bar = new SolidColor(new Color(player.Color)) { Parent = this };
+        this.bar = new RoundedSolidColor(new Color(player.Color), 14)
+        {
+            Parent = this,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, RelativeHeight),
+                Alignment = Alignment.Left,
+            },
+        };
     }
 
     /// <inheritdoc/>
@@ -36,7 +45,7 @@ internal class HealthBar : PlayerBarComponent
         {
             this.bar.Color = new Color(this.bar.Color, 100);
             var progress = Math.Max(float.Epsilon, this.Player.Tank.RegenProgress ?? 0f);
-            this.bar.Transform.RelativeSize = new Vector2(progress, 1f);
+            this.bar.Transform.RelativeSize = new Vector2(progress, RelativeHeight);
             return;
         }
 
@@ -48,9 +57,8 @@ internal class HealthBar : PlayerBarComponent
             return;
         }
 
-
         this.bar.Color = new Color(this.bar.Color, 255);
-        this.bar.Transform.RelativeSize = new Vector2(hp.Value / 100f, 1f);
+        this.bar.Transform.RelativeSize = new Vector2(hp.Value / 100f, RelativeHeight);
 
         base.Update(gameTime);
     }

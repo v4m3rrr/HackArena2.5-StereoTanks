@@ -9,7 +9,7 @@ namespace GameClient.PlayerBarComponents;
 /// </summary>
 internal class Ping : PlayerBarComponent
 {
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Tiny5-Regular.ttf", 13);
+    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 9);
 
     private readonly Text text;
 
@@ -20,12 +20,11 @@ internal class Ping : PlayerBarComponent
     public Ping(Player player)
         : base(player)
     {
-        this.text = new Text(Font, Color.Gray)
+        this.text = new Text(Font, new Color(this.Player.Color))
         {
             Parent = this,
             Value = $"-",
-            TextAlignment = Alignment.Right,
-            TextShrink = TextShrinkMode.Height,
+            TextAlignment = Alignment.Left,
         };
     }
 
@@ -38,7 +37,7 @@ internal class Ping : PlayerBarComponent
         }
 
         var ping = this.Player.Ping;
-        this.text.Value = ping < 1 ? "<1ms" : $"{this.Player.Ping}ms";
+        this.text.Value = ping < 1 ? "<1 MS" : $"{this.Player.Ping} MS";
 
         base.Update(gameTime);
     }

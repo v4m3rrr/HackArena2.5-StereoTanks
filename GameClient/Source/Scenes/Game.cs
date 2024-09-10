@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -20,20 +20,25 @@ namespace GameClient.Scenes;
 internal class Game : Scene
 {
     private readonly Dictionary<string, Player> players = [];
-    private readonly List<PlayerBar> playerBars = [];
+    private readonly List<PlayerStatsBar> playerStatsBars = [];
+    private readonly List<PlayerIdentityBar> playerIdentityBars = [];
+
     private readonly GridComponent grid;
+
+    private readonly ListBox playerIdentityBox;
+    private readonly ListBox playerStatsBox;
 
     private ClientWebSocket client;
     private string? playerId = null;
     private bool isSpectator;
 
-    private LocalizedText spectatorInfo = default!;
+    private Text matchName = default!;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Game"/> class.
     /// </summary>
     public Game()
-        : base(Color.DimGray)
+        : base(Color.Transparent)
     {
         this.client = new ClientWebSocket();
 
@@ -45,7 +50,34 @@ internal class Game : Scene
             {
                 Alignment = Alignment.Center,
                 Ratio = new Ratio(1, 1),
-                RelativeSize = new Vector2(0.95f),
+                RelativeSize = new Vector2(0.8f),
+                RelativeOffset = new Vector2(0.0f, 0.03f),
+            },
+        };
+
+        this.playerIdentityBox = new AlignedListBox()
+        {
+            Parent = this.BaseComponent,
+            ElementsAlignment = Alignment.Center,
+            Spacing = 8,
+            Transform =
+            {
+                Alignment = Alignment.Left,
+                RelativeSize = new Vector2(0.23f, 1.0f),
+                RelativePadding = new Vector4(0.05f),
+            },
+        };
+
+        this.playerStatsBox = new AlignedListBox()
+        {
+            Parent = this.BaseComponent,
+            ElementsAlignment = Alignment.Center,
+            Spacing = 5,
+            Transform =
+            {
+                Alignment = Alignment.Right,
+                RelativeSize = new Vector2(0.23f, 1.0f),
+                RelativePadding = new Vector4(0.05f),
             },
         };
     }
@@ -62,86 +94,72 @@ internal class Game : Scene
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
+        if (MainMenu.Effect.Rotation != 0.0f)
+        {
+            int sign = MainMenu.Effect.Rotation is > MathHelper.Pi or < 0 and > -MathHelper.Pi ? 1 : -1;
+            var value = 0.25f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            MainMenu.Effect.Rotation += Math.Min(MainMenu.Effect.Rotation, Math.Min(value, 0.1f)) * sign;
+            MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        }
+
         this.HandleInput();
         base.Update(gameTime);
     }
 
     /// <inheritdoc/>
+    public override void Draw(GameTime gameTime)
+    {
+        ScreenController.GraphicsDevice.Clear(Color.Black);
+        MainMenu.Effect.Draw(gameTime);
+
+        base.Draw(gameTime);
+    }
+
+    /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
-        this.Showing += async (s, e) =>
+        this.Showing += this.Game_Showing;
+        this.Hiding += this.Game_Hiding;
+
+        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 15);
+        this.matchName = new Text(font, Color.White)
         {
-            if (e is not ChangeEventArgs args)
-            {
-                DebugConsole.ThrowError(
-                    $"Game scene requires {nameof(ChangeEventArgs)}.");
-                ChangeToPreviousOrDefault<MainMenu>();
-                return;
-            }
-
-            this.isSpectator = args.IsSpectator;
-            this.spectatorInfo.IsEnabled = args.IsSpectator;
-
-            await this.ConnectAsync(args.JoinCode);
-        };
-
-        this.Hiding += async (s, e) =>
-        {
-            this.players.Clear();
-
-            foreach (var playerBar in this.playerBars)
-            {
-                playerBar.Parent = null;
-            }
-
-            this.playerBars.Clear();
-            this.grid.ResetFogOfWar();
-            this.grid.IsEnabled = false;
-
-            if (this.client.State == WebSocketState.Open)
-            {
-                await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-            }
-        };
-
-        var backBtn = new Button<Frame>(new Frame())
-        {
-            Parent = this.BaseComponent,
+            Parent = baseComponent,
+            Value = "Match Name",
+            Case = TextCase.Upper,
+            AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
             Transform =
             {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.04f, -0.04f),
-                RelativeSize = new Vector2(0.12f, 0.07f),
-            },
-        }.ApplyStyle(Styles.UI.ButtonStyle);
-        backBtn.Clicked += (s, e) => Change<MainMenu>();
-        backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.MainMenu");
-
-        var settingsBtn = new Button<Frame>(new Frame())
-        {
-            Parent = this.BaseComponent,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.04f, -0.12f),
-                RelativeSize = new Vector2(0.12f, 0.07f),
-            },
-        }.ApplyStyle(Styles.UI.ButtonStyle);
-        settingsBtn.Clicked += (s, e) => ShowOverlay<Settings>(new OverlayShowOptions(BlockFocusOnUnderlyingScenes: true));
-        settingsBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Settings");
-
-        this.spectatorInfo = new LocalizedText(Styles.UI.ButtonStyle.GetProperty<ScalableFont>("Font")!, Color.LightYellow)
-        {
-            Parent = this.BaseComponent,
-            Value = new LocalizedString("Other.YouAreSpectator"),
-            TextAlignment = Alignment.BottomRight,
-            Transform =
-            {
-                Alignment = Alignment.BottomRight,
-                RelativeSize = new Vector2(0.2f, 0.05f),
-                RelativeOffset = new Vector2(-0.02f, -0.04f),
+                Alignment = Alignment.Top,
+                RelativeOffset = new Vector2(0.0f, 0.03f),
             },
         };
+    }
+
+    private async void Game_Showing(object? sender, SceneDisplayEventArgs? e)
+    {
+        if (e is not DisplayEventArgs args)
+        {
+            DebugConsole.ThrowError(
+                $"Game scene requires {nameof(DisplayEventArgs)}.");
+            ChangeToPreviousOrDefault<MainMenu>();
+            return;
+        }
+
+        this.isSpectator = args.IsSpectator;
+
+        await this.ConnectAsync(args.JoinCode);
+    }
+
+    private async void Game_Hiding(object? sender, EventArgs e)
+    {
+        this.grid.ResetFogOfWar();
+        this.grid.IsEnabled = false;
+
+        if (this.client.State == WebSocketState.Open)
+        {
+            await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+        }
     }
 
     private async Task ConnectAsync(string? joinCode)
@@ -215,6 +233,7 @@ internal class Game : Scene
         DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
     }
 
+    // What matters is that it works
     private async Task ReceiveMessages()
     {
         while (this.client.State is WebSocketState.Open or WebSocketState.CloseReceived)
@@ -288,7 +307,8 @@ internal class Game : Scene
 
                                 if (gameState is GameStatePayload.ForPlayer playerGameState)
                                 {
-                                    this.grid.UpdateFogOfWar(playerGameState.VisibilityGrid);
+                                    var player = this.players[playerGameState.PlayerId];
+                                    this.grid.UpdateFogOfWar(playerGameState.VisibilityGrid, new Color(player.Color));
                                 }
 
                                 this.grid.IsEnabled = true;
@@ -396,31 +416,53 @@ internal class Game : Scene
     private void UpdatePlayerBars()
     {
         var newPlayerBars = this.players.Values
-        .Where(player => this.playerBars.All(pb => pb.Player != player))
-        .Select(player => new PlayerBar(player)
-        {
-            Parent = this.BaseComponent,
-            Transform =
+            .Where(player => this.playerIdentityBars.All(pb => pb.Player != player) && player is not null)
+            .Select(player => new PlayerIdentityBar(player)
             {
-                RelativeSize = new Vector2(0.2f, 0.13f),
-            },
-        })
-        .ToList();
+                Parent = this.playerIdentityBox.ContentContainer,
+                Transform =
+                {
+                    RelativeSize = new Vector2(1f, 0.2f),
+                    Alignment = Alignment.Top,
+                    MaxSize = new Point(310, 110),
+                },
+            })
+            .ToList();
 
-        this.playerBars.AddRange(newPlayerBars);
+        this.playerIdentityBars.AddRange(newPlayerBars);
 
-        foreach (PlayerBar playerBar in this.playerBars.ToList())
+        foreach (PlayerIdentityBar playerBar in this.playerIdentityBars.ToList())
         {
             if (!this.players.ContainsValue(playerBar.Player))
             {
                 playerBar.Parent = null;
-                _ = this.playerBars.Remove(playerBar);
+                _ = this.playerIdentityBars.Remove(playerBar);
             }
         }
 
-        for (int i = 0; i < this.playerBars.Count; i++)
+        var newPlayerBars2 = this.players.Values
+            .Where(player => this.playerStatsBars.All(pb => pb.Player != player) && player is not null)
+            .Select(player => new PlayerStatsBar(player)
+            {
+                Parent = this.playerStatsBox.ContentContainer,
+                Transform =
+                {
+                    RelativeSize = new Vector2(1f, 0.2f),
+                    Alignment = Alignment.Top,
+                    MaxSize = new Point(310, 110),
+                },
+            })
+            .ToList();
+
+        this.playerStatsBars.AddRange(newPlayerBars2);
+
+        foreach (PlayerStatsBar playerBar in this.playerStatsBars.ToList())
         {
-            this.playerBars[i].Transform.RelativeOffset = new Vector2(0.02f, 0.06f + (i * 0.15f));
+            if (!this.players.ContainsValue(playerBar.Player))
+            {
+                playerBar.Parent = null;
+                _ = this.playerStatsBars.Remove(playerBar);
+            }
         }
     }
 
@@ -429,7 +471,7 @@ internal class Game : Scene
     /// </summary>
     /// <param name="joinCode">The join code to join the game.</param>
     /// <param name="isSpectator">A value indicating whether the player is a spectator.</param>
-    public new class ChangeEventArgs(string? joinCode, bool isSpectator) : Scene.ChangeEventArgs
+    public class DisplayEventArgs(string? joinCode, bool isSpectator) : SceneDisplayEventArgs
     {
         /// <summary>
         /// Gets the join code to join the game.

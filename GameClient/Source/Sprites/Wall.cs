@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
 using MonoRivUI;
 
 namespace GameClient.Sprites;
@@ -10,86 +6,47 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a wall sprite.
 /// </summary>
-internal class Wall : Sprite
+internal abstract class Wall : Sprite
 {
-    private static readonly Dictionary<string, Texture2D> Textures = [];
-    private static Vector2 origin;
+    private static readonly ScalableTexture2D.Static StaticTexture;
 
+    private readonly ScalableTexture2D texture;
     private readonly GridComponent grid;
-    private float rotation;
-    private Rectangle destination;
-    private string textureName = default!;
-    private bool isUpdateNeeded = true;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Wall"/> class.
-    /// </summary>
-    /// <param name="logic">The wall logic.</param>
-    /// <param name="grid">The grid component.</param>
-    public Wall(GameLogic.Wall logic, GridComponent grid)
+    static Wall()
     {
-        this.grid = grid;
-        this.Logic = logic;
+        StaticTexture = new ScalableTexture2D.Static("Images/Game/wall.svg");
+    }
 
+    private Wall(GridComponent grid)
+    {
+        this.texture = new ScalableTexture2D(StaticTexture)
+        {
+            Transform =
+            {
+                Type = TransformType.Absolute,
+                Size = new Point(grid.TileSize, grid.TileSize),
+            },
+        };
+
+        this.grid = grid;
         this.grid.DrawDataChanged += (s, e) => this.UpdateDestination();
     }
 
     /// <summary>
-    /// Gets the wall logic.
+    /// Gets the wall position.
     /// </summary>
-    public GameLogic.Wall Logic { get; private set; }
-
-    /// <summary>
-    /// Updates the wall logic.
-    /// </summary>
-    /// <param name="logic">The new wall logic.</param>
-    public void UpdateLogic(GameLogic.Wall logic)
-    {
-        this.Logic = logic;
-        this.isUpdateNeeded = true;
-    }
+    protected abstract Point Position { get; }
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        if (this.isUpdateNeeded)
-        {
-            this.UpdateTextureName();
-            this.UpdateTextureRotation();
-            this.UpdateDestination();
-            this.isUpdateNeeded = false;
-        }
     }
 
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        Texture2D texture = Textures[this.textureName];
-        SpriteBatchController.SpriteBatch.Draw(
-            texture,
-            destinationRectangle: this.destination,
-            sourceRectangle: null,
-            color: Color.White,
-            rotation: this.rotation,
-            origin: origin,
-            effects: SpriteEffects.None,
-            layerDepth: 1.0f);
-    }
-
-    private void UpdateTextureName()
-    {
-        this.textureName = this.GetTextureName();
-        if (!Textures.ContainsKey(this.textureName))
-        {
-            var texture = ContentController.Content.Load<Texture2D>("Images/" + this.textureName);
-            Textures.Add(this.textureName, texture);
-            origin = texture.Bounds.Size.ToVector2() / 2f;
-        }
-    }
-
-    private void UpdateTextureRotation()
-    {
-        this.rotation = this.GetRotation();
+        this.texture.Draw(gameTime);
     }
 
     private void UpdateDestination()
@@ -99,58 +56,85 @@ internal class Wall : Sprite
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        this.destination = new Rectangle(
-            gridLeft + (this.Logic.X * tileSize) + drawOffset,
-            gridTop + (this.Logic.Y * tileSize) + drawOffset,
-            tileSize,
-            tileSize);
+        var location = new Point(
+             gridLeft + (this.Position.X * tileSize) + drawOffset,
+             gridTop + (this.Position.Y * tileSize) + drawOffset);
+
+        StaticTexture.Transform.Size = new Point(tileSize);
+
+        this.texture.Transform.Location = location;
+        this.texture.Transform.Size = new Point(tileSize);
     }
 
-    private string GetTextureName()
+    /// <summary>
+    /// Represents a border wall.
+    /// </summary>
+    /// <remarks>
+    /// A border wall is a wall that is placed on the border of the grid.
+    /// </remarks>
+    internal class Border : Wall
     {
-        GameLogic.Wall?[] neighbors = this.grid.Logic.GetWallNeighbors(this.Logic);
+        private int x;
+        private int y;
 
-        int nullCount = neighbors.Count(x => x is null);
-        bool[] isNull = neighbors.Select(x => x is null).ToArray();
-
-        return nullCount switch
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Border"/> class.
+        /// </summary>
+        /// <param name="x">The x position of the wall.
+        /// </param>
+        /// <param name="y">The y position of the wall.</param>
+        /// <param name="grid">The grid component.</param>
+        public Border(int x, int y, GridComponent grid)
+            : base(grid)
         {
-            0 => "Wall",
-            1 => "WallU",
-            2 when isNull[0] == isNull[2] => "WallUD",
-            2 => "WallUR",
-            3 => "WallURD",
-            4 => "WallURDL",
-            _ => "Wall",
-        };
+            this.x = x;
+            this.y = y;
+            this.texture.Opacity = 0.35f;
+
+            this.UpdateDestination();
+        }
+
+        /// <inheritdoc/>
+        protected override Point Position => new(this.x, this.y);
     }
 
-    private float GetRotation()
+    /// <summary>
+    /// Represents a solid wall.
+    /// </summary>
+    /// <remarks>
+    /// A solid wall is a wall that is placed on the grid.
+    /// </remarks>
+    internal class Solid : Wall
     {
-        GameLogic.Wall?[] neighbors = this.grid.Logic.GetWallNeighbors(this.Logic);
-
-        int nullCount = neighbors.Count(x => x is null);
-        bool[] isNull = neighbors.Select(x => x is null).ToArray();
-
-        return nullCount switch
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Solid"/> class.
+        /// </summary>
+        /// <param name="logic">The wall logic.</param>
+        /// <param name="grid">The grid component.</param>
+        public Solid(GameLogic.Wall logic, GridComponent grid)
+            : base(grid)
         {
-            0 => 0,
-            1 when isNull[0] => MathF.PI * 3 / 2,
-            1 when isNull[1] => 0,
-            1 when isNull[2] => MathF.PI / 2,
-            1 => MathF.PI,
-            2 when isNull[0] && isNull[2] => MathF.PI / 2,
-            2 when isNull[1] && isNull[3] => 0,
-            2 when isNull[0] && isNull[1] => MathF.PI * 3 / 2,
-            2 when isNull[1] && isNull[2] => 0,
-            2 when isNull[2] && isNull[3] => MathF.PI / 2,
-            2 => MathF.PI,
-            3 when !isNull[0] => 0,
-            3 when !isNull[1] => MathF.PI / 2,
-            3 when !isNull[2] => MathF.PI,
-            3 => MathF.PI * 3 / 2,
-            4 => 0,
-            _ => 0,
-        };
+            this.Logic = logic;
+            this.texture.Opacity = 1f;
+
+            this.UpdateDestination();
+        }
+
+        /// <summary>
+        /// Gets the wall logic.
+        /// </summary>
+        public GameLogic.Wall Logic { get; private set; }
+
+        /// <inheritdoc/>
+        protected override Point Position => new(this.Logic.X, this.Logic.Y);
+
+        /// <summary>
+        /// Updates the wall logic.
+        /// </summary>
+        /// <param name="logic">The new wall logic.</param>
+        public void UpdateLogic(GameLogic.Wall logic)
+        {
+            this.Logic = logic;
+        }
     }
 }

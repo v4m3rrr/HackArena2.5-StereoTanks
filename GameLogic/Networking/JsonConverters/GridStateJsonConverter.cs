@@ -48,7 +48,8 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
 
     private Grid.StatePayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
     {
-        var grid = JArray.Load(reader);
+        var jObject = JObject.Load(reader);
+        var grid = (JArray)jObject["grid"]!;
 
         var wallGrid = new Wall?[grid.Count, (grid[0] as JArray)!.Count];
         List<Tank> tanks = [];
@@ -88,11 +89,18 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
             }
         }
 
+        var zones = new List<Zone>();
+        foreach (var zone in jObject["zones"]!)
+        {
+            zones.Add(zone.ToObject<Zone>(serializer)!);
+        }
+
         return new Grid.StatePayload
         {
             WallGrid = wallGrid,
             Tanks = tanks,
             Bullets = bullets,
+            Zones = zones,
         };
     }
 
@@ -109,12 +117,14 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
 
         var tanks = jObject["tanks"]!.ToObject<List<Tank>>(serializer)!;
         var bullets = jObject["bullets"]!.ToObject<List<Bullet>>(serializer)!;
+        var zones = jObject["zones"]!.ToObject<List<Zone>>(serializer)!;
 
         return new Grid.StatePayload
         {
             WallGrid = wallGrid,
             Tanks = tanks,
             Bullets = bullets,
+            Zones = zones,
         };
     }
 
@@ -122,7 +132,13 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
     {
         var visibilityGrid = (this.context as SerializationContext.Player)!.VisibilityGrid!;
 
-        var grid = new JArray();
+        var jObject = new JObject
+        {
+            ["grid"] = new JArray(),
+            ["zones"] = JArray.FromObject(value!.Zones, serializer),
+        };
+
+        var grid = (JArray)jObject["grid"]!;
         for (int i = 0; i < value!.WallGrid.GetLength(0); i++)
         {
             var row = new JArray();
@@ -177,7 +193,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
             });
         }
 
-        grid.WriteTo(writer);
+        jObject.WriteTo(writer);
     }
 
     private void WriteSpectatorJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
@@ -187,6 +203,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
             ["bullets"] = JArray.FromObject(value!.Bullets, serializer),
             ["tanks"] = JArray.FromObject(value.Tanks, serializer),
             ["walls"] = JArray.FromObject(value.WallGrid.Cast<Wall?>().Where(w => w is not null), serializer),
+            ["zones"] = JArray.FromObject(value.Zones, serializer),
             ["gridDimensions"] = new JArray(value.WallGrid.GetLength(0), value.WallGrid.GetLength(1)),
         };
 

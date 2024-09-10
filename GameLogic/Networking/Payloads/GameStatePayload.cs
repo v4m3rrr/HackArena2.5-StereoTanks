@@ -40,6 +40,7 @@ public class GameStatePayload : IPacketPayload
             new GridStateJsonConverter(context),
             new BulletJsonConverter(context),
             new WallJsonConverter(context),
+            new ZoneJsonConverter(context),
             new PlayerJsonConverter(context)];
     }
 

@@ -4,39 +4,23 @@
          xsi:schemaLocation="http://tempuri.org/Language.xsd Language.xsd">
 
 	<Buttons>
-		<CreateGame>Créer</CreateGame>
 		<JoinGame>Rejoindre</JoinGame>
-		<HowToPlay>Comment jouer</HowToPlay>
 		<Settings>Paramètres</Settings>
 		<Authors>Auteurs</Authors>
 		<Exit>Quitter</Exit>
 		<Back>Retour</Back>
-		<Close>Fermer</Close>
-		<Save>Enregister</Save>
-		<MainMenu>Menu</MainMenu>
 	</Buttons>
 
 	<Labels>
 		<Language>Langue</Language>
 		<Resolution>Résolution</Resolution>
-		<ScreenType>Type d'écran</ScreenType>
-		<ScreenTypeWindowed>Fenêtré</ScreenTypeWindowed>
-		<ScreenTypeFullScreen>Plein écran</ScreenTypeFullScreen>
-		<ScreenTypeBorderless>Sans bordure</ScreenTypeBorderless>
+		<DisplayMode>Mode d'affichage</DisplayMode>
+		<DisplayModeWindowed>Fenêtré</DisplayModeWindowed>
+		<DisplayModeFullScreen>Plein écran</DisplayModeFullScreen>
+		<DisplayModeBorderless>Sans bordure</DisplayModeBorderless>
 	</Labels>
 
 	<Other>
-		<HowToPlay>Le Lorem Ipsum est bien plus qu'un simple texte de remplissage. Son origine remonte au 16ème siècle, lorsqu'un imprimeur anonyme assembla des sections de texte pour créer un livre spécimen, mettant en lumière différentes polices de caractères et éléments de mise en forme. Cette invention marqua le début d'une longue tradition dans le monde de l'imprimerie et du graphisme
-			Le Lorem Ipsum gagna en popularité au fil des siècles, et avec l'avènement de l'informatique, il trouva sa place dans des logiciels de PAO tels que QuarkXPress et Adobe InDesign. La transition vers le numérique permit une diffusion plus large du Lorem Ipsum, faisant de lui le texte de remplissage par défaut pour les professionnels de la communication visuelle
-			Son texte latin archaïque offre un charme intemporel, tout en remplissant sa fonction première : fournir un contenu neutre permettant aux graphistes et maquettistes de se concentrer sur l'aspect visuel de leurs créations. Aujourd'hui, le Lorem Ipsum demeure un outil indispensable, témoignant de l'histoire riche et fascinante de l'imprimerie et du design graphique.
-			Le Lorem Ipsum est bien plus qu'un simple texte de remplissage. Son origine remonte au 16ème siècle, lorsqu'un imprimeur anonyme assembla des sections de texte pour créer un livre spécimen, mettant en lumière différentes polices de caractères et éléments de mise en forme. Cette invention marqua le début d'une longue tradition dans le monde de l'imprimerie et du graphisme
-			Le Lorem Ipsum gagna en popularité au fil des siècles, et avec l'avènement de l'informatique, il trouva sa place dans des logiciels de PAO tels que QuarkXPress et Adobe InDesign. La transition vers le numérique permit une diffusion plus large du Lorem Ipsum, faisant de lui le texte de remplissage par défaut pour les professionnels de la communication visuelle
-			Son texte latin archaïque offre un charme intemporel, tout en remplissant sa fonction première : fournir un contenu neutre permettant aux graphistes et maquettistes de se concentrer sur l'aspect visuel de leurs créations. Aujourd'hui, le Lorem Ipsum demeure un outil indispensable, témoignant de l'histoire riche et fascinante de l'imprimerie et du design graphique.
-			Le Lorem Ipsum est bien plus qu'un simple texte de remplissage. Son origine remonte au 16ème siècle, lorsqu'un imprimeur anonyme assembla des sections de texte pour créer un livre spécimen, mettant en lumière différentes polices de caractères et éléments de mise en forme. Cette invention marqua le début d'une longue tradition dans le monde de l'imprimerie et du graphisme
-			Le Lorem Ipsum gagna en popularité au fil des siècles, et avec l'avènement de l'informatique, il trouva sa place dans des logiciels de PAO tels que QuarkXPress et Adobe InDesign. La transition vers le numérique permit une diffusion plus large du Lorem Ipsum, faisant de lui le texte de remplissage par défaut pour les professionnels de la communication visuelle
-			Son texte latin archaïque offre un charme intemporel, tout en remplissant sa fonction première : fournir un contenu neutre permettant aux graphistes et maquettistes de se concentrer sur l'aspect visuel de leurs créations. Aujourd'hui, le Lorem Ipsum demeure un outil indispensable, témoignant de l'histoire riche et fascinante de l'imprimerie et du design graphique.
-			Et voilà, c'est fini.</HowToPlay>
-		<YouAreSpectator>Vous êtes un spectateur</YouAreSpectator>
 	</Other>
 
 </Content>

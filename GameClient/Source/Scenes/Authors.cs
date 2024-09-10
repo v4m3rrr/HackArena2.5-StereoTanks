@@ -24,7 +24,7 @@ internal class Authors : Scene
     {
         var font = new ScalableFont("Content\\Fonts\\Tiny5-Regular.ttf", 26);
 
-        var backBtn = new Button<Frame>(new Frame())
+        var backButton = new Button<Container>(new Container())
         {
             Parent = this.BaseComponent,
             Transform =
@@ -33,9 +33,10 @@ internal class Authors : Scene
                 RelativeOffset = new Vector2(0.04f, -0.04f),
                 RelativeSize = new Vector2(0.12f, 0.07f),
             },
-        }.ApplyStyle(Styles.UI.ButtonStyle);
-        backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
-        backBtn.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
+        };
+
+        backButton.ApplyStyle(Styles.UI.BackButtonStyle);
+        backButton.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
 
         var container = new Container()
         {

@@ -37,9 +37,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
         CommandInitializer.Initialize();
     }
 
-    /// <inheritdoc/>
-    public event EventHandler<(int Before, int After)>? PriorityChanged;
-
     /// <summary>
     /// Gets the instance of the debug console.
     /// </summary>
@@ -49,7 +46,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
     public int Priority => int.MaxValue;
 
     /// <inheritdoc/>
-    public IEnumerable<IReadOnlyComponent> OverlayComponents => [this.baseFrame];
+    public IEnumerable<IComponent> OverlayComponents => [this.baseFrame];
 
     /// <summary>
     /// Clears all messages from the debug console.
@@ -162,6 +159,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 Value = "DEBUG CONSOLE",
                 TextAlignment = Alignment.Left,
                 TextShrink = TextShrinkMode.HeightAndWidth,
+                Spacing = 5,
                 Transform =
                 {
                     Alignment = Alignment.TopLeft,
@@ -201,57 +199,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
             button.Clicked += (s, e) => this.Close();
             button.HoverEntered += (s, e) => e.Color = Color.Red;
             button.HoverExited += (s, e) => e.Color = Color.DarkRed;
-        }
-
-        // Messages
-        {
-            var messagesFrame = new Frame(new Color(60, 60, 60, 255), thickness: 2)
-            {
-                Parent = this.baseFrame.InnerContainer,
-                Transform =
-                {
-                    Alignment = Alignment.Top,
-                    RelativeSize = new Vector2(0.995f, 0.885f),
-                    RelativeOffset = new Vector2(0.0f, 0.05f),
-                },
-            };
-
-            var background = new SolidColor(Color.Gray * 0.15f)
-            {
-                Parent = messagesFrame.InnerContainer,
-                Transform = { IgnoreParentPadding = true },
-            };
-
-            var messages = this.messages = new ListBox()
-            {
-                Parent = messagesFrame.InnerContainer,
-                Orientation = Orientation.Vertical,
-                Spacing = 8,
-                IsScrollable = true,
-                DrawContentOnMargin = true,
-                ContentContainerRelativeMargin = new Vector4(0.005f, 0.02f, 0.005f, 0.02f),
-                ScrollBar =
-                {
-                    FrameColor = Color.Gray,
-                    ThumbColor = Color.DarkGray,
-                    RelativeSize = 0.015f,
-                },
-            };
-
-            // After adding a new message, scroll to the bottom
-            // if the scroll bar is at the bottom or has just appeared
-            float? scrollPositionBeforeDequeue = null;
-            messages.ComponentsDequeuing += (s, e) =>
-            {
-                scrollPositionBeforeDequeue = messages.IsScrollBarNeeded ? messages.ScrollBar?.Position : null;
-            };
-            messages.ComponentsDequeued += (s, e) =>
-            {
-                if (scrollPositionBeforeDequeue is null or 1.0f && messages.IsScrollBarNeeded)
-                {
-                    messages.ScrollBar?.ScrollTo(1.0f);
-                }
-            };
         }
 
         // Text input
@@ -359,11 +306,39 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 {
                     SendMessage($"Did you mean '{command.FullName}'?", Color.Orange);
                 }
+            };
+        }
 
-                if (this.messages.IsScrollBarNeeded)
+        // Messages
+        {
+            var messagesFrame = new Frame(new Color(60, 60, 60, 255), thickness: 2)
+            {
+                Parent = this.baseFrame.InnerContainer,
+                Transform =
                 {
-                    this.messages.ScrollBar?.ScrollTo(1.0f);
-                }
+                    Alignment = Alignment.Top,
+                    RelativeSize = new Vector2(0.995f, 0.885f),
+                    RelativeOffset = new Vector2(0.0f, 0.05f),
+                },
+            };
+
+            var background = new SolidColor(Color.Gray * 0.15f)
+            {
+                Parent = messagesFrame.InnerContainer,
+                Transform = { IgnoreParentPadding = true },
+            };
+
+            var messages = this.messages = new ScrollableListBox(new SolidColor(Color.Red))
+            {
+                Parent = messagesFrame.InnerContainer,
+                Orientation = Orientation.Vertical,
+                Spacing = 8,
+                Transform =
+                {
+                    RelativePadding = new Vector4(0.005f, 0.02f, 0.005f + 0.02f, 0.02f),
+                },
+                DrawContentOnParentPadding = true,
+                ShowScrollBarIfNotNeeded = false,
             };
         }
 

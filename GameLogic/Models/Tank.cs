@@ -1,4 +1,6 @@
-﻿namespace GameLogic;
+﻿using System.Diagnostics;
+
+namespace GameLogic;
 
 /// <summary>
 /// Represents a tank.
@@ -221,12 +223,28 @@ public class Tank : IEquatable<Tank>
     /// <param name="damage">The amount of damage to take.</param>
     internal void TakeDamage(int damage)
     {
+        Debug.Assert(damage >= 0, "Damage cannot be negative.");
+
         this.Health -= damage;
 
         if (this.Health <= 0)
         {
             this.SetPosition(-1, -1);
             this.Died?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Heals the tank by the specified amount of points.
+    /// </summary>
+    /// <param name="points">The amount of points to heal.</param>
+    internal void Heal(int points)
+    {
+        Debug.Assert(points >= 0, "Healing points cannot be negative.");
+
+        if (this.Health < 100)
+        {
+            this.Health += points;
         }
     }
 
