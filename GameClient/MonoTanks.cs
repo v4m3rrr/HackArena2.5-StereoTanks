@@ -38,6 +38,15 @@ public class MonoTanks : Game
     }
 
     /// <summary>
+    /// Gets the theme color of the game.
+    /// </summary>
+#if DEBUG
+    public static Color ThemeColor { get; } = new(255, 155, 26);
+#else
+    public static Color ThemeColor { get; } = new(0, 166, 255);
+#endif
+
+    /// <summary>
     /// Gets the minimum window size for the game.
     /// </summary>
     public static Point MinWindowSize => new(640, 480);
@@ -124,6 +133,9 @@ public class MonoTanks : Game
         ScreenController.Change(1366, 768, ScreenType.Windowed);
         ScreenController.ApplyChanges();
 
+        var spriteBatch = new SpriteBatch(this.GraphicsDevice);
+        SpriteBatchController.Initialize(spriteBatch);
+
         var dc = new DebugConsole();
         dc.Initialize();
         Scene.AddScene(dc);
@@ -173,8 +185,6 @@ public class MonoTanks : Game
     /// </summary>
     protected override void LoadContent()
     {
-        var spriteBatch = new SpriteBatch(this.GraphicsDevice);
-        SpriteBatchController.Initialize(spriteBatch);
     }
 
     /// <summary>

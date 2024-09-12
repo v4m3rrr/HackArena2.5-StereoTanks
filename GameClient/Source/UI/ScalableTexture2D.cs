@@ -46,11 +46,16 @@ internal class ScalableTexture2D : TextureComponent
     /// <param name="texture">
     /// The static texture that will be used to create a new scalable texture.
     /// </param>
+    /// <remarks>
+    /// This constructor also sets the <see cref="Transform.Ratio"/>
+    /// to the ratio of the image.
+    /// </remarks>
     public ScalableTexture2D(Static texture)
     {
         this.AssetPath = texture.AssetPath;
         this.Texture = texture.Texture;
         this.isLoaded = true;
+        this.Transform.Ratio = texture.Transform.Ratio;
         texture.TextureChanged += (s, e) => this.Texture = texture.Texture;
     }
 
@@ -62,7 +67,11 @@ internal class ScalableTexture2D : TextureComponent
     /// <summary>
     /// Loads the texture from the SVG asset.
     /// </summary>
-    public virtual void Load()
+    /// <param name="overrideRatio">
+    /// A value indicating whether <see cref="Transform.Ratio"/>
+    /// should be overriden by the SVG ratio.
+    /// </param>
+    public virtual void Load(bool overrideRatio = true)
     {
         var content = ContentController.Content;
 
@@ -79,6 +88,11 @@ internal class ScalableTexture2D : TextureComponent
         var svgSize = svg.Picture!.CullRect;
         float scaleX = width / svgSize.Width;
         float scaleY = height / svgSize.Height;
+
+        if (overrideRatio)
+        {
+            this.Transform.Ratio = (svgSize.Width / svgSize.Height).ToRatio();
+        }
 
         if (this.Transform.Ratio == new Ratio(1, 1))
         {
@@ -136,10 +150,8 @@ internal class ScalableTexture2D : TextureComponent
         /// </summary>
         public event EventHandler? TextureChanged;
 
-        /// <summary>
-        /// Loads the texture from the SVG asset.
-        /// </summary>
-        public override void Load()
+        /// <inheritdoc/>
+        public override void Load(bool overrideRatio = true)
         {
             base.Load();
             this.TextureChanged?.Invoke(this, EventArgs.Empty);
