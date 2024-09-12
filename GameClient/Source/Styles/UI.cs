@@ -17,6 +17,7 @@ internal static class UI
         Action = (button) =>
         {
             var color = ButtonStyle!.GetProperty<Color>("UnhoveredColor")!;
+            var offsetTextFromTexture = 60;
 
             var text = new LocalizedText(ButtonStyle!.GetPropertyOfType<ScalableFont>()!, color)
             {
@@ -32,7 +33,7 @@ internal static class UI
                 if (!isRecalculating)
                 {
                     isRecalculating = true;
-                    text.Transform.SetRelativeOffsetFromAbsolute(x: 60);
+                    text.Transform.SetRelativeOffsetFromAbsolute(x: offsetTextFromTexture);
                     isRecalculating = false;
                 }
             };
@@ -47,6 +48,25 @@ internal static class UI
                     RelativeSize = new Vector2(0.7f),
                     Alignment = Alignment.Left,
                 },
+            };
+
+            void AdjustButtonSize()
+            {
+                var newWidth = text.Dimensions.X + offsetTextFromTexture + text.Font.Spacing;
+                button.Transform.SetRelativeSizeFromAbsolute(x: newWidth);
+            }
+
+            text.ValueChanged += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(texture.AssetPath))
+                {
+                    AdjustButtonSize();
+                }
+            };
+
+            texture.Transform.SizeChanged += (s, e) =>
+            {
+                AdjustButtonSize();
             };
         },
         CustomProperties =
