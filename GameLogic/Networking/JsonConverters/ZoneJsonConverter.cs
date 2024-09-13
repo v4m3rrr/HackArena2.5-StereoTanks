@@ -53,7 +53,6 @@ internal class ZoneJsonConverter(SerializationContext context) : JsonConverter<Z
             "beingCaptured" => token.ToObject<ZoneStatus.BeingCaptured>(serializer)!,
             "captured" => token.ToObject<ZoneStatus.Captured>(serializer)!,
             "beingContested" => new ZoneStatus.BeingContested(
-                token["players"]!.ToObject<IEnumerable<Player>>(serializer)!,
                 token["capturedBy"]?.Type == JTokenType.Null ? null : token["capturedBy"]?.ToObject<Player>(serializer)),
             "beingRetaken" => token.ToObject<ZoneStatus.BeingRetaken>(serializer)!,
             "neutral" => token.ToObject<ZoneStatus.Neutral>(serializer)!,

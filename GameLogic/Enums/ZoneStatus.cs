@@ -32,9 +32,8 @@ public record class ZoneStatus
     /// <summary>
     /// Represents a zone that is being contested.
     /// </summary>
-    /// <param name="Players">The players that are contesting the zone.</param>
     /// <param name="CapturedBy">The player that captured the zone, if the zone was captured.</param>
-    public record class BeingContested(IEnumerable<Player> Players, Player? CapturedBy) : ZoneStatus;
+    public record class BeingContested(Player? CapturedBy) : ZoneStatus;
 
     /// <summary>
     /// Represents a zone that is being retaken.
