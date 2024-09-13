@@ -254,7 +254,7 @@ internal static class CommandInitializer
     {
         GameSettings.ServerAddress = ip;
         GameSettings.ServerPort = port;
-        var args = new Scenes.Game.DisplayEventArgs(joinCode, isSpectator: true);
+        var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: true);
         Scene.Change<Scenes.Game>(args);
     }
 
@@ -266,7 +266,7 @@ internal static class CommandInitializer
     {
         GameSettings.ServerAddress = ip;
         GameSettings.ServerPort = port;
-        var args = new Scenes.Game.DisplayEventArgs(joinCode, isSpectator: false);
+        var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: false);
         Scene.Change<Scenes.Game>(args);
     }
 #endif

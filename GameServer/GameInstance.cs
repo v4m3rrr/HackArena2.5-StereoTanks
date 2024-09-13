@@ -39,6 +39,8 @@ internal class GameInstance
     private readonly int broadcastInterval;
     private readonly bool eagerBroadcast;
 
+    private DateTime? startTime;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
@@ -79,6 +81,8 @@ internal class GameInstance
 
         _ = this.Grid.GenerateTank(player);
         this.players.Add(socket, player);
+
+        this.startTime ??= DateTime.UtcNow;
     }
 
     /// <summary>
@@ -439,6 +443,8 @@ internal class GameInstance
 
     private async Task BroadcastGameState()
     {
+        float time = (float)(DateTime.UtcNow - (this.startTime ?? DateTime.UtcNow)).TotalMilliseconds;
+
         byte[] buffer;
         foreach (var client in this.players.Keys.Concat(this.spectators).ToList())
         {
@@ -446,12 +452,12 @@ internal class GameInstance
 
             if (this.IsSpecator(client))
             {
-                packet = new GameStatePayload([.. this.players.Values], this.Grid.ToStatePayload());
+                packet = new GameStatePayload(time, [.. this.players.Values], this.Grid.ToStatePayload());
             }
             else
             {
                 var player = this.players[client];
-                packet = new GameStatePayload.ForPlayer(player, [.. this.players.Values], this.Grid.ToStatePayload());
+                packet = new GameStatePayload.ForPlayer(time, player, [.. this.players.Values], this.Grid.ToStatePayload());
             }
 
             SerializationContext context = this.IsSpecator(client)

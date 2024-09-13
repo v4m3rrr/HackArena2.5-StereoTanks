@@ -3,7 +3,7 @@ using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
-namespace GameClient.PlayerBarComponents;
+namespace GameClient.GameSceneComponents.PlayerBarComponents;
 
 /// <summary>
 /// Represents the bullet count of a player displayed on a player bar.

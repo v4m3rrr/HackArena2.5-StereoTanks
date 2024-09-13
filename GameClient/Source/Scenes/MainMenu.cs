@@ -10,12 +10,9 @@ namespace GameClient.Scenes;
 /// </summary>
 internal class MainMenu : Scene
 {
-    public static ScalableTexture2D Effect { get; private set; } = default!;
-
-    private ScalableTexture2D element = default!;
-
     private Text title = default!;
     private ScalableTexture2D logo = default!;
+    private ScalableTexture2D element = default!;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainMenu"/> class.
@@ -24,6 +21,11 @@ internal class MainMenu : Scene
         : base(Color.Black)
     {
     }
+
+    /// <summary>
+    /// Gets the background texture.
+    /// </summary>
+    public static ScalableTexture2D Effect { get; private set; } = default!;
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -153,7 +155,7 @@ internal class MainMenu : Scene
         quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
         quickJoinPlayerBtn.Clicked += (s, e) =>
         {
-            var args = new Game.DisplayEventArgs(joinCode: null, isSpectator: false);
+            var args = new GameDisplayEventArgs(joinCode: null, isSpectator: false);
             Change<Game>(args);
         };
         _ = new Text(quickJoinFont, Color.White)
@@ -195,7 +197,7 @@ internal class MainMenu : Scene
         quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
         quickJoinSpectatorBtn.Clicked += (s, e) =>
         {
-            var args = new Game.DisplayEventArgs(joinCode: null, isSpectator: true);
+            var args = new GameDisplayEventArgs(joinCode: null, isSpectator: true);
             Change<Game>(args);
         };
         _ = new Text(quickJoinFont, Color.White)

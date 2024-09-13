@@ -1,7 +1,7 @@
 ﻿using GameLogic;
 using MonoRivUI;
 
-namespace GameClient;
+namespace GameClient.GameSceneComponents;
 
 /// <summary>
 /// Represents a player bar component.

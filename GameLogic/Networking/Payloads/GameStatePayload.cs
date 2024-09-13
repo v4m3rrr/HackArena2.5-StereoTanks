@@ -6,27 +6,29 @@ namespace GameLogic.Networking;
 /// <summary>
 /// Represents a grid state payload.
 /// </summary>
-public class GameStatePayload : IPacketPayload
+/// <param name="time">The time of the game.</param>
+/// <param name="players">The list of players.</param>
+/// <param name="gridState">The grid state of the game.</param>
+public class GameStatePayload(float time, List<Player> players, Grid.StatePayload gridState) : IPacketPayload
 {
-    public GameStatePayload(List<Player> players, Grid.StatePayload gridState)
-    {
-        this.Players = players;
-        this.GridState = gridState;
-    }
-
     /// <inheritdoc/>
     public PacketType Type => PacketType.GameState;
 
     /// <summary>
+    /// Gets the time of the game.
+    /// </summary>
+    public float Time { get; init; } = time;
+
+    /// <summary>
     /// Gets the players.
     /// </summary>
-    public List<Player> Players { get; init; }
+    public List<Player> Players { get; init; } = players;
 
     /// <summary>
     /// Gets the grid state.
     /// </summary>
     [JsonProperty("grid")]
-    public Grid.StatePayload GridState { get; init; }
+    public Grid.StatePayload GridState { get; init; } = gridState;
 
     /// <summary>
     /// Gets the converters to use during serialization.
@@ -52,26 +54,28 @@ public class GameStatePayload : IPacketPayload
         /// <summary>
         /// Initializes a new instance of the <see cref="ForPlayer"/> class.
         /// </summary>
+        /// <param name="time">The time of the game.</param>
         /// <param name="player">The player the payload is for.</param>
         /// <param name="players">The list of all players.</param>
         /// <param name="gridState">The grid state of the game.</param>
-        public ForPlayer(Player player, List<Player> players, Grid.StatePayload gridState)
-            : base(players, gridState)
+        public ForPlayer(float time, Player player, List<Player> players, Grid.StatePayload gridState)
+            : base(time, players, gridState)
         {
             this.PlayerId = player.Id;
             this.RegenProgress = player.Tank.RegenProgress;
-            this.VisibilityGrid = player.VisibilityGrid;
+            this.VisibilityGrid = player.VisibilityGrid!;
         }
 
         [JsonConstructor]
         [SuppressMessage("CodeQuality", "IDE0051", Justification = "Used by Newtonsoft.Json.")]
         private ForPlayer(
+            float time,
             List<Player> players,
             Grid.StatePayload gridState,
             string playerId,
             float? regenProgress,
             int[,] visibilityGrid)
-            : base(players, gridState)
+            : base(time, players, gridState)
         {
             this.PlayerId = playerId;
             this.RegenProgress = regenProgress;

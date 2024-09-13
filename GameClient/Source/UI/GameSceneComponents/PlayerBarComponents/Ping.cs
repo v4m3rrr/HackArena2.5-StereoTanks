@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
-namespace GameClient.PlayerBarComponents;
+namespace GameClient.GameSceneComponents.PlayerBarComponents;
 
 /// <summary>
 /// Represents a player's ping displayed on a player bar.
@@ -25,6 +25,7 @@ internal class Ping : PlayerBarComponent
             Parent = this,
             Value = $"-",
             TextAlignment = Alignment.Left,
+            Spacing = 3,
         };
     }
 

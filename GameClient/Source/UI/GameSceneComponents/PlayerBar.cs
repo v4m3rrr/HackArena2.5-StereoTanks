@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
-namespace GameClient;
+namespace GameClient.GameSceneComponents;
 
 /// <summary>
 /// Represents a player bar.

@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
-namespace GameClient.PlayerBarComponents;
+namespace GameClient.GameSceneComponents.PlayerBarComponents;
 
 /// <summary>
 /// Represents a player's nickname displayed on a player bar.
