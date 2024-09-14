@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 /// <summary>
 /// Represents a tank json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class TankJsonConverter(SerializationContext context) : JsonConverter<Tank>
+internal class TankJsonConverter(GameSerializationContext context) : JsonConverter<Tank>
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
     public override Tank? ReadJson(JsonReader reader, Type objectType, Tank? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
@@ -25,13 +23,12 @@ internal class TankJsonConverter(SerializationContext context) : JsonConverter<T
         Turret turret = jsonObject["turret"]!.ToObject<Turret>(serializer)!;
 
         Tank? tank = null;
-        if (this.context is SerializationContext.Spectator || this.context.IsPlayerWithId(ownerId))
+        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(ownerId))
         {
             var health = jsonObject["health"]!.Value<int?>();
-            var regenProgress = jsonObject["regenProgress"]!.Value<float?>();
-            tank = new Tank(x, y, ownerId, health ?? 0, regenProgress, direction, turret);
+            tank = new Tank(x, y, ownerId, health ?? 0, direction, turret);
         }
-        else if (this.context is SerializationContext.Player)
+        else if (context is GameSerializationContext.Player)
         {
             tank = new Tank(x, y, ownerId, direction, turret);
         }
@@ -49,16 +46,15 @@ internal class TankJsonConverter(SerializationContext context) : JsonConverter<T
             ["turret"] = JObject.FromObject(value.Turret, serializer),
         };
 
-        if (this.context is SerializationContext.Spectator)
+        if (context is GameSerializationContext.Spectator)
         {
             jObject["x"] = value.X;
             jObject["y"] = value.Y;
         }
 
-        if (this.context is SerializationContext.Spectator || this.context.IsPlayerWithId(value.Owner.Id))
+        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Owner.Id))
         {
             jObject["health"] = value.Health;
-            jObject["regenProgress"] = value.RegenProgress;
         }
 
         jObject.WriteTo(writer);

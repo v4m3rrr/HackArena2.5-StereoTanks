@@ -8,17 +8,17 @@ public enum PacketType
     /// <summary>
     /// An unknown packet type.
     /// </summary>
-    Unknown,
+    Unknown = 0,
 
     /// <summary>
     /// The ping packet type.
     /// </summary>
-    Ping,
+    Ping = 1,
 
     /// <summary>
     /// The pong packet type.
     /// </summary>
-    Pong,
+    Pong = 2,
 
     /// <summary>
     /// The tank movement packet type.
@@ -26,7 +26,7 @@ public enum PacketType
     /// <remarks>
     /// This packet is used to move a tank.
     /// </remarks>
-    TankMovement,
+    TankMovement = 11,
 
     /// <summary>
     /// The tank rotation packet type.
@@ -34,7 +34,7 @@ public enum PacketType
     /// <remarks>
     /// This packet is used to rotate a tank and/or its turret.
     /// </remarks>
-    TankRotation,
+    TankRotation = 12,
 
     /// <summary>
     /// The tank shoot packet type.
@@ -42,15 +42,7 @@ public enum PacketType
     /// <remarks>
     /// This packet is used to shoot from a tank.
     /// </remarks>
-    TankShoot,
-
-    /// <summary>
-    /// The game data packet type.
-    /// </summary>
-    /// <remarks>
-    /// This packet is used to send game data like id, join code, etc.
-    /// </remarks>
-    GameData,
+    TankShoot = 13,
 
     /// <summary>
     /// The game state packet type.
@@ -58,9 +50,27 @@ public enum PacketType
     /// <remarks>
     /// This packet is used to send the game state.
     /// </remarks>
-    GameState,
+    GameState = 21,
+
+    /// <summary>
+    /// The lobby data packet type.
+    /// </summary>
+    /// <remarks>
+    /// This packet is used to send the lobby data.
+    /// </remarks>
+    LobbyData = 31,
+
+    /// <summary>
+    /// The lobby deleted packet type.
+    /// </summary>
+    /// <remarks>
+    /// This packet is used to notify that the lobby was deleted.
+    /// </remarks>
+    LobbyDeleted = 32,
 
 #if DEBUG
+    /* Debug packets should havea value between 91 and 99. */
+
     /// <summary>
     /// The shoot all packet type.
     /// </summary>
@@ -68,6 +78,6 @@ public enum PacketType
     /// This packet is used to shoot from all tanks.
     /// It is only for debugging purposes.
     /// </remarks>
-    ShootAll,
+    ShootAll = 91,
 #endif
 }

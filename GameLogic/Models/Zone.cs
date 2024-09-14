@@ -1,4 +1,5 @@
-﻿using static GameLogic.ZoneStatus;
+﻿using System.Diagnostics;
+using static GameLogic.ZoneStatus;
 
 namespace GameLogic;
 
@@ -12,7 +13,7 @@ public class Zone : IEquatable<Zone>
     /// </summary>
     public const int TicksToCapture = 100;
 
-    private int remainingTicksToCapture = TicksToCapture;
+    private readonly Dictionary<Player, int> remainingTicksToCapture = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Zone"/> class.
@@ -148,15 +149,16 @@ public class Zone : IEquatable<Zone>
     internal void UpdateCapturingStatus(IEnumerable<Tank> tanks)
     {
         var tanksInZone = tanks.Where(this.ContainsTank).ToList();
-        var tanksInZoneCount = tanksInZone.Count();
+        var tanksOutsideZone = tanks.Except(tanksInZone).ToList();
+        var tanksInZoneCount = tanksInZone.Count;
 
         switch (this.Status)
         {
             case Neutral:
                 this.HandleNeutralState(tanksInZone);
                 break;
-            case BeingCaptured beingCaptured:
-                this.HandleBeingCapturedState(beingCaptured, tanksInZone, tanksInZoneCount);
+            case BeingCaptured:
+                this.HandleBeingCapturedState(tanksInZone, tanksInZoneCount);
                 break;
             case Captured captured:
                 this.HandleCapturedState(captured, tanksInZone, tanksInZoneCount);
@@ -170,6 +172,55 @@ public class Zone : IEquatable<Zone>
             default:
                 throw new InvalidOperationException($"Unknown status type: {this.Status.GetType().Name}");
         }
+
+        foreach (var player in tanksOutsideZone.Select(t => t.Owner))
+        {
+            if (this.remainingTicksToCapture.ContainsKey(player)
+                && this.IncrementRemainingTicksToCapture(player) == TicksToCapture)
+            {
+                this.RemovePlayerFromRemainingTicksToCapture(player);
+            }
+        }
+
+        if (this.Status is BeingCaptured beingCaptured)
+        {
+            if (this.remainingTicksToCapture.Count == 0)
+            {
+                this.Status = new Neutral();
+            }
+            else
+            {
+                if (tanksInZone.Contains(beingCaptured.Player.Tank))
+                {
+                    this.Status = new BeingCaptured(beingCaptured.Player, this.GetRemainingTicksToCapture(beingCaptured.Player));
+                }
+                else
+                {
+                    var playerClosestToCapture = this.remainingTicksToCapture.OrderBy(kvp => kvp.Value).First();
+                    this.Status = new BeingCaptured(playerClosestToCapture.Key, playerClosestToCapture.Value);
+                }
+            }
+        }
+
+        if (this.Status is BeingRetaken beingRetaken1)
+        {
+            if (this.remainingTicksToCapture.Count == 0)
+            {
+                this.Status = new Captured(beingRetaken1.CapturedBy);
+            }
+            else
+            {
+                if (tanksInZone.Contains(beingRetaken1.RetakenBy.Tank))
+                {
+                    this.Status = new BeingRetaken(beingRetaken1.CapturedBy, beingRetaken1.RetakenBy, this.GetRemainingTicksToCapture(beingRetaken1.RetakenBy));
+                }
+                else
+                {
+                    var playerClosestToCapture = this.remainingTicksToCapture.Where(x => x.Key != beingRetaken1.CapturedBy).OrderBy(kvp => kvp.Value).First();
+                    this.Status = new BeingRetaken(beingRetaken1.CapturedBy, playerClosestToCapture.Key, playerClosestToCapture.Value);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -180,52 +231,38 @@ public class Zone : IEquatable<Zone>
     {
         if (tanksInZone.Count == 1)
         {
-            // A single tank starts capturing the neutral zone
             var tank = tanksInZone.First();
-            this.Status = new BeingCaptured(tank.Owner, this.remainingTicksToCapture);
+            this.remainingTicksToCapture[tank.Owner] = TicksToCapture;
+            this.Status = new BeingCaptured(tank.Owner, TicksToCapture);
+        }
+        else if (tanksInZone.Count >= 2)
+        {
+            this.Status = new BeingContested(null);
         }
     }
 
     /// <summary>
     /// Handles the logic when the zone is being captured by a player.
     /// </summary>
-    private void HandleBeingCapturedState(BeingCaptured beingCaptured, List<Tank> tanksInZone, int tanksInZoneCount)
+    private void HandleBeingCapturedState(List<Tank> tanksInZone, int tanksInZoneCount)
     {
-        if (tanksInZoneCount == 0)
-        {
-            // If no tanks remain in the zone, the capturing process reverses
-            beingCaptured.RemainingTicks++;
-
-            if (beingCaptured.RemainingTicks >= TicksToCapture)
-            {
-                // Zone goes back to neutral if enough time passes without a tank
-                this.Status = new Neutral();
-            }
-        }
-        else if (tanksInZoneCount == 1)
+        if (tanksInZoneCount == 1)
         {
             var tank = tanksInZone.First();
-            if (tank == beingCaptured.Player.Tank)
-            {
-                // Continue capturing if the same player's tank remains in the zone
-                beingCaptured.RemainingTicks--;
+            var remainingTicks = this.DecrementRemainingTicksToCapture(tank.Owner);
 
-                if (beingCaptured.RemainingTicks <= 0)
-                {
-                    // Capture is complete
-                    this.Status = new Captured(beingCaptured.Player);
-                }
-            }
-            else
+            if (remainingTicks == 0)
             {
-                // Another tank is now capturing the zone
-                this.Status = new BeingCaptured(tank.Owner, this.remainingTicksToCapture);
+                this.Status = new Captured(tank.Owner);
+                this.remainingTicksToCapture.Clear();
+                return;
             }
+
+            this.Status = new BeingCaptured(tank.Owner, remainingTicks);
         }
-        else
+        else if (tanksInZoneCount >= 2)
         {
-            // Multiple tanks in the zone, the zone is contested
-            this.Status = new BeingContested(tanksInZone.Select(t => t.Owner), null);
+            this.Status = new BeingContested(null);
         }
     }
 
@@ -238,7 +275,6 @@ public class Zone : IEquatable<Zone>
 
         if (tanksInZoneCount == 0)
         {
-            // Award points to the owner if no one is contesting
             captured.Player.Score++;
         }
         else if (tanksInZoneCount == 1)
@@ -246,20 +282,22 @@ public class Zone : IEquatable<Zone>
             var tank = tanksInZone.First();
             if (ownerInZone)
             {
-                // The owner is still in the zone, continue awarding points and heal
                 captured.Player.Score++;
-                captured.Player.Tank.Heal(1);
+
+                if (tank.Health < 80)
+                {
+                    captured.Player.Tank.Heal(1);
+                }
             }
             else
             {
-                // Another player tries to retake the zone
-                this.Status = new BeingRetaken(captured.Player, tank.Owner, this.remainingTicksToCapture);
+                var remainingTicks = this.remainingTicksToCapture[tank.Owner] = TicksToCapture;
+                this.Status = new BeingRetaken(captured.Player, tank.Owner, remainingTicks);
             }
         }
         else
         {
-            // Multiple tanks are contesting the captured zone
-            this.Status = new BeingContested(tanksInZone.Select(t => t.Owner), captured.Player);
+            this.Status = new BeingContested(captured.Player);
         }
     }
 
@@ -270,7 +308,6 @@ public class Zone : IEquatable<Zone>
     {
         if (tanksInZoneCount == 0)
         {
-            // If no tanks remain, return the zone to neutral or back to the previous owner
             this.Status = beingContested.CapturedBy is null
                 ? new Neutral()
                 : new Captured(beingContested.CapturedBy);
@@ -278,11 +315,12 @@ public class Zone : IEquatable<Zone>
         else if (tanksInZoneCount == 1)
         {
             var tank = tanksInZone.First();
+            var remainingTicks = this.GetRemainingTicksToCapture(tank.Owner);
             this.Status = tank.Owner == beingContested.CapturedBy
                 ? new Captured(beingContested.CapturedBy)
                 : beingContested.CapturedBy is null
-                    ? new BeingCaptured(tank.Owner, this.remainingTicksToCapture)
-                    : new BeingRetaken(beingContested.CapturedBy, tank.Owner, this.remainingTicksToCapture);
+                    ? new BeingCaptured(tank.Owner, remainingTicks)
+                    : new BeingRetaken(beingContested.CapturedBy, tank.Owner, remainingTicks);
         }
     }
 
@@ -291,38 +329,49 @@ public class Zone : IEquatable<Zone>
     /// </summary>
     private void HandleBeingRetakenState(BeingRetaken beingRetaken, List<Tank> tanksInZone, int tanksInZoneCount)
     {
-        beingRetaken.CapturedBy.Score++;
-
-        if (tanksInZoneCount == 0)
-        {
-            // If no tanks remain, reverse the retake process
-            beingRetaken.RemainingTicks++;
-
-            if (beingRetaken.RemainingTicks >= TicksToCapture)
-            {
-                // Retake complete, the zone now belongs to the new player
-                this.Status = new Captured(beingRetaken.CapturedBy);
-            }
-        }
-        else if (tanksInZoneCount == 1)
+        if (tanksInZoneCount == 1)
         {
             var tank = tanksInZone.First();
             if (tank == beingRetaken.RetakenBy.Tank)
             {
-                // Continue the retake if the retaking player's tank is still in the zone
-                beingRetaken.RemainingTicks--;
-
-                if (beingRetaken.RemainingTicks <= 0)
+                var remainingTicks = this.DecrementRemainingTicksToCapture(beingRetaken.RetakenBy);
+                if (remainingTicks == 0)
                 {
-                    // Retake is complete
                     this.Status = new Captured(beingRetaken.RetakenBy);
+                    this.remainingTicksToCapture.Clear();
+                }
+                else
+                {
+                    this.Status = new BeingRetaken(beingRetaken.CapturedBy, beingRetaken.RetakenBy, remainingTicks);
                 }
             }
         }
-        else
+        else if (tanksInZoneCount >= 2)
         {
-            // The zone is contested during the retaking process
-            this.Status = new BeingContested(tanksInZone.Select(t => t.Owner), beingRetaken.CapturedBy);
+            this.Status = new BeingContested(beingRetaken.CapturedBy);
         }
+    }
+
+    private int GetRemainingTicksToCapture(Player player)
+    {
+        return this.remainingTicksToCapture.GetValueOrDefault(player, TicksToCapture);
+    }
+
+    private int IncrementRemainingTicksToCapture(Player player)
+    {
+        return ++this.remainingTicksToCapture[player];
+    }
+
+    private int DecrementRemainingTicksToCapture(Player player)
+    {
+        var remainingTicks = this.remainingTicksToCapture.GetValueOrDefault(player, TicksToCapture);
+        this.remainingTicksToCapture[player] = --remainingTicks;
+        return remainingTicks;
+
+    }
+
+    private void RemovePlayerFromRemainingTicksToCapture(Player player)
+    {
+        _ = this.remainingTicksToCapture.Remove(player);
     }
 }

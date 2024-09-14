@@ -99,7 +99,6 @@ while (true)
     addClientMethod(webSocket);
 
     _ = Task.Run(() => game.HandleConnection(webSocket, clientIP));
-    _ = Task.Run(() => game.SendGameData(webSocket));
     _ = Task.Run(() => game.PingClientLoop(webSocket));
 }
 

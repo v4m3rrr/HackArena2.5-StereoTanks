@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 /// <summary>
 /// Represents a turret json converter.
 /// </summary>
 /// <param name="context">The serializaton context.</param>
-internal class TurretJsonConverter(SerializationContext context) : JsonConverter<Turret>
+internal class TurretJsonConverter(GameSerializationContext context) : JsonConverter<Turret>
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
     public override Turret? ReadJson(JsonReader reader, Type objectType, Turret? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
@@ -38,7 +36,7 @@ internal class TurretJsonConverter(SerializationContext context) : JsonConverter
             ["direction"] = (int)value!.Direction,
         };
 
-        if (this.context is SerializationContext.Spectator || this.context.IsPlayerWithId(value.Tank.Owner.Id))
+        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Tank.Owner.Id))
         {
             jObject["bulletCount"] = value.BulletCount;
             jObject["bulletRegenProgress"] = value.BulletRegenProgress;

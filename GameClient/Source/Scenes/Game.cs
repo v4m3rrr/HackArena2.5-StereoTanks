@@ -15,9 +15,6 @@ namespace GameClient.Scenes;
 /// </summary>
 internal class Game : Scene
 {
-    private readonly ServerConnection connection;
-    private readonly GameServerMessageHandler serverMessageHandler;
-
     private readonly Dictionary<string, Player> players = [];
     private readonly GameInitializer initializer;
     private readonly GameComponents components;
@@ -29,18 +26,6 @@ internal class Game : Scene
     public Game()
         : base(Color.Transparent)
     {
-        this.connection = new ServerConnection()
-        {
-            BufferSize = 1024 * 32,
-            ServerTimeoutSeconds = 5,
-        };
-
-        this.connection.MessageReceived += this.Connection_MessageReceived;
-        this.connection.Connecting += Connection_Connecting;
-        this.connection.Connected += Connection_Connected;
-        this.connection.ErrorThrew += Connection_ErrorThrew;
-
-        this.serverMessageHandler = new GameServerMessageHandler(this.connection);
         this.initializer = new GameInitializer(this);
         this.components = new GameComponents(this.initializer);
         this.updater = new GameUpdater(this.components, this.players);
@@ -89,7 +74,6 @@ internal class Game : Scene
         }
     }
 
-
     private static void Connection_Connecting(string server)
     {
         DebugConsole.SendMessage($"Connecting to the server {server}...", Color.LightGreen);
@@ -110,7 +94,7 @@ internal class Game : Scene
     {
         if (result.MessageType == WebSocketMessageType.Close)
         {
-            this.serverMessageHandler.HandleCloseMessage(result);
+            GameServerMessageHandler.HandleCloseMessage(result);
             return;
         }
 
@@ -120,17 +104,22 @@ internal class Game : Scene
             switch (packet.Type)
             {
                 case PacketType.Ping:
-                    this.serverMessageHandler.HandlePingPacket();
+                    GameServerMessageHandler.HandlePingPacket();
                     break;
 
                 case PacketType.GameState:
-                    this.serverMessageHandler.HandleGameStatePacket(packet, this.updater);
+                    GameServerMessageHandler.HandleGameStatePacket(packet, this.updater);
                     break;
 
-                case PacketType.GameData:
-                    this.serverMessageHandler.HandleGameDataPacket(
-                        packet, this.updater, out int broadcastInterval);
-                    ServerBroadcastInterval = broadcastInterval;
+                case PacketType.LobbyData:
+                    GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out int bI);
+                    ServerBroadcastInterval = bI;
+                    break;
+
+                default:
+                    DebugConsole.SendMessage(
+                        $"Unknown packet type in Game scene: {packet.Type}",
+                        Color.Yellow);
                     break;
             }
         }
@@ -146,13 +135,22 @@ internal class Game : Scene
             return;
         }
 
-        var connectionData = new ConnectionData(
-            GameSettings.ServerAddress,
-            GameSettings.ServerPort,
-            args.IsSpectator,
-            args.JoinCode);
+        if (!ServerConnection.IsConnected)
+        {
+            var connectionData = new ConnectionData(
+                GameSettings.ServerAddress,
+                GameSettings.ServerPort,
+                args.IsSpectator,
+                args.JoinCode);
 
-        _ = await this.connection.ConnectAsync(connectionData);
+            _ = await ServerConnection.ConnectAsync(connectionData);
+        }
+
+        ServerConnection.BufferSize = 1024 * 32;
+        ServerConnection.MessageReceived += this.Connection_MessageReceived;
+        ServerConnection.Connecting += Connection_Connecting;
+        ServerConnection.Connected += Connection_Connected;
+        ServerConnection.ErrorThrew += Connection_ErrorThrew;
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
@@ -160,10 +158,15 @@ internal class Game : Scene
         this.components.Grid.ResetFogOfWar();
         this.updater.DisableGridComponent();
 
-        if (this.connection.IsConnected)
+        if (ServerConnection.IsConnected)
         {
-            await this.connection.CloseAsync();
+            await ServerConnection.CloseAsync();
         }
+
+        ServerConnection.MessageReceived -= this.Connection_MessageReceived;
+        ServerConnection.Connecting -= Connection_Connecting;
+        ServerConnection.Connected -= Connection_Connected;
+        ServerConnection.ErrorThrew -= Connection_ErrorThrew;
     }
 
     private async void HandleInput()
@@ -173,7 +176,7 @@ internal class Game : Scene
         if (payload is not null)
         {
             var message = PacketSerializer.Serialize(payload);
-            await this.connection.SendAsync(message);
+            await ServerConnection.SendAsync(message);
         }
     }
 }

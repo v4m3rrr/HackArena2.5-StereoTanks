@@ -1,16 +1,16 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 /// <summary>
 /// Represents a zone json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class ZoneJsonConverter(SerializationContext context) : JsonConverter<Zone>
+#pragma warning disable CS9113
+internal class ZoneJsonConverter(GameSerializationContext context) : JsonConverter<Zone>
+#pragma warning restore CS9113
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
     public override Zone? ReadJson(JsonReader reader, Type objectType, Zone? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
@@ -53,7 +53,6 @@ internal class ZoneJsonConverter(SerializationContext context) : JsonConverter<Z
             "beingCaptured" => token.ToObject<ZoneStatus.BeingCaptured>(serializer)!,
             "captured" => token.ToObject<ZoneStatus.Captured>(serializer)!,
             "beingContested" => new ZoneStatus.BeingContested(
-                token["players"]!.ToObject<IEnumerable<Player>>(serializer)!,
                 token["capturedBy"]?.Type == JTokenType.Null ? null : token["capturedBy"]?.ToObject<Player>(serializer)),
             "beingRetaken" => token.ToObject<ZoneStatus.BeingRetaken>(serializer)!,
             "neutral" => token.ToObject<ZoneStatus.Neutral>(serializer)!,

@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 /// <summary>
 /// Represents a wall json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class WallJsonConverter(SerializationContext context) : JsonConverter<Wall>
+internal class WallJsonConverter(GameSerializationContext context) : JsonConverter<Wall>
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
     public override Wall? ReadJson(JsonReader reader, Type objectType, Wall? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
@@ -28,7 +26,7 @@ internal class WallJsonConverter(SerializationContext context) : JsonConverter<W
     {
         var jObject = new JObject();
 
-        if (this.context is SerializationContext.Spectator)
+        if (context is GameSerializationContext.Spectator)
         {
             jObject["x"] = value!.X;
             jObject["y"] = value!.Y;

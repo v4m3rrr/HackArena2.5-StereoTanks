@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using GameLogic;
 using GameLogic.Networking;
@@ -52,7 +52,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <param name="payload">The game state payload.</param>
     public void UpdateGridLogic(GameStatePayload payload)
     {
-        components.Grid.Logic.UpdateFromStatePayload(payload);
+        components.Grid.Logic.UpdateFromGameStatePayload(payload);
     }
 
     /// <summary>

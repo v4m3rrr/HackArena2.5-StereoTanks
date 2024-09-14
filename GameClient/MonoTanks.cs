@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using GameClient.Networking;
+using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -135,6 +137,9 @@ public class MonoTanks : Game
 
         var spriteBatch = new SpriteBatch(this.GraphicsDevice);
         SpriteBatchController.Initialize(spriteBatch);
+
+        PacketSerializer.ExceptionThrew += DebugConsole.ThrowError;
+        Packet.GetPayloadFailed += DebugConsole.ThrowError;
 
         var dc = new DebugConsole();
         dc.Initialize();
