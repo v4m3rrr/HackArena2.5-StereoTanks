@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 /// <summary>
 /// Represents a bullet json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class BulletJsonConverter(SerializationContext context) : JsonConverter<Bullet>
+internal class BulletJsonConverter(GameSerializationContext context) : JsonConverter<Bullet>
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
     public override Bullet? ReadJson(JsonReader reader, Type objectType, Bullet? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
@@ -22,7 +20,7 @@ internal class BulletJsonConverter(SerializationContext context) : JsonConverter
         var speed = jObject["speed"]!.Value<float>()!;
         var direction = (Direction)jObject["direction"]!.Value<int>()!;
 
-        if (this.context is SerializationContext.Player)
+        if (context is GameSerializationContext.Player)
         {
             return new Bullet(id, x, y, direction, speed);
         }
@@ -43,7 +41,7 @@ internal class BulletJsonConverter(SerializationContext context) : JsonConverter
             ["direction"] = (int)value.Direction,
         };
 
-        if (this.context is SerializationContext.Spectator)
+        if (context is GameSerializationContext.Spectator)
         {
             jObject["x"] = value.X;
             jObject["y"] = value.Y;

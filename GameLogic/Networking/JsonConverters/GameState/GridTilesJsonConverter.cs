@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 #pragma warning disable CA1822 // Mark members as static
 
@@ -10,18 +10,16 @@ namespace GameLogic.Networking;
 /// Represents a grid state json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class GridStateJsonConverter(SerializationContext context) : JsonConverter<Grid.StatePayload>
+internal class GridTilesJsonConverter(GameSerializationContext context) : JsonConverter<Grid.TilesPayload>
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
-    public override Grid.StatePayload? ReadJson(JsonReader reader, Type objectType, Grid.StatePayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override Grid.TilesPayload? ReadJson(JsonReader reader, Type objectType, Grid.TilesPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        switch (this.context)
+        switch (context)
         {
-            case SerializationContext.Player:
+            case GameSerializationContext.Player:
                 return this.ReadPlayerJson(reader, serializer);
-            case SerializationContext.Spectator:
+            case GameSerializationContext.Spectator:
                 return this.ReadSpectatorJson(reader, serializer);
             default:
                 Debug.Fail("Unknown serialization context.");
@@ -30,14 +28,14 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
     }
 
     /// <inheritdoc/>
-    public override void WriteJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
     {
-        switch (this.context)
+        switch (context)
         {
-            case SerializationContext.Player:
+            case GameSerializationContext.Player:
                 this.WritePlayerJson(writer, value, serializer);
                 break;
-            case SerializationContext.Spectator:
+            case GameSerializationContext.Spectator:
                 this.WriteSpectatorJson(writer, value, serializer);
                 break;
             default:
@@ -46,18 +44,17 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         }
     }
 
-    private Grid.StatePayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
+    private Grid.TilesPayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
     {
-        var jObject = JObject.Load(reader);
-        var grid = (JArray)jObject["grid"]!;
+        var jObject = JArray.Load(reader);
 
-        var wallGrid = new Wall?[grid.Count, (grid[0] as JArray)!.Count];
+        var wallGrid = new Wall?[jObject.Count, (jObject[0] as JArray)!.Count];
         List<Tank> tanks = [];
         List<Bullet> bullets = [];
 
-        for (int i = 0; i < grid.Count; i++)
+        for (int i = 0; i < jObject.Count; i++)
         {
-            var row = grid[i] as JArray;
+            var row = jObject[i] as JArray;
             for (int j = 0; j < row!.Count; j++)
             {
                 var cell = (row[j] as JArray)!;
@@ -89,22 +86,10 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
             }
         }
 
-        var zones = new List<Zone>();
-        foreach (var zone in jObject["zones"]!)
-        {
-            zones.Add(zone.ToObject<Zone>(serializer)!);
-        }
-
-        return new Grid.StatePayload
-        {
-            WallGrid = wallGrid,
-            Tanks = tanks,
-            Bullets = bullets,
-            Zones = zones,
-        };
+        return new Grid.TilesPayload(wallGrid, tanks, bullets);
     }
 
-    private Grid.StatePayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
+    private Grid.TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
     {
         var jObject = JObject.Load(reader);
 
@@ -117,28 +102,16 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
 
         var tanks = jObject["tanks"]!.ToObject<List<Tank>>(serializer)!;
         var bullets = jObject["bullets"]!.ToObject<List<Bullet>>(serializer)!;
-        var zones = jObject["zones"]!.ToObject<List<Zone>>(serializer)!;
 
-        return new Grid.StatePayload
-        {
-            WallGrid = wallGrid,
-            Tanks = tanks,
-            Bullets = bullets,
-            Zones = zones,
-        };
+        return new Grid.TilesPayload(wallGrid, tanks, bullets);
     }
 
-    private void WritePlayerJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
+    private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
     {
-        var visibilityGrid = (this.context as SerializationContext.Player)!.VisibilityGrid!;
+        var visibilityGrid = (context as GameSerializationContext.Player)!.VisibilityGrid!;
 
-        var jObject = new JObject
-        {
-            ["grid"] = new JArray(),
-            ["zones"] = JArray.FromObject(value!.Zones, serializer),
-        };
+        var jObject = new JArray();
 
-        var grid = (JArray)jObject["grid"]!;
         for (int i = 0; i < value!.WallGrid.GetLength(0); i++)
         {
             var row = new JArray();
@@ -148,11 +121,9 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
 
                 if (value.WallGrid[i, j] is { } w)
                 {
-                    /* var obj = JObject.FromObject(w, serializer); */
                     var wall = new JObject()
                     {
                         { "type", "wall" },
-                        /* { "payload", obj }, */
                     };
                     cell.Add(wall);
                 }
@@ -160,7 +131,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
                 row.Add(cell);
             }
 
-            grid.Add(row);
+            jObject.Add(row);
         }
 
         foreach (Tank tank in value.Tanks.Where(x => !x.IsDead))
@@ -171,7 +142,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
             }
 
             var obj = JObject.FromObject(tank, serializer);
-            (grid[tank.X][tank.Y] as JArray)!.Add(new JObject
+            (jObject[tank.X][tank.Y] as JArray)!.Add(new JObject
             {
                 { "type", "tank" },
                 { "payload", obj },
@@ -186,7 +157,7 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
             }
 
             var obj = JObject.FromObject(bullet, serializer);
-            (grid[bullet.X][bullet.Y] as JArray)!.Add(new JObject
+            (jObject[bullet.X][bullet.Y] as JArray)!.Add(new JObject
             {
                 { "type", "bullet" },
                 { "payload", obj },
@@ -196,14 +167,13 @@ internal class GridStateJsonConverter(SerializationContext context) : JsonConver
         jObject.WriteTo(writer);
     }
 
-    private void WriteSpectatorJson(JsonWriter writer, Grid.StatePayload? value, JsonSerializer serializer)
+    private void WriteSpectatorJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
     {
         var jObject = new JObject
         {
             ["bullets"] = JArray.FromObject(value!.Bullets, serializer),
             ["tanks"] = JArray.FromObject(value.Tanks, serializer),
             ["walls"] = JArray.FromObject(value.WallGrid.Cast<Wall?>().Where(w => w is not null), serializer),
-            ["zones"] = JArray.FromObject(value.Zones, serializer),
             ["gridDimensions"] = new JArray(value.WallGrid.GetLength(0), value.WallGrid.GetLength(1)),
         };
 

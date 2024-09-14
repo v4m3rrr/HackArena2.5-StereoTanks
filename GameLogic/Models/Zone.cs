@@ -221,8 +221,6 @@ public class Zone : IEquatable<Zone>
                 }
             }
         }
-
-        Debug.WriteLine(this.Status);
     }
 
     /// <summary>

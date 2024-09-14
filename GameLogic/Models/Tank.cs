@@ -7,9 +7,6 @@ namespace GameLogic;
 /// </summary>
 public class Tank : IEquatable<Tank>
 {
-    private const int RegenTicks = 50;
-    private int ticksUntilRegen = RegenTicks;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="Tank"/> class.
     /// </summary>
@@ -36,8 +33,8 @@ public class Tank : IEquatable<Tank>
     /// <para>
     /// This constructor should be used when creating a tank
     /// from player perspective, because they shouldn't know
-    /// the <see cref="Health"/>, <see cref="RegenProgress"/>
-    /// (these will be set to <see langword="null"/>).
+    /// the <see cref="Health"/>
+    /// (it will be set to <see langword="null"/>).
     /// </para>
     /// <para>
     /// The <see cref="Owner"/> property is set to <see langword="null"/>.
@@ -58,7 +55,6 @@ public class Tank : IEquatable<Tank>
     /// <param name="y">The y coordinate of the tank.</param>
     /// <param name="ownerId">The owner ID of the tank.</param>
     /// <param name="health">The health of the tank.</param>
-    /// <param name="regenProgress">The regeneration progress of the tank.</param>
     /// <param name="direction">The direction of the tank.</param>
     /// <param name="turret">The turret of the tank.</param>
     /// <remarks>
@@ -72,11 +68,10 @@ public class Tank : IEquatable<Tank>
     /// See its documentation for more information.
     /// </para>
     /// </remarks>
-    internal Tank(int x, int y, string ownerId, int health, float? regenProgress, Direction direction, Turret turret)
+    internal Tank(int x, int y, string ownerId, int health, Direction direction, Turret turret)
         : this(x, y, ownerId, direction, turret)
     {
         this.Health = health;
-        this.RegenProgress = regenProgress;
     }
 
     private Tank(int x, int y, string ownerId)
@@ -88,16 +83,6 @@ public class Tank : IEquatable<Tank>
         this.Direction = EnumUtils.Random<Direction>();
         this.Turret = new Turret(this);
     }
-
-    /// <summary>
-    /// Occurs when the tank dies.
-    /// </summary>
-    internal event EventHandler? Died;
-
-    /// <summary>
-    /// Occurs when the tank regenerates.
-    /// </summary>
-    internal event EventHandler? Regenerated;
 
     /// <summary>
     /// Gets the x coordinate of the tank.
@@ -115,11 +100,6 @@ public class Tank : IEquatable<Tank>
     public int? Health { get; private set; }
 
     /// <summary>
-    /// Gets the regeneration progress of the tank.
-    /// </summary>
-    public float? RegenProgress { get; private set; }
-
-    /// <summary>
     /// Gets a value indicating whether the tank is dead.
     /// </summary>
     public bool IsDead => this.Health <= 0;
@@ -129,7 +109,7 @@ public class Tank : IEquatable<Tank>
     /// </summary>
     /// <remarks>
     /// The setter is internal because the owner is set
-    /// in the <see cref="Grid.UpdateFromStatePayload"/> method.
+    /// in the <see cref="Grid.UpdateFromGameStatePayload"/> method.
     /// </remarks>
     public Player Owner { get; internal set; }
 
@@ -191,33 +171,6 @@ public class Tank : IEquatable<Tank>
     }
 
     /// <summary>
-    /// Creates a tank with only the regeneration progress set.
-    /// </summary>
-    /// <param name="ownerId">The owner ID of the tank.</param>
-    /// <param name="progress">The regeneration progress of the tank.</param>
-    /// <returns>
-    /// A tank with only the regeneration progress set.
-    /// </returns>
-    /// <remarks>
-    /// <para>
-    /// It is used to create a tank with only the regeneration progress set,
-    /// for example, when the tank is dead but GUI still needs to display the
-    /// regeneration progress of the tank.
-    /// </para>
-    /// <para>
-    /// The position of the tank is set to (-1, -1) and the health is set to -1.
-    /// </para>
-    /// </remarks>
-    internal static Tank OnlyRegenProgress(string ownerId, float progress)
-    {
-        return new Tank(-1, -1, ownerId)
-        {
-            Health = -1,
-            RegenProgress = progress,
-        };
-    }
-
-    /// <summary>
     /// Reduces the health of the tank.
     /// </summary>
     /// <param name="damage">The amount of damage to take.</param>
@@ -230,7 +183,7 @@ public class Tank : IEquatable<Tank>
         if (this.Health <= 0)
         {
             this.SetPosition(-1, -1);
-            this.Died?.Invoke(this, EventArgs.Empty);
+            this.Health = 0;
         }
     }
 
@@ -257,29 +210,5 @@ public class Tank : IEquatable<Tank>
     {
         this.X = x;
         this.Y = y;
-    }
-
-    /// <summary>
-    /// Regenerates the tank over time, if it is dead.
-    /// </summary>
-    internal void Regenerate()
-    {
-        if (!this.IsDead)
-        {
-            return;
-        }
-
-        if (this.ticksUntilRegen > 0)
-        {
-            this.RegenProgress = (float)(RegenTicks - --this.ticksUntilRegen) / RegenTicks;
-        }
-
-        if (this.ticksUntilRegen <= 0)
-        {
-            this.Health = 100;
-            this.ticksUntilRegen = RegenTicks;
-            this.RegenProgress = null;
-            this.Regenerated?.Invoke(this, EventArgs.Empty);
-        }
     }
 }

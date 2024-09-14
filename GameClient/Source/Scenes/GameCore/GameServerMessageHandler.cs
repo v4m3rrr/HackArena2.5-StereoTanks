@@ -9,14 +9,13 @@ namespace GameClient.Scenes.GameCore;
 /// <summary>
 /// Represents a game server message handler.
 /// </summary>
-/// <param name="connection">The server connection.</param>
-internal class GameServerMessageHandler(ServerConnection connection)
+internal static class GameServerMessageHandler
 {
     /// <summary>
     /// Handles the close message.
     /// </summary>
     /// <param name="result">The result of the close message.</param>
-    public async void HandleCloseMessage(WebSocketReceiveResult result)
+    public static async void HandleCloseMessage(WebSocketReceiveResult result)
     {
         WebSocketCloseStatus? status = result.CloseStatus;
         string? description = result.CloseStatusDescription;
@@ -35,7 +34,7 @@ internal class GameServerMessageHandler(ServerConnection connection)
         }
 
         Scene.ChangeToPreviousOrDefault<MainMenu>();
-        await connection.CloseAsync();
+        await ServerConnection.CloseAsync();
     }
 
     /// <summary>
@@ -44,10 +43,10 @@ internal class GameServerMessageHandler(ServerConnection connection)
     /// <remarks>
     /// Sends a pong packet back to the server.
     /// </remarks>
-    public async void HandlePingPacket()
+    public static async void HandlePingPacket()
     {
         var pong = new EmptyPayload() { Type = PacketType.Pong };
-        await connection.SendAsync(PacketSerializer.Serialize(pong));
+        await ServerConnection.SendAsync(PacketSerializer.Serialize(pong));
     }
 
     /// <summary>
@@ -56,9 +55,11 @@ internal class GameServerMessageHandler(ServerConnection connection)
     /// <param name="packet">The packet containing the game data payload.</param>
     /// <param name="updater">The game updater.</param>
     /// <param name="broadcastInterval">The server broadcast interval.</param>
-    public void HandleGameDataPacket(Packet packet, GameUpdater updater, out int broadcastInterval)
+    public static void HandleLobbyDataPacket(Packet packet, GameUpdater updater, out int broadcastInterval)
     {
-        var gameData = packet.GetPayload<GameDataPayload>();
+        var converters = LobbyDataPayload.GetConverters();
+        var serializers = PacketSerializer.GetSerializer(converters);
+        var gameData = packet.GetPayload<LobbyDataPayload>(serializers);
 
         DebugConsole.SendMessage("Broadcast interval: " + gameData.BroadcastInterval + "ms", Color.DarkGray);
         DebugConsole.SendMessage("Player ID: " + gameData.PlayerId, Color.DarkGray);
@@ -75,13 +76,15 @@ internal class GameServerMessageHandler(ServerConnection connection)
     /// </summary>
     /// <param name="packet">The packet containing the game state payload.</param>
     /// <param name="updater">The game updater.</param>
-    public void HandleGameStatePacket(Packet packet, GameUpdater updater)
+    public static void HandleGameStatePacket(Packet packet, GameUpdater updater)
     {
-        var isSpectator = connection.ConnectionData.IsSpectator;
+        var isSpectator = ServerConnection.Data.IsSpectator;
 
-        SerializationContext context = isSpectator
-            ? new SerializationContext.Spectator()
-            : new SerializationContext.Player(updater.PlayerId!);
+        var message = packet.Payload.ToString();
+
+        GameSerializationContext context = isSpectator
+            ? new GameSerializationContext.Spectator()
+            : new GameSerializationContext.Player(updater.PlayerId!);
 
         var converters = GameStatePayload.GetConverters(context);
         var serializer = PacketSerializer.GetSerializer(converters);

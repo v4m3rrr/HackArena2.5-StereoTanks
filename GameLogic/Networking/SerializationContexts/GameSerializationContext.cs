@@ -1,9 +1,9 @@
 ﻿namespace GameLogic.Networking;
 
 /// <summary>
-/// Represents a serialization context.
+/// Represents a game serialization context.
 /// </summary>
-public abstract class SerializationContext
+public abstract class GameSerializationContext
 {
     /// <summary>
     /// Determines whether the context is a player with the specified id.
@@ -21,7 +21,7 @@ public abstract class SerializationContext
     /// <summary>
     /// Represents a player serialization context.
     /// </summary>
-    public class Player : SerializationContext
+    public class Player : GameSerializationContext
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Player"/> class.
@@ -65,7 +65,7 @@ public abstract class SerializationContext
     /// <summary>
     /// Represents a spectator serialization context.
     /// </summary>
-    public class Spectator : SerializationContext
+    public class Spectator : GameSerializationContext
     {
     }
 }

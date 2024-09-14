@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GameLogic.Networking;
+namespace GameLogic.Networking.GameState;
 
 /// <summary>
 /// Represents a player json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class PlayerJsonConverter(SerializationContext context) : JsonConverter<Player>
+internal class PlayerJsonConverter(GameSerializationContext context) : JsonConverter<Player>
 {
-    private readonly SerializationContext context = context;
-
     /// <inheritdoc/>
     public override Player? ReadJson(JsonReader reader, Type objectType, Player? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
@@ -21,11 +19,12 @@ internal class PlayerJsonConverter(SerializationContext context) : JsonConverter
         var color = jObject["color"]!.Value<uint>()!;
         var ping = jObject["ping"]!.Value<int>()!;
 
-        if (this.context is SerializationContext.Spectator || this.context.IsPlayerWithId(id))
+        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(id))
         {
             var score = jObject["score"]!.Value<int>()!;
+            var regenProgress = jObject["regenProgress"]?.Value<float?>();
 
-            return new Player(id, nickname, color)
+            return new Player(id, nickname, color, regenProgress)
             {
                 Ping = ping,
                 Score = score,
@@ -49,9 +48,10 @@ internal class PlayerJsonConverter(SerializationContext context) : JsonConverter
             ["ping"] = value.Ping,
         };
 
-        if (this.context is SerializationContext.Spectator || this.context.IsPlayerWithId(value.Id))
+        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Id))
         {
             jObject["score"] = value.Score;
+            jObject["regenProgress"] = value.RegenProgress;
         }
 
         jObject.WriteTo(writer);

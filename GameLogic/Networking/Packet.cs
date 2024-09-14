@@ -9,6 +9,12 @@ namespace GameLogic.Networking;
 public class Packet
 {
     /// <summary>
+    /// Occurs when the payload could not
+    /// be converted to the specified type.
+    /// </summary>
+    public static event Action<Exception>? GetPayloadFailed;
+
+    /// <summary>
     /// Gets the packet type.
     /// </summary>
     public PacketType Type { get; init; }
@@ -26,7 +32,15 @@ public class Packet
     public T GetPayload<T>()
         where T : IPacketPayload
     {
-        return this.Payload.ToObject<T>()!;
+        try
+        {
+            return this.Payload.ToObject<T>()!;
+        }
+        catch (Exception ex)
+        {
+            GetPayloadFailed?.Invoke(ex);
+            throw;
+        }
     }
 
     /// <summary>
@@ -38,6 +52,14 @@ public class Packet
     public T GetPayload<T>(JsonSerializer serializer)
         where T : IPacketPayload
     {
-        return this.Payload.ToObject<T>(serializer)!;
+        try
+        {
+            return this.Payload.ToObject<T>(serializer)!;
+        }
+        catch (Exception ex)
+        {
+            GetPayloadFailed?.Invoke(ex);
+            throw;
+        }
     }
 }

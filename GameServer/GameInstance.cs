@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
+using Newtonsoft.Json;
 
 namespace GameServer;
 
@@ -54,7 +55,11 @@ internal class GameInstance
         this.broadcastInterval = options.BroadcastInterval;
         this.eagerBroadcast = options.EagerBroadcast;
 
-        _ = Task.Run(this.GameStateBroadcastLoop);
+        PacketSerializer.ExceptionThrew += (Exception ex) =>
+        {
+            Console.WriteLine(
+                $"[ERROR] An error has been thrown in the PacketSerializer: {ex.Message}");
+        };
     }
 
     private event Action<Player>? PlayerSentMovementPacket;
@@ -82,7 +87,15 @@ internal class GameInstance
         _ = this.Grid.GenerateTank(player);
         this.players.Add(socket, player);
 
-        this.startTime ??= DateTime.UtcNow;
+        foreach (var ws in this.players.Keys.Concat(this.spectators).ToList())
+        {
+            _ = Task.Run(() => this.SendLobbyData(ws));
+        }
+
+        if (this.startTime is null)
+        {
+            this.StartGame();
+        }
     }
 
     /// <summary>
@@ -103,6 +116,7 @@ internal class GameInstance
     public void AddSpectator(WebSocket socket)
     {
         this.spectators.Add(socket);
+        _ = Task.Run(() => this.SendLobbyData(socket));
     }
 
     /// <summary>
@@ -112,6 +126,12 @@ internal class GameInstance
     public void RemoveSpectator(WebSocket socket)
     {
         _ = this.spectators.Remove(socket);
+    }
+
+    public void StartGame()
+    {
+        this.startTime ??= DateTime.UtcNow;
+        _ = Task.Run(this.GameStateBroadcastLoop);
     }
 
     /// <summary>
@@ -168,15 +188,19 @@ internal class GameInstance
     /// </summary>
     /// <param name="socket">The socket of the client to send the game data to.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task SendGameData(WebSocket socket)
+    public async Task SendLobbyData(WebSocket socket)
     {
         _ = this.players.TryGetValue(socket, out var player);
-        var response = new GameDataPayload(
+
+        var response = new LobbyDataPayload(
             player?.Id,
+            [.. this.players.Values],
             this.Grid.Dim,
             this.Grid.Seed,
             this.broadcastInterval);
-        await SendPacketAsync(socket, response);
+
+        var converters = LobbyDataPayload.GetConverters();
+        await SendPacketAsync(socket, response, converters);
     }
 
     /// <summary>
@@ -207,9 +231,12 @@ internal class GameInstance
         }
     }
 
-    private static async Task SendPacketAsync(WebSocket socket, IPacketPayload packet)
+    private static async Task SendPacketAsync(
+        WebSocket socket,
+        IPacketPayload packet,
+        List<JsonConverter>? converters = null)
     {
-        var buffer = PacketSerializer.ToByteArray(packet);
+        var buffer = PacketSerializer.ToByteArray(packet, converters ?? []);
 
         Monitor.Enter(socket);
         try
@@ -252,8 +279,8 @@ internal class GameInstance
 
             this.Grid.UpdateBullets(1f);
             this.RegeneratePlayersBullets();
-            this.Grid.RegenerateTanks();
-            this.Grid.UpdatePlayersVisibilityGrids([.. this.players.Values]);
+            this.Grid.UpdateTanksRegenerationProgress();
+            this.Grid.UpdatePlayersVisibilityGrids();
             this.Grid.UpdateZones();
 
             await this.BroadcastGameState();
@@ -338,8 +365,8 @@ internal class GameInstance
                     _ = player.Tank.Turret.TryShoot();
                     break;
 
-                case PacketType.GameData:
-                    await this.SendGameData(socket);
+                case PacketType.LobbyData:
+                    await this.SendLobbyData(socket);
                     break;
 
                 case PacketType.Pong:
@@ -452,17 +479,17 @@ internal class GameInstance
 
             if (this.IsSpecator(client))
             {
-                packet = new GameStatePayload(time, [.. this.players.Values], this.Grid.ToStatePayload());
+                packet = new GameStatePayload(time, [.. this.players.Values], this.Grid);
             }
             else
             {
                 var player = this.players[client];
-                packet = new GameStatePayload.ForPlayer(time, player, [.. this.players.Values], this.Grid.ToStatePayload());
+                packet = new GameStatePayload.ForPlayer(time, player, [.. this.players.Values], this.Grid);
             }
 
-            SerializationContext context = this.IsSpecator(client)
-                ? new SerializationContext.Spectator()
-                : new SerializationContext.Player(this.players[client]);
+            GameSerializationContext context = this.IsSpecator(client)
+                ? new GameSerializationContext.Spectator()
+                : new GameSerializationContext.Player(this.players[client]);
 
             var converters = GameStatePayload.GetConverters(context);
 

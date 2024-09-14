@@ -14,6 +14,12 @@ public static class PacketSerializer
         = new CamelCasePropertyNamesContractResolver();
 
     /// <summary>
+    /// Occurs when an exception is thrown
+    /// during serialization or deserialization.
+    /// </summary>
+    public static event Action<Exception>? ExceptionThrew;
+
+    /// <summary>
     /// Gets the serializer.
     /// </summary>
     /// <returns>The serializer.</returns>
@@ -65,21 +71,29 @@ public static class PacketSerializer
         IEnumerable<JsonConverter> converters,
         bool indented = false)
     {
-        var serializer = GetSerializer(converters);
-
-        var packet = new Packet()
+        try
         {
-            Type = payload.Type,
-            Payload = JObject.FromObject(payload, serializer),
-        };
+            var serializer = GetSerializer(converters);
 
-        var settings = new JsonSerializerSettings()
+            var packet = new Packet()
+            {
+                Type = payload.Type,
+                Payload = JObject.FromObject(payload, serializer),
+            };
+
+            var settings = new JsonSerializerSettings()
+            {
+                ContractResolver = ContractResolver,
+                Formatting = indented ? Formatting.Indented : Formatting.None,
+            };
+
+            return JsonConvert.SerializeObject(packet, settings);
+        }
+        catch (Exception ex)
         {
-            ContractResolver = ContractResolver,
-            Formatting = indented ? Formatting.Indented : Formatting.None,
-        };
-
-        return JsonConvert.SerializeObject(packet, settings);
+            ExceptionThrew?.Invoke(ex);
+            throw;
+        }
     }
 
     /// <summary>
@@ -132,12 +146,20 @@ public static class PacketSerializer
     /// <returns>The deserialized packet.</returns>
     public static Packet Deserialize(string serializedPacket)
     {
-        var settings = new JsonSerializerSettings()
+        try
         {
-            ContractResolver = ContractResolver,
-        };
+            var settings = new JsonSerializerSettings()
+            {
+                ContractResolver = ContractResolver,
+            };
 
-        return JsonConvert.DeserializeObject<Packet>(serializedPacket, settings)!;
+            return JsonConvert.DeserializeObject<Packet>(serializedPacket, settings)!;
+        }
+        catch (Exception ex)
+        {
+            ExceptionThrew?.Invoke(ex);
+            throw;
+        }
     }
 
     /// <summary>
