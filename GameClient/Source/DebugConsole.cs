@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Fastenshtein;
 using GameClient.DebugConsoleItems;
 using GameClient.Scenes;
+using GameClient.Source;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
@@ -234,112 +235,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
             };
             this.Showed += (s, e) => this.textInput.Select();
             this.Hid += (s, e) => this.textInput.Deselect();
-            this.textInput.TextInputSent += (s, e) =>
-            {
-                if (string.IsNullOrWhiteSpace(e.Value))
-                {
-                    return;
-                }
-
-                SendMessage(">" + e.Value.Trim(), Color.MediumPurple, spaceAfterTime: false);
-
-                ICommand? command = GetCommandFromInput(e.Value, out int threshold);
-
-                if (command is null || threshold > 3)
-                {
-                    SendMessage("Command not found.", Color.IndianRed);
-                }
-                else if (threshold == 0 && command is CommandGroupAttribute cg)
-                {
-                    SendMessage($"'{(cg as ICommand).FullName}' is a command group.", Color.Orange);
-                }
-                else if (threshold == 0 && command is CommandAttribute c)
-                {
-                    var args = GetArgsFromInput(c, e.Value);
-                    var parameters = c.Action.Method.GetParameters();
-
-                    var areArgumentsValid = true;
-
-                    var convertedArgs = new object[args.Length];
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        try
-                        {
-                            convertedArgs[i] = ConvertArgument(args[i], parameters[i].ParameterType);
-                        }
-                        catch (ArgumentException)
-                        {
-                            SendMessage($"Invalid argument '{args[i]}'.", Color.IndianRed);
-                            areArgumentsValid = false;
-                            break;
-                        }
-                    }
-
-                    try
-                    {
-                        if (areArgumentsValid)
-                        {
-                            // Refactor!!!
-                            var convertedArgs2 = new List<object?>();
-                            int i = 0;
-                            foreach (var parameter in c.Action.Method.GetParameters())
-                            {
-                                if (parameter.HasDefaultValue)
-                                {
-                                    convertedArgs2.Add(parameter.DefaultValue);
-                                }
-                                else
-                                {
-                                    convertedArgs2.Add(convertedArgs[i++]);
-                                }
-                            }
-
-                            c.Action.DynamicInvoke(convertedArgs2.ToArray());
-                        }
-                    }
-                    catch (TargetParameterCountException)
-                    {
-                        SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
-                    }
-                }
-                else
-                {
-                    SendMessage($"Did you mean '{command.FullName}'?", Color.Orange);
-                }
-            };
-        }
-
-        // Messages
-        {
-            var messagesFrame = new Frame(new Color(60, 60, 60, 255), thickness: 2)
-            {
-                Parent = this.baseFrame.InnerContainer,
-                Transform =
-                {
-                    Alignment = Alignment.Top,
-                    RelativeSize = new Vector2(0.995f, 0.885f),
-                    RelativeOffset = new Vector2(0.0f, 0.05f),
-                },
-            };
-
-            var background = new SolidColor(Color.Gray * 0.15f)
-            {
-                Parent = messagesFrame.InnerContainer,
-                Transform = { IgnoreParentPadding = true },
-            };
-
-            var messages = this.messages = new ScrollableListBox(new SolidColor(Color.Red))
-            {
-                Parent = messagesFrame.InnerContainer,
-                Orientation = Orientation.Vertical,
-                Spacing = 8,
-                Transform =
-                {
-                    RelativePadding = new Vector4(0.005f, 0.02f, 0.005f + 0.02f, 0.02f),
-                },
-                DrawContentOnParentPadding = true,
-                ShowScrollBarIfNotNeeded = false,
-            };
+            this.textInput.TextInputSent += (s, e) => CommandParser.Parse(s, e);
         }
 
 #if DEBUG
@@ -347,71 +243,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
 #endif
 
         SendMessage("Type 'help' to get list of available commands.", Color.White);
-    }
-
-    private static ICommand? GetCommandFromInput(string input, out int threshold)
-    {
-        threshold = int.MaxValue;
-
-        if (string.IsNullOrEmpty(input))
-        {
-            return null;
-        }
-
-        ICommand? foundCommand = null;
-        var lev = new Levenshtein(input);
-        string[] inputParts = Regex.Split(input, @"\s+");
-        int maxDepth = inputParts.Length - 1;
-        foreach (ICommand command in GetAllCommandCombinations(maxDepth))
-        {
-            int levenshteinDistance = int.MaxValue;
-            if (command is CommandAttribute c && c.Arguments.Length <= maxDepth)
-            {
-                for (int i = 0; i < c.Arguments.Length; i++)
-                {
-                    levenshteinDistance = Math.Min(levenshteinDistance, Levenshtein.Distance(
-                        string.Join(' ', inputParts[..^(i + 1)]), command.FullName));
-                }
-            }
-
-            var fullName = command.CaseSensitive ? command.FullName : command.FullName.ToLower();
-            levenshteinDistance = Math.Min(levenshteinDistance, lev.DistanceFrom(fullName));
-
-            if (threshold > levenshteinDistance)
-            {
-                threshold = levenshteinDistance;
-                foundCommand = command;
-            }
-        }
-
-        return foundCommand;
-    }
-
-    private static List<ICommand> GetAllCommandCombinations(int maxDepth, CommandGroupAttribute? group = null)
-    {
-        var result = new List<ICommand>();
-        foreach (ICommand command in CommandInitializer.GetCommands())
-        {
-            result.Add(command);
-            if (command is CommandGroupAttribute commandGroup && commandGroup == group && command.Depth < maxDepth)
-            {
-                result.AddRange(GetAllCommandCombinations(maxDepth, commandGroup));
-            }
-        }
-
-        return result;
-    }
-
-    private static string[] GetArgsFromInput(ICommand command, string input)
-    {
-        return input[command.FullName.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-    }
-
-    private static object ConvertArgument(string argument, Type targetType)
-    {
-        return targetType.IsEnum
-            ? Enum.Parse(targetType, argument, ignoreCase: true)
-            : Convert.ChangeType(argument, targetType);
     }
 
     private void Close()
