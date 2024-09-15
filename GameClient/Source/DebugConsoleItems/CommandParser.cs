@@ -1,23 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using Fastenshtein;
 using GameClient.DebugConsoleItems;
 using Microsoft.Xna.Framework;
 
-namespace GameClient.Source;
+namespace GameClient.DebugConsoleItems;
 
 /// <summary>
-/// Provides parser.
+/// Represents parser for debug console commands.
 /// </summary>
 internal static class CommandParser
 {
-    private static readonly int CommandTreshold = 3;
+    private static readonly int CommandThreshold = 3;
 
     /// <summary>
-    /// Parse method that recieves data from event.
+    /// Parse method that recieves data from an event.
     /// </summary>
     /// <param name="sender">Event sender.</param>
     /// <param name="e">Event arguments.</param>
@@ -30,12 +28,9 @@ internal static class CommandParser
 
         DebugConsole.SendMessage(">" + e.Value.Trim(), Color.MediumPurple, spaceAfterTime: false);
 
-        GetCommand(e.Value);
-        return;
-        /*
-        ICommand? command = GetCommandFromInput(e.Value, out int threshold);
+        ICommand? command = GetCommand(e.Value, out int threshold);
 
-        if (command is null || threshold > CommandTreshold)
+        if (command is null || threshold > CommandThreshold)
         {
             DebugConsole.SendMessage("Command not found.", Color.IndianRed);
             return;
@@ -67,8 +62,6 @@ internal static class CommandParser
                 }
             }
 
-
-
             try
             {
                 List<object?> invokeParameters = [];
@@ -85,7 +78,7 @@ internal static class CommandParser
                     }
                 }
 
-                c.Action.DynamicInvoke(invokeParameters.ToArray());
+                _ = c.Action.DynamicInvoke(invokeParameters.ToArray());
             }
             catch (Exception ex) when (
                 ex is TargetParameterCountException
@@ -102,71 +95,65 @@ internal static class CommandParser
         }
 
         DebugConsole.SendMessage($"Did you mean '{command.FullName}'?", Color.Orange);
-        */
     }
 
-    private static ICommand? MatchCommand(string input, out int threshold)
-    {
-        threshold = int.MaxValue;
-
-        if (string.IsNullOrEmpty(input))
-        {
-            return null;
-        }
-
-        ICommand? foundCommand = null;
-        var lev = new Levenshtein(input);
-        string[] inputParts = Regex.Split(input, @"\s+");
-        int maxDepth = inputParts.Length - 1;
-        foreach (ICommand command in GetAllCommandCombinations(maxDepth))
-        {
-            int levenshteinDistance = int.MaxValue;
-            if (command is CommandAttribute c && c.Arguments.Length <= maxDepth)
-            {
-                for (int i = 0; i < c.Arguments.Length; i++)
-                {
-                    levenshteinDistance = Math.Min(levenshteinDistance, Levenshtein.Distance(
-                        string.Join(' ', inputParts[..^(i + 1)]), command.FullName));
-                }
-            }
-
-            var fullName = command.CaseSensitive ? command.FullName : command.FullName.ToLower();
-            levenshteinDistance = Math.Min(levenshteinDistance, lev.DistanceFrom(fullName));
-
-            if (threshold > levenshteinDistance)
-            {
-                threshold = levenshteinDistance;
-                foundCommand = command;
-            }
-        }
-
-        return foundCommand;
-    }
-    //private static ICommand? GetCommand(string rawInput, out int newthreshold)
-
-    private static void GetCommand(string rawInput)
+    private static ICommand? GetCommand(string rawInput, out int threshold)
     {
         var segments = rawInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        StringBuilder prefix = new();
+
+        CommandGroupAttribute? parent = null;
+        threshold = int.MaxValue;
         for (int i = 0; i < segments.Length; i++)
         {
-            _ = prefix.Append(segments[i]);
+            ICommand? result = MatchCommand(parent, segments[i], out threshold);
 
-            ICommand? bestMatch = MatchCommand(prefix.ToString(), out int threshold);
+            if (result == null || threshold > CommandThreshold)
+            {
+                return result;
+            }
 
-            DebugConsole.SendMessage($"for prefix: {prefix.ToString()} best mach is: {bestMatch.DisplayName} with dist: {threshold}", Color.White);
+            if (result is CommandGroupAttribute newParent)
+            {
+                parent = newParent;
+            }
+            else
+            {
+                return result;
+            }
         }
+
+        return parent;
     }
 
-    private static List<ICommand> GetAllCommandCombinations(int maxDepth, CommandGroupAttribute? group = null)
+    private static ICommand? MatchCommand(CommandGroupAttribute? parent, string segment, out int threshold)
+    {
+        List<ICommand> commands = GetCommandsByGroup(parent);
+
+        int minimumDistance = int.MaxValue;
+        ICommand? result = null;
+        foreach (var command in commands)
+        {
+            int levensteinDistance = Levenshtein.Distance(command.DisplayName, segment.ToLower());
+
+            if (levensteinDistance < minimumDistance)
+            {
+                minimumDistance = levensteinDistance;
+                result = command;
+            }
+        }
+
+        threshold = minimumDistance;
+        return result;
+    }
+
+    private static List<ICommand> GetCommandsByGroup(CommandGroupAttribute? group)
     {
         var result = new List<ICommand>();
         foreach (ICommand command in CommandInitializer.GetCommands())
         {
-            result.Add(command);
-            if (command is CommandGroupAttribute commandGroup && commandGroup == group && command.Depth < maxDepth)
+            if (command.Group == group)
             {
-                result.AddRange(GetAllCommandCombinations(maxDepth, commandGroup));
+                result.Add(command);
             }
         }
 

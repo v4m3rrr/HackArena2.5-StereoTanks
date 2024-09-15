@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
-using Fastenshtein;
 using GameClient.DebugConsoleItems;
 using GameClient.Scenes;
-using GameClient.Source;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
@@ -238,6 +234,38 @@ internal partial class DebugConsole : Scene, IOverlayScene
             this.textInput.TextInputSent += (s, e) => CommandParser.Parse(s, e);
         }
 
+        // Messages
+        {
+            var messagesFrame = new Frame(new Color(60, 60, 60, 255), thickness: 2)
+            {
+                Parent = this.baseFrame.InnerContainer,
+                Transform =
+                {
+                    Alignment = Alignment.Top,
+                    RelativeSize = new Vector2(0.995f, 0.885f),
+                    RelativeOffset = new Vector2(0.0f, 0.05f),
+                },
+            };
+
+            var background = new SolidColor(Color.Gray * 0.15f)
+            {
+                Parent = messagesFrame.InnerContainer,
+                Transform = { IgnoreParentPadding = true },
+            };
+
+            var messages = this.messages = new ScrollableListBox(new SolidColor(Color.Red))
+            {
+                Parent = messagesFrame.InnerContainer,
+                Orientation = Orientation.Vertical,
+                Spacing = 8,
+                Transform =
+                {
+                    RelativePadding = new Vector4(0.005f, 0.02f, 0.005f + 0.02f, 0.02f),
+                },
+                DrawContentOnParentPadding = true,
+                ShowScrollBarIfNotNeeded = false,
+            };
+        }
 #if DEBUG
         SendMessage("You are running in the DEBUG mode.", Color.Yellow);
 #endif
