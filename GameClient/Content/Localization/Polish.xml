@@ -7,16 +7,17 @@
 		<JoinGame>Dolacz</JoinGame>
 		<Settings>Ustawienia</Settings>
 		<Authors>Autorzy</Authors>
-		<Exit>Wyjście</Exit>
-		<Back>Wróć</Back>
+		<Exit>Wyjscie</Exit>
+		<Back>Wroc</Back>
+		<Leave>Opusc</Leave>
 	</Buttons>
 
 	<Labels>
-		<Language>Język</Language>
-		<Resolution>Rozdzielczość</Resolution>
-		<DisplayMode>Typ wyświetlania</DisplayMode>
+		<Language>Jezyk</Language>
+		<Resolution>Rozdzielczosc</Resolution>
+		<DisplayMode>Tryb wyswietlania</DisplayMode>
 		<DisplayModeWindowed>Okno</DisplayModeWindowed>
-		<DisplayModeFullScreen>Pełny ekran</DisplayModeFullScreen>
+		<DisplayModeFullScreen>Pelny ekran</DisplayModeFullScreen>
 		<DisplayModeBorderless>Bezramkowy</DisplayModeBorderless>
 	</Labels>
 

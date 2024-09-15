@@ -5,15 +5,16 @@
 
 	<Buttons>
 		<JoinGame>Rejoindre</JoinGame>
-		<Settings>Paramètres</Settings>
-		<Authors>Auteurs</Authors>
-		<Exit>Quitter</Exit>
+		<Settings>Options</Settings>
+		<Authors>Crédits</Authors>
+		<Exit>Sortir</Exit>
 		<Back>Retour</Back>
+		<Leave>Quitter</Leave>
 	</Buttons>
 
 	<Labels>
 		<Language>Langue</Language>
-		<Resolution>Résolution</Resolution>
+		<Resolution>Résolution d'écran</Resolution>
 		<DisplayMode>Mode d'affichage</DisplayMode>
 		<DisplayModeWindowed>Fenêtré</DisplayModeWindowed>
 		<DisplayModeFullScreen>Plein écran</DisplayModeFullScreen>

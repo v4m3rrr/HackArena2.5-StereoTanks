@@ -9,12 +9,13 @@
 		<Authors>Authors</Authors>
 		<Exit>Exit</Exit>
 		<Back>Back</Back>
+		<Leave>Leave</Leave>
 	</Buttons>
 
 	<Labels>
 		<Language>Language</Language>
 		<Resolution>Resolution</Resolution>
-		<DisplayMode>Screen type</DisplayMode>
+		<DisplayMode>Display mode</DisplayMode>
 		<DisplayModeWindowed>Windowed</DisplayModeWindowed>
 		<DisplayModeFullScreen>Fullscreen</DisplayModeFullScreen>
 		<DisplayModeBorderless>Borderless</DisplayModeBorderless>

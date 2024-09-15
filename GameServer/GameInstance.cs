@@ -37,8 +37,7 @@ internal class GameInstance
 
     private readonly List<WebSocket> spectators = [];
 
-    private readonly int broadcastInterval;
-    private readonly bool eagerBroadcast;
+    private readonly ServerSettings settings;
 
     private DateTime? startTime;
 
@@ -52,8 +51,12 @@ internal class GameInstance
         int dimension = options.GridDimension;
         this.Grid = new Grid(dimension, seed);
 
-        this.broadcastInterval = options.BroadcastInterval;
-        this.eagerBroadcast = options.EagerBroadcast;
+        this.settings = new ServerSettings(
+            dimension,
+            options.NumberOfPlayers,
+            seed,
+            options.BroadcastInterval,
+            options.EagerBroadcast);
 
         PacketSerializer.ExceptionThrew += (Exception ex) =>
         {
@@ -195,9 +198,7 @@ internal class GameInstance
         var response = new LobbyDataPayload(
             player?.Id,
             [.. this.players.Values],
-            this.Grid.Dim,
-            this.Grid.Seed,
-            this.broadcastInterval);
+            this.settings);
 
         var converters = LobbyDataPayload.GetConverters();
         await SendPacketAsync(socket, response, converters);
@@ -287,13 +288,13 @@ internal class GameInstance
             this.playersWhoSentMovementPacketThisTick.Clear();
 
             var endTime = DateTime.UtcNow;
-            var sleepTime = this.broadcastInterval - (endTime - startTime).Milliseconds;
+            var sleepTime = this.settings.BroadcastInterval - (endTime - startTime).Milliseconds;
 
             var tcs = new TaskCompletionSource<bool>();
 
             this.PlayerSentMovementPacket += (player) =>
             {
-                if (this.eagerBroadcast)
+                if (this.settings.EagerBroadcast)
                 {
                     var alivePlayers = this.players.Values.Where(p => !p.Tank.IsDead);
                     if (this.playersWhoSentMovementPacketThisTick.Count >= alivePlayers.Count())
@@ -316,7 +317,7 @@ internal class GameInstance
             {
                 var diff = endTime - startTime;
                 Console.Write($"WARNING: GAME STATE BROADCAST TOOK {diff.TotalMilliseconds}ms ");
-                Console.WriteLine($"AND EXCEEDED INTERVAL {this.broadcastInterval}ms!");
+                Console.WriteLine($"AND EXCEEDED INTERVAL {this.settings.BroadcastInterval}ms!");
             }
         }
     }

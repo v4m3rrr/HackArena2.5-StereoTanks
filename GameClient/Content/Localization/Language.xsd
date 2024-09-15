@@ -13,6 +13,7 @@
 			<xs:element name="Authors" type="xs:string"/>
 			<xs:element name="Exit" type="xs:string"/>
 			<xs:element name="Back" type="xs:string"/>
+			<xs:element name="Leave" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 

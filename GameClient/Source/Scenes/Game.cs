@@ -16,7 +16,6 @@ namespace GameClient.Scenes;
 internal class Game : Scene
 {
     private readonly Dictionary<string, Player> players = [];
-    private readonly GameInitializer initializer;
     private readonly GameComponents components;
     private readonly GameUpdater updater;
 
@@ -26,8 +25,8 @@ internal class Game : Scene
     public Game()
         : base(Color.Transparent)
     {
-        this.initializer = new GameInitializer(this);
-        this.components = new GameComponents(this.initializer);
+        var initializer = new GameInitializer(this);
+        this.components = new GameComponents(initializer);
         this.updater = new GameUpdater(this.components, this.players);
     }
 
@@ -82,12 +81,6 @@ internal class Game : Scene
     private static void Connection_Connected()
     {
         DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
-    }
-
-    private static void Connection_ErrorThrew(string error)
-    {
-        DebugConsole.ThrowError(error);
-        ChangeToPreviousOrDefault<MainMenu>();
     }
 
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
@@ -150,7 +143,6 @@ internal class Game : Scene
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
         ServerConnection.Connecting += Connection_Connecting;
         ServerConnection.Connected += Connection_Connected;
-        ServerConnection.ErrorThrew += Connection_ErrorThrew;
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
@@ -166,7 +158,6 @@ internal class Game : Scene
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;
         ServerConnection.Connecting -= Connection_Connecting;
         ServerConnection.Connected -= Connection_Connected;
-        ServerConnection.ErrorThrew -= Connection_ErrorThrew;
     }
 
     private async void HandleInput()

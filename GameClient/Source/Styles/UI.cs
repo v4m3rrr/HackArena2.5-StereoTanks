@@ -29,6 +29,7 @@ internal static class UI
             var isRecalculating = false;
             text.Transform.Recalculating += (s, e) =>
             {
+                offsetTextFromTexture = (int)(0.05f * ScreenController.Width);
                 // Avoid infinite recursion
                 if (!isRecalculating)
                 {

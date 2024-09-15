@@ -1,4 +1,5 @@
 ﻿using System;
+using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
@@ -141,89 +142,180 @@ internal class MainMenu : Scene
 #if DEBUG
         var quickJoinFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 9);
 
-        var quickJoinPlayerBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+        async void Connect<T>(bool isSpectator)
+            where T : Scene
         {
-            Parent = this.BaseComponent,
-            Transform =
+            ServerConnection.ErrorThrew += DebugConsole.ThrowError;
+
+            string? joinCode = "a";
+
+            var connectionData = new ConnectionData("localhost", 5000, isSpectator, joinCode);
+            if (await ServerConnection.ConnectAsync(connectionData))
+            {
+                var args = new GameDisplayEventArgs(joinCode, isSpectator);
+                Change<T>(args);
+            }
+
+            ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
+        }
+
+        // Lobby
+        {
+            var quickJoinPlayerBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+            {
+                Parent = this.BaseComponent,
+                Transform =
+            {
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(-0.3f, -0.04f),
+                RelativeSize = new Vector2(0.15f, 0.06f),
+            },
+            };
+            quickJoinPlayerBtn.HoverEntered += (s, e) => e.Color = Color.Red;
+            quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
+            quickJoinPlayerBtn.Clicked += (s, e) => Connect<Lobby>(false);
+            _ = new Text(quickJoinFont, Color.White)
+            {
+                Parent = quickJoinPlayerBtn.Component,
+                Value = "Quick Lobby",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Top,
+            },
+            };
+            _ = new Text(quickJoinFont, Color.White)
+            {
+                Parent = quickJoinPlayerBtn.Component,
+                Value = "(player)",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Bottom,
+            },
+            };
+
+            var quickJoinSpectatorBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+            {
+                Parent = this.BaseComponent,
+                Transform =
+            {
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(-0.3f, -0.12f),
+                RelativeSize = new Vector2(0.15f, 0.06f),
+            },
+            };
+            quickJoinSpectatorBtn.HoverEntered += (s, e) => e.Color = Color.Red;
+            quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
+            quickJoinSpectatorBtn.Clicked += (s, e) => Connect<Lobby>(true);
+            _ = new Text(quickJoinFont, Color.White)
+            {
+                Parent = quickJoinSpectatorBtn.Component,
+                Value = "Quick Lobby",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Top,
+            },
+            };
+            _ = new Text(quickJoinFont, Color.White)
+            {
+                Parent = quickJoinSpectatorBtn.Component,
+                Value = "(spectator)",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Bottom,
+            },
+            };
+        }
+
+        // Game
+        {
+            var quickJoinPlayerBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+            {
+                Parent = this.BaseComponent,
+                Transform =
             {
                 Alignment = Alignment.BottomRight,
                 RelativeOffset = new Vector2(-0.12f, -0.04f),
                 RelativeSize = new Vector2(0.15f, 0.06f),
             },
-        };
-        quickJoinPlayerBtn.HoverEntered += (s, e) => e.Color = Color.Red;
-        quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
-        quickJoinPlayerBtn.Clicked += (s, e) =>
-        {
-            var args = new GameDisplayEventArgs(joinCode: null, isSpectator: false);
-            Change<Game>(args);
-        };
-        _ = new Text(quickJoinFont, Color.White)
-        {
-            Parent = quickJoinPlayerBtn.Component,
-            Value = "Quick Join",
-            TextAlignment = Alignment.Center,
-            TextShrink = TextShrinkMode.Width,
-            Transform =
+            };
+            quickJoinPlayerBtn.HoverEntered += (s, e) => e.Color = Color.Red;
+            quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
+            quickJoinPlayerBtn.Clicked += (s, e) => Connect<Game>(false);
+            _ = new Text(quickJoinFont, Color.White)
+            {
+                Parent = quickJoinPlayerBtn.Component,
+                Value = "Quick Join",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
                 Alignment = Alignment.Top,
             },
-        };
-        _ = new Text(quickJoinFont, Color.White)
-        {
-            Parent = quickJoinPlayerBtn.Component,
-            Value = "(player)",
-            TextAlignment = Alignment.Center,
-            TextShrink = TextShrinkMode.Width,
-            Transform =
+            };
+            _ = new Text(quickJoinFont, Color.White)
             {
-                RelativeSize = new Vector2(1f, 0.5f),
-                Alignment = Alignment.Bottom,
-            },
-        };
+                Parent = quickJoinPlayerBtn.Component,
+                Value = "(player)",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
+                {
+                    RelativeSize = new Vector2(1f, 0.5f),
+                    Alignment = Alignment.Bottom,
+                },
+            };
 
-        var quickJoinSpectatorBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
-        {
-            Parent = this.BaseComponent,
-            Transform =
+            var quickJoinSpectatorBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
             {
-                Alignment = Alignment.BottomRight,
-                RelativeOffset = new Vector2(-0.12f, -0.12f),
-                RelativeSize = new Vector2(0.15f, 0.06f),
-            },
-        };
-        quickJoinSpectatorBtn.HoverEntered += (s, e) => e.Color = Color.Red;
-        quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
-        quickJoinSpectatorBtn.Clicked += (s, e) =>
-        {
-            var args = new GameDisplayEventArgs(joinCode: null, isSpectator: true);
-            Change<Game>(args);
-        };
-        _ = new Text(quickJoinFont, Color.White)
-        {
-            Parent = quickJoinSpectatorBtn.Component,
-            Value = "Quick Join",
-            TextAlignment = Alignment.Center,
-            TextShrink = TextShrinkMode.Width,
-            Transform =
+                Parent = this.BaseComponent,
+                Transform =
+                {
+                    Alignment = Alignment.BottomRight,
+                    RelativeOffset = new Vector2(-0.12f, -0.12f),
+                    RelativeSize = new Vector2(0.15f, 0.06f),
+                },
+            };
+            quickJoinSpectatorBtn.HoverEntered += (s, e) => e.Color = Color.Red;
+            quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
+            quickJoinSpectatorBtn.Clicked += (s, e) => Connect<Game>(true);
+            _ = new Text(quickJoinFont, Color.White)
             {
-                RelativeSize = new Vector2(1f, 0.5f),
-                Alignment = Alignment.Top,
-            },
-        };
-        _ = new Text(quickJoinFont, Color.White)
-        {
-            Parent = quickJoinSpectatorBtn.Component,
-            Value = "(spectator)",
-            TextAlignment = Alignment.Center,
-            TextShrink = TextShrinkMode.Width,
-            Transform =
+                Parent = quickJoinSpectatorBtn.Component,
+                Value = "Quick Join",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
+                {
+                    RelativeSize = new Vector2(1f, 0.5f),
+                    Alignment = Alignment.Top,
+                },
+            };
+            _ = new Text(quickJoinFont, Color.White)
+            {
+                Parent = quickJoinSpectatorBtn.Component,
+                Value = "(spectator)",
+                TextAlignment = Alignment.Center,
+                TextShrink = TextShrinkMode.Width,
+                Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
                 Alignment = Alignment.Bottom,
             },
-        };
+            };
+        }
 #endif
     }
 
