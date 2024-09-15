@@ -1,6 +1,5 @@
 ﻿using GameLogic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient.Sprites;
@@ -10,22 +9,9 @@ namespace GameClient.Sprites;
 /// </summary>
 internal class Tank : Sprite
 {
-    private static readonly Texture2D TankTexture;
-    private static readonly Texture2D TankFillTexture;
-    private static readonly Texture2D TurretTexture;
-
+    private readonly ScalableTexture2D tankTexture;
+    private readonly ScalableTexture2D turretTexture;
     private readonly GridComponent grid;
-
-    private Rectangle destinationRect;
-    private float tankRotation;
-    private float turretRotation;
-
-    static Tank()
-    {
-        TankTexture = ContentController.Content.Load<Texture2D>("Images/Tank");
-        TankFillTexture = ContentController.Content.Load<Texture2D>("Images/TankFill");
-        TurretTexture = ContentController.Content.Load<Texture2D>("Images/TankTurret");
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Tank"/> class.
@@ -36,6 +22,32 @@ internal class Tank : Sprite
     {
         this.Logic = logic;
         this.grid = grid;
+
+        this.tankTexture = new ScalableTexture2D("Images/Game/tank.svg")
+        {
+            Color = new Color(logic.Owner.Color),
+            RelativeOrigin = new Vector2(0.5f),
+            CenterOrigin = true,
+            Transform =
+            {
+                Type = TransformType.Absolute,
+                Size = new Point(grid.TileSize, grid.TileSize),
+            },
+        };
+
+        this.turretTexture = new ScalableTexture2D("Images/Game/turret.svg")
+        {
+            RelativeOrigin = new Vector2(0.5f),
+            CenterOrigin = true,
+            Transform =
+            {
+                Type = TransformType.Absolute,
+                Size = new Point(grid.TileSize, grid.TileSize),
+            },
+        };
+
+        this.tankTexture.Load();
+        this.turretTexture.Load();
     }
 
     /// <summary>
@@ -60,19 +72,24 @@ internal class Tank : Sprite
             return;
         }
 
+        this.tankTexture.Rotation = DirectionUtils.ToRadians(this.Logic.Direction);
+        this.turretTexture.Rotation = DirectionUtils.ToRadians(this.Logic.Turret.Direction);
+
         int tileSize = this.grid.TileSize;
         int drawOffset = this.grid.DrawOffset;
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
-        this.tankRotation = DirectionUtils.ToRadians(this.Logic.Direction);
-        this.turretRotation = DirectionUtils.ToRadians(this.Logic.Turret.Direction);
+        this.tankTexture.Transform.Location = this.turretTexture.Transform.Location
+            = new Point(
+                gridLeft + (this.Logic.X * tileSize) + drawOffset,
+                gridTop + (this.Logic.Y * tileSize) + drawOffset);
 
-        this.destinationRect = new Rectangle(
-            gridLeft + (this.Logic.X * tileSize) + drawOffset,
-            gridTop + (this.Logic.Y * tileSize) + drawOffset,
-            tileSize,
-            tileSize);
+        this.tankTexture.Transform.Size = this.turretTexture.Transform.Size
+            = new Point(tileSize, tileSize);
+
+        this.tankTexture.Update(gameTime);
+        this.turretTexture.Update(gameTime);
     }
 
     /// <inheritdoc/>
@@ -83,34 +100,7 @@ internal class Tank : Sprite
             return;
         }
 
-        SpriteBatchController.SpriteBatch.Draw(
-            TankTexture,
-            this.destinationRect,
-            null,
-            Color.White,
-            this.tankRotation,
-            TankTexture.Bounds.Size.ToVector2() / 2f,
-            SpriteEffects.None,
-            1.0f);
-
-        SpriteBatchController.SpriteBatch.Draw(
-            TankFillTexture,
-            this.destinationRect,
-            null,
-            new Color(this.Logic.Owner.Color),
-            this.tankRotation,
-            TankTexture.Bounds.Size.ToVector2() / 2f,
-            SpriteEffects.None,
-            1.0f);
-
-        SpriteBatchController.SpriteBatch.Draw(
-            TurretTexture,
-            this.destinationRect,
-            null,
-            Color.White,
-            this.turretRotation,
-            TankTexture.Bounds.Size.ToVector2() / 2f,
-            SpriteEffects.None,
-            1.0f);
+        this.tankTexture.Draw(gameTime);
+        this.turretTexture.Draw(gameTime);
     }
 }

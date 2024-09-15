@@ -10,11 +10,19 @@ namespace GameClient.Sprites;
 /// </summary>
 /// <param name="visibilityGrid">The visibility grid.</param>
 /// <param name="grid">The grid component.</param>
-internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid) : Sprite
+/// <param name="color">The color of fog.</param>
+internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color) : Sprite
 {
+    private static readonly ScalableTexture2D.Static Texture;
+
     private readonly GridComponent grid = grid;
     private readonly List<Rectangle> destinationRects = [];
     private readonly Vector2 origin = Vector2.One / 2f;
+
+    static FogOfWar()
+    {
+        Texture = new ScalableTexture2D.Static("Images/Game/fog_of_war.svg");
+    }
 
     /// <summary>
     /// Gets or sets the visibility grid.
@@ -29,13 +37,15 @@ internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid) : Sprite
         int gridLeft = this.grid.Transform.DestRectangle.Left;
         int gridTop = this.grid.Transform.DestRectangle.Top;
 
+        Texture.Transform.Size = new Point(tileSize);
+
         this.destinationRects.Clear();
 
         for (int y = 0; y < this.VisibilityGrid.GetLength(1); y++)
         {
             for (int x = 0; x < this.VisibilityGrid.GetLength(0); x++)
             {
-                if (!this.VisibilityGrid[x, y])
+                if (this.VisibilityGrid[x, y])
                 {
                     var rect = new Rectangle(
                         gridLeft + (x * tileSize) + drawOffset,
@@ -52,15 +62,14 @@ internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid) : Sprite
     public override void Draw(GameTime gameTime)
     {
         var spriteBatch = SpriteBatchController.SpriteBatch;
-        var whitePixel = SpriteBatchController.WhitePixel;
 
         foreach (Rectangle rect in this.destinationRects)
         {
             spriteBatch.Draw(
-                whitePixel,
+                Texture.Texture,
                 rect,
                 null,
-                Color.Black * 0.5f,
+                color * 0.8f,
                 0f,
                 this.origin,
                 SpriteEffects.None,

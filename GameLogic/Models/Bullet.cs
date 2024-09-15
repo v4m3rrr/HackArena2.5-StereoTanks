@@ -125,7 +125,7 @@ public class Bullet : IEquatable<Bullet>
     /// </summary>
     /// <remarks>
     /// The setter is internal because the owner is set
-    /// in the <see cref="Grid.UpdateFromStatePayload"/> method,
+    /// in the <see cref="Grid.UpdateFromGameStatePayload"/> method,
     /// if the <see cref="ShooterId"/> is known.
     /// </remarks>
     public Player? Shooter { get; internal set; }

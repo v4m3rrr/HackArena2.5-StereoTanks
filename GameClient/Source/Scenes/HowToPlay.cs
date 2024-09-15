@@ -21,18 +21,18 @@ internal class HowToPlay : Scene
     {
         var font = new ScalableFont("Content\\Fonts\\Consolas.ttf", 11);
 
-        var backBtn = new Button<Frame>(new Frame())
-        {
-            Parent = this.BaseComponent,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.04f, -0.04f),
-                RelativeSize = new Vector2(0.12f, 0.07f),
-            },
-        }.ApplyStyle(Styles.UI.ButtonStyle);
-        backBtn.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
-        backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
+        //var backBtn = new Button<Frame>(new Frame())
+        //{
+        //    Parent = this.BaseComponent,
+        //    Transform =
+        //    {
+        //        Alignment = Alignment.BottomLeft,
+        //        RelativeOffset = new Vector2(0.04f, -0.04f),
+        //        RelativeSize = new Vector2(0.12f, 0.07f),
+        //    },
+        //}.ApplyStyle(Styles.UI.ButtonStyle);
+        //backBtn.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
+        //backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
 
         var frame = new Frame(Color.Black, 2)
         {
@@ -45,22 +45,23 @@ internal class HowToPlay : Scene
             },
         };
         var background = new SolidColor(Color.Black * 0.5f) { Parent = frame.InnerContainer };
-        var listBox = new ListBox()
+        var listBox = new ScrollableListBox(new SolidColor(Color.Yellow))
         {
             Parent = frame.InnerContainer,
             Orientation = Orientation.Vertical,
             Spacing = 20,
-            IsScrollable = true,
-            ScrollBar =
-            {
-                FrameThickness = 1,
-                FrameColor = Color.DarkGray * 0.75f,
-                BackgroundColor = Color.Gray * 0.65f,
-                ThumbColor = Color.Yellow,
-                Parent = frame,
-            },
-            ContentContainerRelativeMargin = new Vector4(0.005f, 0.01f, 0.005f, 0.01f),
-            DrawContentOnMargin = true,
+            ScrollBar = { RelativeSize = 0.01f },
+            //IsScrollable = true,
+            //ScrollBar =
+            //{
+            //    FrameThickness = 1,
+            //    FrameColor = Color.DarkGray * 0.75f,
+            //    BackgroundColor = Color.Gray * 0.65f,
+            //    ThumbColor = Color.Yellow,
+            //    Parent = frame,
+            //},
+            //ContentContainerRelativeMargin = new Vector4(0.005f, 0.01f, 0.005f, 0.01f),
+            //DrawContentOnMargin = true,
         };
 
         _ = new LocalizedWrappedText(font, Color.White)
@@ -73,8 +74,7 @@ internal class HowToPlay : Scene
 
         this.Showed += (s, e) =>
         {
-            listBox.DequeueComponents();
-            listBox.ScrollBar?.ScrollTo(0.0f);
+            //listBox.ScrollBar?.ScrollTo(0.0f);
         };
     }
 }

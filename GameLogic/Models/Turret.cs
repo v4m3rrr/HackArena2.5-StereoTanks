@@ -92,7 +92,7 @@ public class Turret
     /// </summary>
     /// <remarks>
     /// The setter is internal because the owner is set in the
-    /// <see cref="Grid.UpdateFromStatePayload"/> method.
+    /// <see cref="Grid.UpdateFromGameStatePayload"/> method.
     /// </remarks>
     public Tank Tank { get; internal set; }
 

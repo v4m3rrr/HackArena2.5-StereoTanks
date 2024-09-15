@@ -16,6 +16,11 @@ internal class FogOfWarManager(bool[,] wallGrid)
     private readonly int height = wallGrid.GetLength(1);
 
     /// <summary>
+    /// Gets an empty grid.
+    /// </summary>
+    public bool[,] EmptyGrid => new bool[this.width, this.height];
+
+    /// <summary>
     /// Determines whether the specified element is visible.
     /// </summary>
     /// <param name="visibilityGrid">The visibility grid.</param>

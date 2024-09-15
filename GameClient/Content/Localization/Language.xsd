@@ -8,16 +8,11 @@
 
 	<xs:complexType name="Buttons">
 		<xs:sequence>
-			<xs:element name="CreateGame" type="xs:string"/>
 			<xs:element name="JoinGame" type="xs:string"/>
-			<xs:element name="HowToPlay" type="xs:string"/>
 			<xs:element name="Settings" type="xs:string"/>
 			<xs:element name="Authors" type="xs:string"/>
 			<xs:element name="Exit" type="xs:string"/>
 			<xs:element name="Back" type="xs:string"/>
-			<xs:element name="Close" type="xs:string"/>
-			<xs:element name="Save" type="xs:string"/>
-			<xs:element name="MainMenu" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 
@@ -25,17 +20,15 @@
 		<xs:sequence>
 			<xs:element name="Language" type="xs:string"/>
 			<xs:element name="Resolution" type="xs:string"/>
-			<xs:element name="ScreenType" type="xs:string"/>
-			<xs:element name="ScreenTypeWindowed" type="xs:string"/>
-			<xs:element name="ScreenTypeFullScreen" type="xs:string"/>
-			<xs:element name="ScreenTypeBorderless" type="xs:string"/>
+			<xs:element name="DisplayMode" type="xs:string"/>
+			<xs:element name="DisplayModeWindowed" type="xs:string"/>
+			<xs:element name="DisplayModeFullScreen" type="xs:string"/>
+			<xs:element name="DisplayModeBorderless" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 
 	<xs:complexType name="Other">
 		<xs:sequence>
-			<xs:element name="HowToPlay" type="xs:string"/>
-			<xs:element name="YouAreSpectator" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 

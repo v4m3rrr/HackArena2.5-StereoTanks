@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient.Scenes;
@@ -8,11 +8,11 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the main menu scene.
 /// </summary>
-public class MainMenu : Scene
+internal class MainMenu : Scene
 {
-#if DEBUG
-    private Text openDebugConsoleInfo = default!;
-#endif
+    private Text title = default!;
+    private ScalableTexture2D logo = default!;
+    private ScalableTexture2D element = default!;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainMenu"/> class.
@@ -22,82 +22,125 @@ public class MainMenu : Scene
     {
     }
 
-#if DEBUG
+    /// <summary>
+    /// Gets the background texture.
+    /// </summary>
+    public static ScalableTexture2D Effect { get; private set; } = default!;
+
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        this.openDebugConsoleInfo.IsEnabled = !DisplayedOverlays.Any(x => x.Scene is DebugConsole);
+        Effect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Effect.Rotation %= MathHelper.TwoPi;
+
         base.Update(gameTime);
     }
-#endif
 
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
-        // Background image
-        _ = new Image("monoTanksBGg") { Parent = this.BaseComponent, Transform = { Alignment = Alignment.Center } };
-
-        // Title
-        var titleFont = new ScalableFont("Content\\Fonts\\Tiny5-Regular.ttf", 76);
-        _ = new Text(titleFont, Color.White)
+        Effect = new ScalableTexture2D("Images/MainMenu/effect.svg")
         {
-            Parent = this.BaseComponent,
+            Parent = baseComponent,
+            Color = MonoTanks.ThemeColor,
+            Transform =
+            {
+                RelativeSize = new Vector2(1.924f, 2.206f),
+                Alignment = Alignment.Center,
+            },
+        };
+
+        Effect.Load();
+        Effect.RelativeOrigin = new Vector2(0.5f);
+        Effect.Transform.SetRelativeOffsetFromAbsolute(Effect.Texture.Bounds.Center);
+
+        this.element = new ScalableTexture2D("Images/MainMenu/background_element.svg")
+        {
+            Parent = baseComponent,
+            Transform =
+            {
+                RelativeSize = new Vector2(0.45f),
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(-0.08f, -0.14f),
+            },
+        };
+
+        this.element.Load();
+
+        var titleFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 42);
+        this.title = new Text(titleFont, Color.White)
+        {
+            Parent = baseComponent,
             Value = "MONO TANKS",
-            TextAlignment = Alignment.TopRight,
+#if DEBUG
+            AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
+#endif
             TextShrink = TextShrinkMode.HeightAndWidth,
+            Spacing = 20,
             Transform =
             {
-                Alignment = Alignment.TopRight,
-                RelativeOffset = new Vector2(-0.06f, 0.06f),
-                RelativeSize = new Vector2(0.6f, 0.2f),
-                MinSize = new Point(450, int.MaxValue),
-                MaxSize = new Point(900, int.MaxValue),
+                Alignment = Alignment.TopLeft,
+                RelativeOffset = new Vector2(0.06f, 0.28f),
             },
         };
-
-        // Buttons
-        var listBoxTop = new ListBox()
-        {
-            Parent = this.BaseComponent,
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            IsScrollable = false,
-            ResizeContent = true,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.03f, -0.12f),
-                RelativeSize = new Vector2(0.66f, 0.06f),
-                MinSize = new Point(500, 20),
-                MaxSize = new Point(900, 100),
-            },
-        };
-
-        var listBoxBottom = new ListBox()
-        {
-            Parent = this.BaseComponent,
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            IsScrollable = false,
-            ResizeContent = true,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.03f, -0.05f),
-                RelativeSize = new Vector2(0.66f, 0.06f),
-                MinSize = new Point(500, 20),
-                MaxSize = new Point(900, 100),
-            },
-        };
-
-        _ = CreateButton(listBoxTop, new LocalizedString("Buttons.CreateGame"), (s, e) => throw new NotImplementedException());
-        _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.JoinGame"), (s, e) => throw new NotImplementedException());
-        _ = CreateButton(listBoxTop, new LocalizedString("Buttons.HowToPlay"), (s, e) => Change<HowToPlay>());
-        _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.Settings"), (s, e) => Change<Settings>());
-        _ = CreateButton(listBoxTop, new LocalizedString("Buttons.Authors"), (s, e) => Change<Authors>());
-        _ = CreateButton(listBoxBottom, new LocalizedString("Buttons.Exit"), (s, e) => MonoTanks.Instance.Exit());
 
 #if DEBUG
+        var debugInfoFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 14);
+        _ = new Text(debugInfoFont, Color.White * 0.9f)
+        {
+            Parent = this.title,
+            Value = "[Debug]",
+            TextAlignment = Alignment.Right,
+            Spacing = 52,
+            Transform =
+            {
+                RelativeSize = new Vector2(0.1f),
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(0.0f, 0.5f),
+            },
+        };
+#endif
+
+        this.logo = new ScalableTexture2D("Images/logo.svg")
+        {
+            Parent = baseComponent,
+            Transform =
+            {
+                RelativeSize = new Vector2(0.1f),
+                Alignment = Alignment.TopRight,
+                RelativeOffset = new Vector2(-0.08f, 0.08f),
+            },
+        };
+
+        this.logo.Load();
+
+        var listBox = new ListBox
+        {
+            Parent = baseComponent,
+            Spacing = 15,
+            Transform =
+            {
+                RelativeSize = new Vector2(0.32f, 0.32f),
+                Alignment = Alignment.Left,
+                RelativeOffset = new Vector2(0.06f, 0.08f),
+            },
+        };
+
+        var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join_room_icon");
+        joinRoomBtn.Clicked += (s, e) => DebugConsole.ThrowError("Joining a room is not implemented yet.");
+
+        var settingsBtn = CreateButton(new LocalizedString("Buttons.Settings"), listBox, "settings_icon");
+        settingsBtn.Clicked += (s, e) => Change<Settings>();
+
+        var authorsBtn = CreateButton(new LocalizedString("Buttons.Authors"), listBox, "authors_icon");
+        authorsBtn.Clicked += (s, e) => Change<Authors>();
+
+        var exitBtn = CreateButton(new LocalizedString("Buttons.Exit"), listBox, "exit_icon");
+        exitBtn.Clicked += (s, e) => MonoTanks.Instance.Exit();
+
+#if DEBUG
+        var quickJoinFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 9);
+
         var quickJoinPlayerBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
         {
             Parent = this.BaseComponent,
@@ -112,27 +155,27 @@ public class MainMenu : Scene
         quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
         quickJoinPlayerBtn.Clicked += (s, e) =>
         {
-            var args = new Game.ChangeEventArgs(joinCode: null, isSpectator: false);
+            var args = new GameDisplayEventArgs(joinCode: null, isSpectator: false);
             Change<Game>(args);
         };
-        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        _ = new Text(quickJoinFont, Color.White)
         {
             Parent = quickJoinPlayerBtn.Component,
             Value = "Quick Join",
-            Scale = 0.7f,
             TextAlignment = Alignment.Center,
+            TextShrink = TextShrinkMode.Width,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
                 Alignment = Alignment.Top,
             },
         };
-        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        _ = new Text(quickJoinFont, Color.White)
         {
             Parent = quickJoinPlayerBtn.Component,
             Value = "(player)",
-            Scale = 0.7f,
             TextAlignment = Alignment.Center,
+            TextShrink = TextShrinkMode.Width,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
@@ -154,55 +197,57 @@ public class MainMenu : Scene
         quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
         quickJoinSpectatorBtn.Clicked += (s, e) =>
         {
-            var args = new Game.ChangeEventArgs(joinCode: null, isSpectator: true);
+            var args = new GameDisplayEventArgs(joinCode: null, isSpectator: true);
             Change<Game>(args);
         };
-        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        _ = new Text(quickJoinFont, Color.White)
         {
             Parent = quickJoinSpectatorBtn.Component,
             Value = "Quick Join",
-            Scale = 0.7f,
             TextAlignment = Alignment.Center,
+            TextShrink = TextShrinkMode.Width,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
                 Alignment = Alignment.Top,
             },
         };
-        _ = new Text(Styles.UI.ButtonStyle.GetPropertyOfType<ScalableFont>()!, Color.White)
+        _ = new Text(quickJoinFont, Color.White)
         {
             Parent = quickJoinSpectatorBtn.Component,
             Value = "(spectator)",
-            Scale = 0.7f,
             TextAlignment = Alignment.Center,
+            TextShrink = TextShrinkMode.Width,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
                 Alignment = Alignment.Bottom,
             },
         };
-
-        this.openDebugConsoleInfo = new Text(new ScalableFont("Content\\Fonts\\Consolas.ttf", 9), Color.LightGray)
-        {
-            Parent = this.BaseComponent,
-            Value = "Press [CTRL + `] to open the debug console.",
-            TextShrink = TextShrinkMode.HeightAndWidth,
-            AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.03f, -0.015f),
-            },
-        };
 #endif
     }
 
-    private static Button<Frame> CreateButton(ListBox listBox, LocalizedString text, EventHandler clicked)
+    private static IButton<Container> CreateButton(
+        LocalizedString text,
+        ListBox listbox,
+        string iconName)
     {
-        var button = new Button<Frame>(new Frame()) { Parent = listBox.ContentContainer };
-        _ = button.ApplyStyle(Styles.UI.ButtonStyle);
-        button.GetDescendant<LocalizedText>()!.Value = text;
-        button.Clicked += clicked;
+        var button = new Button<Container>(new Container())
+        {
+            Parent = listbox.ContentContainer,
+            Transform =
+            {
+                RelativeSize = new Vector2(1, 0.20f),
+            },
+        };
+
+        button.ApplyStyle(Styles.UI.ButtonStyle);
+        button.Component.GetChild<LocalizedText>()!.Value = text;
+
+        var texture = button.Component.GetChild<ScalableTexture2D>()!;
+        texture.AssetPath = $"Images/MainMenu/{iconName}.svg";
+        texture.Load();
+
         return button;
     }
 }

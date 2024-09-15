@@ -11,134 +11,166 @@ namespace GameClient.Scenes;
 /// </summary>
 internal class Settings : Scene, IOverlayScene
 {
-    private readonly List<Component> overlayComponents = new();
-    private ListBox listBox = default!;
-    private Button<Frame> backButton = default!;
+    private readonly List<Component> overlayComponents = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Settings"/> class.
     /// </summary>
     public Settings()
-        : base()
+        : base(Color.Transparent)
     {
     }
-
-    /// <inheritdoc/>
-    public event EventHandler<(int Before, int After)>? PriorityChanged;
 
     /// <inheritdoc/>
     public int Priority => 1;
 
     /// <inheritdoc/>
-    public IEnumerable<IReadOnlyComponent> OverlayComponents => this.overlayComponents;
+    public IEnumerable<IComponent> OverlayComponents => this.overlayComponents;
+
+    /// <inheritdoc/>
+    public override void Update(GameTime gameTime)
+    {
+        if (!this.IsDisplayedOverlay)
+        {
+            MainMenu.Effect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        }
+
+        base.Update(gameTime);
+    }
+
+    /// <inheritdoc/>
+    public override void Draw(GameTime gameTime)
+    {
+        ScreenController.GraphicsDevice.Clear(Color.Black);
+
+        if (!this.IsDisplayedOverlay)
+        {
+            MainMenu.Effect.Draw(gameTime);
+        }
+
+        base.Draw(gameTime);
+    }
 
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
+        var titleFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 21);
+        var title = new LocalizedText(titleFont, Color.White)
+        {
+            Parent = baseComponent,
+            Value = new LocalizedString("Buttons.Settings"),
+            TextAlignment = Alignment.Top,
+            Case = TextCase.Upper,
+            Transform =
+            {
+                Alignment = Alignment.Top,
+                RelativeOffset = new Vector2(0.0f, 0.08f),
+                RelativeSize = new Vector2(0.5f, 0.1f),
+            },
+        };
+
+        var backButton = new Button<Container>(new Container())
+        {
+            Parent = baseComponent,
+            Transform =
+            {
+                Alignment = Alignment.BottomLeft,
+                RelativeOffset = new Vector2(0.08f, -0.08f),
+                RelativeSize = new Vector2(0.2f, 0.07f),
+            },
+        };
+
+        backButton.ApplyStyle(Styles.UI.BackButtonStyle);
+
         this.Showed += (s, e) =>
         {
             if (this.IsDisplayedOverlay)
             {
-                this.SetBackground(Color.Black * 0.5f);
-                this.backButton.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Close");
+                backButton.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Close");
+                backButton.GetDescendant<ScalableTexture2D>()!.AssetPath = "Images/close_icon.svg";
             }
             else
             {
-                this.SetBackground(Color.MediumSpringGreen * 0.7f);
-                this.backButton.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
+                backButton.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
+                backButton.GetDescendant<ScalableTexture2D>()!.AssetPath = "Images/back_icon.svg";
             }
         };
 
-        var font = new ScalableFont("Content\\Fonts\\Consolas.ttf", 12);
-
-        var baseFrame = new Frame(Color.Black, 2)
+        backButton.Clicked += (s, e) =>
         {
-            Parent = this.BaseComponent,
+            if (this.IsDisplayedOverlay)
+            {
+                HideOverlay<Settings>();
+            }
+            else
+            {
+                ChangeToPreviousOrDefault<MainMenu>();
+            }
+        };
+
+        var listBox = new FlexListBox()
+        {
+            Parent = baseComponent,
+            Orientation = Orientation.Vertical,
+            Spacing = 20,
             Transform =
             {
                 Alignment = Alignment.Center,
-                RelativeSize = new Vector2(0.75f),
-                Ratio = new Ratio(4, 3),
-                MinSize = new Point(520, 390),
-                MaxSize = new Point(800, 600),
+                RelativeSize = new Vector2(0.6f, 0.6f),
+                MinSize = new Point(620, 1),
             },
         };
-        this.overlayComponents.Add(baseFrame);
 
-        var baseBackground = new SolidColor(Color.Black * 0.75f) { Parent = baseFrame.InnerContainer };
+        var itemFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 12);
 
-        this.listBox = new ListBox()
-        {
-            Parent = baseFrame.InnerContainer,
-            Orientation = Orientation.Vertical,
-            IsScrollable = true,
-            Spacing = 10,
-            ContentContainerRelativeMargin = new Vector4(0.01f, 0.02f, 0.01f, 0.02f),
-            ScrollBar =
-            {
-                FrameThickness = 1,
-                FrameColor = Color.DarkGray * 0.75f,
-                BackgroundColor = Color.Gray * 0.65f,
-                ThumbColor = Color.DarkSalmon,
-                Parent = baseFrame,
-            },
-        };
+        List<ListBox> sections = [];
+
+        var generalSection = CreateSection(listBox.ContentContainer);
+        sections.Add(generalSection);
 
         // Language
         {
-            var frame = CreateLabelFrame(this.listBox, font, "Labels.Language");
-            var selector = CreateSelector<Language>(font, frame.InnerContainer);
-            selector.Opened += (s, e) => this.UpdateOtherOptions();
-            selector.Closed += (s, e) => this.UpdateOtherOptions();
+            var (_, selector) = CreateItem<Language>(generalSection, new LocalizedString("Labels.Language"), itemFont, false, 2.8f);
             selector.CurrentItemPredicate = (x) => x == GameSettings.Language;
             selector.ItemSelected += (s, item) =>
             {
-                selector.Close();
-                selector.InactiveContainer.GetDescendant<Text>()!.Value = item?.Name ?? string.Empty;
+                selector.InactiveContainer.GetChild<Text>()!.Value = item?.Name ?? string.Empty;
             };
 
             GameSettings.LanguageChanged += (s, e) => selector.SelectCurrentItem();
 
             foreach (string languageName in Enum.GetNames(typeof(Language)))
             {
-                Language language = (Language)Enum.Parse(typeof(Language), languageName);
+                var language = (Language)Enum.Parse(typeof(Language), languageName);
                 var nativeName = Localization.GetNativeLanguageName(language);
 
-                var button = new Button<Frame>(new Frame()).ApplyStyle(Styles.Settings.SelectorItem);
-                button.Clicked += (s, e) => GameSettings.Language = language;
-                _ = new Text(Styles.Settings.Font, Color.White)
-                {
-                    Parent = button.Component.InnerContainer,
-                    Value = nativeName,
-                    TextAlignment = Alignment.Center,
-                };
+                var button = new Button<Container>(new Container());
+                button.ApplyStyle(Styles.Settings.SelectorButtonItem);
+                button.Component.GetChild<Text>()!.Value = nativeName;
 
                 var item = new Selector<Language>.Item(button, language, nativeName);
                 selector.AddItem(item);
 
+                button.Clicked += (s, e) => GameSettings.Language = language;
                 button.Clicked += (s, e) => selector.SelectItem(item);
             }
+
+            selector.SelectCurrentItem();
         }
+
+        var graphicsSection = CreateSection(listBox.ContentContainer);
+        sections.Add(graphicsSection);
 
         // Resolution
         {
-            var frame = CreateLabelFrame(this.listBox, font, "Labels.Resolution");
-            var selector = CreateSelector<Point>(font, frame.InnerContainer);
+            var (_, selector) = CreateItem<Point>(graphicsSection, new LocalizedString("Labels.Resolution"), itemFont, true, 2.8f);
             selector.RelativeHeight = 5f;
-            selector.ListBox.ResizeContent = false;
-            selector.ListBox.IsScrollable = true;
-            selector.ListBox.ScrollBar.FrameThickness = 1;
-            selector.ListBox.ScrollBar.FrameColor = Color.DarkGray;
-            selector.ListBox.ScrollBar.BackgroundColor = Color.Gray * 0.65f;
-            selector.ListBox.ScrollBar.ThumbColor = Color.Gainsboro;
-            selector.ListBox.ScrollBar.RelativeSize = 0.07f;
+            selector.ElementFixedHeight = (int)(itemFont.BaseCharDimensions.Y * 2.5f);
             selector.ScrollToSelected = true;
-            selector.Opened += (s, e) => this.UpdateOtherOptions();
-            selector.Closed += (s, e) => this.UpdateOtherOptions();
             selector.CurrentItemPredicate = (x) => x == ScreenController.CurrentSize;
             selector.ItemSelected += (s, item) =>
             {
-                selector.Close();
                 selector.InactiveContainer.GetDescendant<Text>()!.Value = item?.Name
                     ?? GetResolutionWithAspectRatio(ScreenController.CurrentSize);
             };
@@ -149,7 +181,7 @@ internal class Settings : Scene, IOverlayScene
             {
                 Ratio ratio = (resolution.X / (float)resolution.Y).ToRatio(epsilon: 0.02);
                 string ratioText = ratio.ToString().Replace("8:5", "16:10");
-                return $"{resolution.X}x{resolution.Y} ({ratioText})";
+                return $"{resolution.X}x{resolution.Y}  ({ratioText})";
             }
 
             List<Point> resolutions = ScreenController.GraphicsDevice.Adapter.SupportedDisplayModes
@@ -162,198 +194,143 @@ internal class Settings : Scene, IOverlayScene
             {
                 string description = GetResolutionWithAspectRatio(resolution);
 
-                var button = new Button<Frame>(new Frame()).ApplyStyle(Styles.Settings.SelectorItem);
-                button.Clicked += (s, e) => GameSettings.SetResolution(resolution.X, resolution.Y);
-                _ = new Text(Styles.Settings.Font, Color.White)
+                var button = new Button<Container>(new Container());
+                button.ApplyStyle(Styles.Settings.SelectorButtonItem);
+                button.Component.GetChild<Text>()!.Value = description;
+
+                if (selector.ListBox is ScrollableListBox scrollableListBox)
                 {
-                    Parent = button.Component.InnerContainer,
-                    Value = description,
-                    TextAlignment = Alignment.Center,
-                    TextShrink = TextShrinkMode.HeightAndWidth,
-                };
+                    scrollableListBox.ScrollBar.Scrolled += (s, e) =>
+                    {
+                        if (e.ClampedDelta != 0)
+                        {
+                            button.ResetHover();
+                        }
+                    };
+                }
 
                 var item = new Selector<Point>.Item(button, resolution, description);
                 selector.AddItem(item);
 
+                button.Clicked += (s, e) => GameSettings.SetResolution(resolution.X, resolution.Y);
                 button.Clicked += (s, e) => selector.SelectItem(item);
             }
+
+            selector.SelectCurrentItem();
         }
 
-        // Screen type
+        // Display mode
         {
-            var frame = CreateLabelFrame(this.listBox, font, "Labels.ScreenType");
-            var selector = CreateSelector<ScreenType>(font, frame.InnerContainer, localized: true);
-            selector.Opened += (s, e) => this.UpdateOtherOptions();
-            selector.Closed += (s, e) => this.UpdateOtherOptions();
+            var (_, selector) = CreateItem<ScreenType>(graphicsSection, new LocalizedString("Labels.DisplayMode"), itemFont, false, 2.8f);
             selector.CurrentItemPredicate = (x) => x == ScreenController.ScreenType;
             selector.ItemSelected += (s, item) =>
             {
-                selector.Close();
-                selector.InactiveContainer.GetDescendant<LocalizedText>()!.Value = new LocalizedString($"Labels.ScreenType{item?.Name}");
+                selector.InactiveContainer.GetChild<Text>()!.Value = item?.Name ?? string.Empty;
             };
 
             GameSettings.ScreenTypeChanged += (s, e) => selector.SelectCurrentItem();
 
-            foreach (string screenTypeName in Enum.GetNames(typeof(ScreenType)))
+            foreach (string typeName in Enum.GetNames(typeof(ScreenType)))
             {
-                ScreenType screenType = (ScreenType)Enum.Parse(typeof(ScreenType), screenTypeName);
+                var screenType = (ScreenType)Enum.Parse(typeof(ScreenType), typeName);
+                var button = new Button<Container>(new Container());
+                button.ApplyStyle(Styles.Settings.SelectorButtonItem);
+                button.Component.GetChild<Text>()!.Value = typeName;
 
-                var button = new Button<Frame>(new Frame()).ApplyStyle(Styles.Settings.SelectorItem);
-                button.Clicked += (s, e) => GameSettings.SetScreenType(screenType);
-                _ = new LocalizedText(Styles.Settings.Font, Color.White)
-                {
-                    Parent = button.Component.InnerContainer,
-                    Value = new LocalizedString($"Labels.ScreenType{screenTypeName}"),
-                    TextAlignment = Alignment.Center,
-                };
-
-                var item = new Selector<ScreenType>.Item(button, screenType, screenTypeName);
+                var item = new Selector<ScreenType>.Item(button, screenType, typeName);
                 selector.AddItem(item);
 
+                button.Clicked += (s, e) => GameSettings.SetScreenType(screenType);
                 button.Clicked += (s, e) => selector.SelectItem(item);
             }
+
+            selector.SelectCurrentItem();
         }
 
-        this.SetCurrentSettings();
+        ResizeSections(listBox, sections);
+    }
 
-        // Back button
+    private static void ResizeSections(ListBox baseListBox, IEnumerable<ListBox> sections)
+    {
+        if (baseListBox is not FlexListBox baseFlex)
         {
-            this.backButton = new Button<Frame>(new Frame())
-            {
-                Parent = this.BaseComponent,
-                Transform =
-                {
-                    Alignment = Alignment.BottomLeft,
-                    RelativeOffset = new Vector2(0.04f, -0.04f),
-                    RelativeSize = new Vector2(0.12f, 0.07f),
-                },
-            }.ApplyStyle(Styles.UI.ButtonStyle);
-            this.backButton.Clicked += (s, e) =>
-            {
-                GameSettings.DiscardChanges();
-                this.SetCurrentSettings();
-
-                if (this.IsDisplayedOverlay)
-                {
-                    HideOverlay<Settings>();
-                }
-                else
-                {
-                    ChangeToPreviousOrDefault<MainMenu>();
-                }
-            };
-            this.overlayComponents.Add(this.backButton);
+            return;
         }
 
-        // Save button
+        foreach (ListBox section in sections)
         {
-            var button = new Button<Frame>(new Frame())
-            {
-                Parent = this.BaseComponent,
-                Transform =
-            {
-                Alignment = Alignment.BottomRight,
-                RelativeOffset = new Vector2(-0.04f, -0.04f),
-                RelativeSize = new Vector2(0.12f, 0.07f),
-            },
-            }.ApplyStyle(Styles.UI.ButtonStyle);
-            button.Clicked += (s, e) =>
-            {
-                GameSettings.SaveSettings();
-
-                if (this.IsDisplayedOverlay)
-                {
-                    HideOverlay<Settings>();
-                }
-                else
-                {
-                    ChangeToPreviousOrDefault<MainMenu>();
-                }
-            };
-            button.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Save");
-            this.overlayComponents.Add(button);
+            var itemCount = section.Components.Count();
+            var paddingYW = section.Transform.RelativePadding.Y + section.Transform.RelativePadding.W;
+            baseFlex.SetResizeFactor(section, 1 + ((itemCount - 1) * (1 + paddingYW)));
         }
     }
 
-    private static Frame CreateLabelFrame(ListBox listBox, ScalableFont font, string localizedIdentificator)
+    private static FlexListBox CreateSection(IComponent parent)
     {
-        var frame = new Frame()
-        {
-            Parent = listBox.ContentContainer,
-            Transform =
-            {
-                RelativePadding = new Vector4(0.01f, 0.0f, 0.0f, 0.0f),
-                MinSize = new Point(1, (int)(font.SafeDimensions.Y * 2)),
-                MaxSize = new Point(int.MaxValue, (int)(font.SafeDimensions.Y * 2)),
-            },
-        }.ApplyStyle(Styles.Settings.FrameLabel);
-        frame.InnerContainer.GetChild<LocalizedText>()!.Value = new LocalizedString(localizedIdentificator);
-        return frame;
-    }
-
-    // TODO: Remove localization from this method
-    private static Selector<T> CreateSelector<T>(ScalableFont font, IReadOnlyComponent parent, bool localized = false)
-    {
-        var selector = new Selector<T>(font)
+        var container = new FlexListBox()
         {
             Parent = parent,
-            ElementFixedHeight = (int)(font.SafeDimensions.Y * 1.8f),
-            ActiveContainerAlignment = Alignment.Top,
-            RelativeHeight = Enum.GetNames(typeof(Language)).Length,
-            ListBox =
+            Orientation = Orientation.Vertical,
+            Transform =
             {
-                Orientation = Orientation.Vertical,
-                Spacing = 10,
-                ContentContainerRelativeMargin = new Vector4(0.05f, 0.05f, 0.05f, 0.05f),
-                ResizeContent = true,
-                DrawContentOnMargin = true,
+                RelativePadding = new Vector4(0.05f, 0.1f, 0.05f, 0.1f),
             },
+        };
+
+        // Background
+        _ = new RoundedSolidColor(MonoTanks.ThemeColor, 30)
+        {
+            Parent = container,
+            Opacity = 0.35f,
+            Transform = { IgnoreParentPadding = true },
+        };
+
+        return container;
+    }
+
+    private static (Container Container, Selector<T_Item> Selector) CreateItem<T_Item>(
+        ListBox parent,
+        LocalizedString name,
+        ScalableFont font,
+        bool scrollable,
+        float relativeHeight = 1f)
+        where T_Item : notnull
+    {
+        var container = new Container()
+        {
+            Parent = parent.ContentContainer,
+        };
+
+        // Name
+        _ = new LocalizedText(font, Color.White)
+        {
+            Parent = container,
+            Value = name,
+            TextShrink = TextShrinkMode.Width,
+            Case = TextCase.Upper,
+            TextAlignment = Alignment.Left,
+        };
+
+        ListBox listBox = scrollable
+            ? new ScrollableListBox()
+            : new FlexListBox();
+
+        var selector = new Selector<T_Item>(listBox)
+        {
+            Parent = container,
+            ActiveContainerAlignment = Alignment.Top,
+            RelativeHeight = relativeHeight,
             Transform =
             {
                 Alignment = Alignment.Right,
-                RelativeSize = new Vector2(0.5f, 1.0f),
+                RelativeSize = new Vector2(0.4f, 0.6f),
             },
-            ActiveBackground = new Frame().ApplyStyle(Styles.Settings.SelectorActiveBackground),
-            InactiveBackground = new Frame().ApplyStyle(Styles.Settings.SelectorInactiveBackground),
+            ScrollToSelected = scrollable,
+            CloseAfterSelect = true,
         };
 
-        var text = localized ? new LocalizedText(font, Color.White) : new Text(font, Color.White);
-        text.Parent = selector.InactiveContainer;
-        text.TextAlignment = Alignment.Center;
+        selector.ApplyStyle(Styles.Settings.SelectorStyle);
 
-        return selector;
-    }
-
-    private void SetCurrentSettings()
-    {
-        this.BaseComponent.GetAllDescendants<ISelector>().ToList().ForEach(x => x.SelectCurrentItem());
-    }
-
-    private void UpdateOtherOptions()
-    {
-        var selected = this.listBox.ContentContainer.GetDescendant<ISelector>(x => x.ActiveContainer.IsEnabled);
-        var labels = this.listBox.ContentContainer.GetAllChildren<Frame>();
-        foreach (var frame in labels)
-        {
-            var selector = frame.GetDescendant<ISelector>();
-            if (selector != selected && selector is not null)
-            {
-                var selectedText = selector.InactiveContainer.GetDescendant<Text>()!;
-                selectedText.Color = new Color(selectedText.Color, selected is null ? 1f : 0.3f);
-
-                frame.InnerContainer.GetChild<SolidColor>()!.Color = Color.White * (selected is null ? 0.3f : 0.05f);
-
-                var solidColor = selector.InactiveContainer.GetDescendant<SolidColor>()!;
-                solidColor.Color = new Color(solidColor.Color, selected is null ? 1f : 0.6f);
-
-                var frame2 = selector.InactiveContainer.GetChild<Frame>()!;
-                frame2.Color = new Color(frame2.Color, selected is null ? 1f : 0.2f);
-
-                foreach (var text in frame.InnerContainer.GetAllChildren<Text>())
-                {
-                    text.Color = new Color(text.Color, selected is null ? 1f : 0.5f);
-                }
-            }
-        }
+        return (container, selector);
     }
 }

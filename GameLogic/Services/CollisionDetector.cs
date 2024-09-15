@@ -28,6 +28,11 @@ public static class CollisionDetector
 
             var (x, y) = trajectory[i];
 
+            if (x < 0 || x >= grid.Dim || y < 0 || y >= grid.Dim)
+            {
+                return new BorderCollision(x, y);
+            }
+
             Wall? wall = grid.WallGrid[x, y];
             if (wall is not null)
             {

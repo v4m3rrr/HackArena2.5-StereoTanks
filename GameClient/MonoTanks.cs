@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using GameClient.Networking;
+using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -36,6 +38,15 @@ public class MonoTanks : Game
         this.Content.RootDirectory = "Content";
         this.IsMouseVisible = true;
     }
+
+    /// <summary>
+    /// Gets the theme color of the game.
+    /// </summary>
+#if DEBUG
+    public static Color ThemeColor { get; } = new(255, 155, 26);
+#else
+    public static Color ThemeColor { get; } = new(0, 166, 255);
+#endif
 
     /// <summary>
     /// Gets the minimum window size for the game.
@@ -124,6 +135,12 @@ public class MonoTanks : Game
         ScreenController.Change(1366, 768, ScreenType.Windowed);
         ScreenController.ApplyChanges();
 
+        var spriteBatch = new SpriteBatch(this.GraphicsDevice);
+        SpriteBatchController.Initialize(spriteBatch);
+
+        PacketSerializer.ExceptionThrew += DebugConsole.ThrowError;
+        Packet.GetPayloadFailed += DebugConsole.ThrowError;
+
         var dc = new DebugConsole();
         dc.Initialize();
         Scene.AddScene(dc);
@@ -173,8 +190,6 @@ public class MonoTanks : Game
     /// </summary>
     protected override void LoadContent()
     {
-        var spriteBatch = new SpriteBatch(this.GraphicsDevice);
-        SpriteBatchController.Initialize(spriteBatch);
     }
 
     /// <summary>

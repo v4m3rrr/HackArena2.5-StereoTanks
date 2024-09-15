@@ -1,15 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Net.WebSockets;
-using System.Threading;
-using System.Threading.Tasks;
+using GameClient.Networking;
+using GameClient.Scenes.GameCore;
 using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
 
 namespace GameClient.Scenes;
@@ -20,34 +16,19 @@ namespace GameClient.Scenes;
 internal class Game : Scene
 {
     private readonly Dictionary<string, Player> players = [];
-    private readonly List<PlayerBar> playerBars = [];
-    private readonly GridComponent grid;
-
-    private ClientWebSocket client;
-    private string? playerId = null;
-    private bool isSpectator;
-
-    private LocalizedText spectatorInfo = default!;
+    private readonly GameInitializer initializer;
+    private readonly GameComponents components;
+    private readonly GameUpdater updater;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Game"/> class.
     /// </summary>
     public Game()
-        : base(Color.DimGray)
+        : base(Color.Transparent)
     {
-        this.client = new ClientWebSocket();
-
-        this.grid = new GridComponent()
-        {
-            IsEnabled = false,
-            Parent = this.BaseComponent,
-            Transform =
-            {
-                Alignment = Alignment.Center,
-                Ratio = new Ratio(1, 1),
-                RelativeSize = new Vector2(0.95f),
-            },
-        };
+        this.initializer = new GameInitializer(this);
+        this.components = new GameComponents(this.initializer);
+        this.updater = new GameUpdater(this.components, this.players);
     }
 
     /// <summary>
@@ -62,383 +43,140 @@ internal class Game : Scene
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
+        UpdateMainMenuBackgroundEffectRotation(gameTime);
         this.HandleInput();
         base.Update(gameTime);
     }
 
     /// <inheritdoc/>
-    protected override void Initialize(Component baseComponent)
+    public override void Draw(GameTime gameTime)
     {
-        this.Showing += async (s, e) =>
-        {
-            if (e is not ChangeEventArgs args)
-            {
-                DebugConsole.ThrowError(
-                    $"Game scene requires {nameof(ChangeEventArgs)}.");
-                ChangeToPreviousOrDefault<MainMenu>();
-                return;
-            }
-
-            this.isSpectator = args.IsSpectator;
-            this.spectatorInfo.IsEnabled = args.IsSpectator;
-
-            await this.ConnectAsync(args.JoinCode);
-        };
-
-        this.Hiding += async (s, e) =>
-        {
-            this.players.Clear();
-
-            foreach (var playerBar in this.playerBars)
-            {
-                playerBar.Parent = null;
-            }
-
-            this.playerBars.Clear();
-            this.grid.ResetFogOfWar();
-            this.grid.IsEnabled = false;
-
-            if (this.client.State == WebSocketState.Open)
-            {
-                await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-            }
-        };
-
-        var backBtn = new Button<Frame>(new Frame())
-        {
-            Parent = this.BaseComponent,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.04f, -0.04f),
-                RelativeSize = new Vector2(0.12f, 0.07f),
-            },
-        }.ApplyStyle(Styles.UI.ButtonStyle);
-        backBtn.Clicked += (s, e) => Change<MainMenu>();
-        backBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.MainMenu");
-
-        var settingsBtn = new Button<Frame>(new Frame())
-        {
-            Parent = this.BaseComponent,
-            Transform =
-            {
-                Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.04f, -0.12f),
-                RelativeSize = new Vector2(0.12f, 0.07f),
-            },
-        }.ApplyStyle(Styles.UI.ButtonStyle);
-        settingsBtn.Clicked += (s, e) => ShowOverlay<Settings>(new OverlayShowOptions(BlockFocusOnUnderlyingScenes: true));
-        settingsBtn.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Settings");
-
-        this.spectatorInfo = new LocalizedText(Styles.UI.ButtonStyle.GetProperty<ScalableFont>("Font")!, Color.LightYellow)
-        {
-            Parent = this.BaseComponent,
-            Value = new LocalizedString("Other.YouAreSpectator"),
-            TextAlignment = Alignment.BottomRight,
-            Transform =
-            {
-                Alignment = Alignment.BottomRight,
-                RelativeSize = new Vector2(0.2f, 0.05f),
-                RelativeOffset = new Vector2(-0.02f, -0.04f),
-            },
-        };
+        ScreenController.GraphicsDevice.Clear(Color.Black);
+        MainMenu.Effect.Draw(gameTime);
+        base.Draw(gameTime);
     }
 
-    private async Task ConnectAsync(string? joinCode)
+    /// <inheritdoc/>
+    protected override void Initialize(Component baseComponent)
     {
-        string server = $"ws://{GameSettings.ServerAddress}:{GameSettings.ServerPort}"
-            + $"/{(this.isSpectator ? "spectator" : string.Empty)}";
+        this.Showing += this.Game_Showing;
+        this.Hiding += this.Game_Hiding;
+    }
 
-        if (joinCode is not null)
+    private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
+    {
+        if (MainMenu.Effect.Rotation != 0.0f)
         {
-            server += $"?joinCode={joinCode}";
+            int sign = MainMenu.Effect.Rotation is > MathHelper.Pi or < 0 and > -MathHelper.Pi ? 1 : -1;
+            var value = 0.25f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            MainMenu.Effect.Rotation += Math.Min(MainMenu.Effect.Rotation, Math.Min(value, 0.1f)) * sign;
+            MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        }
+    }
+
+    private static void Connection_Connecting(string server)
+    {
+        DebugConsole.SendMessage($"Connecting to the server {server}...", Color.LightGreen);
+    }
+
+    private static void Connection_Connected()
+    {
+        DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
+    }
+
+    private static void Connection_ErrorThrew(string error)
+    {
+        DebugConsole.ThrowError(error);
+        ChangeToPreviousOrDefault<MainMenu>();
+    }
+
+    private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
+    {
+        if (result.MessageType == WebSocketMessageType.Close)
+        {
+            GameServerMessageHandler.HandleCloseMessage(result);
+            return;
         }
 
-        DebugConsole.SendMessage($"Connecting to the server...");
-#if DEBUG
-        DebugConsole.SendMessage($"Server URI: {server}", Color.DarkGray);
-#endif
-
-        int timeout = 5;
-        using (HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(timeout) })
+        if (result.MessageType == WebSocketMessageType.Text)
         {
-            HttpResponseMessage response;
+            Packet packet = PacketSerializer.Deserialize(message);
+            switch (packet.Type)
+            {
+                case PacketType.Ping:
+                    GameServerMessageHandler.HandlePingPacket();
+                    break;
 
-            try
-            {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
-                var srvUri = new Uri(server.ToString().Replace("ws://", "http://"));
-                response = await httpClient.GetAsync(srvUri, cts.Token).ConfigureAwait(false);
-            }
-            catch (TaskCanceledException)
-            {
-                DebugConsole.ThrowError("The request timed out.");
-                ChangeToPreviousOrDefault<MainMenu>();
-                return;
-            }
-            catch (Exception ex)
-            {
-                DebugConsole.ThrowError($"An error occurred while sending HTTP request: {ex.Message}");
-                ChangeToPreviousOrDefault<MainMenu>();
-                return;
-            }
+                case PacketType.GameState:
+                    GameServerMessageHandler.HandleGameStatePacket(packet, this.updater);
+                    break;
 
-            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.TooManyRequests)
-            {
-                string errorMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                DebugConsole.ThrowError($"Server error: {errorMessage}");
-                ChangeToPreviousOrDefault<MainMenu>();
-                return;
-            }
-            else if (response.StatusCode != HttpStatusCode.OK)
-            {
-                DebugConsole.ThrowError($"Unexpected response from server: {response.StatusCode}");
-                ChangeToPreviousOrDefault<MainMenu>();
-                return;
+                case PacketType.LobbyData:
+                    GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out int bI);
+                    ServerBroadcastInterval = bI;
+                    break;
+
+                default:
+                    DebugConsole.SendMessage(
+                        $"Unknown packet type in Game scene: {packet.Type}",
+                        Color.Yellow);
+                    break;
             }
         }
+    }
 
-        this.client = new ClientWebSocket();
-
-        try
+    private async void Game_Showing(object? sender, SceneDisplayEventArgs? e)
+    {
+        if (e is not GameDisplayEventArgs args)
         {
-            await this.client.ConnectAsync(new Uri(server), CancellationToken.None);
-        }
-        catch (WebSocketException ex)
-        {
-            DebugConsole.ThrowError($"An error occurred while connecting to the server: {ex.Message}");
+            DebugConsole.ThrowError(
+                $"Game scene requires {nameof(GameDisplayEventArgs)}.");
             ChangeToPreviousOrDefault<MainMenu>();
             return;
         }
 
-        _ = Task.Run(this.ReceiveMessages);
-        DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
-    }
-
-    private async Task ReceiveMessages()
-    {
-        while (this.client.State is WebSocketState.Open or WebSocketState.CloseReceived)
+        if (!ServerConnection.IsConnected)
         {
-            WebSocketReceiveResult? result = null;
-            byte[] buffer = new byte[1024 * 32];
-            try
-            {
-                result = await this.client.ReceiveAsync(buffer, CancellationToken.None);
+            var connectionData = new ConnectionData(
+                GameSettings.ServerAddress,
+                GameSettings.ServerPort,
+                args.IsSpectator,
+                args.JoinCode);
 
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    WebSocketCloseStatus? status = result.CloseStatus;
-                    string? description = result.CloseStatusDescription;
-
-                    var msg = description is null
-                        ? $"Server status: connection closed ({(int?)status ?? -1})"
-                        : $"Server status: connection closed ({(int?)status ?? -1}) - {description}";
-
-                    if (status == WebSocketCloseStatus.NormalClosure)
-                    {
-                        DebugConsole.SendMessage(msg);
-                    }
-                    else
-                    {
-                        DebugConsole.ThrowError(msg);
-                    }
-
-                    ChangeToPreviousOrDefault<MainMenu>();
-                    await this.client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-                    break;
-                }
-                else if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    Packet packet = PacketSerializer.Deserialize(buffer);
-                    try
-                    {
-                        switch (packet.Type)
-                        {
-                            case PacketType.Ping:
-                                var pong = new EmptyPayload() { Type = PacketType.Pong };
-                                await this.client.SendAsync(PacketSerializer.ToByteArray(pong), WebSocketMessageType.Text, true, CancellationToken.None);
-                                break;
-
-                            case PacketType.GameState:
-
-                                GameStatePayload gameState = null!;
-
-                                SerializationContext context = this.isSpectator
-                                    ? new SerializationContext.Spectator()
-                                    : new SerializationContext.Player(this.playerId!);
-
-                                var converters = GameStatePayload.GetConverters(context);
-                                var serializer = PacketSerializer.GetSerializer(converters);
-
-                                try
-                                {
-                                    gameState = this.isSpectator
-                                        ? packet.GetPayload<GameStatePayload>(serializer)
-                                        : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
-                                }
-                                catch (Exception e)
-                                {
-                                    Debug.WriteLine(e);
-                                    break;
-                                }
-
-                                this.grid.Logic.UpdateFromStatePayload(gameState);
-                                this.UpdatePlayers(gameState.Players);
-                                this.UpdatePlayerBars();
-
-                                if (gameState is GameStatePayload.ForPlayer playerGameState)
-                                {
-                                    this.grid.UpdateFogOfWar(playerGameState.VisibilityGrid);
-                                }
-
-                                this.grid.IsEnabled = true;
-                                break;
-
-                            case PacketType.GameData:
-                                var gameData = packet.GetPayload<GameDataPayload>();
-                                DebugConsole.SendMessage("Broadcast interval: " + gameData.BroadcastInterval + "ms", Color.DarkGray);
-                                DebugConsole.SendMessage("Player ID: " + gameData.PlayerId, Color.DarkGray);
-                                this.playerId = gameData.PlayerId;
-                                DebugConsole.SendMessage("Seed: " + gameData.Seed, Color.DarkGray);
-                                ServerBroadcastInterval = gameData.BroadcastInterval;
-                                this.grid.IsEnabled = true;
-                                break;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        DebugConsole.ThrowError($"An error occurred while processing the packet {packet.Type}: " + e.Message);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                if (this.client.State == WebSocketState.Closed)
-                {
-                    // Ignore
-                    break;
-                }
-
-                DebugConsole.ThrowError($"An error occurred while receiving messages: " + e.Message);
-                DebugConsole.SendMessage("MessageType: " + result?.MessageType, Color.Orange);
-            }
+            _ = await ServerConnection.ConnectAsync(connectionData);
         }
+
+        ServerConnection.BufferSize = 1024 * 32;
+        ServerConnection.MessageReceived += this.Connection_MessageReceived;
+        ServerConnection.Connecting += Connection_Connecting;
+        ServerConnection.Connected += Connection_Connected;
+        ServerConnection.ErrorThrew += Connection_ErrorThrew;
     }
 
-    // TODO: Refactor!!!
+    private async void Game_Hiding(object? sender, EventArgs e)
+    {
+        this.components.Grid.ResetFogOfWar();
+        this.updater.DisableGridComponent();
+
+        if (ServerConnection.IsConnected)
+        {
+            await ServerConnection.CloseAsync();
+        }
+
+        ServerConnection.MessageReceived -= this.Connection_MessageReceived;
+        ServerConnection.Connecting -= Connection_Connecting;
+        ServerConnection.Connected -= Connection_Connected;
+        ServerConnection.ErrorThrew -= Connection_ErrorThrew;
+    }
+
     private async void HandleInput()
     {
-        IPacketPayload? payload = null;
-        if (KeyboardController.IsKeyHit(Keys.W))
-        {
-            payload = new TankMovementPayload(TankMovement.Forward);
-        }
-        else if (KeyboardController.IsKeyHit(Keys.S))
-        {
-            payload = new TankMovementPayload(TankMovement.Backward);
-        }
-        else if (KeyboardController.IsKeyHit(Keys.A))
-        {
-            payload = new TankRotationPayload() { TankRotation = Rotation.Left };
-        }
-        else if (KeyboardController.IsKeyHit(Keys.D))
-        {
-            payload = new TankRotationPayload() { TankRotation = Rotation.Right };
-        }
-        else if (KeyboardController.IsKeyHit(Keys.Space))
-        {
-            payload = new TankShootPayload();
-        }
-#if DEBUG
-        else if (KeyboardController.IsKeyHit(Keys.T))
-        {
-            payload = new EmptyPayload() { Type = PacketType.ShootAll };
-        }
-#endif
-
-        var p = payload as TankRotationPayload;
-        if (KeyboardController.IsKeyHit(Keys.Q))
-        {
-            payload = new TankRotationPayload() { TankRotation = p?.TankRotation, TurretRotation = Rotation.Left };
-        }
-        else if (KeyboardController.IsKeyHit(Keys.E))
-        {
-            payload = new TankRotationPayload() { TankRotation = p?.TankRotation, TurretRotation = Rotation.Right };
-        }
+        var payload = GameInputHandler.HandleInputPayload();
 
         if (payload is not null)
         {
-            var buffer = PacketSerializer.ToByteArray(payload);
-            await this.client.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            var message = PacketSerializer.Serialize(payload);
+            await ServerConnection.SendAsync(message);
         }
-    }
-
-    private void UpdatePlayers(IEnumerable<Player> updatedPlayers)
-    {
-        foreach (Player updatedPlayer in updatedPlayers)
-        {
-            if (this.players.TryGetValue(updatedPlayer.Id, out var existingPlayer))
-            {
-                existingPlayer.UpdateFrom(updatedPlayer);
-            }
-            else
-            {
-                this.players[updatedPlayer.Id] = updatedPlayer;
-            }
-        }
-
-        this.players
-            .Where(x => !updatedPlayers.Contains(x.Value))
-            .ToList()
-            .ForEach(x => this.players.Remove(x.Key));
-    }
-
-    private void UpdatePlayerBars()
-    {
-        var newPlayerBars = this.players.Values
-        .Where(player => this.playerBars.All(pb => pb.Player != player))
-        .Select(player => new PlayerBar(player)
-        {
-            Parent = this.BaseComponent,
-            Transform =
-            {
-                RelativeSize = new Vector2(0.2f, 0.13f),
-            },
-        })
-        .ToList();
-
-        this.playerBars.AddRange(newPlayerBars);
-
-        foreach (PlayerBar playerBar in this.playerBars.ToList())
-        {
-            if (!this.players.ContainsValue(playerBar.Player))
-            {
-                playerBar.Parent = null;
-                _ = this.playerBars.Remove(playerBar);
-            }
-        }
-
-        for (int i = 0; i < this.playerBars.Count; i++)
-        {
-            this.playerBars[i].Transform.RelativeOffset = new Vector2(0.02f, 0.06f + (i * 0.15f));
-        }
-    }
-
-    /// <summary>
-    /// Represents the event arguments for the <see cref="Game"/> scene.
-    /// </summary>
-    /// <param name="joinCode">The join code to join the game.</param>
-    /// <param name="isSpectator">A value indicating whether the player is a spectator.</param>
-    public new class ChangeEventArgs(string? joinCode, bool isSpectator) : Scene.ChangeEventArgs
-    {
-        /// <summary>
-        /// Gets the join code to join the game.
-        /// </summary>
-        public string? JoinCode { get; } = joinCode;
-
-        /// <summary>
-        /// Gets a value indicating whether the player is a spectator.
-        /// </summary>
-        public bool IsSpectator { get; } = isSpectator;
     }
 }

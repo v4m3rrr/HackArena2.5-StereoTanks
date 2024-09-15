@@ -12,6 +12,7 @@ public class Grid(int dimension, int seed)
     private readonly Queue<Bullet> queuedBullets = new();
     private readonly Random random = new(seed);
 
+    private List<Zone> zones = [];
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
 
@@ -58,6 +59,11 @@ public class Grid(int dimension, int seed)
     public Wall?[,] WallGrid { get; private set; } = new Wall?[dimension, dimension];
 
     /// <summary>
+    /// Gets the zones.
+    /// </summary>
+    public IEnumerable<Zone> Zones => this.zones;
+
+    /// <summary>
     /// Gets the tanks.
     /// </summary>
     public IEnumerable<Tank> Tanks => this.tanks;
@@ -99,14 +105,15 @@ public class Grid(int dimension, int seed)
     /// and the <see cref="DimensionsChanged"/> event after updating the dimensions.
     /// </para>
     /// </remarks>
-    public void UpdateFromStatePayload(Networking.GameStatePayload payload)
+    public void UpdateFromGameStatePayload(Networking.GameStatePayload payload)
     {
         this.StateUpdating?.Invoke(this, EventArgs.Empty);
 
-        var gridState = payload.GridState;
+        var map = payload.Map;
+        var tiles = map.Tiles;
 
         // Update the dimensions of the grid.
-        var newDim = gridState.WallGrid.GetLength(0);
+        var newDim = tiles.WallGrid.GetLength(0);
         if (newDim != this.Dim)
         {
             this.DimensionsChanging?.Invoke(this, EventArgs.Empty);
@@ -116,22 +123,10 @@ public class Grid(int dimension, int seed)
         }
 
         // Update the walls.
-        this.WallGrid = gridState.WallGrid;
+        this.WallGrid = tiles.WallGrid;
 
         // Update the tanks.
-        this.tanks = [.. gridState.Tanks];
-
-        if (payload is Networking.GameStatePayload.ForPlayer playerPayload)
-        {
-            // Add the player's tank with regen progress.
-            if (playerPayload.RegenProgress is not null)
-            {
-                var playerId = playerPayload.PlayerId;
-                var regenProgress = playerPayload.RegenProgress.Value;
-                var tank = Tank.OnlyRegenProgress(playerId, regenProgress);
-                this.tanks.Add(tank);
-            }
-        }
+        this.tanks = [.. tiles.Tanks];
 
         // Set the tanks' owners, owners' tanks and turrets' tanks.
         foreach (Tank tank in this.tanks)
@@ -144,7 +139,7 @@ public class Grid(int dimension, int seed)
         }
 
         // Update the bullets.
-        this.bullets = gridState.Bullets;
+        this.bullets = tiles.Bullets;
 
         // Set the bullets' shooters.
         foreach (Bullet bullet in this.bullets)
@@ -163,24 +158,64 @@ public class Grid(int dimension, int seed)
             bullet.Shooter = shooter;
         }
 
+        // Update the zones.
+        this.zones = map.Zones;
+
+        Player player;
+        foreach (Zone zone in this.zones)
+        {
+            switch (zone.Status)
+            {
+                case ZoneStatus.BeingCaptured beingCaptured:
+                    player = payload.Players.First(p => p.Id == beingCaptured.PlayerId);
+                    beingCaptured.Player = player;
+                    break;
+
+                case ZoneStatus.Captured captured:
+                    player = payload.Players.First(p => p.Id == captured.PlayerId);
+                    captured.Player = player;
+                    break;
+
+                case ZoneStatus.BeingContested beingContested:
+                    if (beingContested.CapturedBy is not null)
+                    {
+                        player = payload.Players.First(p => p.Id == beingContested.CapturedBy.Id);
+                        beingContested.CapturedBy = player;
+                    }
+
+                    break;
+
+                case ZoneStatus.BeingRetaken beingRetaken:
+                    player = payload.Players.First(p => p.Id == beingRetaken.CapturedById);
+                    var player2 = payload.Players.First(p => p.Id == beingRetaken.RetakenById);
+                    beingRetaken.CapturedBy = player;
+                    beingRetaken.RetakenBy = player2;
+                    break;
+            }
+        }
+
         this.StateUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
-    /// Generates the walls.
+    /// Generates the map.
     /// </summary>
-    public void GenerateWalls()
+    public void GenerateMap()
     {
         var generator = new MapGenerator(this.Dim, this.Seed);
+
         var walls = generator.GenerateWalls();
+        this.zones = generator.GenerateZones();
+
+        generator.RemoveSomeWallsFromZones(walls, this.zones);
 
         this.fogOfWarManager = new FogOfWarManager(walls);
 
-        for (int i = 0; i < this.Dim; i++)
+        for (int x = 0; x < this.Dim; x++)
         {
-            for (int j = 0; j < this.Dim; j++)
+            for (int y = 0; y < this.Dim; y++)
             {
-                this.WallGrid[i, j] = walls[i, j] ? new Wall() { X = i, Y = j } : null;
+                this.WallGrid[x, y] = walls[x, y] ? new Wall() { X = x, Y = y } : null;
             }
         }
     }
@@ -223,7 +258,7 @@ public class Grid(int dimension, int seed)
         this.tanks.Add(tank);
 
         tank.Turret.Shot += this.queuedBullets.Enqueue;
-        tank.Regenerated += (s, e) =>
+        owner.TankRegenerated += (s, e) =>
         {
             var (x, y) = this.GetRandomEmptyCell();
             tank.SetPosition(x, y);
@@ -268,15 +303,18 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
-    /// Regenerates the tanks.
+    /// Updates the tanks' regeneration progress.
     /// </summary>
     /// <remarks>
     /// This method regenerates the dead tanks
-    /// by calling the <see cref="Tank.Regenerate"/> method.
+    /// by calling the <see cref="Player.UpdateRegenerationProgress"/> method.
     /// </remarks>
-    public void RegenerateTanks()
+    public void UpdateTanksRegenerationProgress()
     {
-        this.tanks.ForEach(x => x.Regenerate());
+        this.Tanks
+            .Select(x => x.Owner)
+            .ToList()
+            .ForEach(x => x.UpdateRegenerationProgress());
     }
 
     /// <summary>
@@ -335,32 +373,44 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Updates the players' visibility grids.
     /// </summary>
-    /// <param name="players">The players for which to update the visibility grids.</param>
-    public void UpdatePlayersVisibilityGrids(List<Player> players)
+    public void UpdatePlayersVisibilityGrids()
     {
-        foreach (Player player in players)
+        foreach (Tank tank in this.tanks)
         {
-            player.CalculateVisibilityGrid(this.fogOfWarManager);
+            tank.Owner.CalculateVisibilityGrid(this.fogOfWarManager);
         }
     }
 
     /// <summary>
-    /// Converts the grid to a payload.
+    /// Updates the zones.
     /// </summary>
-    /// <returns>The payload representing the grid.</returns>
-    public StatePayload ToStatePayload()
+    public void UpdateZones()
     {
-        return new StatePayload
+        foreach (Zone zone in this.zones)
         {
-            WallGrid = this.WallGrid,
-            Tanks = this.tanks,
-            Bullets = this.bullets,
-        };
+            zone.UpdateCapturingStatus(this.tanks);
+        }
+    }
+
+    /// <summary>
+    /// Converts the grid to a map payload.
+    /// </summary>
+    /// <param name="player">The player to convert the grid for.</param>
+    /// <returns>The map payload for the grid.</returns>
+    internal MapPayload ToMapPayload(Player? player)
+    {
+        var visibility = player is not null
+            ? new VisibilityPayload(player!.VisibilityGrid!)
+            : null;
+        var tiles = new TilesPayload(this.WallGrid, this.tanks, this.bullets);
+        return new MapPayload(visibility, tiles, this.zones);
     }
 
     private bool IsCellEmpty(int x, int y)
     {
-        return this.WallGrid[x, y] is null && !this.tanks.Any(t => t.X == x && t.Y == y && !t.IsDead);
+        var isWithinBounds = x >= 0 && x < this.Dim && y >= 0 && y < this.Dim;
+        var isNotOccupied = !this.tanks.Any(t => t.X == x && t.Y == y);
+        return isWithinBounds && isNotOccupied && this.WallGrid[x, y] is null;
     }
 
     private List<Bullet> HandleBulletCollision(Bullet bullet, ICollision collision)
@@ -398,23 +448,24 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
-    /// Represents a state payload of the grid.
+    /// Represents a map payload for the grid.
     /// </summary>
-    public class StatePayload
-    {
-        /// <summary>
-        /// Gets the wall grid.
-        /// </summary>
-        public Wall?[,] WallGrid { get; init; } = new Wall?[0, 0];
+    /// <param name="Visibility">The visibility payload for the grid.</param>
+    /// <param name="Tiles">The tiles payload for the grid.</param>
+    /// <param name="Zones">The zones of the grid.</param>
+    internal record class MapPayload(VisibilityPayload? Visibility, TilesPayload Tiles, List<Zone> Zones);
 
-        /// <summary>
-        /// Gets the bullets.
-        /// </summary>
-        public List<Bullet> Bullets { get; init; } = [];
+    /// <summary>
+    /// Represents a tiles payload for the grid.
+    /// </summary>
+    /// <param name="WallGrid">The wall grid of the grid.</param>
+    /// <param name="Tanks">The tanks of the grid.</param>
+    /// <param name="Bullets">The bullets of the grid.</param>
+    internal record class TilesPayload(Wall?[,] WallGrid, List<Tank> Tanks, List<Bullet> Bullets);
 
-        /// <summary>
-        /// Gets the tanks.
-        /// </summary>
-        public List<Tank> Tanks { get; init; } = [];
-    }
+    /// <summary>
+    /// Represents a visibility payload for the grid.
+    /// </summary>
+    /// <param name="VisibilityGrid">The visibility grid of the grid.</param>
+    internal record class VisibilityPayload(bool[,] VisibilityGrid);
 }
