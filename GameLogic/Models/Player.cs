@@ -6,7 +6,7 @@
 public class Player : IEquatable<Player>
 {
     private const int RegenTicks = 50;
-    private int ticksUntilRegen = RegenTicks;
+    private Tank tank;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Player"/> class.
@@ -19,16 +19,13 @@ public class Player : IEquatable<Player>
     /// The <see cref="Tank"/> property is set to <see langword="null"/>.
     /// See its documentation for more information.
     /// </para>
-    /// <para>
-    /// The <see cref="RegenProgress"/> property is set to <see langword="null"/>.
-    /// </para>
     /// </remarks>
     public Player(string id, string nickname, uint color)
     {
         this.Id = id;
         this.Nickname = nickname;
         this.Color = color;
-        this.Tank = null!;
+        this.tank = null!;
     }
 
     /// <summary>
@@ -37,15 +34,15 @@ public class Player : IEquatable<Player>
     /// <param name="id">The id of the player.</param>
     /// <param name="nickname">The nickname of the player.</param>
     /// <param name="color">The color of the player.</param>
-    /// <param name="regenProgress">The regeneration progress of the tank.</param>
+    /// <param name="remainingTicksToRegen">The remaining ticks to regenerate the tank.</param>
     /// <remarks>
     /// The <see cref="Tank"/> property is set to <see langword="null"/>.
     /// See its documentation for more information.
     /// </remarks>
-    public Player(string id, string nickname, uint color, float? regenProgress)
+    public Player(string id, string nickname, uint color, int? remainingTicksToRegen)
         : this(id, nickname, color)
     {
-        this.RegenProgress = regenProgress;
+        this.RemainingTicksToRegen = remainingTicksToRegen;
     }
 
     /// <summary>
@@ -81,7 +78,23 @@ public class Player : IEquatable<Player>
     /// <summary>
     /// Gets the regeneration progress of the tank.
     /// </summary>
-    public float? RegenProgress { get; private set; }
+    /// <value>
+    /// The regeneration progress of the tank as a value between 0 and 1.
+    /// </value>
+    /// <remarks>
+    /// The value is <see langword="null"/> if the tank is not dead.
+    /// </remarks>
+    public float? RegenProgress => this.RemainingTicksToRegen is not null
+        ? 1 - (this.RemainingTicksToRegen / (float)RegenTicks)
+        : null;
+
+    /// <summary>
+    /// Gets the remaining ticks to regenerate the tank.
+    /// </summary>
+    /// <remarks>
+    /// The value is <see langword="null"/> if the tank is not dead.
+    /// </remarks>
+    public int? RemainingTicksToRegen { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether the player is dead.
@@ -95,7 +108,15 @@ public class Player : IEquatable<Player>
     /// The setter is internal because the owner is set
     /// in the <see cref="Grid.UpdateFromGameStatePayload"/> method.
     /// </remarks>
-    public Tank Tank { get; internal set; }
+    public Tank Tank
+    {
+        get => this.tank;
+        internal set
+        {
+            this.tank = value;
+            this.Tank.Died += (s, e) => this.RemainingTicksToRegen = RegenTicks;
+        }
+    }
 
     /// <summary>
     /// Gets the visibility grid of the player.
@@ -143,8 +164,8 @@ public class Player : IEquatable<Player>
         this.Color = player.Color;
         this.Score = player.Score;
         this.Ping = player.Ping;
-        this.Tank = player.Tank;
-        this.RegenProgress = player.RegenProgress;
+        this.tank = player.tank;
+        this.RemainingTicksToRegen = player.RemainingTicksToRegen;
         this.VisibilityGrid = player.VisibilityGrid;
     }
 
@@ -171,16 +192,10 @@ public class Player : IEquatable<Player>
             return;
         }
 
-        if (this.ticksUntilRegen > 0)
-        {
-            this.RegenProgress = (float)(RegenTicks - --this.ticksUntilRegen) / RegenTicks;
-        }
-
-        if (this.ticksUntilRegen <= 0)
+        if (--this.RemainingTicksToRegen <= 0)
         {
             this.Tank.Heal(100);
-            this.ticksUntilRegen = RegenTicks;
-            this.RegenProgress = null;
+            this.RemainingTicksToRegen = RegenTicks;
             this.TankRegenerated?.Invoke(this, EventArgs.Empty);
         }
     }

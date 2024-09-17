@@ -39,6 +39,8 @@ internal class GameInstance
 
     private DateTime? startTime;
 
+    private int tick = 0;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
@@ -518,7 +520,7 @@ internal class GameInstance
 
     private async Task BroadcastGameState()
     {
-        float time = (float)(DateTime.UtcNow - (this.startTime ?? DateTime.UtcNow)).TotalMilliseconds;
+        int tick = this.tick++;
 
         byte[] buffer;
         foreach (var client in this.Players.Keys.Concat(this.spectators).ToList())
@@ -527,12 +529,12 @@ internal class GameInstance
 
             if (this.IsSpecator(client))
             {
-                packet = new GameStatePayload(time, [.. this.Players.Values], this.Grid);
+                packet = new GameStatePayload(tick, [.. this.Players.Values], this.Grid);
             }
             else
             {
                 var player = this.Players[client];
-                packet = new GameStatePayload.ForPlayer(time, player, [.. this.Players.Values], this.Grid);
+                packet = new GameStatePayload.ForPlayer(tick, player, [.. this.Players.Values], this.Grid);
             }
 
             GameSerializationContext context = this.IsSpecator(client)

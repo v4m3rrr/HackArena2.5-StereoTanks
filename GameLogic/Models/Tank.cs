@@ -85,6 +85,11 @@ public class Tank : IEquatable<Tank>
     }
 
     /// <summary>
+    /// Occurs when the tank dies.
+    /// </summary>
+    internal event EventHandler? Died;
+
+    /// <summary>
     /// Gets the x coordinate of the tank.
     /// </summary>
     public int X { get; private set; }
@@ -184,6 +189,7 @@ public class Tank : IEquatable<Tank>
         {
             this.SetPosition(-1, -1);
             this.Health = 0;
+            this.Died?.Invoke(this, EventArgs.Empty);
         }
     }
 

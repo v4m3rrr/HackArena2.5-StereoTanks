@@ -44,8 +44,12 @@ internal class HealthBar : PlayerBarComponent
         if (this.Player.RegenProgress is not null)
         {
             this.bar.Color = new Color(this.bar.Color, 100);
-            var progress = Math.Max(float.Epsilon, this.Player.RegenProgress ?? 0f);
-            this.bar.Transform.RelativeSize = new Vector2(progress, RelativeHeight);
+            var progress = this.Player.RegenProgress ?? 0f;
+            if (this.bar.IsEnabled = progress > 0f)
+            {
+                this.bar.Transform.RelativeSize = new Vector2(progress, RelativeHeight);
+            }
+
             return;
         }
 

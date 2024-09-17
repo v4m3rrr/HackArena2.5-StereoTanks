@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using GameClient.Networking;
 using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
@@ -112,11 +113,10 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <summary>
     /// Updates the timer.
     /// </summary>
-    /// <param name="time">
-    /// The time in milliseconds to set the timer to.
-    /// </param>
-    public void UpdateTimer(float time)
+    /// <param name="tick">The current tick of the game.</param>
+    public void UpdateTimer(int tick)
     {
+        var time = Game.ServerBroadcastInterval * tick;
         components.Timer.Time = time;
     }
 }

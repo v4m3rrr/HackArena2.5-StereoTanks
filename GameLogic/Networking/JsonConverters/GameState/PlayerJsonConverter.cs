@@ -22,9 +22,9 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(id))
         {
             var score = jObject["score"]!.Value<int>()!;
-            var regenProgress = jObject["regenProgress"]?.Value<float?>();
+            var remainingTicksToRegen = jObject["ticksToRegen"]!.Value<int?>();
 
-            return new Player(id, nickname, color, regenProgress)
+            return new Player(id, nickname, color, remainingTicksToRegen)
             {
                 Ping = ping,
                 Score = score,
@@ -51,7 +51,7 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Id))
         {
             jObject["score"] = value.Score;
-            jObject["regenProgress"] = value.RegenProgress;
+            jObject["ticksToRegen"] = value.RemainingTicksToRegen;
         }
 
         jObject.WriteTo(writer);

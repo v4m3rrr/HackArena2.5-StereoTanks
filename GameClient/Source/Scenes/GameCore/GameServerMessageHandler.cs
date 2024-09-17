@@ -1,4 +1,4 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using GameClient.Networking;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
@@ -92,7 +92,7 @@ internal static class GameServerMessageHandler
             ? packet.GetPayload<GameStatePayload>(serializer)
             : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
 
-        updater.UpdateTimer(gameState.Time);
+        updater.UpdateTimer(gameState.Tick);
         updater.UpdateGridLogic(gameState);
         updater.UpdatePlayers(gameState.Players);
         updater.RefreshPlayerBarPanels();
