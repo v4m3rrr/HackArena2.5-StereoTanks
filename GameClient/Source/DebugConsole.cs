@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -129,6 +130,13 @@ internal partial class DebugConsole : Scene, IOverlayScene
     protected override void Initialize(Component baseComponent)
     {
         this.Showed += (s, e) => this.openedInThisFrame = true;
+        this.Showed += (s, e) =>
+        {
+            if (this.IsDisplayedOverlay)
+            {
+                Current.BaseComponent.GetAllDescendants<TextInput>().ToList().ForEach(x => x.Deselect());
+            }
+        };
 
         this.baseFrame = new Frame(Color.Black, 2)
         {

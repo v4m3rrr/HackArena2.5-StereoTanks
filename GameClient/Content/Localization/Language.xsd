@@ -25,6 +25,10 @@
 			<xs:element name="DisplayModeWindowed" type="xs:string"/>
 			<xs:element name="DisplayModeFullScreen" type="xs:string"/>
 			<xs:element name="DisplayModeBorderless" type="xs:string"/>
+			<xs:element name="JoinRoom" type="xs:string"/>
+			<xs:element name="Nickname" type="xs:string"/>
+			<xs:element name="RoomCode" type="xs:string"/>
+			<xs:element name="ServerAddress" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 

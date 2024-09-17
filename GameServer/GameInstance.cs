@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
@@ -29,7 +28,6 @@ internal class GameInstance
         0xFF3FD47A,
     ];
 
-    private readonly Dictionary<WebSocket, Player> players = [];
     private readonly List<Player> playersWhoSentMovementPacketThisTick = [];
 
     private readonly ConcurrentDictionary<Player, DateTime> pingSend = [];
@@ -63,9 +61,16 @@ internal class GameInstance
             Console.WriteLine(
                 $"[ERROR] An error has been thrown in the PacketSerializer: {ex.Message}");
         };
+
+        _ = Task.Run(HandleStartGame);
     }
 
     private event Action<Player>? PlayerSentMovementPacket;
+
+    /// <summary>
+    /// Gets the players of the game.
+    /// </summary>
+    public Dictionary<WebSocket, Player> Players { get; } = [];
 
     /// <summary>
     /// Gets the grid of the game.
@@ -76,29 +81,48 @@ internal class GameInstance
     /// Adds a player to the game.
     /// </summary>
     /// <param name="socket">The socket of the player to add.</param>
-    public void AddPlayer(WebSocket socket)
+#if DEBUG
+    public void AddPlayer(WebSocket socket, string nickname, bool quickJoin)
+#else
+    public void AddPlayer(WebSocket socket, string nickname)
+#endif
     {
         string id;
         do
         {
             id = Guid.NewGuid().ToString();
-        } while (this.players.Values.Any(p => p.Id == id));
+        } while (this.Players.Values.Any(p => p.Id == id));
 
         var color = this.GetPlayerColor();
-        var player = new Player(id, $"Player {this.players.Count + 1}", color);
+
+        Player player;
+#if DEBUG
+        if (quickJoin)
+        {
+            player = new Player(id, $"Player {this.Players.Count + 1}", color);
+        }
+        else
+        {
+#endif
+        player = new Player(id, nickname, color);
+#if DEBUG
+        }
+#endif
 
         _ = this.Grid.GenerateTank(player);
-        this.players.Add(socket, player);
+        this.Players.Add(socket, player);
 
-        foreach (var ws in this.players.Keys.Concat(this.spectators).ToList())
+        foreach (var ws in this.Players.Keys.Concat(this.spectators).ToList())
         {
             _ = Task.Run(() => this.SendLobbyData(ws));
         }
 
-        if (this.startTime is null)
+#if DEBUG
+        if (quickJoin && this.startTime is null)
         {
             this.StartGame();
         }
+#endif
     }
 
     /// <summary>
@@ -107,8 +131,8 @@ internal class GameInstance
     /// <param name="socket">The socket of the player to remove.</param>
     public void RemovePlayer(WebSocket socket)
     {
-        var player = this.players[socket];
-        _ = this.players.Remove(socket);
+        var player = this.Players[socket];
+        _ = this.Players.Remove(socket);
         _ = this.Grid.RemoveTank(player);
     }
 
@@ -135,6 +159,29 @@ internal class GameInstance
     {
         this.startTime ??= DateTime.UtcNow;
         _ = Task.Run(this.GameStateBroadcastLoop);
+    }
+
+    public async Task HandleStartGame()
+    {
+        while (this.startTime is null && this.Players.Count < this.settings.NumberOfPlayers)
+        {
+            await Task.Delay(1000);
+        }
+
+        await Task.Delay(2000);
+
+        foreach (var player in this.Players)
+        {
+            var packet = new EmptyPayload() { Type = PacketType.GameStart };
+            await SendPacketAsync(player.Key, packet);
+        }
+
+        await Task.Delay(2000);
+
+        if (this.startTime is null)
+        {
+            this.StartGame();
+        }
     }
 
     /// <summary>
@@ -193,11 +240,11 @@ internal class GameInstance
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task SendLobbyData(WebSocket socket)
     {
-        _ = this.players.TryGetValue(socket, out var player);
+        _ = this.Players.TryGetValue(socket, out var player);
 
         var response = new LobbyDataPayload(
             player?.Id,
-            [.. this.players.Values],
+            [.. this.Players.Values],
             this.settings);
 
         var converters = LobbyDataPayload.GetConverters();
@@ -213,7 +260,7 @@ internal class GameInstance
     {
         while (true)
         {
-            var player = this.players[socket];
+            var player = this.Players[socket];
             if (this.pingReceived.TryGetValue(player, out var received))
             {
                 if (!received)
@@ -263,7 +310,7 @@ internal class GameInstance
     {
         foreach (uint color in Colors)
         {
-            if (!this.players.Values.Any(p => p.Color == color))
+            if (!this.Players.Values.Any(p => p.Color == color))
             {
                 return color;
             }
@@ -296,7 +343,7 @@ internal class GameInstance
             {
                 if (this.settings.EagerBroadcast)
                 {
-                    var alivePlayers = this.players.Values.Where(p => !p.Tank.IsDead);
+                    var alivePlayers = this.Players.Values.Where(p => !p.Tank.IsDead);
                     if (this.playersWhoSentMovementPacketThisTick.Count >= alivePlayers.Count())
                     {
                         _ = tcs.TrySetResult(true);
@@ -324,7 +371,7 @@ internal class GameInstance
 
     private async Task<bool?> HandlePlayerPacket(WebSocket socket, Packet packet)
     {
-        Player player = this.players[socket];
+        Player player = this.Players[socket];
         if (MovementRestrictedPacketTypes.Contains(packet.Type))
         {
             if (player.Tank.IsDead
@@ -450,7 +497,7 @@ internal class GameInstance
             {
 #if DEBUG
                 case PacketType.ShootAll:
-                    this.players.Values.ToList().ForEach(x => x.Tank.Turret.TryShoot());
+                    this.Players.Values.ToList().ForEach(x => x.Tank.Turret.TryShoot());
                     break;
 #endif
             }
@@ -463,7 +510,7 @@ internal class GameInstance
 
     private void RegeneratePlayersBullets()
     {
-        foreach (Player player in this.players.Values)
+        foreach (Player player in this.Players.Values)
         {
             player.Tank.Turret.RegenerateBullets();
         }
@@ -474,23 +521,23 @@ internal class GameInstance
         float time = (float)(DateTime.UtcNow - (this.startTime ?? DateTime.UtcNow)).TotalMilliseconds;
 
         byte[] buffer;
-        foreach (var client in this.players.Keys.Concat(this.spectators).ToList())
+        foreach (var client in this.Players.Keys.Concat(this.spectators).ToList())
         {
             GameStatePayload packet;
 
             if (this.IsSpecator(client))
             {
-                packet = new GameStatePayload(time, [.. this.players.Values], this.Grid);
+                packet = new GameStatePayload(time, [.. this.Players.Values], this.Grid);
             }
             else
             {
-                var player = this.players[client];
-                packet = new GameStatePayload.ForPlayer(time, player, [.. this.players.Values], this.Grid);
+                var player = this.Players[client];
+                packet = new GameStatePayload.ForPlayer(time, player, [.. this.Players.Values], this.Grid);
             }
 
             GameSerializationContext context = this.IsSpecator(client)
                 ? new GameSerializationContext.Spectator()
-                : new GameSerializationContext.Player(this.players[client]);
+                : new GameSerializationContext.Player(this.Players[client]);
 
             var converters = GameStatePayload.GetConverters(context);
 

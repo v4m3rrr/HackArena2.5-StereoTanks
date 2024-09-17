@@ -76,12 +76,7 @@ internal static class GameSettings
     /// <summary>
     /// Gets or sets the server address.
     /// </summary>
-    public static string ServerAddress { get; set; } = "localhost";
-
-    /// <summary>
-    /// Gets or sets the server port.
-    /// </summary>
-    public static int ServerPort { get; set; } = 5000;
+    public static string ServerAddress { get; set; } = "localhost:5000";
 
     /// <summary>
     /// Sets the resolution of the game.

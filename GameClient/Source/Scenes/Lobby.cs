@@ -98,6 +98,11 @@ internal class Lobby : Scene
                     LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out var serverSettings);
                     break;
 
+                case PacketType.GameStart:
+                    var displayArgs = new GameDisplayEventArgs(ServerConnection.Data.JoinCode, ServerConnection.Data.IsSpectator);
+                    Change<Game>(displayArgs);
+                    break;
+
                 default:
                     DebugConsole.SendMessage(
                         $"Unknown packet type in Lobby scene: {packet.Type}",

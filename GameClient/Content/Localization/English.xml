@@ -19,6 +19,10 @@
 		<DisplayModeWindowed>Windowed</DisplayModeWindowed>
 		<DisplayModeFullScreen>Fullscreen</DisplayModeFullScreen>
 		<DisplayModeBorderless>Borderless</DisplayModeBorderless>
+		<JoinRoom>Join room</JoinRoom>
+		<Nickname>Nickname</Nickname>
+		<RoomCode>Room code</RoomCode>
+		<ServerAddress>Server address</ServerAddress>
 	</Labels>
 
 	<Other>

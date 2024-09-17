@@ -73,9 +73,10 @@ internal class LobbyInitializer(Lobby lobby)
             },
         };
 
-        button.ApplyStyle(Styles.UI.ButtonStyle);
-        button.GetDescendant<ScalableTexture2D>()!.AssetPath = "Images/Lobby/leave_icon.svg";
-        button.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Leave");
+        var text = new LocalizedString("Buttons.Leave");
+        var iconPath = "Images/Lobby/leave_icon.svg";
+        var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Left);
+        button.ApplyStyle(style);
 
         button.Clicked += (s, e) => Scene.Change<MainMenu>();
 
@@ -136,18 +137,19 @@ internal class LobbyInitializer(Lobby lobby)
             bottomListBox,
         ];
 
-        var playerInfos = new List<PlayerSlotPanel>();
+        var panels = new List<PlayerSlotPanel>();
 
         for (int i = 0; i < 4; i++)
         {
-            var playerInfo = new PlayerSlotPanel()
+            var panel = new PlayerSlotPanel()
             {
                 Parent = listBoxes[i / 2].ContentContainer,
+                IsEnabled = false,
             };
 
-            playerInfos.Add(playerInfo);
+            panels.Add(panel);
         }
 
-        return playerInfos;
+        return panels;
     }
 }

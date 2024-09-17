@@ -21,6 +21,6 @@ internal static class LobbyServerMessageHandler
 
         serverSettings = data.ServerSettings;
 
-        updater.UpdatePlayerSlotPanels(data.Players);
+        updater.UpdatePlayerSlotPanels(data.Players, serverSettings.NumberOfPlayers);
     }
 }

@@ -1,7 +1,5 @@
-﻿using System;
-using GameClient.Networking;
+﻿using GameClient.Networking;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient.Scenes;
@@ -128,7 +126,7 @@ internal class MainMenu : Scene
         };
 
         var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join_room_icon");
-        joinRoomBtn.Clicked += (s, e) => DebugConsole.ThrowError("Joining a room is not implemented yet.");
+        joinRoomBtn.Clicked += (s, e) => Change<JoinRoom>();
 
         var settingsBtn = CreateButton(new LocalizedString("Buttons.Settings"), listBox, "settings_icon");
         settingsBtn.Clicked += (s, e) => Change<Settings>();
@@ -147,9 +145,18 @@ internal class MainMenu : Scene
         {
             ServerConnection.ErrorThrew += DebugConsole.ThrowError;
 
-            string? joinCode = "a";
+            string? joinCode = null;
+            ConnectionData connectionData;
 
-            var connectionData = new ConnectionData("localhost", 5000, isSpectator, joinCode);
+            if (isSpectator)
+            {
+                connectionData = ConnectionData.ForSpectator("localhost:5000", joinCode);
+            }
+            else
+            {
+                connectionData = ConnectionData.ForPlayer("localhost:5000", joinCode, "player", true);
+            }
+
             if (await ServerConnection.ConnectAsync(connectionData))
             {
                 var args = new GameDisplayEventArgs(joinCode, isSpectator);
@@ -333,12 +340,9 @@ internal class MainMenu : Scene
             },
         };
 
-        button.ApplyStyle(Styles.UI.ButtonStyle);
-        button.Component.GetChild<LocalizedText>()!.Value = text;
-
-        var texture = button.Component.GetChild<ScalableTexture2D>()!;
-        texture.AssetPath = $"Images/MainMenu/{iconName}.svg";
-        texture.Load();
+        var iconPath = $"Images/MainMenu/{iconName}.svg";
+        var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Left);
+        button.ApplyStyle(style);
 
         return button;
     }

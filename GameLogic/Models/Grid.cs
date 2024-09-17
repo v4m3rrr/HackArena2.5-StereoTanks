@@ -177,9 +177,9 @@ public class Grid(int dimension, int seed)
                     break;
 
                 case ZoneStatus.BeingContested beingContested:
-                    if (beingContested.CapturedBy is not null)
+                    if (beingContested.CapturedById is not null)
                     {
-                        player = payload.Players.First(p => p.Id == beingContested.CapturedBy.Id);
+                        player = payload.Players.First(p => p.Id == beingContested.CapturedById);
                         beingContested.CapturedBy = player;
                     }
 

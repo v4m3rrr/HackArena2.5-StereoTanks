@@ -19,6 +19,10 @@
 		<DisplayModeWindowed>Fenêtré</DisplayModeWindowed>
 		<DisplayModeFullScreen>Plein écran</DisplayModeFullScreen>
 		<DisplayModeBorderless>Sans bordure</DisplayModeBorderless>
+		<JoinRoom>Rejoindre une salle</JoinRoom>
+		<Nickname>Surnom</Nickname>
+		<RoomCode>Code de la salle</RoomCode>
+		<ServerAddress>Adresse du serveur</ServerAddress>
 	</Labels>
 
 	<Other>

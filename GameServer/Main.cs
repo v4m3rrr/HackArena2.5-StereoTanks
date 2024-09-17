@@ -36,7 +36,13 @@ var failedAttempts = new ConcurrentDictionary<string, (int Attempts, DateTime La
 while (true)
 {
     HttpListenerContext context = await listener.GetContextAsync();
+
     string? joinCode = context.Request.QueryString["joinCode"];
+    string? nickname = context.Request.QueryString["nickname"]?.ToUpper();
+#if DEBUG
+    _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
+#endif
+
     string absolutePath = context.Request.Url?.AbsolutePath ?? string.Empty;
     string clientIP = context.Request.RemoteEndPoint.Address.ToString();
 
@@ -85,6 +91,37 @@ while (true)
         continue;
     }
 
+    if (!isSpectator)
+    {
+        byte[] buffer = [];
+        if (string.IsNullOrEmpty(nickname))
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            buffer = Encoding.UTF8.GetBytes("Nickname is required");
+        }
+        else if (NicknameAlreadyExists(nickname))
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+            buffer = Encoding.UTF8.GetBytes("Nickname already exists");
+        }
+        else if (game.Players.Count >= opts.NumberOfPlayers)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            buffer = Encoding.UTF8.GetBytes("Game is full");
+        }
+        else
+        {
+            goto TempGoTo;
+        }
+
+        context.Response.ContentLength64 = buffer.Length;
+        await context.Response.OutputStream.WriteAsync(buffer);
+        context.Response.Close();
+        continue;
+    }
+
+TempGoTo:
+
     if (!context.Request.IsWebSocketRequest)
     {
         context.Response.StatusCode = (int)HttpStatusCode.OK;
@@ -95,8 +132,18 @@ while (true)
     HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(null);
     WebSocket webSocket = webSocketContext.WebSocket;
 
-    Action<WebSocket> addClientMethod = isSpectator ? game.AddSpectator : game.AddPlayer;
-    addClientMethod(webSocket);
+    if (isSpectator)
+    {
+        game.AddSpectator(webSocket);
+    }
+    else
+    {
+#if DEBUG
+        game.AddPlayer(webSocket, nickname, quickJoin);
+#else
+        game.AddPlayer(webSocket, nickname);
+#endif
+    }
 
     _ = Task.Run(() => game.HandleConnection(webSocket, clientIP));
     _ = Task.Run(() => game.PingClientLoop(webSocket));
@@ -123,6 +170,11 @@ bool IsIpBlocked(string clientIP)
     }
 
     return false;
+}
+
+bool NicknameAlreadyExists(string nickname)
+{
+    return game.Players.Values.Any(p => p.Nickname == nickname);
 }
 
 void RegisterFailedAttempt(string clientIP)

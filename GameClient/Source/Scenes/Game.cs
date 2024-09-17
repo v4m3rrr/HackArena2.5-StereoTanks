@@ -128,17 +128,6 @@ internal class Game : Scene
             return;
         }
 
-        if (!ServerConnection.IsConnected)
-        {
-            var connectionData = new ConnectionData(
-                GameSettings.ServerAddress,
-                GameSettings.ServerPort,
-                args.IsSpectator,
-                args.JoinCode);
-
-            _ = await ServerConnection.ConnectAsync(connectionData);
-        }
-
         ServerConnection.BufferSize = 1024 * 32;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
         ServerConnection.Connecting += Connection_Connecting;

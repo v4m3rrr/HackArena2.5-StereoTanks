@@ -252,8 +252,7 @@ internal static class CommandInitializer
         [Argument("A port to the server.")] int port,
         [Argument("A join code.")] string? joinCode = null)
     {
-        GameSettings.ServerAddress = ip;
-        GameSettings.ServerPort = port;
+        GameSettings.ServerAddress = $"{ip}:{port}";
         var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: true);
         Scene.Change<Scenes.Game>(args);
     }
@@ -264,8 +263,7 @@ internal static class CommandInitializer
         [Argument("A port to the server.")] int port,
         [Argument("A join code.")] string? joinCode = null)
     {
-        GameSettings.ServerAddress = ip;
-        GameSettings.ServerPort = port;
+        GameSettings.ServerAddress = $"{ip}:{port}";
         var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: false);
         Scene.Change<Scenes.Game>(args);
     }

@@ -68,6 +68,11 @@ public enum PacketType
     /// </remarks>
     LobbyDeleted = 32,
 
+    /// <summary>
+    /// The game start packet type.
+    /// </summary>
+    GameStart = 33,
+
 #if DEBUG
     /* Debug packets should havea value between 91 and 99. */
 

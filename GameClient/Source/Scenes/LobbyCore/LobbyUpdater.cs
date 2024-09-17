@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GameClient.LobbySceneComponents;
 using GameClient.Networking;
 using GameLogic;
 
@@ -14,11 +15,17 @@ internal class LobbyUpdater(LobbyComponents components)
     /// Updates the player slot panels.
     /// </summary>
     /// <param name="player">The list of players.</param>
-    public void UpdatePlayerSlotPanels(List<Player> player)
+    /// <param name="numberOfPlayers">The maximum number of players in the game.</param>
+    public void UpdatePlayerSlotPanels(List<Player> player, int numberOfPlayers)
     {
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+            components.PlayerSlotPanels[i].IsEnabled = i < numberOfPlayers;
+        }
+
         for (int i = 0; i < player.Count; i++)
         {
-            components.PlayerInfos[i].Player = player[i];
+            components.PlayerSlotPanels[i].Player = player[i];
         }
     }
 

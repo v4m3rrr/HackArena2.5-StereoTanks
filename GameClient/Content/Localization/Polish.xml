@@ -19,6 +19,10 @@
 		<DisplayModeWindowed>Okno</DisplayModeWindowed>
 		<DisplayModeFullScreen>Pelny ekran</DisplayModeFullScreen>
 		<DisplayModeBorderless>Bezramkowy</DisplayModeBorderless>
+		<JoinRoom>Dolacz do pokoju</JoinRoom>
+		<Nickname>Nazwa gracza</Nickname>
+		<RoomCode>Kod pokoju</RoomCode>
+		<ServerAddress>Adres serwera</ServerAddress>
 	</Labels>
 
 	<Other>

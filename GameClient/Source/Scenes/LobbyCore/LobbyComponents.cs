@@ -19,7 +19,7 @@ internal class LobbyComponents
     {
         this.MatchName = initializer.CreateMatchName();
         this.JoinCode = initializer.CreateJoinCode();
-        this.PlayerInfos = initializer.CreatePlayerSlotPanels();
+        this.PlayerSlotPanels = initializer.CreatePlayerSlotPanels();
         this.LeaveButton = initializer.CreateLeaveButton();
     }
 
@@ -36,7 +36,7 @@ internal class LobbyComponents
     /// <summary>
     /// Gets the player info components.
     /// </summary>
-    public List<PlayerSlotPanel> PlayerInfos { get; }
+    public List<PlayerSlotPanel> PlayerSlotPanels { get; }
 
     /// <summary>
     /// Gets the leave button component.

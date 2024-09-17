@@ -179,9 +179,9 @@ internal static class ServerConnection
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
-            string errorMessage = response.StatusCode switch
+            string errorMessage = (int)response.StatusCode switch
             {
-                HttpStatusCode.Unauthorized or HttpStatusCode.TooManyRequests => await response.Content.ReadAsStringAsync(),
+                >= 400 and < 500 => await response.Content.ReadAsStringAsync(),
                 _ => $"Unexpected response from server: {response.StatusCode}",
             };
 
