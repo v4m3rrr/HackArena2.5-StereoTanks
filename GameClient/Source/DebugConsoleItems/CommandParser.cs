@@ -128,7 +128,16 @@ internal static class CommandParser
         ICommand? result = null;
         foreach (var command in commands)
         {
-            int levensteinDistance = Levenshtein.Distance(command.DisplayName, segment.ToLower());
+            var comparableCommandName = command.DisplayName;
+            var comparableSegment = segment;
+
+            if (!command.CaseSensitive)
+            {
+                comparableCommandName = comparableCommandName.ToLower();
+                comparableSegment = comparableSegment.ToLower();
+            }
+
+            int levensteinDistance = Levenshtein.Distance(comparableCommandName, comparableSegment);
 
             if (levensteinDistance < minimumDistance)
             {
