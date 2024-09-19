@@ -136,7 +136,7 @@ internal class Game : Scene
 
     private async void Game_Hiding(object? sender, EventArgs e)
     {
-        this.components.Grid.ResetFogOfWar();
+        this.components.Grid.ResetAllFogsOfWar();
         this.updater.DisableGridComponent();
 
         if (ServerConnection.IsConnected)

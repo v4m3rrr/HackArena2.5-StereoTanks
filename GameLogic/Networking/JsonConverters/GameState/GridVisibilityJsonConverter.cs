@@ -13,11 +13,6 @@ internal class GridVisibilityJsonConverter(GameSerializationContext context) : J
     /// <inheritdoc/>
     public override Grid.VisibilityPayload? ReadJson(JsonReader reader, Type objectType, Grid.VisibilityPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        if (context is GameSerializationContext.Spectator)
-        {
-            return null;
-        }
-
         var jObject = JArray.Load(reader);
 
         var height = jObject.Count;
@@ -40,11 +35,6 @@ internal class GridVisibilityJsonConverter(GameSerializationContext context) : J
     /// <inheritdoc/>
     public override void WriteJson(JsonWriter writer, Grid.VisibilityPayload? value, JsonSerializer serializer)
     {
-        if (context is GameSerializationContext.Spectator)
-        {
-            return;
-        }
-
         var jObject = new JArray();
 
         var width = value!.VisibilityGrid.GetLength(0);

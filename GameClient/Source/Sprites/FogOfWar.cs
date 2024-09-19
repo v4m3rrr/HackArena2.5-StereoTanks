@@ -10,7 +10,7 @@ namespace GameClient.Sprites;
 /// </summary>
 /// <param name="visibilityGrid">The visibility grid.</param>
 /// <param name="grid">The grid component.</param>
-/// <param name="color">The color of fog.</param>
+/// <param name="color">The color of the fog of war.</param>
 internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color) : Sprite
 {
     private static readonly ScalableTexture2D.Static Texture;

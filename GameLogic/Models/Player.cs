@@ -35,14 +35,16 @@ public class Player : IEquatable<Player>
     /// <param name="nickname">The nickname of the player.</param>
     /// <param name="color">The color of the player.</param>
     /// <param name="remainingTicksToRegen">The remaining ticks to regenerate the tank.</param>
+    /// <param name="visibilityGrid">The visibility grid of the player.</param>
     /// <remarks>
     /// The <see cref="Tank"/> property is set to <see langword="null"/>.
     /// See its documentation for more information.
     /// </remarks>
-    public Player(string id, string nickname, uint color, int? remainingTicksToRegen)
+    public Player(string id, string nickname, uint color, int? remainingTicksToRegen, bool[,]? visibilityGrid)
         : this(id, nickname, color)
     {
         this.RemainingTicksToRegen = remainingTicksToRegen;
+        this.VisibilityGrid = visibilityGrid;
     }
 
     /// <summary>
@@ -121,7 +123,7 @@ public class Player : IEquatable<Player>
     /// <summary>
     /// Gets the visibility grid of the player.
     /// </summary>
-    internal bool[,]? VisibilityGrid { get; private set; }
+    public bool[,]? VisibilityGrid { get; private set; }
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.

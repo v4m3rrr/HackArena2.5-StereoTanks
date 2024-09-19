@@ -1,4 +1,4 @@
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using GameClient.Networking;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
@@ -100,6 +100,10 @@ internal static class GameServerMessageHandler
         if (gameState is GameStatePayload.ForPlayer playerGameState)
         {
             updater.UpdatePlayerFogOfWar(playerGameState);
+        }
+        else if (isSpectator)
+        {
+            updater.UpdatePlayersFogOfWar();
         }
 
         updater.EnableGridComponent();

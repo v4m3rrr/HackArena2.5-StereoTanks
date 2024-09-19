@@ -107,7 +107,34 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     public void UpdatePlayerFogOfWar(GameStatePayload.ForPlayer payload)
     {
         var player = players[payload.PlayerId];
-        components.Grid.UpdateFogOfWar(payload.VisibilityGrid, new Color(player.Color));
+        components.Grid.UpdatePlayerFogOfWar(player, payload.VisibilityGrid);
+    }
+
+    /// <summary>
+    /// Updates the players' fog of war.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method should be called after <see cref="UpdatePlayers"/>.
+    /// </para>
+    /// <para>
+    /// This method updates the fog of war for all players
+    /// and should be called only for spectators.
+    /// </para>
+    /// </remarks>
+    public void UpdatePlayersFogOfWar()
+    {
+        foreach (var player in players.Values)
+        {
+            if (player.VisibilityGrid is not null)
+            {
+                components.Grid.UpdatePlayerFogOfWar(player, player.VisibilityGrid);
+            }
+            else
+            {
+                components.Grid.ResetFogOfWar(player);
+            }
+        }
     }
 
     /// <summary>
