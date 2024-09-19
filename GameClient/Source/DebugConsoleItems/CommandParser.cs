@@ -56,7 +56,6 @@ internal static class CommandParser
                 }
                 catch (ArgumentException)
                 {
-                    // Arguments are invalid so we return.
                     DebugConsole.SendMessage($"Invalid argument '{args[i]}'.", Color.IndianRed);
                     return;
                 }
@@ -86,10 +85,6 @@ internal static class CommandParser
             {
                 DebugConsole.SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
             }
-            catch (System.IndexOutOfRangeException)
-            {
-                DebugConsole.SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
-            }
 
             return;
         }
@@ -103,9 +98,9 @@ internal static class CommandParser
 
         CommandGroupAttribute? parent = null;
         threshold = int.MaxValue;
-        for (int i = 0; i < segments.Length; i++)
+        foreach (var segment in segments)
         {
-            ICommand? result = MatchCommand(parent, segments[i], out threshold);
+            ICommand? result = MatchCommand(parent, segment, out threshold);
 
             if (result == null || threshold > CommandThreshold)
             {
@@ -148,7 +143,7 @@ internal static class CommandParser
 
     private static List<ICommand> GetCommandsByGroup(CommandGroupAttribute? group)
     {
-        var result = new List<ICommand>();
+        List<ICommand> result = new();
         foreach (ICommand command in CommandInitializer.GetCommands())
         {
             if (command.Group == group)
