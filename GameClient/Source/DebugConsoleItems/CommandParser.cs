@@ -13,6 +13,7 @@ namespace GameClient.DebugConsoleItems;
 internal static class CommandParser
 {
     private static readonly int CommandThreshold = 3;
+    private static readonly int MatchingThreshold = 0;
 
     /// <summary>
     /// Parses user input, identifies and executes the corresponding command or displays appropriate error messages based on text input.
@@ -102,7 +103,7 @@ internal static class CommandParser
         {
             ICommand? result = MatchCommand(parent, segment, out threshold);
 
-            if (result == null || threshold > CommandThreshold)
+            if (result == null || threshold > MatchingThreshold)
             {
                 return result;
             }
