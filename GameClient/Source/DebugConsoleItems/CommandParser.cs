@@ -15,7 +15,7 @@ internal static class CommandParser
     private static readonly int CommandThreshold = 3;
 
     /// <summary>
-    /// Parse method that recieves data from an event.
+    /// Parses user input, identifies and executes the corresponding command or displays appropriate error messages based on text input.
     /// </summary>
     /// <param name="sender">Event sender.</param>
     /// <param name="e">Event arguments.</param>
