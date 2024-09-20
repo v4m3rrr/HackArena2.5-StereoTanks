@@ -60,8 +60,10 @@ internal static class ServerConnection
     /// </summary>
     /// <param name="data">The connection data.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public static async Task<bool> ConnectAsync(ConnectionData data)
+    public static async Task<bool> ConnectAsync(ConnectionData data, int bufferSize)
     {
+        BufferSize = bufferSize;
+
         string serverUrl = data.GetServerWsUrl();
 
         Connecting?.Invoke(serverUrl);

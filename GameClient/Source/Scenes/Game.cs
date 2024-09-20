@@ -31,13 +31,21 @@ internal class Game : Scene
     }
 
     /// <summary>
-    /// Gets the server broadcast interval in milliseconds.
+    /// Gets or sets the server broadcast interval in milliseconds.
     /// </summary>
     /// <value>
     /// The server broadcast interval in seconds.
     /// When the value is -1, the server broadcast interval is not received yet.
     /// </value>
-    public static int ServerBroadcastInterval { get; private set; } = -1;
+    public static int ServerBroadcastInterval { get; set; } = -1;
+
+    /// <summary>
+    /// Gets or sets the player ID.
+    /// </summary>
+    /// <remarks>
+    /// If client is a spectator, this property is <see langword="null"/>.
+    /// </remarks>
+    public static string? PlayerId { get; set; }
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -105,8 +113,7 @@ internal class Game : Scene
                     break;
 
                 case PacketType.LobbyData:
-                    GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out int bI);
-                    ServerBroadcastInterval = bI;
+                    GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
                     break;
 
                 default:

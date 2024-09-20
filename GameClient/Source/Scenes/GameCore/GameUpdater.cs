@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using GameClient.Networking;
 using GameLogic;
 using GameLogic.Networking;
-using Microsoft.Xna.Framework;
 
 namespace GameClient.Scenes.GameCore;
 
@@ -14,23 +12,6 @@ namespace GameClient.Scenes.GameCore;
 /// <param name="players">The list of players.</param>
 internal class GameUpdater(GameComponents components, Dictionary<string, Player> players)
 {
-    /// <summary>
-    /// Gets the player ID.
-    /// </summary>
-    /// <remarks>
-    /// If client is a spectator, this property is <see langword="null"/>.
-    /// </remarks>
-    public string? PlayerId { get; private set; }
-
-    /// <summary>
-    /// Gets the game screen components.
-    /// </summary>
-    /// <param name="playerId">The player ID.</param>
-    public void UpdatePlayerId(string? playerId)
-    {
-        this.PlayerId = playerId;
-    }
-
     /// <summary>
     /// Enables the grid component.
     /// </summary>

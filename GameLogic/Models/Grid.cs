@@ -371,6 +371,17 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
+    /// Regenerates the players' bullets.
+    /// </summary>
+    public void RegeneratePlayersBullets()
+    {
+        foreach (Tank tank in this.tanks)
+        {
+            tank.Turret.RegenerateBullets();
+        }
+    }
+
+    /// <summary>
     /// Updates the players' visibility grids.
     /// </summary>
     public void UpdatePlayersVisibilityGrids()

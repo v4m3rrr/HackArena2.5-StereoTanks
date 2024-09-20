@@ -54,7 +54,7 @@ internal class JoinRoom : Scene
 #endif
 
         ServerConnection.ErrorThrew += DebugConsole.ThrowError;
-        await ServerConnection.ConnectAsync(connectionData);
+        await ServerConnection.ConnectAsync(connectionData, 1024 * 32);
         ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
         Change<Lobby>();
     }

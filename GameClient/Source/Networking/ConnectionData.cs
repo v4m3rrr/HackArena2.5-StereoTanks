@@ -56,17 +56,28 @@ internal readonly struct ConnectionData
     public bool QuickJoin { get; }
 #endif
 
+#pragma warning disable IDE0079
+#pragma warning disable CS1572, SA1612
     /// <summary>
     /// Creates a new instance of the <see cref="ConnectionData"/> struct for a spectator.
     /// </summary>
     /// <param name="serverAddress">The address of the server to connect to.</param>
     /// <param name="joinCode">The join code to use when connecting to the server.</param>
+    /// <param name="quickJoin">A value indicating whether the player should join the game quickly.</param>
     /// <returns>A new instance of the <see cref="ConnectionData"/> struct for a spectator.</returns>
+#if DEBUG
+    public static ConnectionData ForSpectator(string serverAddress, string? joinCode, bool quickJoin)
+    {
+        return new ConnectionData(serverAddress, true, joinCode, null, quickJoin);
+    }
+#else
     public static ConnectionData ForSpectator(string serverAddress, string? joinCode)
     {
         return new ConnectionData(serverAddress, true, joinCode, null);
     }
+#endif
 
+#pragma warning disable IDE0079
 #pragma warning disable CS1572, SA1612
     /// <summary>
     /// Creates a new instance of the <see cref="ConnectionData"/> struct for a player.
@@ -76,7 +87,7 @@ internal readonly struct ConnectionData
     /// <param name="nickname">The nickname of the player.</param>
     /// <param name="quickJoin">A value indicating whether the player should join the game quickly.</param>
     /// <returns>A new instance of the <see cref="ConnectionData"/> struct for a player.</returns>
-#pragma warning restore CS1572, SA1612
+#pragma warning restore IDE0079, CS1572, SA1612
 #if DEBUG
     public static ConnectionData ForPlayer(string serverAddress, string? joinCode, string nickname, bool quickJoin)
     {

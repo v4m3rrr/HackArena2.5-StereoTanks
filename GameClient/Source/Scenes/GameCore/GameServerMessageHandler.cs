@@ -54,8 +54,7 @@ internal static class GameServerMessageHandler
     /// </summary>
     /// <param name="packet">The packet containing the game data payload.</param>
     /// <param name="updater">The game updater.</param>
-    /// <param name="broadcastInterval">The server broadcast interval.</param>
-    public static void HandleLobbyDataPacket(Packet packet, GameUpdater updater, out int broadcastInterval)
+    public static void HandleLobbyDataPacket(Packet packet, GameUpdater updater)
     {
         var converters = LobbyDataPayload.GetConverters();
         var serializers = PacketSerializer.GetSerializer(converters);
@@ -66,10 +65,10 @@ internal static class GameServerMessageHandler
         DebugConsole.SendMessage("Seed: " + data.ServerSettings.Seed, Color.DarkGray);
         DebugConsole.SendMessage("Eager broadcast: " + data.ServerSettings.EagerBroadcast, Color.DarkGray);
 
-        updater.UpdatePlayerId(data.PlayerId);
-        updater.EnableGridComponent();
+        Game.PlayerId = data.PlayerId;
+        Game.ServerBroadcastInterval = data.ServerSettings.BroadcastInterval;
 
-        broadcastInterval = data.ServerSettings.BroadcastInterval;
+        updater.EnableGridComponent();
     }
 
     /// <summary>
@@ -83,7 +82,7 @@ internal static class GameServerMessageHandler
 
         GameSerializationContext context = isSpectator
             ? new GameSerializationContext.Spectator()
-            : new GameSerializationContext.Player(updater.PlayerId!);
+            : new GameSerializationContext.Player(Game.PlayerId!);
 
         var converters = GameStatePayload.GetConverters(context);
         var serializer = PacketSerializer.GetSerializer(converters);

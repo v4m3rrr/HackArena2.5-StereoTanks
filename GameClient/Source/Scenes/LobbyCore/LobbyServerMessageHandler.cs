@@ -20,6 +20,8 @@ internal static class LobbyServerMessageHandler
         var data = packet.GetPayload<LobbyDataPayload>(serializers);
 
         serverSettings = data.ServerSettings;
+        Game.ServerBroadcastInterval = serverSettings.BroadcastInterval;
+        Game.PlayerId = data.PlayerId;
 
         updater.UpdatePlayerSlotPanels(data.Players, serverSettings.NumberOfPlayers);
     }
