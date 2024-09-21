@@ -6,7 +6,7 @@ namespace GameServer;
 /// <summary>
 /// Represents the packet handler.
 /// </summary>
-/// <param name="game"></param>
+/// <param name="game">The game instance.</param>
 internal class PacketHandler(GameInstance game)
 {
     /// <summary>
@@ -78,7 +78,7 @@ internal class PacketHandler(GameInstance game)
             return;
         }
 
-        if (packet.Type.HasFlag(PacketType.PlayerResponseGroup))
+        if (packet.Type.IsGroup(PacketType.PlayerResponseGroup))
         {
             try
             {

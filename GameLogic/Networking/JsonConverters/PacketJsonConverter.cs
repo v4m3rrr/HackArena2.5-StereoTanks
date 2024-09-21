@@ -23,15 +23,18 @@ internal class PacketJsonConverter(PacketSerializationContext context) : JsonCon
             _ => throw new InvalidOperationException("Invalid packet type."),
         };
 
+        if (!type.HasPayload())
+        {
+            return new Packet() { Type = type };
+        }
+
         var payload = jObject["payload"]!.ToObject<IPacketPayload>(serializer)!;
 
-        var packet = new Packet()
+        return new Packet()
         {
             Type = type,
             Payload = JObject.FromObject(payload, serializer),
         };
-
-        return packet;
     }
 
     /// <inheritdoc/>
@@ -45,8 +48,12 @@ internal class PacketJsonConverter(PacketSerializationContext context) : JsonCon
                 TypeOfPacketType.String => JsonNamingPolicy.CamelCase.ConvertName(value!.Type.ToString()),
                 _ => throw new InvalidOperationException("Invalid packet type."),
             },
-            ["payload"] = JObject.FromObject(value!.Payload, serializer),
         };
+
+        if (value!.Type.HasPayload())
+        {
+            jObject["payload"] = JObject.FromObject(value!.Payload, serializer);
+        }
 
         jObject.WriteTo(writer);
     }
