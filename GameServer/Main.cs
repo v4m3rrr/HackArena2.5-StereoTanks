@@ -113,10 +113,13 @@ async Task HandlePlayerConnection(HttpListenerContext context)
         if (quickJoin)
         {
             int i = 0;
-            while (NicknameAlreadyExists(nickname))
+            string newNickname = nickname;
+            while (NicknameAlreadyExists(newNickname))
             {
-                nickname = $"{nickname}{++i}";
+                newNickname = $"{nickname}{++i}";
             }
+
+            nickname = newNickname;
         }
         else
 #endif

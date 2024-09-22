@@ -1,4 +1,4 @@
-﻿using GameClient.LobbySceneComponents.PlayerInfoComponents;
+﻿using GameClient.UI.SceneComponents;
 using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -12,7 +12,7 @@ internal class PlayerSlotPanel : Component
 {
     private readonly RoundedSolidColor background;
     private readonly RoundedSolidColor iconBackground;
-    private readonly TankSprite tankSprite;
+    private readonly TankSpriteIcon tankSpriteIcon;
     private readonly ScalableTexture2D waitingIcon;
     private readonly Text playerNick;
 
@@ -42,7 +42,7 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        this.tankSprite = new TankSprite()
+        this.tankSpriteIcon = new TankSpriteIcon()
         {
             Parent = this.iconBackground,
             IsEnabled = false,
@@ -112,11 +112,11 @@ internal class PlayerSlotPanel : Component
             this.playerNick.Value = value?.Nickname ?? "Waiting...";
 
             this.waitingIcon.IsEnabled = value is null;
-            this.tankSprite.IsEnabled = value is not null;
+            this.tankSpriteIcon.IsEnabled = value is not null;
 
             if (value is not null)
             {
-                this.tankSprite.SetColor(new Color(value!.Color));
+                this.tankSpriteIcon.SetColor(new Color(value!.Color));
             }
         }
     }

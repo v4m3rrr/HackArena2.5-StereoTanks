@@ -55,6 +55,17 @@ internal class CommandLineOptions
     public int GridDimension { get; private set; }
 
     /// <summary>
+    /// Gets the number of ticks per game.
+    /// </summary>
+    [Option(
+        't',
+        "ticks",
+        Required = false,
+        HelpText = "The number of ticks per game.",
+        Default = 3000)]
+    public int Ticks { get; private set; }
+
+    /// <summary>
     /// Gets the broadcast interval in milliseconds.
     /// </summary>
     [Option(

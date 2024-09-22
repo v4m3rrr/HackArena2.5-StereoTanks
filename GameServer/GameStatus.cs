@@ -14,4 +14,9 @@ internal enum GameStatus
     /// Represents the game is in progress.
     /// </summary>
     Running,
+
+    /// <summary>
+    /// Represents the game has ended.
+    /// </summary>
+    Ended,
 }

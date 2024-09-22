@@ -1,20 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoRivUI;
 
-namespace GameClient.LobbySceneComponents.PlayerInfoComponents;
+namespace GameClient.UI.SceneComponents;
 
 /// <summary>
 /// Represents a player's tank sprite displayed on a player slot panel.
 /// </summary>
-internal class TankSprite : Component
+internal class TankSpriteIcon : Component
 {
     private readonly ScalableTexture2D turretTexture;
     private readonly ScalableTexture2D tankTexture;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TankSprite"/> class.
+    /// Initializes a new instance of the <see cref="TankSpriteIcon"/> class.
     /// </summary>
-    public TankSprite()
+    public TankSpriteIcon()
     {
         this.tankTexture = new ScalableTexture2D("Images/Game/tank.svg")
         {

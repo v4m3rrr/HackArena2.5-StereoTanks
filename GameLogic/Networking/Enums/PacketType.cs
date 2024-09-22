@@ -96,6 +96,18 @@ public enum PacketType
 
 #if DEBUG
 
+    // GameState debug group (range: 0xC0 - 0xCF)
+
+    /// <summary>
+    /// The game state debug group packet type.
+    /// </summary>
+    GameStateDebugGroup = 0xC0,
+
+    /// <summary>
+    /// The set player score packet type.
+    /// </summary>
+    SetPlayerScore = GameStateDebugGroup | 0x1,
+
     // Debug group (range: 0xD0 - 0xDF)
 
     /// <summary>
@@ -108,6 +120,11 @@ public enum PacketType
     /// </summary>
     ShootAll = DebugGroup | 0x3,
 
+    /// <summary>
+    /// The force end game packet type (debug).
+    /// </summary>
+    ForceEndGame = DebugGroup | 0x4,
+
 #endif
 
     // Warning group (range: 0xE0 - 0xEF)
@@ -118,12 +135,24 @@ public enum PacketType
     WarningGroup = 0xE0,
 
     /// <summary>
-    /// The invalid packet type.
-    /// </summary>
-    Invalid = WarningGroup | 0x1,
-
-    /// <summary>
     /// The already made movement packet type.
     /// </summary>
     AlreadyMadeMovement = WarningGroup | 0x2,
+
+    // Error group (range: 0xF0 - 0xFF)
+
+    /// <summary>
+    /// The error group packet type.
+    /// </summary>
+    ErrorGroup = 0xF0,
+
+    /// <summary>
+    /// The invalid packet type.
+    /// </summary>
+    InvalidPacketType = ErrorGroup | 0x1,
+
+    /// <summary>
+    /// The invalid packet usage.
+    /// </summary>
+    InvalidPacketUsage = ErrorGroup | 0x2,
 }
