@@ -106,7 +106,7 @@ public enum PacketType
     /// <summary>
     /// The set player score packet type.
     /// </summary>
-    SetPlayerScore = GameStateDebugGroup | 0x1,
+    SetPlayerScore = GameStateDebugGroup | HasPayload | 0x1,
 
     // Debug group (range: 0xD0 - 0xDF)
 
@@ -149,10 +149,10 @@ public enum PacketType
     /// <summary>
     /// The invalid packet type.
     /// </summary>
-    InvalidPacketType = ErrorGroup | 0x1,
+    InvalidPacketType = ErrorGroup | HasPayload | 0x1,
 
     /// <summary>
     /// The invalid packet usage.
     /// </summary>
-    InvalidPacketUsage = ErrorGroup | 0x2,
+    InvalidPacketUsage = ErrorGroup | HasPayload | 0x2,
 }

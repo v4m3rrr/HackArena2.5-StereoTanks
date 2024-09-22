@@ -76,7 +76,7 @@ internal class PacketHandler(GameInstance game)
 
             var payload = new ErrorPayload(
                 PacketType.InvalidPacketType,
-                "Packet type ({packet.Type}) cannot be handled");
+                $"Packet type ({packet.Type}) cannot be handled");
 
             await game.SendPlayerPacketAsync(socket, payload);
         }
