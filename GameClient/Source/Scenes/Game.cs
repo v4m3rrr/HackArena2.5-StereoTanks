@@ -112,9 +112,15 @@ internal class Game : Scene
                     GameServerMessageHandler.HandleGameStatePacket(packet, this.updater);
                     break;
 
+                case PacketType.GameEnd:
+                    GameServerMessageHandler.HandleGameEndPacket(packet);
+                    break;
+
+#if DEBUG
                 case PacketType.LobbyData:
                     GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
                     break;
+#endif
 
                 default:
                     DebugConsole.SendMessage(

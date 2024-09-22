@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System.Diagnostics;
+using System.Net.WebSockets;
 using GameLogic.Networking;
 
 namespace GameServer;
@@ -37,11 +38,44 @@ internal class GameManager(GameInstance game)
         _ = Task.Run(this.StartBroadcastingAsync);
     }
 
+    /// <summary>
+    /// Ends the game.
+    /// </summary>
+    public void EndGame()
+    {
+        this.Status = GameStatus.Ended;
+
+        var players = game.PlayerManager.Players.Values.Select(x => x.Instance).ToList();
+        players.Sort((x, y) => y.Score.CompareTo(x.Score));
+
+        var packet = new GameEndPayload(players);
+        var converters = GameEndPayload.GetConverters();
+
+        foreach (var player in game.PlayerManager.Players.Keys)
+        {
+            _ = game.SendPlayerPacketAsync(player, packet, converters);
+        }
+
+        foreach (var spectator in game.SpectatorManager.Spectators.Keys)
+        {
+            _ = game.SendSpectatorPacketAsync(spectator, packet, converters);
+        }
+    }
+
     private async Task StartBroadcastingAsync()
     {
-        while (true)
+        var stopwatch = new Stopwatch();
+
+        while (this.Status is GameStatus.Running)
         {
-            var startTime = DateTime.UtcNow;
+            if (this.tick++ >= game.Settings.Ticks)
+            {
+                this.EndGame();
+                break;
+            }
+
+            stopwatch.Restart();
+
             var grid = game.Grid;
 
             // Update game logic
@@ -55,12 +89,12 @@ internal class GameManager(GameInstance game)
             this.ResetAlreadyMovement();
             await this.BroadcastGameStateAsync();
 
-            var endTime = DateTime.UtcNow;
-            var sleepTime = game.Settings.BroadcastInterval - (endTime - startTime).Milliseconds;
+            stopwatch.Stop();
 
+            var sleepTime = (int)(game.Settings.BroadcastInterval - stopwatch.ElapsedMilliseconds);
             if (sleepTime > 0)
             {
-                await Task.Delay(sleepTime);
+                await PreciseTimer.PreciseDelay(sleepTime);
             }
             else
             {
@@ -82,8 +116,6 @@ internal class GameManager(GameInstance game)
 
     private async Task BroadcastGameStateAsync()
     {
-        int currentTick = this.tick++;
-
         var players = game.PlayerManager.Players.ToDictionary(x => x.Key, x => x.Value.Instance);
         var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
 
@@ -95,14 +127,14 @@ internal class GameManager(GameInstance game)
 
             if (game.SpectatorManager.IsSpectator(client))
             {
-                packet = new GameStatePayload(currentTick, [.. players.Values], game.Grid);
+                packet = new GameStatePayload(this.tick, [.. players.Values], game.Grid);
                 context = new GameSerializationContext.Spectator();
                 options = SerializationOptions.Default;
             }
             else
             {
                 var player = players[client];
-                packet = new GameStatePayload.ForPlayer(currentTick, player, [.. players.Values], game.Grid);
+                packet = new GameStatePayload.ForPlayer(this.tick, player, [.. players.Values], game.Grid);
                 context = new GameSerializationContext.Player(player);
                 var connectionData = game.PlayerManager.Players[client].ConnectionData;
                 options = new SerializationOptions() { TypeOfPacketType = connectionData.TypeOfPacketType };

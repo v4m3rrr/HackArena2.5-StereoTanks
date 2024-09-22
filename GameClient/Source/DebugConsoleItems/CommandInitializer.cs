@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using GameClient.Networking;
+using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -267,5 +269,70 @@ internal static class CommandInitializer
         var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: false);
         Scene.Change<Scenes.Game>(args);
     }
+
+    [CommandGroup(Name = "Game", Description = "Interact with the game.")]
+    private static class GameCommand
+    {
+        private static bool ThrowErrorIfNotGameScene()
+        {
+            if (Scene.Current is not Scenes.Game game)
+            {
+                DebugConsole.ThrowError("The current scene is not a game scene.");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ThrowErrorIfNotConnectedToServer()
+        {
+            if (!ServerConnection.IsConnected)
+            {
+                DebugConsole.ThrowError("The server is not connected.");
+                return true;
+            }
+
+            return false;
+        }
+
+        [Command("Sets score to a player.")]
+        private static async void SetScore(
+            [Argument("A player nick to sets points")] string nick,
+            [Argument("A points to sets")] int points)
+        {
+            if (ThrowErrorIfNotGameScene() || ThrowErrorIfNotConnectedToServer())
+            {
+                return;
+            }
+
+            var payload = new SetPlayerScorePayload(nick, points);
+            var message = PacketSerializer.Serialize(payload);
+
+            await ServerConnection.SendAsync(message);
+
+            DebugConsole.SendMessage(
+                $"Packet \"Set player '{nick}' points to {points} \" has been sent to the server.",
+                Color.Green);
+        }
+
+        [Command("Force end the game.")]
+        private static async void ForceEnd()
+        {
+            if (ThrowErrorIfNotGameScene() || ThrowErrorIfNotConnectedToServer())
+            {
+                return;
+            }
+
+            var payload = new EmptyPayload() { Type = PacketType.ForceEndGame };
+            var message = PacketSerializer.Serialize(payload);
+
+            await ServerConnection.SendAsync(message);
+
+            DebugConsole.SendMessage(
+                $"Packet \"Force end the game\" has been sent to the server.",
+                Color.Green);
+        }
+    }
+
 #endif
 }

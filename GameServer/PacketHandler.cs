@@ -61,13 +61,28 @@ internal class PacketHandler(GameInstance game)
             return;
         }
 
+        bool isHandled = false;
+
         if (!game.SpectatorManager.IsSpectator(socket))
         {
-            await this.HandlePlayerPacket(socket, packet);
+            isHandled = await this.HandlePlayerPacket(socket, packet);
+        }
+
+        isHandled |= await this.HandleOtherPacket(socket, packet);
+
+        if (!isHandled)
+        {
+            Console.WriteLine($"Invalid packet type ({packet.Type})");
+
+            var payload = new ErrorPayload(
+                PacketType.InvalidPacketType,
+                "Packet type ({packet.Type}) cannot be handled");
+
+            await game.SendPlayerPacketAsync(socket, payload);
         }
     }
 
-    private async Task HandlePlayerPacket(WebSocket socket, Packet packet)
+    private async Task<bool> HandlePlayerPacket(WebSocket socket, Packet packet)
     {
         Player player = game.PlayerManager.Players[socket];
 
@@ -75,7 +90,7 @@ internal class PacketHandler(GameInstance game)
         {
             player.HasSentPong = true;
             player.Instance.Ping = (int)(DateTime.UtcNow - player.LastPingSentTime)!.TotalMilliseconds;
-            return;
+            return true;
         }
 
         if (packet.Type.IsGroup(PacketType.PlayerResponseGroup))
@@ -89,7 +104,60 @@ internal class PacketHandler(GameInstance game)
                 Console.WriteLine("ERROR WHILE HANDLING PLAYER MOVEMENT PACKET: " + e.Message);
                 throw;
             }
+
+            return true;
         }
+
+        return false;
+    }
+
+    private async Task<bool> HandleOtherPacket(WebSocket socket, Packet packet)
+    {
+#if DEBUG
+        if (packet.Type is PacketType.ForceEndGame)
+        {
+            if (game.GameManager.Status is not GameStatus.Running)
+            {
+                var payload = new ErrorPayload(
+                    PacketType.InvalidPacketUsage,
+                    "Cannot force end the game when it is not running");
+
+                await game.SendPacketAsync(socket, payload);
+            }
+
+            game.GameManager.EndGame();
+
+            Console.WriteLine("Forced end game");
+
+            return true;
+        }
+
+        if (packet.Type is PacketType.SetPlayerScore)
+        {
+            var payload = packet.GetPayload<SetPlayerScorePayload>();
+            var player = game.PlayerManager.Players.Values.FirstOrDefault(
+                p => p.Instance.Nickname.Equals(payload.PlayerNick, StringComparison.OrdinalIgnoreCase));
+
+            if (player is null)
+            {
+                var errorPayload = new ErrorPayload(
+                    PacketType.InvalidPacketUsage,
+                    $"Player with nickname '{payload.PlayerNick}' not found");
+
+                await game.SendPacketAsync(socket, errorPayload);
+                return true;
+            }
+
+            var scoreProperty = player.Instance.GetType().GetProperty(nameof(GameLogic.Player.Score));
+            scoreProperty!.SetValue(player.Instance, payload.Score);
+
+            Console.WriteLine($"Set score of player '{player.Instance.Nickname}' to {payload.Score}");
+
+            return true;
+        }
+#endif
+
+        return false;
     }
 
     private async Task HandlePlayerMovementPacket(WebSocket socket, Player player, Packet packet)

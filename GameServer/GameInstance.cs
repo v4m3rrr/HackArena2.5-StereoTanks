@@ -1,4 +1,4 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
 using Newtonsoft.Json;
@@ -30,6 +30,7 @@ internal class GameInstance
             dimension,
             options.NumberOfPlayers,
             seed,
+            options.Ticks,
             options.BroadcastInterval,
             options.EagerBroadcast);
 
@@ -98,6 +99,33 @@ internal class GameInstance
     public void HandleConnection(WebSocket socket)
     {
         _ = Task.Run(() => this.PacketHandler.HandleConnection(socket));
+    }
+
+    /// <summary>
+    /// Sends a packet to a player or a spectator.
+    /// </summary>
+    /// <param name="socket">The socket of the player or spectator to send the packet to.</param>
+    /// <param name="packet">The packet to send.</param>
+    /// <param name="converters">The converters to use when serializing the packet.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task SendPacketAsync(
+        WebSocket socket,
+        IPacketPayload packet,
+        List<JsonConverter>? converters = null)
+    {
+        if (this.PlayerManager.Players.ContainsKey(socket))
+        {
+            await this.SendPlayerPacketAsync(socket, packet, converters);
+        }
+        else if (this.SpectatorManager.Spectators.ContainsKey(socket))
+        {
+            await this.SendSpectatorPacketAsync(socket, packet, converters);
+        }
+        else
+        {
+            Console.WriteLine(
+                "ERROR WHILE SENDING PACKET (SendPacketAsync): The socket is not a player or a spectator.");
+        }
     }
 
     /// <summary>

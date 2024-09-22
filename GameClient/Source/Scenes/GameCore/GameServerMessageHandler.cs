@@ -64,6 +64,8 @@ internal static class GameServerMessageHandler
         DebugConsole.SendMessage("Player ID: " + data.PlayerId, Color.DarkGray);
         DebugConsole.SendMessage("Seed: " + data.ServerSettings.Seed, Color.DarkGray);
         DebugConsole.SendMessage("Eager broadcast: " + data.ServerSettings.EagerBroadcast, Color.DarkGray);
+        DebugConsole.SendMessage("Game ticks: " + data.ServerSettings.Ticks, Color.DarkGray);
+        DebugConsole.SendMessage("Game time: " + (data.ServerSettings.Ticks / (1000f / data.ServerSettings.BroadcastInterval)) + "s", Color.DarkGray);
 
         Game.PlayerId = data.PlayerId;
         Game.ServerBroadcastInterval = data.ServerSettings.BroadcastInterval;
@@ -106,5 +108,18 @@ internal static class GameServerMessageHandler
         }
 
         updater.EnableGridComponent();
+    }
+
+    /// <summary>
+    /// Handles the game end packet.
+    /// </summary>
+    /// <param name="packet">The packet containing the game end payload.</param>
+    public static void HandleGameEndPacket(Packet packet)
+    {
+        var converters = GameEndPayload.GetConverters();
+        var serializers = PacketSerializer.GetSerializer(converters);
+        var payload = packet.GetPayload<GameEndPayload>(serializers);
+        var args = new GameEndDisplayEventArgs(payload.Players);
+        Scene.Change<GameEnd>(args);
     }
 }
