@@ -9,6 +9,31 @@
 	<Authors>KN inIT</Authors>
 	<Title>MonoTanks Server</Title>
 	<Description>A server for MonoTanks game.</Description>
+	<Configurations>Debug;Release;HackatonDebug;HackatonRelease</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;SERVER</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackatonDebug|AnyCPU'">
+    <DefineConstants>DEBUG;HACKATON;SERVER</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>RELEASE;SERVER</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackatonRelease|AnyCPU'">
+    <DefineConstants>RELEASE;HACKATON;SERVER</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
