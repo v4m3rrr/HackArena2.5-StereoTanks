@@ -3,13 +3,18 @@
 /// <summary>
 /// Represents a packet type.
 /// </summary>
-[Flags]
 public enum PacketType
 {
     /// <summary>
     /// An unknown packet type.
     /// </summary>
     Unknown = 0x0,
+
+    /// <summary>
+    /// The mask for packet type
+    /// indicating that it has a payload.
+    /// </summary>
+    HasPayload = 0x8,
 
     // Communication group (range: 0x10 - 0x1F)
 
@@ -38,7 +43,7 @@ public enum PacketType
     /// <summary>
     /// The lobby data packet type.
     /// </summary>
-    LobbyData = LobbyGroup | 0x1,
+    LobbyData = LobbyGroup | HasPayload | 0x1,
 
     /// <summary>
     /// The lobby deleted packet type.
@@ -60,12 +65,12 @@ public enum PacketType
     /// <summary>
     /// The game state packet type.
     /// </summary>
-    GameState = GameStateGroup | 0x2,
+    GameState = GameStateGroup | HasPayload | 0x2,
 
     /// <summary>
     /// The game end packet type.
     /// </summary>
-    GameEnd = GameStateGroup | 0x3,
+    GameEnd = GameStateGroup | HasPayload | 0x3,
 
     // Player response group (range: 0x40 - 0x4F)
 
@@ -77,17 +82,17 @@ public enum PacketType
     /// <summary>
     /// The tank movement packet type.
     /// </summary>
-    TankMovement = PlayerResponseGroup | 0x1,
+    TankMovement = PlayerResponseGroup | HasPayload | 0x1,
 
     /// <summary>
     /// The tank rotation packet type.
     /// </summary>
-    TankRotation = PlayerResponseGroup | 0x2,
+    TankRotation = PlayerResponseGroup | HasPayload | 0x2,
 
     /// <summary>
     /// The tank shoot packet type.
     /// </summary>
-    TankShoot = PlayerResponseGroup | 0x3,
+    TankShoot = PlayerResponseGroup | HasPayload | 0x3,
 
 #if DEBUG
 
