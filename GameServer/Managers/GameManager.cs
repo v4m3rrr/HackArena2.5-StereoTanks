@@ -87,7 +87,8 @@ internal class GameManager(GameInstance game)
 
             // Broadcast the game state
             this.ResetAlreadyMovement();
-            await this.BroadcastGameStateAsync();
+            var broadcast = this.BroadcastGameStateAsync();
+            await Task.WhenAll(broadcast);
 
             stopwatch.Stop();
 
@@ -114,8 +115,10 @@ internal class GameManager(GameInstance game)
         }
     }
 
-    private async Task BroadcastGameStateAsync()
+    private List<Task> BroadcastGameStateAsync()
     {
+        var tasks = new List<Task>();
+
         var players = game.PlayerManager.Players.ToDictionary(x => x.Key, x => x.Value.Instance);
         var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
 
@@ -123,37 +126,28 @@ internal class GameManager(GameInstance game)
         {
             GameStatePayload packet;
             GameSerializationContext context;
-            SerializationOptions options;
 
             if (game.SpectatorManager.IsSpectator(client))
             {
                 packet = new GameStatePayload(this.tick, [.. players.Values], game.Grid);
                 context = new GameSerializationContext.Spectator();
-                options = SerializationOptions.Default;
             }
             else
             {
                 var player = players[client];
                 packet = new GameStatePayload.ForPlayer(this.tick, player, [.. players.Values], game.Grid);
                 context = new GameSerializationContext.Player(player);
-                var connectionData = game.PlayerManager.Players[client].ConnectionData;
-                options = new SerializationOptions() { TypeOfPacketType = connectionData.TypeOfPacketType };
             }
 
             var converters = GameStatePayload.GetConverters(context);
-            var buffer = PacketSerializer.ToByteArray(packet, converters, options);
 
             if (client.State == WebSocketState.Open)
             {
-                try
-                {
-                    await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error while broadcasting game state: {ex.Message}");
-                }
+                var task = Task.Run(() => game.SendPacketAsync(client, packet, converters));
+                tasks.Add(task);
             }
         }
+
+        return tasks;
     }
 }
