@@ -197,7 +197,7 @@ public class Player : IEquatable<Player>
         if (--this.RemainingTicksToRegen <= 0)
         {
             this.Tank.Heal(100);
-            this.RemainingTicksToRegen = RegenTicks;
+            this.RemainingTicksToRegen = null;
             this.TankRegenerated?.Invoke(this, EventArgs.Empty);
         }
     }
