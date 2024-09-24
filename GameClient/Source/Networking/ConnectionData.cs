@@ -104,7 +104,7 @@ internal readonly struct ConnectionData
     /// Returns the WebSocket URL of the server.
     /// </summary>
     /// <returns>The WebSocket URL of the server.</returns>
-    public readonly string GetServerWsUrl()
+    public readonly string GetServerUrl()
     {
         var url = $"ws://{this.ServerAddress}";
 
@@ -139,14 +139,5 @@ internal readonly struct ConnectionData
         }
 
         return url;
-    }
-
-    /// <summary>
-    /// Returns the HTTP URL of the server.
-    /// </summary>
-    /// <returns>The HTTP URL of the server.</returns>
-    public readonly string GetServerHttpUrl()
-    {
-        return string.Concat("http", this.GetServerWsUrl().AsSpan(2));
     }
 }

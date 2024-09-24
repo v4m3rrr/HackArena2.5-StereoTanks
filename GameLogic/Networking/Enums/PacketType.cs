@@ -33,6 +33,16 @@ public enum PacketType
     /// </summary>
     Pong = CommunicationGroup | 0x2,
 
+    /// <summary>
+    /// The connection accepted packet type.
+    /// </summary>
+    ConnectionAccepted = CommunicationGroup | 0x3,
+
+    /// <summary>
+    /// The connection rejected packet type.
+    /// </summary>
+    ConnectionRejected = CommunicationGroup | HasPayload | 0x4,
+
     // Lobby group (range: 0x20 - 0x2F)
 
     /// <summary>
@@ -149,10 +159,10 @@ public enum PacketType
     /// <summary>
     /// The invalid packet type.
     /// </summary>
-    InvalidPacketType = ErrorGroup | HasPayload | 0x1,
+    InvalidPacketType = ErrorGroup | 0x1,
 
     /// <summary>
     /// The invalid packet usage.
     /// </summary>
-    InvalidPacketUsage = ErrorGroup | HasPayload | 0x2,
+    InvalidPacketUsage = ErrorGroup | 0x2,
 }

@@ -104,9 +104,13 @@ internal class Lobby : Scene
                     break;
 
                 default:
-                    DebugConsole.SendMessage(
+                    if (!packet.Type.IsGroup(PacketType.ErrorGroup))
+                    {
+                        DebugConsole.SendMessage(
                         $"Unknown packet type in Lobby scene: {packet.Type}",
                         Color.Yellow);
+                    }
+
                     break;
             }
         }

@@ -150,7 +150,7 @@ internal class MainMenu : Scene
                 ? ConnectionData.ForSpectator("localhost:5000", joinCode, true)
                 : ConnectionData.ForPlayer("localhost:5000", joinCode, "player", true);
 
-            if (await ServerConnection.ConnectAsync(connectionData, 1024 * 32))
+            if (await ServerConnection.ConnectAsync(connectionData))
             {
                 var args = new GameDisplayEventArgs(joinCode, isSpectator);
                 Change<T>(args);

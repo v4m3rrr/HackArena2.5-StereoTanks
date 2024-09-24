@@ -22,12 +22,15 @@ internal class GameManager(GameInstance game)
     /// </summary>
     public void StartGame()
     {
-        if (this.Status is GameStatus.Running)
+        lock (this)
         {
-            return;
-        }
+            if (this.Status is GameStatus.Running)
+            {
+                return;
+            }
 
-        this.Status = GameStatus.Running;
+            this.Status = GameStatus.Running;
+        }
 
         foreach (var player in game.PlayerManager.Players.Keys)
         {

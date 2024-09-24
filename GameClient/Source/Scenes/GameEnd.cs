@@ -71,7 +71,6 @@ internal class GameEnd : Scene
 
         this.updater.UpdateScoreboard(args.Players);
 
-        ServerConnection.BufferSize = 1024 * 2;
         ServerConnection.ErrorThrew += Connection_ErrorThrew;
     }
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -74,15 +74,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GameLogic\GameLogic.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="FreeTypeSharp">
-      <HintPath>Libraries\FreeTypeSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoRivUI">
-      <HintPath>Libraries\MonoRivUI\MonoRivUI\bin\Debug\net6.0\MonoRivUI.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

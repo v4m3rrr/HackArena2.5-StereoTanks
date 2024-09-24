@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Net;
-using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using GameLogic.Networking;
 
 namespace GameClient.Networking;
 
@@ -21,14 +20,18 @@ internal static class ServerConnection
     public static event Action<WebSocketReceiveResult, string>? MessageReceived;
 
     /// <summary>
-    /// Occurs when the connection to the server is establishing.
+    /// Occurs when the connection to the server is connecting.
     /// </summary>
     public static event Action<string>? Connecting;
 
     /// <summary>
     /// Occurs when the connection to the server is established.
     /// </summary>
-    public static event Action? Connected;
+    /// <remarks>
+    /// The connection is established when the WebSocket
+    /// is connected and the connection is accepted.
+    /// </remarks>
+    public static event Action? Established;
 
     /// <summary>
     /// Occurs when an error occurs.
@@ -51,6 +54,24 @@ internal static class ServerConnection
     public static bool IsConnected => client.State == WebSocketState.Open;
 
     /// <summary>
+    /// Gets a value indicating whether the connection is accepted.
+    /// </summary>
+    public static bool IsAccepted { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the connection is established.
+    /// </summary>
+    /// <value>
+    /// <see langword="true"/> if the connection is established;
+    /// otherwise, <see langword="false"/>.
+    /// </value>
+    /// <remarks>
+    /// The connection is established when the WebSocket
+    /// is connected and the connection is accepted.
+    /// </remarks>
+    public static bool IsEstablished => IsConnected && IsAccepted;
+
+    /// <summary>
     /// Gets the connection data.
     /// </summary>
     public static ConnectionData Data { get; private set; }
@@ -60,35 +81,36 @@ internal static class ServerConnection
     /// </summary>
     /// <param name="data">The connection data.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public static async Task<bool> ConnectAsync(ConnectionData data, int bufferSize)
+    public static async Task<bool> ConnectAsync(ConnectionData data)
     {
-        BufferSize = bufferSize;
-
-        string serverUrl = data.GetServerWsUrl();
+        string serverUrl = data.GetServerUrl();
 
         Connecting?.Invoke(serverUrl);
-
-        if (!await ValidateServerConnectionAsync(data))
-        {
-            return false;
-        }
 
         try
         {
             client = new ClientWebSocket();
+
             await client.ConnectAsync(new Uri(serverUrl), CancellationToken.None);
 
+            if (!await WaitForAccept())
+            {
+                return false;
+            }
+
             Data = data;
-            Connected?.Invoke();
+            IsAccepted = true;
+            Established?.Invoke();
 
             _ = Task.Run(ReceiveMessages);
-            return true;
         }
         catch (WebSocketException ex)
         {
             ErrorThrew?.Invoke($"An error occurred while connecting to the WebSocket server: {ex.Message}");
             return false;
         }
+
+        return true;
     }
 
     /// <summary>
@@ -98,9 +120,9 @@ internal static class ServerConnection
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public static async Task SendAsync(string message)
     {
-        if (client.State != WebSocketState.Open)
+        if (!IsEstablished)
         {
-            ErrorThrew?.Invoke("WebSocket is not connected.");
+            ErrorThrew?.Invoke("WebSocket is not established.");
             return;
         }
 
@@ -120,13 +142,52 @@ internal static class ServerConnection
     /// <summary>
     /// Closes the WebSocket connection.
     /// </summary>
+    /// <param name="descriptioin">The description of the closing.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public static async Task CloseAsync()
+    public static async Task CloseAsync(string descriptioin = "Closing")
     {
         if (client.State == WebSocketState.Open)
         {
-            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, descriptioin, CancellationToken.None);
         }
+    }
+
+    private static async Task<bool> WaitForAccept()
+    {
+        while (client.State == WebSocketState.Open)
+        {
+            byte[] buffer = new byte[BufferSize];
+            WebSocketReceiveResult result;
+
+            try
+            {
+                result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            }
+            catch (WebSocketException ex)
+            {
+                ErrorThrew?.Invoke($"A WebSocket error occurred: {ex.Message}");
+                break;
+            }
+
+            var packet = PacketSerializer.Deserialize(buffer);
+            if (packet.Type == PacketType.ConnectionAccepted)
+            {
+                return true;
+            }
+            else if (packet.Type == PacketType.ConnectionRejected)
+            {
+                await client.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "Closing due to rejection",
+                    CancellationToken.None);
+
+                var payload = packet.GetPayload<ConnectionRejectedPayload>();
+                ErrorThrew?.Invoke($"Connection rejected: {payload.Reason}");
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static async Task ReceiveMessages()
@@ -148,49 +209,27 @@ internal static class ServerConnection
 
             if (result.CloseStatus.HasValue)
             {
-                await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-                break;
+                if (result.CloseStatus is WebSocketCloseStatus.NormalClosure)
+                {
+                    var msg = result.CloseStatusDescription is null
+                        ? $"Server connection closed normally."
+                        : $"Server connection closed normally - {result.CloseStatusDescription}";
+
+                    DebugConsole.SendMessage(msg);
+                    await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                    break;
+                }
+                else
+                {
+                    DebugConsole.ThrowError(
+                        $"Server connection closed unexpectedly (status: {result.CloseStatus}, " +
+                        $"description: {result.CloseStatusDescription ?? "N/A"})");
+                    break;
+                }
             }
 
             string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
             MessageReceived?.Invoke(result, message);
         }
-    }
-
-    private static async Task<bool> ValidateServerConnectionAsync(ConnectionData data)
-    {
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(ServerTimeoutSeconds) };
-        HttpResponseMessage response;
-
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(ServerTimeoutSeconds));
-            var serverUri = new Uri(data.GetServerHttpUrl());
-            response = await httpClient.GetAsync(serverUri, cts.Token).ConfigureAwait(false);
-        }
-        catch (TaskCanceledException)
-        {
-            ErrorThrew?.Invoke("The request timed out.");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            ErrorThrew?.Invoke($"An error occurred while sending HTTP request: {ex.Message}");
-            return false;
-        }
-
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            string errorMessage = (int)response.StatusCode switch
-            {
-                >= 400 and < 500 => await response.Content.ReadAsStringAsync(),
-                _ => $"Unexpected response from server: {response.StatusCode}",
-            };
-
-            ErrorThrew?.Invoke($"Server error: {errorMessage}");
-            return false;
-        }
-
-        return true;
     }
 }

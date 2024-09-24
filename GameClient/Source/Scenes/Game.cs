@@ -81,16 +81,6 @@ internal class Game : Scene
         }
     }
 
-    private static void Connection_Connecting(string server)
-    {
-        DebugConsole.SendMessage($"Connecting to the server {server}...", Color.LightGreen);
-    }
-
-    private static void Connection_Connected()
-    {
-        DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
-    }
-
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
     {
         if (result.MessageType == WebSocketMessageType.Close)
@@ -123,9 +113,13 @@ internal class Game : Scene
 #endif
 
                 default:
-                    DebugConsole.SendMessage(
+                    if (!packet.Type.IsGroup(PacketType.ErrorGroup))
+                    {
+                        DebugConsole.SendMessage(
                         $"Unknown packet type in Game scene: {packet.Type}",
                         Color.Yellow);
+                    }
+
                     break;
             }
         }
@@ -143,8 +137,6 @@ internal class Game : Scene
 
         ServerConnection.BufferSize = 1024 * 32;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
-        ServerConnection.Connecting += Connection_Connecting;
-        ServerConnection.Connected += Connection_Connected;
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
@@ -158,8 +150,6 @@ internal class Game : Scene
         }
 
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;
-        ServerConnection.Connecting -= Connection_Connecting;
-        ServerConnection.Connected -= Connection_Connected;
     }
 
     private async void HandleInput()
