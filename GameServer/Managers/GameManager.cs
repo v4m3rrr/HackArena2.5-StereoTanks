@@ -18,6 +18,11 @@ internal class GameManager(GameInstance game)
     public GameStatus Status { get; private set; }
 
     /// <summary>
+    /// Gets the current game state id.
+    /// </summary>
+    public string? CurrentGameStateId { get; private set; }
+
+    /// <summary>
     /// Starts the game.
     /// </summary>
     public void StartGame()
@@ -89,17 +94,51 @@ internal class GameManager(GameInstance game)
             grid.UpdateZones();
 
             // Broadcast the game state
-            this.ResetAlreadyMovement();
+            this.ResetPlayerGameTickProperties();
             var broadcast = this.BroadcastGameStateAsync();
             await Task.WhenAll(broadcast);
 
             stopwatch.Stop();
 
             var sleepTime = (int)(game.Settings.BroadcastInterval - stopwatch.ElapsedMilliseconds);
+
+#if HACKATON
+            var tcs = new TaskCompletionSource<bool>();
+
+            game.PacketHandler.HackatonBotMadeAction += (s, e) =>
+            {
+                lock (e)
+                {
+                    if (game.Settings.EagerBroadcast && game.PlayerManager.Players.Values.All(x => x.IsHackatonBot))
+                    {
+                        var alivePlayers = game.PlayerManager.Players.Values.Where(x => !x.Instance.IsDead);
+                        if (alivePlayers.All(x => x.HasMadeActionToCurrentGameState))
+                        {
+                            _ = tcs.TrySetResult(true);
+                        }
+                    }
+                }
+            };
+
+            if (sleepTime > 0)
+            {
+                var delayTask = PreciseTimer.PreciseDelay(sleepTime);
+                var completedTask = await Task.WhenAny(delayTask, tcs.Task);
+                if (completedTask == tcs.Task)
+                {
+                    Console.WriteLine("All alive players returned their move, broadcasting early.");
+                }
+                else if (game.Settings.EagerBroadcast)
+                {
+                    Console.WriteLine("Not all alive players returned their move, broadcasting normally.");
+                }
+            }
+#else
             if (sleepTime > 0)
             {
                 await PreciseTimer.PreciseDelay(sleepTime);
             }
+#endif
             else
             {
                 Console.WriteLine("Game state broadcast took longer than expected!");
@@ -107,13 +146,16 @@ internal class GameManager(GameInstance game)
         }
     }
 
-    private void ResetAlreadyMovement()
+    private void ResetPlayerGameTickProperties()
     {
         foreach (Player player in game.PlayerManager.Players.Values)
         {
             lock (player)
             {
-                player.HasMadeMovementThisTick = false;
+                player.HasMadeActionThisTick = false;
+#if HACKATON
+                player.HasMadeActionToCurrentGameState = false;
+#endif
             }
         }
     }
@@ -124,6 +166,11 @@ internal class GameManager(GameInstance game)
 
         var players = game.PlayerManager.Players.ToDictionary(x => x.Key, x => x.Value.Instance);
         var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
+
+        lock (this.CurrentGameStateId ?? new object())
+        {
+            this.CurrentGameStateId = Guid.NewGuid().ToString();
+        }
 
         foreach (WebSocket client in clients)
         {
@@ -138,7 +185,7 @@ internal class GameManager(GameInstance game)
             else
             {
                 var player = players[client];
-                packet = new GameStatePayload.ForPlayer(this.tick, player, [.. players.Values], game.Grid);
+                packet = new GameStatePayload.ForPlayer(this.CurrentGameStateId, this.tick, player, [.. players.Values], game.Grid);
                 context = new GameSerializationContext.Player(player);
             }
 

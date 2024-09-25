@@ -87,7 +87,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <param name="payload">The player's game state payload.</param>
     public void UpdatePlayerFogOfWar(GameStatePayload.ForPlayer payload)
     {
-        var player = players[payload.PlayerId];
+        var player = players[Game.PlayerId!];
         components.Grid.UpdatePlayerFogOfWar(player, payload.VisibilityGrid);
     }
 

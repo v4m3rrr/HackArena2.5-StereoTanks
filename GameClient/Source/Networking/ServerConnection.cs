@@ -41,7 +41,7 @@ internal static class ServerConnection
     /// <summary>
     /// Gets or sets the buffer size for the WebSocket messages.
     /// </summary>
-    public static int BufferSize { get; set; } = 1024;
+    public static int BufferSize { get; set; } = 1024 * 32;
 
     /// <summary>
     /// Gets or sets the timeout for the server connection in seconds.

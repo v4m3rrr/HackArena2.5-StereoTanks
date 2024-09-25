@@ -1,4 +1,6 @@
-﻿using System.Net.WebSockets;
+﻿using System.Diagnostics;
+using System.Net.WebSockets;
+using System.Text.Json;
 using GameLogic.Networking;
 
 namespace GameServer;
@@ -9,6 +11,16 @@ namespace GameServer;
 /// <param name="game">The game instance.</param>
 internal class PacketHandler(GameInstance game)
 {
+
+#if HACKATON
+
+    /// <summary>
+    /// Occurs when a bot made an action.
+    /// </summary>
+    public event EventHandler<Player>? HackatonBotMadeAction;
+
+#endif
+
     /// <summary>
     /// Handles the connection.
     /// </summary>
@@ -75,7 +87,7 @@ internal class PacketHandler(GameInstance game)
             Console.WriteLine($"Invalid packet type ({packet.Type})");
 
             var payload = new ErrorPayload(
-                PacketType.InvalidPacketType,
+                PacketType.InvalidPacketTypeError,
                 $"Packet type ({packet.Type}) cannot be handled");
 
             await game.SendPlayerPacketAsync(socket, payload);
@@ -93,11 +105,11 @@ internal class PacketHandler(GameInstance game)
             return true;
         }
 
-        if (packet.Type.IsGroup(PacketType.PlayerResponseGroup))
+        if (packet.Type.IsGroup(PacketType.PlayerResponseActionGroup))
         {
             try
             {
-                await this.HandlePlayerMovementPacket(socket, player, packet);
+                await this.HandlePlayerActionPacket(socket, player, packet);
             }
             catch (Exception e)
             {
@@ -119,7 +131,7 @@ internal class PacketHandler(GameInstance game)
             if (game.GameManager.Status is not GameStatus.Running)
             {
                 var payload = new ErrorPayload(
-                    PacketType.InvalidPacketUsage,
+                    PacketType.InvalidPacketUsageError,
                     "Cannot force end the game when it is not running");
 
                 await game.SendPacketAsync(socket, payload);
@@ -141,7 +153,7 @@ internal class PacketHandler(GameInstance game)
             if (player is null)
             {
                 var errorPayload = new ErrorPayload(
-                    PacketType.InvalidPacketUsage,
+                    PacketType.InvalidPacketUsageError,
                     $"Player with nickname '{payload.PlayerNick}' not found");
 
                 await game.SendPacketAsync(socket, errorPayload);
@@ -160,23 +172,54 @@ internal class PacketHandler(GameInstance game)
         return false;
     }
 
-    private async Task HandlePlayerMovementPacket(WebSocket socket, Player player, Packet packet)
+    private async Task HandlePlayerActionPacket(WebSocket socket, Player player, Packet packet)
     {
-        Monitor.Enter(player);
-        try
+        bool responsedToCurrentGameState;
+
+#if HACKATON
+
+        if (player.IsHackatonBot)
         {
-            if (player.HasMadeMovementThisTick)
+            var responseGameStateId = (string?)packet.Payload[JsonNamingPolicy.CamelCase.ConvertName(nameof(IActionPayload.GameStateId))];
+            Debug.WriteLine(game.GameManager.CurrentGameStateId + " " + responseGameStateId);
+
+            lock (game.GameManager.CurrentGameStateId!)
             {
-                await game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.AlreadyMadeMovement });
+                responsedToCurrentGameState = responseGameStateId is not null
+                    && game.GameManager.CurrentGameStateId == responseGameStateId;
+            }
+
+            lock (player)
+            {
+                player.HasMadeActionToCurrentGameState = responsedToCurrentGameState;
+            }
+
+            if (responseGameStateId is null)
+            {
+                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.MissingGameStateIdWarning });
+            }
+            else if (!responsedToCurrentGameState)
+            {
+                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.SlowResponseWarning });
+            }
+        }
+
+#endif
+
+        lock (player)
+        {
+            if (player.HasMadeActionThisTick)
+            {
+                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.PlayerAlreadyMadeActionWarning });
                 return;
             }
 
-            player.HasMadeMovementThisTick = true;
+            player.HasMadeActionThisTick = true;
         }
-        finally
-        {
-            Monitor.Exit(player);
-        }
+
+#if HACKATON
+        this.HackatonBotMadeAction?.Invoke(this, player);
+#endif
 
         switch (packet.Type)
         {

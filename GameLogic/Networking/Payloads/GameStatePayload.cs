@@ -80,28 +80,29 @@ public class GameStatePayload : IPacketPayload
         /// <summary>
         /// Initializes a new instance of the <see cref="ForPlayer"/> class.
         /// </summary>
+        /// <param name="id">The packet id.</param>
         /// <param name="tick">The current tick.</param>
         /// <param name="player">The player the payload is for.</param>
         /// <param name="players">The list of players.</param>
         /// <param name="grid">The grid state.</param>
-        public ForPlayer(int tick, Player player, List<Player> players, Grid grid)
+        public ForPlayer(string id, int tick, Player player, List<Player> players, Grid grid)
             : base(tick, players, grid.ToMapPayload(player))
         {
-            this.PlayerId = player.Id;
+            this.Id = id;
         }
 
         [JsonConstructor]
         [SuppressMessage("CodeQuality", "IDE0051", Justification = "Used by Newtonsoft.Json.")]
-        private ForPlayer(int tick, List<Player> players, Grid.MapPayload map, string playerId)
+        private ForPlayer(string id, int tick, List<Player> players, Grid.MapPayload map)
             : base(tick, players, map)
         {
-            this.PlayerId = playerId;
+            this.Id = id;
         }
 
         /// <summary>
-        /// Gets the id of the player.
+        /// Gets the packet id.
         /// </summary>
-        public string PlayerId { get; }
+        public string Id { get; }
 
         /// <summary>
         /// Gets the visibility grid of the player.

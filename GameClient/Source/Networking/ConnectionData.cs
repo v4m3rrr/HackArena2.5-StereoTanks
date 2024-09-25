@@ -126,6 +126,11 @@ internal readonly struct ConnectionData
             parameters.Add($"joinCode={this.JoinCode}");
         }
 
+        if (!this.IsSpectator)
+        {
+            parameters.Add("playerType=human");
+        }
+
 #if DEBUG
         if (this.QuickJoin)
         {

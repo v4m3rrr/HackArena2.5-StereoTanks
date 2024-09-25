@@ -96,6 +96,8 @@ internal class CommandLineOptions
         HelpText = "The seed to use for random number generation.")]
     public int? Seed { get; set; }
 
+#if HACKATON
+
     /// <summary>
     /// Gets a value indicating whether to broadcast the game state eagerly.
     /// </summary>
@@ -111,4 +113,6 @@ internal class CommandLineOptions
             + "(if all players return their next move in broadcast interval).",
         Default = false)]
     public bool EagerBroadcast { get; private set; }
+
+#endif
 }

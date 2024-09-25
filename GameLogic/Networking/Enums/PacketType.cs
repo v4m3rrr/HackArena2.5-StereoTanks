@@ -87,22 +87,22 @@ public enum PacketType
     /// <summary>
     /// The player response group packet type.
     /// </summary>
-    PlayerResponseGroup = 0x40,
+    PlayerResponseActionGroup = 0x40,
 
     /// <summary>
     /// The tank movement packet type.
     /// </summary>
-    TankMovement = PlayerResponseGroup | HasPayload | 0x1,
+    TankMovement = PlayerResponseActionGroup | HasPayload | 0x1,
 
     /// <summary>
     /// The tank rotation packet type.
     /// </summary>
-    TankRotation = PlayerResponseGroup | HasPayload | 0x2,
+    TankRotation = PlayerResponseActionGroup | HasPayload | 0x2,
 
     /// <summary>
     /// The tank shoot packet type.
     /// </summary>
-    TankShoot = PlayerResponseGroup | HasPayload | 0x3,
+    TankShoot = PlayerResponseActionGroup | HasPayload | 0x3,
 
 #if DEBUG
 
@@ -147,7 +147,17 @@ public enum PacketType
     /// <summary>
     /// The already made movement packet type.
     /// </summary>
-    AlreadyMadeMovement = WarningGroup | 0x2,
+    PlayerAlreadyMadeActionWarning = WarningGroup | 0x2,
+
+    /// <summary>
+    /// The missing game state id packet type.
+    /// </summary>
+    MissingGameStateIdWarning = WarningGroup | 0x3,
+
+    /// <summary>
+    /// The slow response packet type.
+    /// </summary>
+    SlowResponseWarning = WarningGroup | 0x4,
 
     // Error group (range: 0xF0 - 0xFF)
 
@@ -159,10 +169,10 @@ public enum PacketType
     /// <summary>
     /// The invalid packet type.
     /// </summary>
-    InvalidPacketType = ErrorGroup | 0x1,
+    InvalidPacketTypeError = ErrorGroup | 0x1,
 
     /// <summary>
     /// The invalid packet usage.
     /// </summary>
-    InvalidPacketUsage = ErrorGroup | 0x2,
+    InvalidPacketUsageError = ErrorGroup | 0x2,
 }

@@ -27,7 +27,10 @@ Console.WriteLine("Broadcast interval: " + opts.BroadcastInterval);
 Console.WriteLine("Ticks: " + opts.Ticks);
 Console.WriteLine("Join code: " + opts.JoinCode);
 Console.WriteLine("Number of players: " + opts.NumberOfPlayers);
+
+#if HACKATON
 Console.WriteLine("Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
+#endif
 
 Console.WriteLine("\nPress Ctrl+C to stop the server.\n");
 
@@ -81,11 +84,11 @@ async Task HandleRequest(HttpListenerContext context)
 
     if (absolutePath.Equals("/spectator", StringComparison.OrdinalIgnoreCase))
     {
-        await HandleSpectatorConnection(context, webSocket);
+        await await HandleSpectatorConnection(context, webSocket);
     }
     else if (absolutePath.Equals("/") || string.IsNullOrEmpty(absolutePath))
     {
-        await HandlePlayerConnection(context, webSocket);
+        await await HandlePlayerConnection(context, webSocket);
     }
     else
     {
@@ -93,14 +96,8 @@ async Task HandleRequest(HttpListenerContext context)
     }
 }
 
-Task HandlePlayerConnection(HttpListenerContext context, WebSocket webSocket)
+async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket webSocket)
 {
-    string? nickname = context.Request.QueryString["nickname"]?.ToUpper();
-
-#if DEBUG
-    _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
-#endif
-
     if (!Enum.TryParse(
         context.Request.QueryString["typeOfPacketType"] ?? "Int",
         ignoreCase: true,
@@ -109,10 +106,28 @@ Task HandlePlayerConnection(HttpListenerContext context, WebSocket webSocket)
         return RejectConnection(context, webSocket, "Invalid type of packet type");
     }
 
+    string? nickname = context.Request.QueryString["nickname"]?.ToUpper();
+
     if (string.IsNullOrEmpty(nickname))
     {
         return RejectConnection(context, webSocket, "Nickname is required");
     }
+
+    string? playerType = context.Request.QueryString["playerType"];
+
+    if (string.IsNullOrEmpty(playerType))
+    {
+        return RejectConnection(context, webSocket, "Player type is required");
+    }
+
+    if (!Enum.TryParse(playerType, ignoreCase: true, out PlayerType type))
+    {
+        return RejectConnection(context, webSocket, "Invalid player type");
+    }
+
+#if DEBUG
+    _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
+#endif
 
     GameLogic.Player player;
 
@@ -145,15 +160,16 @@ Task HandlePlayerConnection(HttpListenerContext context, WebSocket webSocket)
         }
 
 #if DEBUG
-        var playerConnectionData = new PlayerConnectionData(nickname, typeOfPacketType, quickJoin);
+        var playerConnectionData = new PlayerConnectionData(nickname, type, typeOfPacketType, quickJoin);
 #else
-        var playerConnectionData = new PlayerConnectionData(nickname, typeOfPacketType);
+        var playerConnectionData = new PlayerConnectionData(nickname, type, typeOfPacketType);
 #endif
 
         player = game.PlayerManager.AddPlayer(webSocket, playerConnectionData);
     }
 
     game.HandleConnection(webSocket);
+    await AcceptConnection(context, webSocket);
 
     var playerCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
     _ = Task.Run(() => game.PlayerManager.PingPlayerLoop(webSocket, playerCts.Token), playerCts.Token);
@@ -171,10 +187,10 @@ Task HandlePlayerConnection(HttpListenerContext context, WebSocket webSocket)
     }
 #endif
 
-    return AcceptConnection(context, webSocket);
+    return Task.CompletedTask;
 }
 
-Task HandleSpectatorConnection(HttpListenerContext context, WebSocket webSocket)
+async Task<Task> HandleSpectatorConnection(HttpListenerContext context, WebSocket webSocket)
 {
     string? joinCode = context.Request.QueryString["joinCode"];
 
@@ -184,17 +200,21 @@ Task HandleSpectatorConnection(HttpListenerContext context, WebSocket webSocket)
 
     game.SpectatorManager.AddSpectator(webSocket);
     game.HandleConnection(webSocket);
-
-    _ = Task.Run(() => game.LobbyManager.SendLobbyDataToSpectator(webSocket));
+    await AcceptConnection(context, webSocket);
 
 #if DEBUG
     if (quickJoin)
     {
         game.GameManager.StartGame();
     }
+
+    // A temporary solution allowing the client to change the game scene
+    await Task.Delay(500);
 #endif
 
-    return AcceptConnection(context, webSocket);
+    await game.LobbyManager.SendLobbyDataToSpectator(webSocket);
+
+    return Task.CompletedTask;
 }
 
 bool IsJoinCodeValid(string? joinCode)

@@ -63,7 +63,11 @@ internal static class GameServerMessageHandler
         DebugConsole.SendMessage("Broadcast interval: " + data.ServerSettings.BroadcastInterval + "ms", Color.DarkGray);
         DebugConsole.SendMessage("Player ID: " + data.PlayerId, Color.DarkGray);
         DebugConsole.SendMessage("Seed: " + data.ServerSettings.Seed, Color.DarkGray);
+
+#if HACKATON
         DebugConsole.SendMessage("Eager broadcast: " + data.ServerSettings.EagerBroadcast, Color.DarkGray);
+#endif
+
         DebugConsole.SendMessage("Game ticks: " + data.ServerSettings.Ticks, Color.DarkGray);
         DebugConsole.SendMessage("Game time: " + (data.ServerSettings.Ticks / (1000f / data.ServerSettings.BroadcastInterval)) + "s", Color.DarkGray);
 

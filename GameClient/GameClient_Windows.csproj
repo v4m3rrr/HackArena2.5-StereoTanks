@@ -11,6 +11,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>GameClient</RootNamespace>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	<Configurations>Debug;Release;HackatonDebug;HackatonRelease</Configurations>
   </PropertyGroup>
 

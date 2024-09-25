@@ -26,13 +26,19 @@ internal class GameInstance
         this.SpectatorManager = new SpectatorManager();
         this.PacketHandler = new PacketHandler(this);
 
+#if HACKATON
+        bool eagerBroadcast = options.EagerBroadcast;
+#else
+        bool eagerBroadcast = false;
+#endif
+
         this.Settings = new ServerSettings(
             dimension,
             options.NumberOfPlayers,
             seed,
             options.Ticks,
             options.BroadcastInterval,
-            options.EagerBroadcast);
+            eagerBroadcast);
 
         PacketSerializer.ExceptionThrew += (Exception ex) =>
         {

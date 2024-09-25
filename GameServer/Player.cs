@@ -1,4 +1,6 @@
-﻿namespace GameServer;
+﻿using GameLogic.Networking;
+
+namespace GameServer;
 
 /// <summary>
 /// Represents a player connected to the server.
@@ -23,6 +25,15 @@ public class Player(GameLogic.Player instance, PlayerConnectionData connectionDa
     /// Gets or sets the time when the last ping was sent.
     /// </summary>
     public DateTime LastPingSentTime { get; set; }
+
+#if HACKATON
+
+    /// <summary>
+    /// Gets a value indicating whether the player is a bot.
+    /// </summary>
+    public bool IsHackatonBot => this.ConnectionData.Type == PlayerType.HackatonBot;
+
+#endif
 
     /// <summary>
     /// Gets or sets a value indicating whether a player has sent a pong.
@@ -56,5 +67,15 @@ public class Player(GameLogic.Player instance, PlayerConnectionData connectionDa
     /// <remarks>
     /// It is used to ensure that a player can only make one move per tick.
     /// </remarks>
-    public bool HasMadeMovementThisTick { get; set; }
+    public bool HasMadeActionThisTick { get; set; }
+
+#if HACKATON
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the player
+    /// has made an action to the current game state.
+    /// </summary>
+    public bool HasMadeActionToCurrentGameState { get; set; }
+
+#endif
 }
