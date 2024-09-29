@@ -252,7 +252,10 @@ public class Grid(int dimension, int seed)
     {
         var (x, y) = this.GetRandomEmptyCell();
 
-        var tank = new Tank(x, y, owner);
+        var tankDirection = EnumUtils.Random<Direction>(this.random);
+        var turretDirection = EnumUtils.Random<Direction>(this.random);
+
+        var tank = new Tank(x, y, tankDirection, turretDirection, owner);
 
         owner.Tank = tank;
         this.tanks.Add(tank);

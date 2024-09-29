@@ -18,9 +18,11 @@ public class Turret
     /// Initializes a new instance of the <see cref="Turret"/> class.
     /// </summary>
     /// <param name="tank">The tank that owns the turret.</param>
-    internal Turret(Tank tank)
+    /// <param name="direction">The direction of the turret.</param>
+    internal Turret(Tank tank, Direction direction)
     {
         this.Tank = tank;
+        this.Direction = direction;
         this.BulletCount = MaxBulletCount;
     }
 
@@ -81,7 +83,7 @@ public class Turret
     /// <summary>
     /// Gets the direction of the turret.
     /// </summary>
-    public Direction Direction { get; private set; } = EnumUtils.Random<Direction>();
+    public Direction Direction { get; private set; }
 
     /// <summary>
     /// Gets the number of bullets the tank has.

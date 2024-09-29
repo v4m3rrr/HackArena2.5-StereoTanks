@@ -20,6 +20,20 @@ internal static class EnumUtils
     }
 
     /// <summary>
+    /// Returns a random value of the specified enum type
+    /// using the specified random number generator.
+    /// </summary>
+    /// <typeparam name="T">The specified enum type.</typeparam>
+    /// <param name="random">The random number generator to use.</param>
+    /// <returns>A random value of the specified enum type.</returns>
+    public static T Random<T>(Random random)
+        where T : struct, Enum
+    {
+        var values = Enum.GetValues(typeof(T));
+        return (T)values.GetValue(random.Next(values.Length))!;
+    }
+
+    /// <summary>
     /// Returns the next value of the specified enum type.
     /// </summary>
     /// <typeparam name="T">The specified enum type.</typeparam>
