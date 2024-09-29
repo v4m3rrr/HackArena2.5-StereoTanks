@@ -107,7 +107,7 @@ internal class PlayerSlotPanel : Component
         };
     }
 
-#if HACKATON
+#if HACKATHON
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
     /// </summary>

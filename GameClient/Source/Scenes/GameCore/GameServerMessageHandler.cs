@@ -64,7 +64,7 @@ internal static class GameServerMessageHandler
         DebugConsole.SendMessage("Player ID: " + data.PlayerId, Color.DarkGray);
         DebugConsole.SendMessage("Seed: " + data.ServerSettings.Seed, Color.DarkGray);
 
-#if HACKATON
+#if HACKATHON
         DebugConsole.SendMessage("Eager broadcast: " + data.ServerSettings.EagerBroadcast, Color.DarkGray);
 #endif
 

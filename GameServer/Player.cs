@@ -26,12 +26,12 @@ public class Player(GameLogic.Player instance, PlayerConnectionData connectionDa
     /// </summary>
     public DateTime LastPingSentTime { get; set; }
 
-#if HACKATON
+#if HACKATHON
 
     /// <summary>
     /// Gets a value indicating whether the player is a bot.
     /// </summary>
-    public bool IsHackatonBot => this.ConnectionData.Type == PlayerType.HackatonBot;
+    public bool IsHackathonBot => this.ConnectionData.Type == PlayerType.HackathonBot;
 
 #endif
 
@@ -69,7 +69,7 @@ public class Player(GameLogic.Player instance, PlayerConnectionData connectionDa
     /// </remarks>
     public bool HasMadeActionThisTick { get; set; }
 
-#if HACKATON
+#if HACKATHON
 
     /// <summary>
     /// Gets or sets a value indicating whether the player

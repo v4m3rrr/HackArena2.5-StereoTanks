@@ -96,7 +96,7 @@ internal class CommandLineOptions
         HelpText = "The seed to use for random number generation.")]
     public int? Seed { get; set; }
 
-#if HACKATON
+#if HACKATHON
 
     /// <summary>
     /// Gets a value indicating whether to broadcast the game state eagerly.

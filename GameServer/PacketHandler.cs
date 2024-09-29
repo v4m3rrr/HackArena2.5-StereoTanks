@@ -12,12 +12,12 @@ namespace GameServer;
 internal class PacketHandler(GameInstance game)
 {
 
-#if HACKATON
+#if HACKATHON
 
     /// <summary>
     /// Occurs when a bot made an action.
     /// </summary>
-    public event EventHandler<Player>? HackatonBotMadeAction;
+    public event EventHandler<Player>? HackathonBotMadeAction;
 
 #endif
 
@@ -176,9 +176,9 @@ internal class PacketHandler(GameInstance game)
     {
         bool responsedToCurrentGameState;
 
-#if HACKATON
+#if HACKATHON
 
-        if (player.IsHackatonBot)
+        if (player.IsHackathonBot)
         {
             var responseGameStateId = (string?)packet.Payload[JsonNamingPolicy.CamelCase.ConvertName(nameof(IActionPayload.GameStateId))];
             Debug.WriteLine(game.GameManager.CurrentGameStateId + " " + responseGameStateId);
@@ -217,8 +217,8 @@ internal class PacketHandler(GameInstance game)
             player.HasMadeActionThisTick = true;
         }
 
-#if HACKATON
-        this.HackatonBotMadeAction?.Invoke(this, player);
+#if HACKATHON
+        this.HackathonBotMadeAction?.Invoke(this, player);
 #endif
 
         switch (packet.Type)

@@ -26,7 +26,7 @@ internal class GameInstance
         this.SpectatorManager = new SpectatorManager();
         this.PacketHandler = new PacketHandler(this);
 
-#if HACKATON
+#if HACKATHON
         bool eagerBroadcast = options.EagerBroadcast;
 #else
         bool eagerBroadcast = false;

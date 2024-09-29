@@ -10,12 +10,12 @@ public enum PlayerType
     /// </summary>
     Human,
 
-#if HACKATON
+#if HACKATHON
 
     /// <summary>
-    /// The player is a hackaton bot.
+    /// The player is a hackathon bot.
     /// </summary>
-    HackatonBot,
+    HackathonBot,
 
 #endif
 }

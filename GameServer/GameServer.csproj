@@ -9,7 +9,7 @@
 	<Authors>KN inIT</Authors>
 	<Title>MonoTanks Server</Title>
 	<Description>A server for MonoTanks game.</Description>
-	<Configurations>Debug;Release;HackatonDebug;HackatonRelease</Configurations>
+	<Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,8 +18,8 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackatonDebug|AnyCPU'">
-    <DefineConstants>DEBUG;HACKATON;SERVER</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonDebug|AnyCPU'">
+    <DefineConstants>DEBUG;HACKATHON;SERVER</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
@@ -30,8 +30,8 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackatonRelease|AnyCPU'">
-    <DefineConstants>RELEASE;HACKATON;SERVER</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonRelease|AnyCPU'">
+    <DefineConstants>RELEASE;HACKATHON;SERVER</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>

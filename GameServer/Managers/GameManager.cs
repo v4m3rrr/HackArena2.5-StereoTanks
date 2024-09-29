@@ -102,14 +102,14 @@ internal class GameManager(GameInstance game)
 
             var sleepTime = (int)(game.Settings.BroadcastInterval - stopwatch.ElapsedMilliseconds);
 
-#if HACKATON
+#if HACKATHON
             var tcs = new TaskCompletionSource<bool>();
 
-            game.PacketHandler.HackatonBotMadeAction += (s, e) =>
+            game.PacketHandler.HackathonBotMadeAction += (s, e) =>
             {
                 lock (e)
                 {
-                    if (game.Settings.EagerBroadcast && game.PlayerManager.Players.Values.All(x => x.IsHackatonBot))
+                    if (game.Settings.EagerBroadcast && game.PlayerManager.Players.Values.All(x => x.IsHackathonBot))
                     {
                         var alivePlayers = game.PlayerManager.Players.Values.Where(x => !x.Instance.IsDead);
                         if (alivePlayers.All(x => x.HasMadeActionToCurrentGameState))
@@ -153,7 +153,7 @@ internal class GameManager(GameInstance game)
             lock (player)
             {
                 player.HasMadeActionThisTick = false;
-#if HACKATON
+#if HACKATHON
                 player.HasMadeActionToCurrentGameState = false;
 #endif
             }

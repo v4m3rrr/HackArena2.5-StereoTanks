@@ -28,7 +28,7 @@ Console.WriteLine("Ticks: " + opts.Ticks);
 Console.WriteLine("Join code: " + opts.JoinCode);
 Console.WriteLine("Number of players: " + opts.NumberOfPlayers);
 
-#if HACKATON
+#if HACKATHON
 Console.WriteLine("Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
 #endif
 

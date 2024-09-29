@@ -12,7 +12,7 @@
     <RootNamespace>GameClient</RootNamespace>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-	<Configurations>Debug;Release;HackatonDebug;HackatonRelease</Configurations>
+	<Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -21,8 +21,8 @@
     <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackatonDebug|AnyCPU'">
-    <DefineConstants>DEBUG;HACKATON;CLIENT;WINDOWS</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonDebug|AnyCPU'">
+    <DefineConstants>DEBUG;HACKATHON;CLIENT;WINDOWS</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
@@ -33,8 +33,8 @@
     <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackatonRelease|AnyCPU'">
-    <DefineConstants>RELEASE;HACKATON;CLIENT;WINDOWS</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonRelease|AnyCPU'">
+    <DefineConstants>RELEASE;HACKATHON;CLIENT;WINDOWS</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
