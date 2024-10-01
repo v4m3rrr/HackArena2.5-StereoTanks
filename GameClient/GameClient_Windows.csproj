@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,8 +10,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <RootNamespace>GameClient</RootNamespace>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
   </PropertyGroup>
 
@@ -30,12 +29,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);RELEASE;CLIENT;WINDOWS</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
+	<Optimize>true</Optimize>
     <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonRelease|AnyCPU'">
     <DefineConstants>$(DefineConstants);RELEASE;HACKATHON;CLIENT;WINDOWS</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
+	<Optimize>true</Optimize>
     <OutputPath>bin\$(Configuration)Windows\</OutputPath>
   </PropertyGroup>
 
