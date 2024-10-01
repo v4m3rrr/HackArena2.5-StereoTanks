@@ -150,10 +150,20 @@ internal class MainMenu : Scene
                 ? ConnectionData.ForSpectator("localhost:5000", joinCode, true)
                 : ConnectionData.ForPlayer("localhost:5000", joinCode, "player", true);
 
-            if (await ServerConnection.ConnectAsync(connectionData))
+            ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData);
+
+            if (status is ConnectionStatus.Success)
             {
                 var args = new GameDisplayEventArgs(joinCode, isSpectator);
                 Change<T>(args);
+            }
+            else if (status is ConnectionStatus.Failed failed && failed.Exception is not null)
+            {
+                DebugConsole.ThrowError(failed.Exception);
+            }
+            else
+            {
+                DebugConsole.ThrowError("Failed to connect to the server.");
             }
 
             ServerConnection.ErrorThrew -= DebugConsole.ThrowError;

@@ -4,6 +4,7 @@
          xsi:schemaLocation="http://tempuri.org/Language.xsd Language.xsd">
 
 	<Buttons>
+		<Ok>Ok</Ok>
 		<JoinGame>Rejoindre</JoinGame>
 		<Settings>Options</Settings>
 		<Authors>Crédits</Authors>
@@ -25,8 +26,27 @@
 		<RoomCode>Code de la salle</RoomCode>
 		<ServerAddress>Adresse du serveur</ServerAddress>
 	</Labels>
+	
+	<MessageBoxLabels>
+		<ErrorOccured>Oh non, une erreur est survenue!</ErrorOccured>
+		<ConnectionFailed>Échec de la connexion!</ConnectionFailed>
+		<ConnectionRejected>Connexion rejetée!</ConnectionRejected>
+	</MessageBoxLabels>
+	
+	<ConnectionRejectedReason>
+		<InvalidJoinCode>La code de connexion est invalide!</InvalidJoinCode>
+		<MissingNickname>Le surnom est requis!</MissingNickname>
+		<NicknameExists>Ce surnom est déjà utilisé.</NicknameExists>
+		<InvalidUrlPath>Chemin d'URL invalide!</InvalidUrlPath>
+		<GameFull>La salle est pleine!</GameFull>
+		<TooManyFailedAttempts>Trop de tentatives échouées! Réessayez plus tard.</TooManyFailedAttempts>
+	</ConnectionRejectedReason>
 
 	<Other>
+		<NoDetails>Aucun détail</NoDetails>
+		<Waiting>En attente</Waiting>
+		<Connecting>Connexion en cours</Connecting>
+		<ServerNotResponding>Le serveur ne répond pas.</ServerNotResponding>
 	</Other>
 
 </Content>

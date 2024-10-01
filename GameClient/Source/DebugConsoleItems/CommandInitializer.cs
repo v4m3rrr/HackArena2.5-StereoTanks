@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -202,7 +202,7 @@ internal static class CommandInitializer
     [Command("Show current scene overlays with priorities.")]
     private static void Overlays()
     {
-        var overlays = Scene.DisplayedOverlays;
+        var overlays = ScreenController.DisplayedOverlays;
         var sb = new StringBuilder();
 
         foreach (var overlay in overlays)
@@ -212,9 +212,9 @@ internal static class CommandInitializer
                 _ = sb.Append(" -> ");
             }
 
-            _ = sb.Append(overlay.Scene.GetType().Name)
+            _ = sb.Append(overlay.Value.GetType().Name)
                 .Append(" (")
-                .Append(overlay.Scene.Priority)
+                .Append(overlay.Value.Priority)
                 .Append(")");
         }
 

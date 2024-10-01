@@ -4,6 +4,7 @@
          xsi:schemaLocation="http://tempuri.org/Language.xsd Language.xsd">
 
 	<Buttons>
+		<Ok>Ok</Ok>
 		<JoinGame>Join</JoinGame>
 		<Settings>Settings</Settings>
 		<Authors>Authors</Authors>
@@ -26,7 +27,25 @@
 		<ServerAddress>Server address</ServerAddress>
 	</Labels>
 
+	<MessageBoxLabels>
+		<ErrorOccured>Oh no! An error occured:</ErrorOccured>
+		<ConnectionFailed>Connection failed!</ConnectionFailed>
+		<ConnectionRejected>Connection rejected!</ConnectionRejected>
+	</MessageBoxLabels>
+	
+	<ConnectionRejectedReason>
+		<InvalidJoinCode>Invalid join code!</InvalidJoinCode>
+		<MissingNickname>Nickname is required!</MissingNickname>
+		<NicknameExists>Nickname already exists!</NicknameExists>
+		<InvalidUrlPath>Invalid URL path!</InvalidUrlPath>
+		<GameFull>Game is full!</GameFull>
+		<TooManyFailedAttempts>Too many failed attempts! Try again later.</TooManyFailedAttempts>
+	</ConnectionRejectedReason>
+
 	<Other>
+		<Waiting>Waiting</Waiting>
+		<Connecting>Connecting</Connecting>
+		<ServerNotResponding>Server is not responding.</ServerNotResponding>
 	</Other>
 
 </Content>

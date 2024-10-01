@@ -150,9 +150,9 @@ public enum PacketType
     PlayerAlreadyMadeActionWarning = WarningGroup | 0x2,
 
     /// <summary>
-    /// The missing game state id packet type.
+    /// The warning packet type with custom message.
     /// </summary>
-    MissingGameStateIdWarning = WarningGroup | 0x3,
+    CustomWarning = WarningGroup | HasPayload | 0x3,
 
     /// <summary>
     /// The slow response packet type.

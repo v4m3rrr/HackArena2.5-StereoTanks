@@ -69,7 +69,7 @@ async Task HandleRequest(HttpListenerContext context)
 
     if (IsIpBlocked(clientIP))
     {
-        await RejectConnection(context, webSocket, "Too many failed attempts. Try again later.");
+        await RejectConnection(context, webSocket, "TooManyFailedAttempts");
         return;
     }
 
@@ -78,7 +78,7 @@ async Task HandleRequest(HttpListenerContext context)
     if (!IsJoinCodeValid(joinCode))
     {
         RegisterFailedAttempt(context.Request.RemoteEndPoint.Address.ToString());
-        await RejectConnection(context, webSocket, "Invalid join code");
+        await RejectConnection(context, webSocket, "InvalidJoinCode");
         return;
     }
 
@@ -92,7 +92,7 @@ async Task HandleRequest(HttpListenerContext context)
     }
     else
     {
-        await RejectConnection(context, webSocket, "Invalid path");
+        await RejectConnection(context, webSocket, "InvalidUrlPath");
     }
 }
 
@@ -103,26 +103,26 @@ async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket w
         ignoreCase: true,
         out TypeOfPacketType typeOfPacketType))
     {
-        return RejectConnection(context, webSocket, "Invalid type of packet type");
+        return RejectConnection(context, webSocket, "InvalidTypOfPacketType");
     }
 
     string? nickname = context.Request.QueryString["nickname"]?.ToUpper();
 
     if (string.IsNullOrEmpty(nickname))
     {
-        return RejectConnection(context, webSocket, "Nickname is required");
+        return RejectConnection(context, webSocket, "MissingNickname");
     }
 
     string? playerType = context.Request.QueryString["playerType"];
 
     if (string.IsNullOrEmpty(playerType))
     {
-        return RejectConnection(context, webSocket, "Player type is required");
+        return RejectConnection(context, webSocket, "MissingPlayerType");
     }
 
     if (!Enum.TryParse(playerType, ignoreCase: true, out PlayerType type))
     {
-        return RejectConnection(context, webSocket, "Invalid player type");
+        return RejectConnection(context, webSocket, "InvalidPlayerType");
     }
 
 #if DEBUG
@@ -135,7 +135,7 @@ async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket w
     {
         if (game.PlayerManager.Players.Count >= opts.NumberOfPlayers)
         {
-            return RejectConnection(context, webSocket, "Game is full");
+            return RejectConnection(context, webSocket, "GameFull");
         }
 
         if (NicknameAlreadyExists(nickname))
@@ -155,7 +155,7 @@ async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket w
             else
 #endif
             {
-                return RejectConnection(context, webSocket, "Nickname already exists");
+                return RejectConnection(context, webSocket, "NicknameExists");
             }
         }
 

@@ -8,6 +8,7 @@
 
 	<xs:complexType name="Buttons">
 		<xs:sequence>
+			<xs:element name="Ok" type="xs:string"/>
 			<xs:element name="JoinGame" type="xs:string"/>
 			<xs:element name="Settings" type="xs:string"/>
 			<xs:element name="Authors" type="xs:string"/>
@@ -33,8 +34,31 @@
 		</xs:sequence>
 	</xs:complexType>
 
+	<xs:complexType name="MessageBoxLabels">
+		<xs:sequence>
+			<xs:element name="ErrorOccured" type="xs:string"/>
+			<xs:element name="ConnectionFailed" type="xs:string"/>
+			<xs:element name="ConnectionRejected" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="ConnectionRejectedReason">
+		<xs:sequence>
+			<xs:element name="InvalidJoinCode" type="xs:string"/>
+			<xs:element name="MissingNickname" type="xs:string"/>
+			<xs:element name="NicknameExists" type="xs:string"/>
+			<xs:element name="InvalidUrlPath" type="xs:string"/>
+			<xs:element name="GameFull" type="xs:string"/>
+			<xs:element name="TooManyFailedAttempts" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
 	<xs:complexType name="Other">
 		<xs:sequence>
+			<xs:element name="NoDetails" type="xs:string"/>
+			<xs:element name="Waiting" type="xs:string"/>
+			<xs:element name="Connecting" type="xs:string"/>
+			<xs:element name="ServerNotResponding" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 
@@ -43,6 +67,8 @@
 			<xs:sequence>
 				<xs:element name="Buttons" type="mstns:Buttons"/>
 				<xs:element name="Labels" type="mstns:Labels"/>
+				<xs:element name="MessageBoxLabels" type="mstns:MessageBoxLabels"/>
+				<xs:element name="ConnectionRejectedReason" type="mstns:ConnectionRejectedReason"/>
 				<xs:element name="Other" type="mstns:Other"/>
 			</xs:sequence>
 		</xs:complexType>

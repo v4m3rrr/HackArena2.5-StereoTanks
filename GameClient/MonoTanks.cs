@@ -222,7 +222,7 @@ public class MonoTanks : Game
         if (KeyboardController.IsKeyHit(Keys.OemTilde)
             && KeyboardController.IsKeyDown(Keys.LeftControl))
         {
-            Scene.ShowOverlay<DebugConsole>(default);
+            Scene.ShowOverlay<DebugConsole>();
         }
 
         if (KeyboardController.IsKeyHit(Keys.F11))
@@ -240,7 +240,7 @@ public class MonoTanks : Game
         }
 
         Scene.Current.Update(gameTime);
-        Scene.UpdateOverlays(gameTime);
+        ScreenController.UpdateOverlays(gameTime);
 
         base.Update(gameTime);
 
@@ -262,7 +262,7 @@ public class MonoTanks : Game
         SpriteBatchController.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
 
         Scene.Current.Draw(gameTime);
-        Scene.DrawOverlays(gameTime);
+        ScreenController.DrawOverlays(gameTime);
 
 #if DEBUG
         this.fpsInfo.GetChild<Text>()!.Value = $"FPS: {1 / gameTime.ElapsedGameTime.TotalSeconds:0}";

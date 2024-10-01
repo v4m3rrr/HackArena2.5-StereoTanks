@@ -81,11 +81,13 @@ internal static class ServerConnection
     /// </summary>
     /// <param name="data">The connection data.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public static async Task<bool> ConnectAsync(ConnectionData data)
+    public static async Task<ConnectionStatus> ConnectAsync(ConnectionData data)
     {
         string serverUrl = data.GetServerUrl();
 
         Connecting?.Invoke(serverUrl);
+
+        ConnectionStatus status;
 
         try
         {
@@ -93,9 +95,11 @@ internal static class ServerConnection
 
             await client.ConnectAsync(new Uri(serverUrl), CancellationToken.None);
 
-            if (!await WaitForAccept())
+            status = await WaitForAccept();
+
+            if (status is not ConnectionStatus.Success)
             {
-                return false;
+                return status;
             }
 
             Data = data;
@@ -106,11 +110,15 @@ internal static class ServerConnection
         }
         catch (WebSocketException ex)
         {
-            ErrorThrew?.Invoke($"An error occurred while connecting to the WebSocket server: {ex.Message}");
-            return false;
+            if (ex.Message != "Unable to connect to the remote server")
+            {
+                ErrorThrew?.Invoke($"An error occurred while connecting to the WebSocket server: {ex.Message}");
+            }
+
+            return new ConnectionStatus.Failed(ex);
         }
 
-        return true;
+        return status;
     }
 
     /// <summary>
@@ -152,7 +160,7 @@ internal static class ServerConnection
         }
     }
 
-    private static async Task<bool> WaitForAccept()
+    private static async Task<ConnectionStatus> WaitForAccept()
     {
         while (client.State == WebSocketState.Open)
         {
@@ -172,7 +180,7 @@ internal static class ServerConnection
             var packet = PacketSerializer.Deserialize(buffer);
             if (packet.Type == PacketType.ConnectionAccepted)
             {
-                return true;
+                return new ConnectionStatus.Success();
             }
             else if (packet.Type == PacketType.ConnectionRejected)
             {
@@ -182,12 +190,11 @@ internal static class ServerConnection
                     CancellationToken.None);
 
                 var payload = packet.GetPayload<ConnectionRejectedPayload>();
-                ErrorThrew?.Invoke($"Connection rejected: {payload.Reason}");
-                return false;
+                return new ConnectionStatus.Rejected(payload.Reason);
             }
         }
 
-        return false;
+        return new ConnectionStatus.Failed();
     }
 
     private static async Task ReceiveMessages()

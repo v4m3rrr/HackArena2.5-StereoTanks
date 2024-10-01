@@ -181,7 +181,6 @@ internal class PacketHandler(GameInstance game)
         if (player.IsHackathonBot)
         {
             var responseGameStateId = (string?)packet.Payload[JsonNamingPolicy.CamelCase.ConvertName(nameof(IActionPayload.GameStateId))];
-            Debug.WriteLine(game.GameManager.CurrentGameStateId + " " + responseGameStateId);
 
             lock (game.GameManager.CurrentGameStateId!)
             {
@@ -196,7 +195,7 @@ internal class PacketHandler(GameInstance game)
 
             if (responseGameStateId is null)
             {
-                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.MissingGameStateIdWarning });
+                _ = game.SendPlayerPacketAsync(socket, new CustomWarningPayload("GameStateId is missing in the payload"));
             }
             else if (!responsedToCurrentGameState)
             {
