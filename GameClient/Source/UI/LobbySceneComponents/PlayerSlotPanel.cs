@@ -79,10 +79,13 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        this.playerNick = new Text(font, Color.White)
+        this.playerNick = new LocalizedText(font, Color.White)
         {
             Parent = nickContainer,
-            Value = "Waiting...",
+            Value = new FormattedLocalizedString("Other.Waiting")
+            {
+                Suffix = "...",
+            },
             Spacing = 8,
             Case = TextCase.Upper,
             TextAlignment = Alignment.Left,
