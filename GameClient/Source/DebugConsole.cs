@@ -239,7 +239,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
             };
             this.Showed += (s, e) => this.textInput.Select();
             this.Hid += (s, e) => this.textInput.Deselect();
-            this.textInput.TextInputSent += (s, e) => CommandParser.Parse(s, e);
+            this.textInput.TextInputSent += CommandParser.Parse;
         }
 
         // Messages
