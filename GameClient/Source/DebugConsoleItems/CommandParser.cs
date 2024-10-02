@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using Fastenshtein;
 using Microsoft.Xna.Framework;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GameClient.DebugConsoleItems;
 
@@ -62,7 +63,7 @@ internal static class CommandParser
                 {
                     convertedArguments[i] = ConvertArgument(args[i], parameters[i].ParameterType);
                 }
-                catch (ArgumentException)
+                catch (Exception ex)
                 {
                     DebugConsole.SendMessage($"Invalid argument '{args[i]}'.", Color.IndianRed);
                     return;
@@ -194,7 +195,7 @@ internal static class CommandParser
     private static object ConvertArgument(string argument, Type targetType)
     {
         return targetType.IsEnum
-            ? Enum.Parse(targetType, argument, ignoreCase: true)
-            : Convert.ChangeType(argument, targetType);
+        ? Enum.Parse(targetType, argument, ignoreCase: true)
+        : Convert.ChangeType(argument, targetType);
     }
 }
