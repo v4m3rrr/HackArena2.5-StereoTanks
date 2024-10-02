@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using Fastenshtein;
-using GameClient.DebugConsoleItems;
 using Microsoft.Xna.Framework;
 
 namespace GameClient.DebugConsoleItems;
@@ -106,12 +106,26 @@ internal static class CommandParser
 
         CommandGroupAttribute? parent = null;
         threshold = int.MaxValue;
-        foreach (var segment in segments)
+        for (int i = 0; i < segments.Length; i++)
         {
-            ICommand? result = MatchCommand(parent, segment, out threshold);
+            ICommand? result = MatchCommand(parent, segments[i], out threshold);
 
-            if (result == null || threshold > MatchingThreshold)
+            if (result == null || threshold > ExactMatchThreshold)
             {
+                StringBuilder compositeSegment = new(segments[i]);
+                for (int j = i + 1; j < segments.Length; j++)
+                {
+                    _ = compositeSegment.Append(' ').Append(segments[j]);
+
+                    ICommand? newResult = MatchCommand(parent, compositeSegment.ToString(), out int newThreshold);
+
+                    if (newThreshold < threshold)
+                    {
+                        threshold = newThreshold;
+                        result = newResult;
+                    }
+                }
+
                 return result;
             }
 
