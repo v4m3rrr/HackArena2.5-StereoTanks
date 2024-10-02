@@ -13,7 +13,7 @@ namespace GameClient.DebugConsoleItems;
 internal static class CommandParser
 {
     private static readonly int CommandThreshold = 3;
-    private static readonly int MatchingThreshold = 0;
+    private static readonly int ExactMatchThreshold = 0;
 
     /// <summary>
     /// Parses user input, identifies and executes the corresponding command or displays appropriate error messages based on text input.
@@ -37,13 +37,13 @@ internal static class CommandParser
             return;
         }
 
-        if (threshold == 0 && command is CommandGroupAttribute cg)
+        if (threshold == ExactMatchThreshold && command is CommandGroupAttribute cg)
         {
             DebugConsole.SendMessage($"'{(cg as ICommand).FullName}' is a command group.", Color.Orange);
             return;
         }
 
-        if (threshold == 0 && command is CommandAttribute c)
+        if (threshold == ExactMatchThreshold && command is CommandAttribute c)
         {
             var args = GetArgsFromInput(c, e.Value);
             var parameters = c.Action.Method.GetParameters();
