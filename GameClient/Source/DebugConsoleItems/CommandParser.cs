@@ -85,8 +85,6 @@ internal static class CommandParser
                         invokeParameters.Add(convertedArguments[convertedArgumentsIndex++]);
                     }
                 }
-
-                _ = c.Action.DynamicInvoke(invokeParameters.ToArray());
             }
             catch (Exception ex) when (
                 ex is TargetParameterCountException
