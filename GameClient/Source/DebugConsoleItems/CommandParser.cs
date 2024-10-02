@@ -75,7 +75,7 @@ internal static class CommandParser
                 int convertedArgumentsIndex = 0;
                 foreach (var parameter in parameters)
                 {
-                    if (parameter.HasDefaultValue)
+                    if (parameter.HasDefaultValue && convertedArgumentsIndex >= convertedArguments.Length)
                     {
                         invokeParameters.Add(parameter.DefaultValue);
                     }
