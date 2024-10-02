@@ -14,5 +14,5 @@ internal class LocalizedString(string key)
     /// <summary>
     /// Gets the localized string value.
     /// </summary>
-    public string Value => Localization.Get(key);
+    public virtual string Value => Localization.Get(key);
 }

@@ -4,22 +4,48 @@
          xsi:schemaLocation="http://tempuri.org/Language.xsd Language.xsd">
 
 	<Buttons>
+		<Ok>Ok</Ok>
 		<JoinGame>Dolacz</JoinGame>
 		<Settings>Ustawienia</Settings>
 		<Authors>Autorzy</Authors>
-		<Exit>Wyjście</Exit>
-		<Back>Wróć</Back>
+		<Exit>Wyjscie</Exit>
+		<Back>Wroc</Back>
+		<Leave>Opusc</Leave>
+		<Continue>Kontynuuj</Continue>
 	</Buttons>
 
 	<Labels>
-		<Language>Język</Language>
-		<Resolution>Rozdzielczość</Resolution>
-		<DisplayMode>Typ wyświetlania</DisplayMode>
+		<Language>Jezyk</Language>
+		<Resolution>Rozdzielczosc</Resolution>
+		<DisplayMode>Tryb wyswietlania</DisplayMode>
 		<DisplayModeWindowed>Okno</DisplayModeWindowed>
-		<DisplayModeFullScreen>Pełny ekran</DisplayModeFullScreen>
+		<DisplayModeFullScreen>Pelny ekran</DisplayModeFullScreen>
 		<DisplayModeBorderless>Bezramkowy</DisplayModeBorderless>
+		<JoinRoom>Dolacz do pokoju</JoinRoom>
+		<Nickname>Nazwa gracza</Nickname>
+		<RoomCode>Kod pokoju</RoomCode>
+		<ServerAddress>Adres serwera</ServerAddress>
 	</Labels>
+	
+	<MessageBoxLabels>
+		<ErrorOccured>Ups, cos poszlo nie tak!</ErrorOccured>
+		<ConnectionFailed>Polaczenie nieudane!</ConnectionFailed>
+		<ConnectionRejected>Polaczenie odrzucone!</ConnectionRejected>
+	</MessageBoxLabels>
+	
+	<ConnectionRejectedReason>
+		<InvalidJoinCode>Nieprawidlowy kod dolaczenia!</InvalidJoinCode>
+		<MissingNickname>Nazwa gracza jest wymagana!</MissingNickname>
+		<NicknameExists>Gracz o takiej nazwie juz istnieje!</NicknameExists>
+		<InvalidUrlPath>Nieprawidlowa sciezka URL!</InvalidUrlPath>
+		<GameFull>Lobby jest pelne!</GameFull>
+		<TooManyFailedAttempts>Za duzo nieudanych prob! Spróbuj ponownie pozniej.</TooManyFailedAttempts>
+	</ConnectionRejectedReason>
 
 	<Other>
+		<NoDetails>Brak szczegolow</NoDetails>
+		<Waiting>Oczekiwanie</Waiting>
+		<Connecting>Laczenie</Connecting>
+		<ServerNotResponding>Serwer nie odpowiada.</ServerNotResponding>
 	</Other>
 </Content>

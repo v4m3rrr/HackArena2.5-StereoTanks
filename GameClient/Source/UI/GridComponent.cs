@@ -16,7 +16,7 @@ internal class GridComponent : Component
     private readonly List<Sprites.Bullet> bullets = [];
     private readonly List<Sprites.Zone> zones = [];
 
-    private Sprites.FogOfWar? fogOfWar;
+    private Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
 
@@ -59,7 +59,7 @@ internal class GridComponent : Component
         .Concat(this.bullets)
         .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
         .Concat(this.borderWalls.Cast<Sprite>())
-        .Concat([this.fogOfWar])
+        .Concat(this.fogsOfWar.Values)
         .Where(x => x is not null)!;
 
     /// <inheritdoc/>
@@ -97,26 +97,36 @@ internal class GridComponent : Component
     /// <summary>
     /// Updates the fog of war.
     /// </summary>
+    /// <param name="player">The player whose fog of war will be updated.</param>
     /// <param name="visibilityGrid">The visibility grid.</param>
-    /// <param name="color">The color of the fog of war.</param>
-    public void UpdateFogOfWar(bool[,] visibilityGrid, Color color)
+    public void UpdatePlayerFogOfWar(Player player, bool[,] visibilityGrid)
     {
-        if (this.fogOfWar is null)
+        if (!this.fogsOfWar.TryGetValue(player, out var fogOfWar))
         {
-            this.fogOfWar = new Sprites.FogOfWar(visibilityGrid, this, color);
+            fogOfWar = new Sprites.FogOfWar(visibilityGrid, this, new Color(player.Color));
+            this.fogsOfWar[player] = fogOfWar;
         }
         else
         {
-            this.fogOfWar.VisibilityGrid = visibilityGrid;
+            fogOfWar.VisibilityGrid = visibilityGrid;
         }
+    }
+
+    /// <summary>
+    /// Resets all fogs of war.
+    /// </summary>
+    public void ResetAllFogsOfWar()
+    {
+        this.fogsOfWar.Clear();
     }
 
     /// <summary>
     /// Resets the fog of war.
     /// </summary>
-    public void ResetFogOfWar()
+    /// <param name="player">The player whose fog of war will be reset.</param>
+    public void ResetFogOfWar(Player player)
     {
-        this.fogOfWar = null;
+        _ = this.fogsOfWar.Remove(player);
     }
 
     private void Logic_DimensionsChanged(object? sender, EventArgs args)

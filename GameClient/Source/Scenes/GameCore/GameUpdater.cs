@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using GameLogic;
 using GameLogic.Networking;
-using Microsoft.Xna.Framework;
 
 namespace GameClient.Scenes.GameCore;
 
@@ -13,23 +12,6 @@ namespace GameClient.Scenes.GameCore;
 /// <param name="players">The list of players.</param>
 internal class GameUpdater(GameComponents components, Dictionary<string, Player> players)
 {
-    /// <summary>
-    /// Gets the player ID.
-    /// </summary>
-    /// <remarks>
-    /// If client is a spectator, this property is <see langword="null"/>.
-    /// </remarks>
-    public string? PlayerId { get; private set; }
-
-    /// <summary>
-    /// Gets the game screen components.
-    /// </summary>
-    /// <param name="playerId">The player ID.</param>
-    public void UpdatePlayerId(string? playerId)
-    {
-        this.PlayerId = playerId;
-    }
-
     /// <summary>
     /// Enables the grid component.
     /// </summary>
@@ -105,18 +87,44 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <param name="payload">The player's game state payload.</param>
     public void UpdatePlayerFogOfWar(GameStatePayload.ForPlayer payload)
     {
-        var player = players[payload.PlayerId];
-        components.Grid.UpdateFogOfWar(payload.VisibilityGrid, new Color(player.Color));
+        var player = players[Game.PlayerId!];
+        components.Grid.UpdatePlayerFogOfWar(player, payload.VisibilityGrid);
+    }
+
+    /// <summary>
+    /// Updates the players' fog of war.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method should be called after <see cref="UpdatePlayers"/>.
+    /// </para>
+    /// <para>
+    /// This method updates the fog of war for all players
+    /// and should be called only for spectators.
+    /// </para>
+    /// </remarks>
+    public void UpdatePlayersFogOfWar()
+    {
+        foreach (var player in players.Values)
+        {
+            if (player.VisibilityGrid is not null)
+            {
+                components.Grid.UpdatePlayerFogOfWar(player, player.VisibilityGrid);
+            }
+            else
+            {
+                components.Grid.ResetFogOfWar(player);
+            }
+        }
     }
 
     /// <summary>
     /// Updates the timer.
     /// </summary>
-    /// <param name="time">
-    /// The time in milliseconds to set the timer to.
-    /// </param>
-    public void UpdateTimer(float time)
+    /// <param name="tick">The current tick of the game.</param>
+    public void UpdateTimer(int tick)
     {
+        var time = Game.ServerBroadcastInterval * tick;
         components.Timer.Time = time;
     }
 }

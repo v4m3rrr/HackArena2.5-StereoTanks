@@ -177,9 +177,9 @@ public class Grid(int dimension, int seed)
                     break;
 
                 case ZoneStatus.BeingContested beingContested:
-                    if (beingContested.CapturedBy is not null)
+                    if (beingContested.CapturedById is not null)
                     {
-                        player = payload.Players.First(p => p.Id == beingContested.CapturedBy.Id);
+                        player = payload.Players.First(p => p.Id == beingContested.CapturedById);
                         beingContested.CapturedBy = player;
                     }
 
@@ -252,7 +252,10 @@ public class Grid(int dimension, int seed)
     {
         var (x, y) = this.GetRandomEmptyCell();
 
-        var tank = new Tank(x, y, owner);
+        var tankDirection = EnumUtils.Random<Direction>(this.random);
+        var turretDirection = EnumUtils.Random<Direction>(this.random);
+
+        var tank = new Tank(x, y, tankDirection, turretDirection, owner);
 
         owner.Tank = tank;
         this.tanks.Add(tank);
@@ -367,6 +370,17 @@ public class Grid(int dimension, int seed)
             {
                 _ = this.HandleBulletCollision(bullet, collision);
             }
+        }
+    }
+
+    /// <summary>
+    /// Regenerates the players' bullets.
+    /// </summary>
+    public void RegeneratePlayersBullets()
+    {
+        foreach (Tank tank in this.tanks)
+        {
+            tank.Turret.RegenerateBullets();
         }
     }
 

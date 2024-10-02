@@ -16,7 +16,6 @@ namespace GameClient.Scenes;
 internal class Game : Scene
 {
     private readonly Dictionary<string, Player> players = [];
-    private readonly GameInitializer initializer;
     private readonly GameComponents components;
     private readonly GameUpdater updater;
 
@@ -26,19 +25,27 @@ internal class Game : Scene
     public Game()
         : base(Color.Transparent)
     {
-        this.initializer = new GameInitializer(this);
-        this.components = new GameComponents(this.initializer);
+        var initializer = new GameInitializer(this);
+        this.components = new GameComponents(initializer);
         this.updater = new GameUpdater(this.components, this.players);
     }
 
     /// <summary>
-    /// Gets the server broadcast interval in milliseconds.
+    /// Gets or sets the server broadcast interval in milliseconds.
     /// </summary>
     /// <value>
     /// The server broadcast interval in seconds.
     /// When the value is -1, the server broadcast interval is not received yet.
     /// </value>
-    public static int ServerBroadcastInterval { get; private set; } = -1;
+    public static int ServerBroadcastInterval { get; set; } = -1;
+
+    /// <summary>
+    /// Gets or sets the player ID.
+    /// </summary>
+    /// <remarks>
+    /// If client is a spectator, this property is <see langword="null"/>.
+    /// </remarks>
+    public static string? PlayerId { get; set; }
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -74,22 +81,6 @@ internal class Game : Scene
         }
     }
 
-    private static void Connection_Connecting(string server)
-    {
-        DebugConsole.SendMessage($"Connecting to the server {server}...", Color.LightGreen);
-    }
-
-    private static void Connection_Connected()
-    {
-        DebugConsole.SendMessage("Server status: connected", Color.LightGreen);
-    }
-
-    private static void Connection_ErrorThrew(string error)
-    {
-        DebugConsole.ThrowError(error);
-        ChangeToPreviousOrDefault<MainMenu>();
-    }
-
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
     {
         if (result.MessageType == WebSocketMessageType.Close)
@@ -111,15 +102,24 @@ internal class Game : Scene
                     GameServerMessageHandler.HandleGameStatePacket(packet, this.updater);
                     break;
 
-                case PacketType.LobbyData:
-                    GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out int bI);
-                    ServerBroadcastInterval = bI;
+                case PacketType.GameEnd:
+                    GameServerMessageHandler.HandleGameEndPacket(packet);
                     break;
 
+#if DEBUG
+                case PacketType.LobbyData:
+                    GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
+                    break;
+#endif
+
                 default:
-                    DebugConsole.SendMessage(
+                    if (!packet.Type.IsGroup(PacketType.ErrorGroup))
+                    {
+                        DebugConsole.SendMessage(
                         $"Unknown packet type in Game scene: {packet.Type}",
                         Color.Yellow);
+                    }
+
                     break;
             }
         }
@@ -135,27 +135,13 @@ internal class Game : Scene
             return;
         }
 
-        if (!ServerConnection.IsConnected)
-        {
-            var connectionData = new ConnectionData(
-                GameSettings.ServerAddress,
-                GameSettings.ServerPort,
-                args.IsSpectator,
-                args.JoinCode);
-
-            _ = await ServerConnection.ConnectAsync(connectionData);
-        }
-
         ServerConnection.BufferSize = 1024 * 32;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
-        ServerConnection.Connecting += Connection_Connecting;
-        ServerConnection.Connected += Connection_Connected;
-        ServerConnection.ErrorThrew += Connection_ErrorThrew;
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
     {
-        this.components.Grid.ResetFogOfWar();
+        this.components.Grid.ResetAllFogsOfWar();
         this.updater.DisableGridComponent();
 
         if (ServerConnection.IsConnected)
@@ -164,9 +150,6 @@ internal class Game : Scene
         }
 
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;
-        ServerConnection.Connecting -= Connection_Connecting;
-        ServerConnection.Connected -= Connection_Connected;
-        ServerConnection.ErrorThrew -= Connection_ErrorThrew;
     }
 
     private async void HandleInput()

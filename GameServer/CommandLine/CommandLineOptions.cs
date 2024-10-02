@@ -55,6 +55,17 @@ internal class CommandLineOptions
     public int GridDimension { get; private set; }
 
     /// <summary>
+    /// Gets the number of ticks per game.
+    /// </summary>
+    [Option(
+        't',
+        "ticks",
+        Required = false,
+        HelpText = "The number of ticks per game.",
+        Default = 3000)]
+    public int Ticks { get; private set; }
+
+    /// <summary>
     /// Gets the broadcast interval in milliseconds.
     /// </summary>
     [Option(
@@ -85,6 +96,8 @@ internal class CommandLineOptions
         HelpText = "The seed to use for random number generation.")]
     public int? Seed { get; set; }
 
+#if HACKATHON
+
     /// <summary>
     /// Gets a value indicating whether to broadcast the game state eagerly.
     /// </summary>
@@ -100,4 +113,6 @@ internal class CommandLineOptions
             + "(if all players return their next move in broadcast interval).",
         Default = false)]
     public bool EagerBroadcast { get; private set; }
+
+#endif
 }

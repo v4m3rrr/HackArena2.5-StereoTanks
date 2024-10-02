@@ -90,6 +90,7 @@ internal static class Settings
     /// </summary>
     public static IButton<Container>.Style SelectorButtonItem { get; } = new()
     {
+        ["FontColor"] = Color.White,
         Action = (button) =>
         {
             button.Component.Transform.RelativePadding = new(0.05f, 0.1f, 0.05f, 0.1f);
@@ -114,9 +115,6 @@ internal static class Settings
                 Case = TextCase.Upper,
             };
         },
-        CustomProperties = [
-            new Style.Property("FontColor", Color.White),
-        ],
         HoverEntered = (s, e) =>
         {
             var background = e.GetChild<RoundedSolidColor>()!;

@@ -12,20 +12,20 @@ public class GameStatePayload : IPacketPayload
     /// <summary>
     /// Initializes a new instance of the <see cref="GameStatePayload"/> class.
     /// </summary>
-    /// <param name="time">The time of the game.</param>
+    /// <param name="tick">The current tick.</param>
     /// <param name="players">The list of players.</param>
     /// <param name="grid">The grid state.</param>
-    public GameStatePayload(float time, List<Player> players, Grid grid)
+    public GameStatePayload(int tick, List<Player> players, Grid grid)
     {
-        this.Time = time;
+        this.Tick = tick;
         this.Players = players;
         this.Map = grid.ToMapPayload(null);
     }
 
     [JsonConstructor]
-    private GameStatePayload(float time, List<Player> players, Grid.MapPayload map)
+    private GameStatePayload(int tick, List<Player> players, Grid.MapPayload map)
     {
-        this.Time = time;
+        this.Tick = tick;
         this.Players = players;
         this.Map = map;
     }
@@ -34,9 +34,10 @@ public class GameStatePayload : IPacketPayload
     public PacketType Type => PacketType.GameState;
 
     /// <summary>
-    /// Gets the time of the game.
+    /// Gets the number of ticks that
+    /// have passed in the game.
     /// </summary>
-    public float Time { get; }
+    public int Tick { get; }
 
     /// <summary>
     /// Gets the players.
@@ -79,28 +80,29 @@ public class GameStatePayload : IPacketPayload
         /// <summary>
         /// Initializes a new instance of the <see cref="ForPlayer"/> class.
         /// </summary>
-        /// <param name="time">The time of the game.</param>
+        /// <param name="id">The packet id.</param>
+        /// <param name="tick">The current tick.</param>
         /// <param name="player">The player the payload is for.</param>
         /// <param name="players">The list of players.</param>
         /// <param name="grid">The grid state.</param>
-        public ForPlayer(float time, Player player, List<Player> players, Grid grid)
-            : base(time, players, grid.ToMapPayload(player))
+        public ForPlayer(string id, int tick, Player player, List<Player> players, Grid grid)
+            : base(tick, players, grid.ToMapPayload(player))
         {
-            this.PlayerId = player.Id;
+            this.Id = id;
         }
 
         [JsonConstructor]
         [SuppressMessage("CodeQuality", "IDE0051", Justification = "Used by Newtonsoft.Json.")]
-        private ForPlayer(float time, List<Player> players, Grid.MapPayload map, string playerId)
-            : base(time, players, map)
+        private ForPlayer(string id, int tick, List<Player> players, Grid.MapPayload map)
+            : base(tick, players, map)
         {
-            this.PlayerId = playerId;
+            this.Id = id;
         }
 
         /// <summary>
-        /// Gets the id of the player.
+        /// Gets the packet id.
         /// </summary>
-        public string PlayerId { get; }
+        public string Id { get; }
 
         /// <summary>
         /// Gets the visibility grid of the player.

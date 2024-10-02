@@ -54,21 +54,27 @@ internal static class GameServerMessageHandler
     /// </summary>
     /// <param name="packet">The packet containing the game data payload.</param>
     /// <param name="updater">The game updater.</param>
-    /// <param name="broadcastInterval">The server broadcast interval.</param>
-    public static void HandleLobbyDataPacket(Packet packet, GameUpdater updater, out int broadcastInterval)
+    public static void HandleLobbyDataPacket(Packet packet, GameUpdater updater)
     {
         var converters = LobbyDataPayload.GetConverters();
         var serializers = PacketSerializer.GetSerializer(converters);
-        var gameData = packet.GetPayload<LobbyDataPayload>(serializers);
+        var data = packet.GetPayload<LobbyDataPayload>(serializers);
 
-        DebugConsole.SendMessage("Broadcast interval: " + gameData.BroadcastInterval + "ms", Color.DarkGray);
-        DebugConsole.SendMessage("Player ID: " + gameData.PlayerId, Color.DarkGray);
-        DebugConsole.SendMessage("Seed: " + gameData.Seed, Color.DarkGray);
+        DebugConsole.SendMessage("Broadcast interval: " + data.ServerSettings.BroadcastInterval + "ms", Color.DarkGray);
+        DebugConsole.SendMessage("Player ID: " + data.PlayerId, Color.DarkGray);
+        DebugConsole.SendMessage("Seed: " + data.ServerSettings.Seed, Color.DarkGray);
 
-        updater.UpdatePlayerId(gameData.PlayerId);
+#if HACKATHON
+        DebugConsole.SendMessage("Eager broadcast: " + data.ServerSettings.EagerBroadcast, Color.DarkGray);
+#endif
+
+        DebugConsole.SendMessage("Game ticks: " + data.ServerSettings.Ticks, Color.DarkGray);
+        DebugConsole.SendMessage("Game time: " + (data.ServerSettings.Ticks / (1000f / data.ServerSettings.BroadcastInterval)) + "s", Color.DarkGray);
+
+        Game.PlayerId = data.PlayerId;
+        Game.ServerBroadcastInterval = data.ServerSettings.BroadcastInterval;
+
         updater.EnableGridComponent();
-
-        broadcastInterval = gameData.BroadcastInterval;
     }
 
     /// <summary>
@@ -80,11 +86,9 @@ internal static class GameServerMessageHandler
     {
         var isSpectator = ServerConnection.Data.IsSpectator;
 
-        var message = packet.Payload.ToString();
-
         GameSerializationContext context = isSpectator
             ? new GameSerializationContext.Spectator()
-            : new GameSerializationContext.Player(updater.PlayerId!);
+            : new GameSerializationContext.Player(Game.PlayerId!);
 
         var converters = GameStatePayload.GetConverters(context);
         var serializer = PacketSerializer.GetSerializer(converters);
@@ -93,7 +97,7 @@ internal static class GameServerMessageHandler
             ? packet.GetPayload<GameStatePayload>(serializer)
             : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
 
-        updater.UpdateTimer(gameState.Time);
+        updater.UpdateTimer(gameState.Tick);
         updater.UpdateGridLogic(gameState);
         updater.UpdatePlayers(gameState.Players);
         updater.RefreshPlayerBarPanels();
@@ -102,7 +106,24 @@ internal static class GameServerMessageHandler
         {
             updater.UpdatePlayerFogOfWar(playerGameState);
         }
+        else if (isSpectator)
+        {
+            updater.UpdatePlayersFogOfWar();
+        }
 
         updater.EnableGridComponent();
+    }
+
+    /// <summary>
+    /// Handles the game end packet.
+    /// </summary>
+    /// <param name="packet">The packet containing the game end payload.</param>
+    public static void HandleGameEndPacket(Packet packet)
+    {
+        var converters = GameEndPayload.GetConverters();
+        var serializers = PacketSerializer.GetSerializer(converters);
+        var payload = packet.GetPayload<GameEndPayload>(serializers);
+        var args = new GameEndDisplayEventArgs(payload.Players);
+        Scene.Change<GameEnd>(args);
     }
 }

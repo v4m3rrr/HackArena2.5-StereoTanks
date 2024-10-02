@@ -13,15 +13,16 @@ public class Turret
     public const int MaxBulletCount = 3;
 
     private const int BulletRegenTicks = 10;
-    private int ticksUntilBulletRegen = BulletRegenTicks;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Turret"/> class.
     /// </summary>
     /// <param name="tank">The tank that owns the turret.</param>
-    internal Turret(Tank tank)
+    /// <param name="direction">The direction of the turret.</param>
+    internal Turret(Tank tank, Direction direction)
     {
         this.Tank = tank;
+        this.Direction = direction;
         this.BulletCount = MaxBulletCount;
     }
 
@@ -52,7 +53,9 @@ public class Turret
     /// </summary>
     /// <param name="direction">The direction of the turret.</param>
     /// <param name="bulletCount">The number of bullets the tank has.</param>
-    /// <param name="bulletRegenProgress">The bullet regeneration progress.</param>
+    /// <param name="remainingTicksToRegenBullet">
+    /// The remaining ticks to regenerate the bullet.
+    /// </param>
     /// <remarks>
     /// <para>
     /// This constructor should be used when creating a turret
@@ -64,11 +67,11 @@ public class Turret
     /// See its documentation for more information.
     /// </para>
     /// </remarks>
-    internal Turret(Direction direction, int bulletCount, float? bulletRegenProgress)
+    internal Turret(Direction direction, int bulletCount, int? remainingTicksToRegenBullet)
     {
         this.Direction = direction;
         this.BulletCount = bulletCount;
-        this.BulletRegenProgress = bulletRegenProgress;
+        this.RemainingTicksToRegenBullet = remainingTicksToRegenBullet;
         this.Tank = null!;
     }
 
@@ -80,7 +83,7 @@ public class Turret
     /// <summary>
     /// Gets the direction of the turret.
     /// </summary>
-    public Direction Direction { get; private set; } = EnumUtils.Random<Direction>();
+    public Direction Direction { get; private set; }
 
     /// <summary>
     /// Gets the number of bullets the tank has.
@@ -99,11 +102,33 @@ public class Turret
     /// <summary>
     /// Gets the bullet regeneration progress.
     /// </summary>
+    /// <value>
+    /// The regeneration progress of the bullet as a value between 0 and 1.
+    /// </value>
     /// <remarks>
-    /// The progress is a value between 0 and 1.
+    /// The value is <see langword="null"/> if the tank is dead or has full bullets.
     /// </remarks>
-    [JsonProperty]
-    public float? BulletRegenProgress { get; private set; }
+    public float? BulletRegenProgress => this.RemainingTicksToRegenBullet is not null
+        ? 1f - (this.RemainingTicksToRegenBullet / (float)BulletRegenTicks)
+        : null;
+
+    /// <summary>
+    /// Gets the remaining ticks to regenerate the bullet.
+    /// </summary>
+    /// <remarks>
+    /// The value is <see langword="null"/> if the tank is dead or has full bullets.
+    /// </remarks>
+    public int? RemainingTicksToRegenBullet { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the tank has full bullets.
+    /// </summary>
+    public bool HasFullBullets => this.BulletCount >= MaxBulletCount;
+
+    /// <summary>
+    /// Gets a value indicating whether the tank has bullets.
+    /// </summary>
+    public bool HasBullets => this.BulletCount > 0;
 
     /// <summary>
     /// Tries to shoot a bullet.
@@ -119,7 +144,7 @@ public class Turret
     /// </remarks>
     public Bullet? TryShoot()
     {
-        if (this.BulletCount <= 0)
+        if (!this.HasBullets)
         {
             return null;
         }
@@ -134,7 +159,9 @@ public class Turret
             this.Tank.Owner);
 
         this.BulletCount--;
+        this.RemainingTicksToRegenBullet ??= BulletRegenTicks;
         this.Shot?.Invoke(bullet);
+
         return bullet;
     }
 
@@ -157,21 +184,15 @@ public class Turret
     /// </summary>
     public void RegenerateBullets()
     {
-        if (this.Tank.IsDead || this.BulletCount >= MaxBulletCount)
+        if (this.Tank.IsDead || this.HasFullBullets)
         {
             return;
         }
 
-        if (this.ticksUntilBulletRegen > 0)
-        {
-            this.BulletRegenProgress = (float)(BulletRegenTicks - --this.ticksUntilBulletRegen) / BulletRegenTicks;
-        }
-
-        if (this.ticksUntilBulletRegen <= 0)
+        if (--this.RemainingTicksToRegenBullet <= 0)
         {
             this.BulletCount++;
-            this.ticksUntilBulletRegen = BulletRegenTicks;
-            this.BulletRegenProgress = 0;
+            this.RemainingTicksToRegenBullet = this.HasFullBullets ? null : BulletRegenTicks;
         }
     }
 }

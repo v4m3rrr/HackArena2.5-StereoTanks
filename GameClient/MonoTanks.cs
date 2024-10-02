@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using GameClient.Networking;
@@ -141,6 +141,15 @@ public class MonoTanks : Game
         PacketSerializer.ExceptionThrew += DebugConsole.ThrowError;
         Packet.GetPayloadFailed += DebugConsole.ThrowError;
 
+        ServerConnection.MessageReceived += (s, e) =>
+        {
+            var packet = PacketSerializer.Deserialize(e);
+            if (packet.Type.HasFlag(PacketType.ErrorGroup))
+            {
+                DebugConsole.ThrowError("Server error: " + packet.GetPayload<ErrorPayload>().Message);
+            }
+        };
+
         var dc = new DebugConsole();
         dc.Initialize();
         Scene.AddScene(dc);
@@ -213,7 +222,7 @@ public class MonoTanks : Game
         if (KeyboardController.IsKeyHit(Keys.OemTilde)
             && KeyboardController.IsKeyDown(Keys.LeftControl))
         {
-            Scene.ShowOverlay<DebugConsole>(default);
+            Scene.ShowOverlay<DebugConsole>();
         }
 
         if (KeyboardController.IsKeyHit(Keys.F11))
@@ -231,7 +240,7 @@ public class MonoTanks : Game
         }
 
         Scene.Current.Update(gameTime);
-        Scene.UpdateOverlays(gameTime);
+        ScreenController.UpdateOverlays(gameTime);
 
         base.Update(gameTime);
 
@@ -253,7 +262,7 @@ public class MonoTanks : Game
         SpriteBatchController.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
 
         Scene.Current.Draw(gameTime);
-        Scene.DrawOverlays(gameTime);
+        ScreenController.DrawOverlays(gameTime);
 
 #if DEBUG
         this.fpsInfo.GetChild<Text>()!.Value = $"FPS: {1 / gameTime.ElapsedGameTime.TotalSeconds:0}";

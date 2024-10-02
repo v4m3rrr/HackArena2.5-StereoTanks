@@ -20,25 +20,16 @@ public static class PacketSerializer
     public static event Action<Exception>? ExceptionThrew;
 
     /// <summary>
-    /// Gets the serializer.
-    /// </summary>
-    /// <returns>The serializer.</returns>
-    public static JsonSerializer GetSerializer()
-    {
-        return new JsonSerializer()
-        {
-            ContractResolver = ContractResolver,
-        };
-    }
-
-    /// <summary>
     /// Gets the serializer with the specified converters.
     /// </summary>
     /// <param name="converters">The converters to use during serialization.</param>
     /// <returns>The serializer with the specified converters.</returns>
     public static JsonSerializer GetSerializer(IEnumerable<JsonConverter> converters)
     {
-        var serializer = GetSerializer();
+        var serializer = new JsonSerializer()
+        {
+            ContractResolver = ContractResolver,
+        };
 
         foreach (var converter in converters)
         {
@@ -49,31 +40,22 @@ public static class PacketSerializer
     }
 
     /// <summary>
-    /// Serializes the specified payload.
-    /// </summary>
-    /// <param name="payload">The payload to serialize.</param>
-    /// <param name="indented">Whether to indent the output.</param>
-    /// <returns>The serialized payload.</returns>
-    public static string Serialize(IPacketPayload payload, bool indented = false)
-    {
-        return Serialize(payload, converters: [], indented);
-    }
-
-    /// <summary>
     /// Serializes the specified payload with the specified converters.
     /// </summary>
     /// <param name="payload">The payload to serialize.</param>
     /// <param name="converters">The converters to use during serialization.</param>
-    /// <param name="indented">Whether to indent the output.</param>
+    /// <param name="options">The serialization options.</param>
     /// <returns>The serialized payload.</returns>
     public static string Serialize(
         IPacketPayload payload,
-        IEnumerable<JsonConverter> converters,
-        bool indented = false)
+        IEnumerable<JsonConverter>? converters = null,
+        SerializationOptions? options = null)
     {
+        options ??= SerializationOptions.Default;
+
         try
         {
-            var serializer = GetSerializer(converters);
+            var serializer = GetSerializer(converters ?? []);
 
             var packet = new Packet()
             {
@@ -81,10 +63,13 @@ public static class PacketSerializer
                 Payload = JObject.FromObject(payload, serializer),
             };
 
+            var context = new PacketSerializationContext(options.TypeOfPacketType);
+
             var settings = new JsonSerializerSettings()
             {
                 ContractResolver = ContractResolver,
-                Formatting = indented ? Formatting.Indented : Formatting.None,
+                Formatting = options.Formatting,
+                Converters = [new PacketJsonConverter(context)],
             };
 
             return JsonConvert.SerializeObject(packet, settings);
@@ -100,21 +85,15 @@ public static class PacketSerializer
     /// Converts the specified payload to a byte array.
     /// </summary>
     /// <param name="payload">The payload to convert.</param>
-    /// <returns>The byte array representation of the serialized payload.</returns>
-    public static byte[] ToByteArray(IPacketPayload payload)
-    {
-        return ToByteArray(Serialize(payload));
-    }
-
-    /// <summary>
-    /// Converts the specified payload to a byte array.
-    /// </summary>
-    /// <param name="payload">The payload to convert.</param>
     /// <param name="converters">The converters to use during serialization.</param>
+    /// <param name="options">The serialization options.</param>
     /// <returns>The byte array representation of the serialized payload.</returns>
-    public static byte[] ToByteArray(IPacketPayload payload, IEnumerable<JsonConverter> converters)
+    public static byte[] ToByteArray(
+        IPacketPayload payload,
+        IEnumerable<JsonConverter> converters,
+        SerializationOptions options)
     {
-        return ToByteArray(Serialize(payload, converters));
+        return ToByteArray(Serialize(payload, converters, options));
     }
 
     /// <summary>

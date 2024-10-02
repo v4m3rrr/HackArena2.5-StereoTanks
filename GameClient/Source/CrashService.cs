@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameClient.Networking;
+using System;
 using System.IO;
 using System.Text;
 
@@ -16,8 +17,13 @@ internal static class CrashService
     /// </summary>
     /// <param name="sender">The sender of the event.</param>
     /// <param name="e">The event arguments.</param>
-    public static void HandleCrash(object sender, UnhandledExceptionEventArgs e)
+    public static async void HandleCrash(object sender, UnhandledExceptionEventArgs e)
     {
+        if (ServerConnection.IsEstablished)
+        {
+            await ServerConnection.CloseAsync("Client crashed.");
+        }
+
         var sb = new StringBuilder()
             .AppendLine("Foock...")
             .AppendLine("Probably a crash. Don't worry, we'll get through this together.\n")

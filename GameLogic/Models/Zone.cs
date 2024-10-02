@@ -176,7 +176,7 @@ public class Zone : IEquatable<Zone>
         foreach (var player in tanksOutsideZone.Select(t => t.Owner))
         {
             if (this.remainingTicksToCapture.ContainsKey(player)
-                && this.IncrementRemainingTicksToCapture(player) == TicksToCapture)
+                && this.IncrementRemainingTicksToCapture(player) >= TicksToCapture)
             {
                 this.RemovePlayerFromRemainingTicksToCapture(player);
             }

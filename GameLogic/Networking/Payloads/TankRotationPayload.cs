@@ -3,10 +3,13 @@
 /// <summary>
 /// Represents a tank rotation payload.
 /// </summary>
-public class TankRotationPayload : IPacketPayload
+public class TankRotationPayload : IPacketPayload, IActionPayload
 {
     /// <inheritdoc/>
     public PacketType Type => PacketType.TankRotation;
+
+    /// <inheritdoc/>
+    public string? GameStateId { get; init; }
 
     /// <summary>
     /// Gets the tank rotation.

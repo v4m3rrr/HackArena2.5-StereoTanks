@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34616.47
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameClient", "GameClient\GameClient_Linux.csproj", "{18CA78FA-92E5-4078-A91D-D93F3120EF7A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameClient_Linux", "GameClient\GameClient_Linux.csproj", "{18CA78FA-92E5-4078-A91D-D93F3120EF7A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89} = {F5FB9F27-01FF-42E0-AC8B-D7F834840E89}
 	EndProjectSection
@@ -25,19 +25,33 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		HackathonDebug|Any CPU = HackathonDebug|Any CPU
+		HackathonRelease|Any CPU = HackathonRelease|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.HackathonDebug|Any CPU.ActiveCfg = HackathonDebug|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.HackathonDebug|Any CPU.Build.0 = HackathonDebug|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.HackathonRelease|Any CPU.ActiveCfg = HackathonRelease|Any CPU
+		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.HackathonRelease|Any CPU.Build.0 = HackathonRelease|Any CPU
 		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18CA78FA-92E5-4078-A91D-D93F3120EF7A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.HackathonDebug|Any CPU.ActiveCfg = HackathonDebug|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.HackathonDebug|Any CPU.Build.0 = HackathonDebug|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.HackathonRelease|Any CPU.ActiveCfg = HackathonRelease|Any CPU
+		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.HackathonRelease|Any CPU.Build.0 = HackathonRelease|Any CPU
 		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB4626F0-F700-486A-948F-4CE47D3E2D79}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.HackathonDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.HackathonDebug|Any CPU.Build.0 = Debug|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.HackathonRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.HackathonRelease|Any CPU.Build.0 = Release|Any CPU
 		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5FB9F27-01FF-42E0-AC8B-D7F834840E89}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

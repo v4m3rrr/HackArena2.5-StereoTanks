@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,17 +8,32 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
     <RootNamespace>GameClient</RootNamespace>
+	<Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;CLIENT;LINUX</DefineConstants>
+    <DefineConstants>$(DefineConstants);DEBUG;CLIENT;LINUX</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\$(Configuration)Linux\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonDebug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);DEBUG;HACKATHON;CLIENT;LINUX</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\$(Configuration)Linux\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>RELEASE;CLIENT;LINUX</DefineConstants>
+    <DefineConstants>$(DefineConstants);RELEASE;CLIENT;LINUX</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
+	<Optimize>true</Optimize>
+    <OutputPath>bin\$(Configuration)Linux\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='HackathonRelease|AnyCPU'">
+    <DefineConstants>$(DefineConstants);RELEASE;HACKATHON;CLIENT;LINUX</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+	<Optimize>true</Optimize>
     <OutputPath>bin\$(Configuration)Linux\</OutputPath>
   </PropertyGroup>
 
@@ -52,19 +67,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Svg.Skia" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GameLogic\GameLogic.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="FreeTypeSharp">
-      <HintPath>Libraries\FreeTypeSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoRivUI">
-      <HintPath>Libraries\MonoRivUI\MonoRivUI\bin\Debug\net6.0\MonoRivUI.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

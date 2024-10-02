@@ -8,15 +8,11 @@ namespace GameLogic.Networking;
 /// </summary>
 /// <param name="PlayerId">The player id.</param>
 /// <param name="Players">The list of players.</param>
-/// <param name="GridDimension">The dimension of the grid.</param>
-/// <param name="Seed">The seed of the grid.</param>
-/// <param name="BroadcastInterval">The broadcast interval in milliseconds.</param>
+/// <param name="ServerSettings">The server settings.</param>
 public record class LobbyDataPayload(
     string? PlayerId,
     List<Player> Players,
-    int GridDimension,
-    int Seed,
-    int BroadcastInterval) : IPacketPayload
+    ServerSettings ServerSettings) : IPacketPayload
 {
     /// <inheritdoc/>
     public PacketType Type => PacketType.LobbyData;

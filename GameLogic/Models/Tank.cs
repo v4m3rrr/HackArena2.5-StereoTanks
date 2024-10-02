@@ -12,13 +12,15 @@ public class Tank : IEquatable<Tank>
     /// </summary>
     /// <param name="x">The x coordinate of the tank.</param>
     /// <param name="y">The y coordinate of the tank.</param>
+    /// <param name="direction">The direction of the tank.</param>
+    /// <param name="turretDirection">The direction of the turret.</param>
     /// <param name="owner">The owner of the tank.</param>
-    internal Tank(int x, int y, Player owner)
-        : this(x, y, owner.Id)
+    internal Tank(int x, int y, Direction direction, Direction turretDirection, Player owner)
+        : this(x, y, owner.Id, direction)
     {
         this.Owner = owner;
         this.Health = 100;
-        this.Turret = new Turret(this);
+        this.Turret = new Turret(this, turretDirection);
     }
 
     /// <summary>
@@ -42,9 +44,8 @@ public class Tank : IEquatable<Tank>
     /// </para>
     /// </remarks>
     internal Tank(int x, int y, string ownerId, Direction direction, Turret turret)
-        : this(x, y, ownerId)
+        : this(x, y, ownerId, direction)
     {
-        this.Direction = direction;
         this.Turret = turret;
     }
 
@@ -74,15 +75,20 @@ public class Tank : IEquatable<Tank>
         this.Health = health;
     }
 
-    private Tank(int x, int y, string ownerId)
+    private Tank(int x, int y, string ownerId, Direction direction)
     {
         this.X = x;
         this.Y = y;
         this.Owner = null!;
         this.OwnerId = ownerId;
-        this.Direction = EnumUtils.Random<Direction>();
-        this.Turret = new Turret(this);
+        this.Direction = direction;
+        this.Turret = null!;  // Set in the other constructors
     }
+
+    /// <summary>
+    /// Occurs when the tank dies.
+    /// </summary>
+    internal event EventHandler? Died;
 
     /// <summary>
     /// Gets the x coordinate of the tank.
@@ -116,7 +122,7 @@ public class Tank : IEquatable<Tank>
     /// <summary>
     /// Gets the direction of the tank.
     /// </summary>
-    public Direction Direction { get; private set; } = EnumUtils.Random<Direction>();
+    public Direction Direction { get; private set; }
 
     /// <summary>
     /// Gets the turret of the tank.
@@ -184,6 +190,7 @@ public class Tank : IEquatable<Tank>
         {
             this.SetPosition(-1, -1);
             this.Health = 0;
+            this.Died?.Invoke(this, EventArgs.Empty);
         }
     }
 

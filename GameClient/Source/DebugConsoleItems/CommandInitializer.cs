@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using GameClient.Networking;
+using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -200,7 +202,7 @@ internal static class CommandInitializer
     [Command("Show current scene overlays with priorities.")]
     private static void Overlays()
     {
-        var overlays = Scene.DisplayedOverlays;
+        var overlays = ScreenController.DisplayedOverlays;
         var sb = new StringBuilder();
 
         foreach (var overlay in overlays)
@@ -210,9 +212,9 @@ internal static class CommandInitializer
                 _ = sb.Append(" -> ");
             }
 
-            _ = sb.Append(overlay.Scene.GetType().Name)
+            _ = sb.Append(overlay.Value.GetType().Name)
                 .Append(" (")
-                .Append(overlay.Scene.Priority)
+                .Append(overlay.Value.Priority)
                 .Append(")");
         }
 
@@ -252,8 +254,7 @@ internal static class CommandInitializer
         [Argument("A port to the server.")] int port,
         [Argument("A join code.")] string? joinCode = null)
     {
-        GameSettings.ServerAddress = ip;
-        GameSettings.ServerPort = port;
+        GameSettings.ServerAddress = $"{ip}:{port}";
         var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: true);
         Scene.Change<Scenes.Game>(args);
     }
@@ -264,10 +265,74 @@ internal static class CommandInitializer
         [Argument("A port to the server.")] int port,
         [Argument("A join code.")] string? joinCode = null)
     {
-        GameSettings.ServerAddress = ip;
-        GameSettings.ServerPort = port;
+        GameSettings.ServerAddress = $"{ip}:{port}";
         var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: false);
         Scene.Change<Scenes.Game>(args);
     }
+
+    [CommandGroup(Name = "Game", Description = "Interact with the game.")]
+    private static class GameCommand
+    {
+        private static bool ThrowErrorIfNotGameScene()
+        {
+            if (Scene.Current is not Scenes.Game game)
+            {
+                DebugConsole.ThrowError("The current scene is not a game scene.");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ThrowErrorIfNotConnectedToServer()
+        {
+            if (!ServerConnection.IsConnected)
+            {
+                DebugConsole.ThrowError("The server is not connected.");
+                return true;
+            }
+
+            return false;
+        }
+
+        [Command("Sets score to a player.")]
+        private static async void SetScore(
+            [Argument("A player nick to sets points")] string nick,
+            [Argument("A points to sets")] int points)
+        {
+            if (ThrowErrorIfNotGameScene() || ThrowErrorIfNotConnectedToServer())
+            {
+                return;
+            }
+
+            var payload = new SetPlayerScorePayload(nick, points);
+            var message = PacketSerializer.Serialize(payload);
+
+            await ServerConnection.SendAsync(message);
+
+            DebugConsole.SendMessage(
+                $"Packet \"Set player '{nick}' points to {points} \" has been sent to the server.",
+                Color.Green);
+        }
+
+        [Command("Force end the game.")]
+        private static async void ForceEnd()
+        {
+            if (ThrowErrorIfNotGameScene() || ThrowErrorIfNotConnectedToServer())
+            {
+                return;
+            }
+
+            var payload = new EmptyPayload() { Type = PacketType.ForceEndGame };
+            var message = PacketSerializer.Serialize(payload);
+
+            await ServerConnection.SendAsync(message);
+
+            DebugConsole.SendMessage(
+                $"Packet \"Force end the game\" has been sent to the server.",
+                Color.Green);
+        }
+    }
+
 #endif
 }
