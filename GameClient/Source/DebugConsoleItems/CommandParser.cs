@@ -49,6 +49,13 @@ internal static class CommandParser
             var parameters = c.Action.Method.GetParameters();
 
             var convertedArguments = new object[args.Length];
+
+            if (args.Length > parameters.Length)
+            {
+                DebugConsole.SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
+                return;
+            }
+
             for (int i = 0; i < args.Length; i++)
             {
                 try
