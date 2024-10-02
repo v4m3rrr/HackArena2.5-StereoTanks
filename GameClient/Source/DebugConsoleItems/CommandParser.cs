@@ -63,16 +63,16 @@ internal static class CommandParser
                 {
                     convertedArguments[i] = ConvertArgument(args[i], parameters[i].ParameterType);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     DebugConsole.SendMessage($"Invalid argument '{args[i]}'.", Color.IndianRed);
                     return;
                 }
             }
 
+            List<object?> invokeParameters = [];
             try
             {
-                List<object?> invokeParameters = [];
                 int convertedArgumentsIndex = 0;
                 foreach (var parameter in parameters)
                 {
@@ -90,9 +90,18 @@ internal static class CommandParser
             }
             catch (Exception ex) when (
                 ex is TargetParameterCountException
-                || ex is System.IndexOutOfRangeException)
+                or System.IndexOutOfRangeException)
             {
                 DebugConsole.SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
+            }
+
+            try
+            {
+                _ = c.Action.DynamicInvoke([.. invokeParameters]);
+            }
+            catch (Exception ex)
+            {
+                DebugConsole.ThrowError(ex.Message);
             }
 
             return;
