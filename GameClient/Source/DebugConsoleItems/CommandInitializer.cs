@@ -181,7 +181,7 @@ internal static class CommandInitializer
     [Command("Show current scene stack.")]
     private static void SceneStack()
     {
-        var stack = (Stack<Scene>)typeof(Scene)
+        var stack = (Stack<(Scene, SceneDisplayEventArgs)>)typeof(Scene)
             .GetField("SceneStack", BindingFlags.NonPublic | BindingFlags.Static)!
             .GetValue(null)!;
         var sb = new StringBuilder();
