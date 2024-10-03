@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text.Json;
 using GameLogic.Networking;
@@ -18,6 +18,11 @@ internal class PacketHandler(GameInstance game)
     /// Occurs when a bot made an action.
     /// </summary>
     public event EventHandler<Player>? HackathonBotMadeAction;
+
+    /// <summary>
+    /// Gets the hackathon bot actions.
+    /// </summary>
+    public readonly ConcurrentDictionary<Player, Action> HackathonBotActions = new();
 
 #endif
 
@@ -77,7 +82,7 @@ internal class PacketHandler(GameInstance game)
 
         if (!game.SpectatorManager.IsSpectator(socket))
         {
-            isHandled = await this.HandlePlayerPacket(socket, packet);
+            isHandled = this.HandlePlayerPacket(socket, packet);
         }
 
         isHandled |= await this.HandleOtherPacket(socket, packet);
@@ -94,7 +99,7 @@ internal class PacketHandler(GameInstance game)
         }
     }
 
-    private async Task<bool> HandlePlayerPacket(WebSocket socket, Packet packet)
+    private bool HandlePlayerPacket(WebSocket socket, Packet packet)
     {
         Player player = game.PlayerManager.Players[socket];
 
@@ -109,7 +114,7 @@ internal class PacketHandler(GameInstance game)
         {
             try
             {
-                await this.HandlePlayerActionPacket(socket, player, packet);
+                this.HandlePlayerActionPacket(socket, player, packet);
             }
             catch (Exception e)
             {
@@ -172,11 +177,11 @@ internal class PacketHandler(GameInstance game)
         return false;
     }
 
-    private async Task HandlePlayerActionPacket(WebSocket socket, Player player, Packet packet)
+    private void HandlePlayerActionPacket(WebSocket socket, Player player, Packet packet)
     {
-        bool responsedToCurrentGameState;
-
 #if HACKATHON
+
+        bool? responsedToCurrentGameState = null;
 
         if (player.IsHackathonBot)
         {
@@ -188,16 +193,11 @@ internal class PacketHandler(GameInstance game)
                     && game.GameManager.CurrentGameStateId == responseGameStateId;
             }
 
-            lock (player)
-            {
-                player.HasMadeActionToCurrentGameState = responsedToCurrentGameState;
-            }
-
             if (responseGameStateId is null)
             {
                 _ = game.SendPlayerPacketAsync(socket, new CustomWarningPayload("GameStateId is missing in the payload"));
             }
-            else if (!responsedToCurrentGameState)
+            else if (!(bool)responsedToCurrentGameState)
             {
                 _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.SlowResponseWarning });
             }
@@ -212,42 +212,126 @@ internal class PacketHandler(GameInstance game)
                 _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.PlayerAlreadyMadeActionWarning });
                 return;
             }
-
-            player.HasMadeActionThisTick = true;
         }
-
-#if HACKATHON
-        this.HackathonBotMadeAction?.Invoke(this, player);
-#endif
 
         switch (packet.Type)
         {
             case PacketType.TankMovement:
-                var movement = packet.GetPayload<TankMovementPayload>();
-                game.Grid.TryMoveTank(player.Instance.Tank, movement.Direction);
+                this.HandleMoveTank(player, packet);
                 break;
 
             case PacketType.TankRotation:
-                var rotation = packet.GetPayload<TankRotationPayload>();
-                if (rotation.TankRotation is { } tankRotation)
-                {
-                    player.Instance.Tank.Rotate(tankRotation);
-                }
-
-                if (rotation.TurretRotation is { } turretRotation)
-                {
-                    player.Instance.Tank.Turret.Rotate(turretRotation);
-                }
-
+                this.HandleRotateTank(player, packet);
                 break;
 
             case PacketType.TankShoot:
-                _ = player.Instance.Tank.Turret.TryShoot();
+                this.HandleShootTank(player);
                 break;
 
             default:
                 Console.WriteLine($"Invalid packet type ({packet.Type}) in PlayerResponseGroup");
                 return;
         }
+
+        lock (player)
+        {
+            player.HasMadeActionThisTick = true;
+#if HACKATHON
+            if (responsedToCurrentGameState is not null)
+            {
+                player.HasMadeActionToCurrentGameState = (bool)responsedToCurrentGameState;
+            }
+#endif
+        }
+
+#if HACKATHON
+        this.HackathonBotMadeAction?.Invoke(this, player);
+#endif
+    }
+
+    private void HandleMoveTank(Player player, Packet packet)
+    {
+        var movement = packet.GetPayload<TankMovementPayload>();
+        void Action() => game.Grid.TryMoveTank(player.Instance.Tank, movement.Direction);
+
+#if HACKATHON
+        if (player.IsHackathonBot)
+        {
+            this.HackathonBotActions[player] = Action;
+        }
+        else
+        {
+#endif
+            lock (game.Grid)
+            {
+                Action();
+            }
+#if HACKATHON
+        }
+#endif
+    }
+
+    private void HandleRotateTank(Player player, Packet packet)
+    {
+        var rotation = packet.GetPayload<TankRotationPayload>();
+        var actions = new List<Action>();
+
+        if (rotation.TankRotation is { } tankRotation)
+        {
+            actions.Add(() => player.Instance.Tank.Rotate(tankRotation));
+        }
+
+        if (rotation.TurretRotation is { } turretRotation)
+        {
+            actions.Add(() => player.Instance.Tank.Turret.Rotate(turretRotation));
+        }
+#if HACKATHON
+        if (player.IsHackathonBot)
+        {
+            this.HackathonBotActions[player] = () =>
+            {
+                foreach (var action in actions)
+                {
+                    action();
+                }
+            };
+        }
+        else
+        {
+#endif
+            foreach (var action in actions)
+            {
+                action();
+            }
+#if HACKATHON
+        }
+#endif
+    }
+
+    private void HandleShootTank(Player player)
+    {
+        GameLogic.Bullet? Action() => player.Instance.Tank.Turret.TryShoot();
+
+#if HACKATHON
+        if (player.IsHackathonBot)
+        {
+            this.HackathonBotActions[player] = () =>
+            {
+                lock (game.Grid)
+                {
+                    Action();
+                }
+            };
+        }
+        else
+        {
+#endif
+            lock (game.Grid)
+            {
+                Action();
+            }
+#if HACKATHON
+        }
+#endif
     }
 }

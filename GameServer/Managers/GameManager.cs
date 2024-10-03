@@ -10,6 +10,11 @@ namespace GameServer;
 /// <param name="game">The game instance.</param>
 internal class GameManager(GameInstance game)
 {
+#if HACKATHON
+    // Used to shuffle the bot actions.
+    private readonly Random random = new(game.Settings.Seed);
+#endif
+
     private int tick = 0;
 
     /// <summary>
@@ -86,6 +91,21 @@ internal class GameManager(GameInstance game)
 
             var grid = game.Grid;
 
+#if HACKATHON
+            var botActions = game.PacketHandler.HackathonBotActions;
+            var actionList = botActions.ToList();
+            actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
+            Action[] actions = actionList.Select(x => x.Value).ToArray();
+            this.random.Shuffle(actions);
+
+            foreach (Action action in actions)
+            {
+                action.Invoke();
+            }
+
+            game.PacketHandler.HackathonBotActions.Clear();
+#endif
+
             // Update game logic
             grid.UpdateBullets(1f);
             grid.RegeneratePlayersBullets();
@@ -105,11 +125,11 @@ internal class GameManager(GameInstance game)
 #if HACKATHON
             var tcs = new TaskCompletionSource<bool>();
 
-            game.PacketHandler.HackathonBotMadeAction += (s, e) =>
+            void Func(dynamic? s, dynamic e)
             {
                 lock (e)
                 {
-                    if (game.Settings.EagerBroadcast && game.PlayerManager.Players.Values.All(x => x.IsHackathonBot))
+                    if (this.tick > 5 && game.Settings.EagerBroadcast && game.PlayerManager.Players.Values.All(x => x.IsHackathonBot))
                     {
                         var alivePlayers = game.PlayerManager.Players.Values.Where(x => !x.Instance.IsDead);
                         if (alivePlayers.All(x => x.HasMadeActionToCurrentGameState))
@@ -118,7 +138,9 @@ internal class GameManager(GameInstance game)
                         }
                     }
                 }
-            };
+            }
+
+            game.PacketHandler.HackathonBotMadeAction += Func;
 
             if (sleepTime > 0)
             {
@@ -143,6 +165,10 @@ internal class GameManager(GameInstance game)
             {
                 Console.WriteLine("Game state broadcast took longer than expected!");
             }
+
+#if HACKATHON
+            game.PacketHandler.HackathonBotMadeAction -= Func;
+#endif
         }
     }
 

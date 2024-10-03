@@ -18,13 +18,6 @@ internal class GameInstance
     {
         int seed = options.Seed!.Value;
         int dimension = options.GridDimension;
-        this.Grid = new Grid(dimension, seed);
-
-        this.LobbyManager = new LobbyManager(this);
-        this.GameManager = new GameManager(this);
-        this.PlayerManager = new PlayerManager(this);
-        this.SpectatorManager = new SpectatorManager();
-        this.PacketHandler = new PacketHandler(this);
 
 #if HACKATHON
         bool eagerBroadcast = options.EagerBroadcast;
@@ -39,6 +32,14 @@ internal class GameInstance
             options.Ticks,
             options.BroadcastInterval,
             eagerBroadcast);
+
+        this.Grid = new Grid(dimension, seed);
+
+        this.LobbyManager = new LobbyManager(this);
+        this.GameManager = new GameManager(this);
+        this.PlayerManager = new PlayerManager(this);
+        this.SpectatorManager = new SpectatorManager();
+        this.PacketHandler = new PacketHandler(this);
 
         PacketSerializer.ExceptionThrew += (Exception ex) =>
         {
