@@ -159,6 +159,14 @@ internal static class CommandInitializer
         [Command("Set a new language.")]
         private static void Set([Argument("A new screen type.")] Language language)
         {
+            int languageMemberCount = Enum.GetNames(typeof(Language)).Length;
+            var languageValue = (int)language;
+            if (languageValue < 0 || languageValue >= languageMemberCount)
+            {
+                DebugConsole.SendMessage($"Invalid argument {language}", Color.IndianRed);
+                return;
+            }
+
             GameSettings.Language = language;
             GameSettings.SaveSettings();
             DebugConsole.SendMessage($"Language has been changed to {language}.", Color.Green);
