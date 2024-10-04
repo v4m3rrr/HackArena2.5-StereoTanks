@@ -1,12 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
+using GameClient.GameSceneComponents.PlayerBarComponents;
 using GameClient.Networking;
+using GameClient.Scenes;
+using GameClient.UI;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GameClient.DebugConsoleItems;
 
@@ -268,14 +273,54 @@ internal static class CommandInitializer
     }
 
     [Command("Join to the server as a player.")]
-    private static void Join(
+    private static async void Join(
         [Argument("An address IP to the server.")] string ip,
         [Argument("A port to the server.")] int port,
         [Argument("A join code.")] string? joinCode = null)
     {
-        GameSettings.ServerAddress = $"{ip}:{port}";
-        var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: false);
-        Scene.Change<Scenes.Game>(args);
+        var address = $"{ip}:{port}";
+        var connectionData = ConnectionData.ForPlayer(address, joinCode, "Steve", false);
+
+        ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData);
+
+        ServerConnection.ErrorThrew += DebugConsole.ThrowError;
+        var connectingMessageBox = new ConnectingMessageBox();
+        ScreenController.ShowOverlay(connectingMessageBox);
+
+        switch (status)
+        {
+            case ConnectionStatus.Success:
+                ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
+                Scene.Change<Lobby>();
+                break;
+            case ConnectionStatus.Failed s:
+                ConnectionFailedMessageBox failedMsgBox = s.Exception is null
+                    ? new(new LocalizedString("Other.NoDetails"))
+                    : s.Exception is System.Net.WebSockets.WebSocketException
+                        && s.Exception.Message == "Unable to connect to the remote server"
+                        ? new(new LocalizedString("Other.ServerNotResponding"))
+                        : new(s.Exception.Message);
+                ScreenController.ShowOverlay(failedMsgBox);
+                break;
+            case ConnectionStatus.Rejected s:
+                ScreenController.ShowOverlay(new ConnectionRejectedMessageBox(s.Reason));
+                break;
+        }
+
+
+        if (status is ConnectionStatus.Success)
+        {
+            ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
+            Scene.Change<Lobby>();
+        }
+        else if (status is ConnectionStatus.Success)
+        {
+            var localizedString = new LocalizedString("Other.ServerNotResponding");
+            var connectionFailedMessageBox = new ConnectionFailedMessageBox(localizedString);
+            ScreenController.ShowOverlay(connectionFailedMessageBox);
+        }
+
+        ScreenController.HideOverlay(connectingMessageBox);
     }
 
     [CommandGroup(Name = "Game", Description = "Interact with the game.")]
