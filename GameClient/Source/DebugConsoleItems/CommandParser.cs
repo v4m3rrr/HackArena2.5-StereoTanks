@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text;
 using Fastenshtein;
 using Microsoft.Xna.Framework;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GameClient.DebugConsoleItems;
 
@@ -91,6 +90,7 @@ internal static class CommandParser
                 or System.IndexOutOfRangeException)
             {
                 DebugConsole.SendMessage($"Invalid number of arguments. (expected: {parameters.Length}, got: {args.Length})", Color.IndianRed);
+                return;
             }
 
             try
