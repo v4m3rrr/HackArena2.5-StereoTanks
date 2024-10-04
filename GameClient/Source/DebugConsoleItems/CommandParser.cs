@@ -197,7 +197,24 @@ internal static class CommandParser
 
     private static string[] GetArgsFromInput(ICommand command, string input)
     {
-        return input[command.FullName.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var segments = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        StringBuilder normalizer = new();
+        foreach (var segment in segments)
+        {
+            if (normalizer.Length == 0)
+            {
+                _ = normalizer.Append(segment);
+            }
+            else
+            {
+                _ = normalizer.Append(' ').Append(segment);
+            }
+        }
+
+        var normalizedInput = normalizer.ToString();
+
+        return normalizedInput[command.FullName.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
     }
 
     private static object ConvertArgument(string argument, Type targetType)
