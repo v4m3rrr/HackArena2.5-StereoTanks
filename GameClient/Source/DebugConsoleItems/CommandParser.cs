@@ -16,7 +16,8 @@ internal static class CommandParser
     private static readonly int ExactMatchThreshold = 0;
 
     /// <summary>
-    /// Parses user input, identifies and executes the corresponding command or displays appropriate error messages based on text input.
+    /// Parses user input, identifies and executes the corresponding command
+    /// or displays appropriate error messages based on text input.
     /// </summary>
     /// <param name="sender">Event sender.</param>
     /// <param name="e">Event arguments.</param>
