@@ -28,13 +28,23 @@ Console.WriteLine("Ticks: " + opts.Ticks);
 Console.WriteLine("Join code: " + opts.JoinCode);
 Console.WriteLine("Number of players: " + opts.NumberOfPlayers);
 
+string? saveReplayPath = null;
+if (opts.SaveReplay)
+{
+    saveReplayPath = opts.ReplayFilepath is not null
+        ? Path.GetFullPath(opts.ReplayFilepath)
+        : Path.GetFullPath($"Replay_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json");
+
+    Console.WriteLine("The replay will be saved to: " + saveReplayPath);
+}
+
 #if HACKATHON
 Console.WriteLine("Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
 #endif
 
 Console.WriteLine("\nPress Ctrl+C to stop the server.\n");
 
-var game = new GameInstance(opts);
+var game = new GameInstance(opts, saveReplayPath);
 game.Grid.GenerateMap();
 
 var failedAttempts = new ConcurrentDictionary<string, (int Attempts, DateTime LastAttempt)>();

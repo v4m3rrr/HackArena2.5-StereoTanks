@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic.Networking;
+using Newtonsoft.Json.Linq;
 
 namespace GameServer;
 
@@ -8,12 +9,16 @@ namespace GameServer;
 /// Represents the game manager.
 /// </summary>
 /// <param name="game">The game instance.</param>
-internal class GameManager(GameInstance game)
+/// <param name="saveReplayPath">The path to save the replay.</param>
+internal class GameManager(GameInstance game, string? saveReplayPath)
 {
 #if HACKATHON
     // Used to shuffle the bot actions.
     private readonly Random random = new(game.Settings.Seed);
 #endif
+
+    private readonly List<string> gameStates = [];
+    private string lobbyData = string.Empty;
 
     private int tick = 0;
 
@@ -42,6 +47,16 @@ internal class GameManager(GameInstance game)
             this.Status = GameStatus.Running;
         }
 
+        var lobbyData = new LobbyDataPayload(
+            PlayerId: null,
+            [.. game.PlayerManager.Players.Values.Select(x => x.Instance)],
+            game.Settings);
+
+        var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
+        var converters = LobbyDataPayload.GetConverters();
+        _ = PacketSerializer.Serialize(lobbyData, out var lobbyDataObj, converters, options);
+        this.lobbyData = lobbyDataObj.ToString(options.Formatting);
+
         foreach (var player in game.PlayerManager.Players.Keys)
         {
             var packet = new EmptyPayload() { Type = PacketType.GameStart };
@@ -61,17 +76,17 @@ internal class GameManager(GameInstance game)
         var players = game.PlayerManager.Players.Values.Select(x => x.Instance).ToList();
         players.Sort((x, y) => y.Score.CompareTo(x.Score));
 
-        var packet = new GameEndPayload(players);
+        var payload = new GameEndPayload(players);
         var converters = GameEndPayload.GetConverters();
 
         foreach (var player in game.PlayerManager.Players.Keys)
         {
-            _ = game.SendPlayerPacketAsync(player, packet, converters);
+            _ = game.SendPlayerPacketAsync(player, payload, converters);
         }
 
         foreach (var spectator in game.SpectatorManager.Spectators.Keys)
         {
-            _ = game.SendSpectatorPacketAsync(spectator, packet, converters);
+            _ = game.SendSpectatorPacketAsync(spectator, payload, converters);
         }
 
         var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
@@ -79,6 +94,49 @@ internal class GameManager(GameInstance game)
         foreach (var client in clients)
         {
             _ = client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Game ended", CancellationToken.None);
+        }
+
+        JObject results = [];
+
+        if (saveReplayPath is not null)
+        {
+            try
+            {
+                var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
+
+                _ = PacketSerializer.Serialize(payload, out results, converters, options);
+
+                var jObject = new JObject()
+                {
+                    ["lobbyData"] = JObject.Parse(this.lobbyData),
+                    ["gameStates"] = JArray.Parse($"[{string.Join(",", this.gameStates)}]"),
+                    ["gameEnd"] = JObject.Parse(results.ToString()),
+                };
+
+                File.WriteAllText(saveReplayPath, jObject.ToString(options.Formatting));
+                Console.WriteLine($"Replay saved to {saveReplayPath}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error while saving replay: {e.Message}");
+            }
+
+#if HACKATHON
+            try
+            {
+                var path = Path.GetDirectoryName(saveReplayPath)!;
+                var fileName = Path.GetFileNameWithoutExtension(saveReplayPath);
+                var extension = Path.GetExtension(saveReplayPath);
+                var savePath = Path.Combine(path, $"{fileName}_results{extension}");
+                File.WriteAllText(savePath, results.ToString());
+
+                Console.WriteLine($"Results saved to {savePath}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error while saving results: {e.Message}");
+            }
+#endif
         }
 
         Environment.Exit(0);
@@ -128,6 +186,17 @@ internal class GameManager(GameInstance game)
             // Broadcast the game state
             this.ResetPlayerGameTickProperties();
             var broadcast = this.BroadcastGameStateAsync();
+
+            if (saveReplayPath is not null)
+            {
+                var payload = new GameStatePayload(this.tick, [.. game.PlayerManager.Players.Values.Select(x => x.Instance)], game.Grid);
+                var context = new GameSerializationContext.Spectator();
+                var converters = GameStatePayload.GetConverters(context);
+                var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
+                _ = PacketSerializer.Serialize(payload, out var gameState, converters, options);
+                this.gameStates.Add(gameState.ToString(options.Formatting));
+            }
+
             await Task.WhenAll(broadcast);
 
             stopwatch.Stop();

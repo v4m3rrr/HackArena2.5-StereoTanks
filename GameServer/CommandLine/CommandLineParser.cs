@@ -29,7 +29,11 @@ internal static partial class CommandLineParser
         bool areOptionsValid = true;
         _ = parserResult.WithParsed((opts) =>
         {
+#if DEBUG
+            if (!opts.SkipValidation && !RunOptions(opts))
+#else
             if (!RunOptions(opts))
+#endif
             {
                 areOptionsValid = false;
                 var helpText = GenerateHelpText(parserResult);
@@ -52,12 +56,12 @@ internal static partial class CommandLineParser
         return parserResult.Value;
     }
 
-    [GeneratedRegex(@"^\*$|^localhost$|^(\d{1,3}\.){3}\d{1,3}$")]
+    [GeneratedRegex(@"^\*$|^localhost$|^host.docker.internal$|^(\d{1,3}\.){3}\d{1,3}$")]
     private static partial Regex HostRegex();
 
     private static bool RunOptions(CommandLineOptions opts)
     {
-        if (!HostRegex().IsMatch(opts.Host))
+        if (!opts.SkipHostRegexValidation && !HostRegex().IsMatch(opts.Host))
         {
             Console.WriteLine("Invalid host. Must be a valid IP address or 'localhost'.");
             return false;
@@ -79,6 +83,46 @@ internal static partial class CommandLineParser
         {
             Console.WriteLine("Invalid broadcast interval. Must be at least 1.");
             return false;
+        }
+
+        if (opts.SaveReplay && opts.ReplayFilepath is not null)
+        {
+            string replayPath = Path.GetFullPath(opts.ReplayFilepath);
+
+            if (!opts.OverwriteReplayFile && File.Exists(replayPath))
+            {
+                Console.WriteLine($"Record file '{replayPath}' already exists. Use --override-record-file to overwrite.");
+                return false;
+            }
+
+#if HACKATHON
+            var pathWithoutExtension = Path.GetFileNameWithoutExtension(replayPath);
+            if (pathWithoutExtension.ToLower().EndsWith("_results"))
+            {
+                Console.WriteLine("The record file cannot end with '_results'.");
+                return false;
+            }
+#endif
+
+            try
+            {
+                _ = Directory.CreateDirectory(Path.GetDirectoryName(replayPath)!);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to create directory for record file '{replayPath}': {ex.Message}");
+                return false;
+            }
+
+            try
+            {
+                File.Create(replayPath).Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to create record file '{replayPath}': {ex.Message}");
+                return false;
+            }
         }
 
         return true;

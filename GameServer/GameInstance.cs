@@ -14,7 +14,8 @@ internal class GameInstance
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
     /// <param name="options">The command line options.</param>
-    public GameInstance(CommandLineOptions options)
+    /// <param name="replayPath">The path to save the replay.</param>
+    public GameInstance(CommandLineOptions options, string? saveReplayPath)
     {
         int seed = options.Seed!.Value;
         int dimension = options.GridDimension;
@@ -36,7 +37,7 @@ internal class GameInstance
         this.Grid = new Grid(dimension, seed);
 
         this.LobbyManager = new LobbyManager(this);
-        this.GameManager = new GameManager(this);
+        this.GameManager = new GameManager(this, saveReplayPath);
         this.PlayerManager = new PlayerManager(this);
         this.SpectatorManager = new SpectatorManager();
         this.PacketHandler = new PacketHandler(this);

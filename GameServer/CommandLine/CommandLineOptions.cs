@@ -115,4 +115,62 @@ internal class CommandLineOptions
     public bool EagerBroadcast { get; private set; }
 
 #endif
+
+    /// <summary>
+    /// Gets a value indicating whether to save the replay.
+    /// </summary>
+    [Option(
+        'r',
+        "save-replay",
+        Required = false,
+        HelpText = "Whether to save the replay.",
+        Default = false)]
+    public bool SaveReplay { get; private set; }
+
+    /// <summary>
+    /// Gets the filepath to save the replay to.
+    /// </summary>
+    [Option(
+        "replay-filepath",
+        Required = false,
+        HelpText = "The filepath to save the replay to.",
+        Default = null)]
+    public string? ReplayFilepath { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether to override
+    /// the replay file if it already exists.
+    /// </summary>
+    [Option(
+        "overwrite-replay-file",
+        Required = false,
+        HelpText = "Whether to override the replay file if it already exists.",
+        Default = false)]
+    public bool OverwriteReplayFile { get; private set; }
+
+#if DEBUG
+
+    /// <summary>
+    /// Gets a value indicating whether to skip
+    /// validation of the command line options.
+    /// </summary>
+    [Option(
+        "skip-validation",
+        Required = false,
+        HelpText = "Whether to skip validation of the command line options.",
+        Default = false)]
+    public bool SkipValidation { get; private set; }
+
+#endif
+
+    /// <summary>
+    /// Gets a value indicating whether to
+    /// skip validation of the host regex.
+    /// </summary>
+    [Option(
+        "skip-host-regex-validation",
+        Required = false,
+        HelpText = "Whether to skip validation of the host regex.",
+        Default = false)]
+    public bool SkipHostRegexValidation { get; private set; }
 }
