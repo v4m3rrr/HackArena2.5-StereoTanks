@@ -17,6 +17,7 @@ internal class PlayerJsonConverter : JsonConverter<Player>
         var nickname = jObject["nickname"]!.Value<string>()!;
         var color = jObject["color"]!.Value<uint>()!;
         var score = jObject["score"]!.Value<int>()!;
+        var kills = jObject["kills"]!.Value<int>()!;
 
         return new Player(id, nickname, color) { Score = score };
     }
@@ -30,6 +31,7 @@ internal class PlayerJsonConverter : JsonConverter<Player>
             ["nickname"] = value.Nickname,
             ["color"] = value.Color,
             ["score"] = value.Score,
+            ["kills"] = value.Kills,
         };
 
         jObject.WriteTo(writer);

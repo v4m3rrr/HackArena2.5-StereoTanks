@@ -437,6 +437,11 @@ public class Grid(int dimension, int seed)
             case TankCollision tankCollision:
                 bullet.Shooter!.Score += bullet.Damage!.Value / 2;
                 tankCollision.Tank.TakeDamage(bullet.Damage.Value);
+                if (tankCollision.Tank.IsDead)
+                {
+                    bullet.Shooter.Kills++;
+                }
+
                 break;
 
             case BulletCollision bulletCollision:

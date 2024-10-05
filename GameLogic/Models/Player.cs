@@ -73,6 +73,11 @@ public class Player : IEquatable<Player>
     public uint Color { get; internal set; }
 
     /// <summary>
+    /// Gets the number of players killed by this player.
+    /// </summary>
+    public int Kills { get; internal set; } = 0;
+
+    /// <summary>
     /// Gets or sets the ping of the player.
     /// </summary>
     public int Ping { get; set; }
