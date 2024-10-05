@@ -73,7 +73,7 @@ internal class PlayerManager(GameInstance game)
         const int pingInterval = 1000;
         var player = this.Players[socket];
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested && socket.State == WebSocketState.Open)
         {
             try
             {

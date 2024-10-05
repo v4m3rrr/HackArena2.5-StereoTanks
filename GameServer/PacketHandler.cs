@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text.Json;
 using GameLogic.Networking;
@@ -53,13 +53,18 @@ internal class PacketHandler(GameInstance game)
             }
             else if (result.MessageType == WebSocketMessageType.Close)
             {
-                if (game.SpectatorManager.IsSpectator(socket))
+                var isSpectator = game.SpectatorManager.IsSpectator(socket);
+
+                if (isSpectator)
                 {
                     game.SpectatorManager.RemoveSpectator(socket);
+                    Console.WriteLine("Spectator disconnected");
                 }
                 else
                 {
+                    var player = game.PlayerManager.Players[socket];
                     game.PlayerManager.RemovePlayer(socket);
+                    Console.WriteLine($"Player {player.Instance.Nickname} disconnected");
                 }
             }
         }

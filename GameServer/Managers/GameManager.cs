@@ -73,6 +73,15 @@ internal class GameManager(GameInstance game)
         {
             _ = game.SendSpectatorPacketAsync(spectator, packet, converters);
         }
+
+        var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
+
+        foreach (var client in clients)
+        {
+            _ = client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Game ended", CancellationToken.None);
+        }
+
+        Environment.Exit(0);
     }
 
     private async Task StartBroadcastingAsync()
