@@ -154,9 +154,16 @@ internal static class ServerConnection
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public static async Task CloseAsync(string descriptioin = "Closing")
     {
-        if (client.State == WebSocketState.Open)
+        try
         {
-            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, descriptioin, CancellationToken.None);
+            if (client.State == WebSocketState.Open)
+            {
+                await client.CloseAsync(WebSocketCloseStatus.NormalClosure, descriptioin, CancellationToken.None);
+            }
+        }
+        catch
+        {
+            // pass
         }
     }
 
