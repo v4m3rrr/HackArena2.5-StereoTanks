@@ -11,7 +11,6 @@ namespace GameServer;
 /// <param name="game">The game instance.</param>
 internal class PacketHandler(GameInstance game)
 {
-
 #if HACKATHON
 
     /// <summary>
@@ -22,7 +21,7 @@ internal class PacketHandler(GameInstance game)
     /// <summary>
     /// Gets the hackathon bot actions.
     /// </summary>
-    public readonly ConcurrentDictionary<Player, Action> HackathonBotActions = new();
+    public ConcurrentDictionary<Player, Action> HackathonBotActions { get; } = new();
 
 #endif
 
@@ -231,6 +230,10 @@ internal class PacketHandler(GameInstance game)
 
             case PacketType.TankShoot:
                 this.HandleShootTank(player);
+                break;
+
+            case PacketType.ResponsePass:
+                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.ActionIgnoredDueToDeadWarning });
                 break;
 
             default:

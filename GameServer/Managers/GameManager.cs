@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic.Networking;
 
@@ -86,6 +86,9 @@ internal class GameManager(GameInstance game)
 
     private async Task StartBroadcastingAsync()
     {
+        // Give some time for the clients to load the game
+        await PreciseTimer.PreciseDelay(game.Settings.BroadcastInterval);
+
         var stopwatch = new Stopwatch();
 
         while (this.Status is GameStatus.Running)
@@ -134,35 +137,25 @@ internal class GameManager(GameInstance game)
 #if HACKATHON
             var tcs = new TaskCompletionSource<bool>();
 
-            void Func(dynamic? s, dynamic e)
+            void EagerBroadcast(object? sender, Player player)
             {
-                lock (e)
+                lock (player)
                 {
-                    if (this.tick > 5 && game.Settings.EagerBroadcast && game.PlayerManager.Players.Values.All(x => x.IsHackathonBot))
+                    if (this.tick > 5 // Warm-up period
+                        && game.Settings.EagerBroadcast
+                        && game.PlayerManager.Players.Values.All(x => x.IsHackathonBot && x.HasMadeActionToCurrentGameState))
                     {
-                        var alivePlayers = game.PlayerManager.Players.Values.Where(x => !x.Instance.IsDead);
-                        if (alivePlayers.All(x => x.HasMadeActionToCurrentGameState))
-                        {
-                            _ = tcs.TrySetResult(true);
-                        }
+                        _ = tcs.TrySetResult(true);
                     }
                 }
             }
 
-            game.PacketHandler.HackathonBotMadeAction += Func;
-
             if (sleepTime > 0)
             {
+                game.PacketHandler.HackathonBotMadeAction += EagerBroadcast;
                 var delayTask = PreciseTimer.PreciseDelay(sleepTime);
-                var completedTask = await Task.WhenAny(delayTask, tcs.Task);
-                if (completedTask == tcs.Task)
-                {
-                    Console.WriteLine("All alive players returned their move, broadcasting early.");
-                }
-                else if (game.Settings.EagerBroadcast)
-                {
-                    Console.WriteLine("Not all alive players returned their move, broadcasting normally.");
-                }
+                await Task.WhenAny(delayTask, tcs.Task);
+                game.PacketHandler.HackathonBotMadeAction -= EagerBroadcast;
             }
 #else
             if (sleepTime > 0)
@@ -172,12 +165,12 @@ internal class GameManager(GameInstance game)
 #endif
             else
             {
-                Console.WriteLine("Game state broadcast took longer than expected!");
+                var broadcastTime = stopwatch.ElapsedMilliseconds;
+                var broadcastInterval = game.Settings.BroadcastInterval;
+                Console.WriteLine(
+                    $"[Tick {this.tick}] Game state broadcast took longer than expected! " +
+                    $"({broadcastTime}/{broadcastInterval} ms)");
             }
-
-#if HACKATHON
-            game.PacketHandler.HackathonBotMadeAction -= Func;
-#endif
         }
     }
 

@@ -104,6 +104,11 @@ public enum PacketType
     /// </summary>
     TankShoot = PlayerResponseActionGroup | HasPayload | 0x3,
 
+    /// <summary>
+    /// The reponse pass packet type.
+    /// </summary>
+    ResponsePass = PlayerResponseActionGroup | HasPayload | 0x7,
+
 #if DEBUG
 
     // GameState debug group (range: 0xC0 - 0xCF)
@@ -145,14 +150,19 @@ public enum PacketType
     WarningGroup = 0xE0,
 
     /// <summary>
+    /// The warning packet type with custom message.
+    /// </summary>
+    CustomWarning = WarningGroup | HasPayload | 0x1,
+
+    /// <summary>
     /// The already made movement packet type.
     /// </summary>
     PlayerAlreadyMadeActionWarning = WarningGroup | 0x2,
 
     /// <summary>
-    /// The warning packet type with custom message.
+    /// The action ignored packet type.
     /// </summary>
-    CustomWarning = WarningGroup | HasPayload | 0x3,
+    ActionIgnoredDueToDeadWarning = WarningGroup | 0x3,
 
     /// <summary>
     /// The slow response packet type.

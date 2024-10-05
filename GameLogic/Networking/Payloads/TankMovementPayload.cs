@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a tank movement direction payload.
 /// </summary>
-/// <param name="direction">The tank movement direction</param>
+/// <param name="direction">The tank movement direction.</param>
 public class TankMovementPayload(TankMovement direction) : IPacketPayload, IActionPayload
 {
     /// <inheritdoc/>

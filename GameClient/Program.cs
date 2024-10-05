@@ -1,18 +1,34 @@
 ﻿global using System.Diagnostics;
 using GameClient.Networking;
 
+namespace MonoTanks;
+
+/// <summary>
+/// Represents the MonoTanks game client.
+/// </summary>
+public static class Program
+{
+    /// <summary>
+    /// The main entry point for the application.
+    /// </summary>
+    [System.STAThread]
+    public static void Main()
+    {
+        var currentDomain = System.AppDomain.CurrentDomain;
+
 #if !DEBUG
-    var currentDomain = System.AppDomain.CurrentDomain;
-    currentDomain.UnhandledException += new System.UnhandledExceptionEventHandler(GameClient.CrashService.HandleCrash);
+        currentDomain.UnhandledException += new System.UnhandledExceptionEventHandler(GameClient.CrashService.HandleCrash);
 #endif
 
-System.AppDomain.CurrentDomain.ProcessExit += async(s, e) =>
-{
-    if (ServerConnection.IsConnected)
-    {
-        await ServerConnection.CloseAsync("Client exited");
-    }
-};
+        currentDomain.ProcessExit += async (s, e) =>
+        {
+            if (ServerConnection.IsConnected)
+            {
+                await ServerConnection.CloseAsync("Client exited");
+            }
+        };
 
-using var game = new GameClient.MonoTanks();
-game.Run();
+        using var game = new GameClient.MonoTanks();
+        game.Run();
+    }
+}
