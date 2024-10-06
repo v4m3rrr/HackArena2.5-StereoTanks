@@ -218,27 +218,33 @@ internal class PacketHandler(GameInstance game)
             }
         }
 
-        switch (packet.Type)
+        if (player.Instance.IsDead && packet.Type is not PacketType.ResponsePass)
         {
-            case PacketType.TankMovement:
-                this.HandleMoveTank(player, packet);
-                break;
+            _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.ActionIgnoredDueToDeadWarning });
+        }
+        else
+        {
+            switch (packet.Type)
+            {
+                case PacketType.TankMovement:
+                    this.HandleMoveTank(player, packet);
+                    break;
 
-            case PacketType.TankRotation:
-                this.HandleRotateTank(player, packet);
-                break;
+                case PacketType.TankRotation:
+                    this.HandleRotateTank(player, packet);
+                    break;
 
-            case PacketType.TankShoot:
-                this.HandleShootTank(player);
-                break;
+                case PacketType.TankShoot:
+                    this.HandleShootTank(player);
+                    break;
 
-            case PacketType.ResponsePass:
-                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.ActionIgnoredDueToDeadWarning });
-                break;
+                case PacketType.ResponsePass:
+                    break;
 
-            default:
-                Console.WriteLine($"Invalid packet type ({packet.Type}) in PlayerResponseGroup");
-                return;
+                default:
+                    Console.WriteLine($"Invalid packet type ({packet.Type}) in PlayerResponseGroup");
+                    return;
+            }
         }
 
         lock (player)
