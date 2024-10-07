@@ -150,15 +150,15 @@ internal static class ServerConnection
     /// <summary>
     /// Closes the WebSocket connection.
     /// </summary>
-    /// <param name="descriptioin">The description of the closing.</param>
+    /// <param name="description">The description of the closing.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public static async Task CloseAsync(string descriptioin = "Closing")
+    public static async Task CloseAsync(string description = "Closing")
     {
         try
         {
             if (client.State == WebSocketState.Open)
             {
-                await client.CloseAsync(WebSocketCloseStatus.NormalClosure, descriptioin, CancellationToken.None);
+                await client.CloseAsync(WebSocketCloseStatus.NormalClosure, description, CancellationToken.None);
             }
         }
         catch
