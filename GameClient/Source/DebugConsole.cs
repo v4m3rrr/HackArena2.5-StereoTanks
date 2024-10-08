@@ -75,6 +75,8 @@ internal partial class DebugConsole : Scene, IOverlayScene
             Value = sb.ToString(),
             AdjustTransformSizeToText = AdjustSizeOption.OnlyHeight,
         };
+
+        ScrollToBottom();
     }
 
     /// <summary>
@@ -276,8 +278,8 @@ internal partial class DebugConsole : Scene, IOverlayScene
 
             // After adding a new message, scroll to the bottom
             // if the scroll bar is at the bottom or has just appeared
-            messages.ComponentAdded += (s, e) => this.ScrollToBottom();
-            ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => this.ScrollToBottom();
+            messages.ComponentAdded += (s, e) => ScrollToBottom();
+            ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => ScrollToBottom();
 
         }
 #if DEBUG
@@ -285,6 +287,11 @@ internal partial class DebugConsole : Scene, IOverlayScene
 #endif
 
         SendMessage("Type 'help' to get list of available commands.", Color.White);
+    }
+
+    private static void ScrollToBottom()
+    {
+        ((ScrollableListBox)Instance.messages).ScrollBar.ScrollTo(1.0f);
     }
 
     private void Close()
