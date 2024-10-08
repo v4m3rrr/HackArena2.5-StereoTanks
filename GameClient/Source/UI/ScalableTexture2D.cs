@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
@@ -74,10 +74,8 @@ internal class ScalableTexture2D : TextureComponent
     public virtual void Load(bool overrideRatio = true)
     {
         var content = ContentController.Content;
-
         var svg = new SKSvg();
-        _ = svg.Load(content.RootDirectory + "/" + this.AssetPath);
-
+        _ = svg.Load(PathUtils.GetAbsolutePath(content.RootDirectory + "/" + this.AssetPath));
         int width = this.Transform.Size.X;
         int height = this.Transform.Size.Y;
 
@@ -119,7 +117,9 @@ internal class ScalableTexture2D : TextureComponent
     {
         if (!this.isLoaded)
         {
-            throw new InvalidOperationException("The texture has not been loaded yet.");
+            // TODO: Load the texture at the beginning of the game
+            // Line below is a temporary solution, mainly for Linux
+            this.Load();
         }
 
         base.Draw(gameTime);
@@ -153,7 +153,7 @@ internal class ScalableTexture2D : TextureComponent
         /// <inheritdoc/>
         public override void Load(bool overrideRatio = true)
         {
-            base.Load();
+            base.Load(overrideRatio);
             this.TextureChanged?.Invoke(this, EventArgs.Empty);
         }
     }

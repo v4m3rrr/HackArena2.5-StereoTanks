@@ -9,11 +9,10 @@ namespace GameClient;
 /// </summary>
 internal static class Localization
 {
-    private const string LanguageTranslationFile = "Content/Localization/{0}.xml";
-    private const string NativeLanguageNamesFile = "Content/Localization/NativeLanguageNames.xml";
-
-    private static readonly Dictionary<Language, string> NativeNames = new();
-    private static readonly Dictionary<string, string> Texts = new();
+    private static readonly string LanguageTranslationFile = PathUtils.GetAbsolutePath("Content/Localization/{0}.xml");
+    private static readonly string NativeLanguageNamesFile = PathUtils.GetAbsolutePath("Content/Localization/NativeLanguageNames.xml");
+    private static readonly Dictionary<Language, string> NativeNames = [];
+    private static readonly Dictionary<string, string> Texts = [];
 
     static Localization()
     {
@@ -71,7 +70,7 @@ internal static class Localization
         var root = xml.DocumentElement;
 
         var nodeNames = new List<string>();
-        foreach (XmlNode child in root.ChildNodes)
+        foreach (XmlNode child in root!.ChildNodes)
         {
             nodeNames.Add(child.Name);
         }

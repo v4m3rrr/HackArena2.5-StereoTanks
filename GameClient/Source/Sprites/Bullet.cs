@@ -12,7 +12,7 @@ namespace GameClient.Sprites;
 internal class Bullet : Sprite
 {
     private static readonly ScalableTexture2D.Static StaticTexture;
-    private static readonly float HeightPercentage;
+    private static float heightPercentage;
 
     private readonly ScalableTexture2D texture;
     private readonly GridComponent grid;
@@ -25,31 +25,37 @@ internal class Bullet : Sprite
     static Bullet()
     {
         StaticTexture = new ScalableTexture2D.Static("Images/Game/bullet_ts.svg");
-        StaticTexture.Load();
 
-        var data = new Color[StaticTexture.Texture.Width * StaticTexture.Texture.Height];
-        StaticTexture.Texture.GetData(data);
 
-        int firstHeight = -1;
-        int lastHeight = -1;
 
-        for (int i = 0; i < StaticTexture.Texture.Height; i++)
+        MonoTanks.InvokeOnMainThread(() =>
         {
-            for (int j = 0; j < StaticTexture.Texture.Width; j++)
-            {
-                if (data[(i * StaticTexture.Texture.Width) + j].A > 0)
-                {
-                    if (firstHeight == -1)
-                    {
-                        firstHeight = i;
-                    }
+            StaticTexture.Load();
 
-                    lastHeight = i;
+            var data = new Color[StaticTexture.Texture.Width * StaticTexture.Texture.Height];
+            StaticTexture.Texture.GetData(data);
+
+            int firstHeight = -1;
+            int lastHeight = -1;
+
+            for (int i = 0; i < StaticTexture.Texture.Height; i++)
+            {
+                for (int j = 0; j < StaticTexture.Texture.Width; j++)
+                {
+                    if (data[(i * StaticTexture.Texture.Width) + j].A > 0)
+                    {
+                        if (firstHeight == -1)
+                        {
+                            firstHeight = i;
+                        }
+
+                        lastHeight = i;
+                    }
                 }
             }
-        }
 
-        HeightPercentage = (float)(lastHeight - firstHeight) / StaticTexture.Texture.Height;
+            heightPercentage = (float)(lastHeight - firstHeight) / StaticTexture.Texture.Height;
+        });
     }
 
     /// <summary>
@@ -70,11 +76,13 @@ internal class Bullet : Sprite
             },
         };
 
+        this.texture.Load();
+
         this.grid = grid;
         this.UpdateLogic(logic);
         this.position = new Vector2(this.Logic.X, this.Logic.Y);
         var (nx, ny) = DirectionUtils.Normal(this.Logic.Direction);
-        this.position -= new Vector2(HeightPercentage) * new Vector2(nx, ny);
+        this.position -= new Vector2(heightPercentage) * new Vector2(nx, ny);
         this.skipNextPositionUpdate = true;
     }
 
@@ -101,7 +109,7 @@ internal class Bullet : Sprite
         {
             this.position = new Vector2(this.Logic.X, this.Logic.Y);
             var (nx, ny) = DirectionUtils.Normal(this.Logic.Direction);
-            this.position -= new Vector2(HeightPercentage) * new Vector2(nx, ny);
+            this.position -= new Vector2(heightPercentage) * new Vector2(nx, ny);
             this.skipNextPositionUpdate = true;
         }
     }
