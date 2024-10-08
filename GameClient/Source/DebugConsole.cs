@@ -122,6 +122,11 @@ internal partial class DebugConsole : Scene, IOverlayScene
             }
         }
 
+        if (KeyboardController.IsKeyHit(Keys.Tab))
+        {
+            Autocomplete();
+        }
+
         base.Update(gameTime);
     }
 
@@ -280,7 +285,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
             // if the scroll bar is at the bottom or has just appeared
             messages.ComponentAdded += (s, e) => ScrollToBottom();
             ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => ScrollToBottom();
-
         }
 #if DEBUG
         SendMessage("You are running in the DEBUG mode.", Color.Yellow);
@@ -292,6 +296,30 @@ internal partial class DebugConsole : Scene, IOverlayScene
     private static void ScrollToBottom()
     {
         ((ScrollableListBox)Instance.messages).ScrollBar.ScrollTo(1.0f);
+    }
+
+    private static void Autocomplete()
+    {
+        var incompleteCommand = Instance.textInput.Value;
+
+        if (incompleteCommand.Length <= 4)
+        {
+            return;
+        }
+
+        var bestMatch = CommandParser.GetCommand(incompleteCommand, out int threshold);
+
+        if (bestMatch == null)
+        {
+            return;
+        }
+
+        if (bestMatch.FullName.Length < incompleteCommand.Length)
+        {
+            return;
+        }
+
+        Instance.textInput.SetText(bestMatch.FullName);
     }
 
     private void Close()
