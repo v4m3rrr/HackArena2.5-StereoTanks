@@ -273,6 +273,12 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 DrawContentOnParentPadding = true,
                 ShowScrollBarIfNotNeeded = false,
             };
+
+            // After adding a new message, scroll to the bottom
+            // if the scroll bar is at the bottom or has just appeared
+            messages.ComponentAdded += (s, e) => this.ScrollToBottom();
+            ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => this.ScrollToBottom();
+
         }
 #if DEBUG
         SendMessage("You are running in the DEBUG mode.", Color.Yellow);
@@ -291,5 +297,10 @@ internal partial class DebugConsole : Scene, IOverlayScene
         {
             ChangeToPreviousOrDefaultWithoutStack<MainMenu>();
         }
+    }
+
+    private void ScrollToBottom()
+    {
+        ((ScrollableListBox)Instance.messages).ScrollBar.ScrollTo(1.0f);
     }
 }
