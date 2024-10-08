@@ -305,9 +305,4 @@ internal partial class DebugConsole : Scene, IOverlayScene
             ChangeToPreviousOrDefaultWithoutStack<MainMenu>();
         }
     }
-
-    private void ScrollToBottom()
-    {
-        ((ScrollableListBox)Instance.messages).ScrollBar.ScrollTo(1.0f);
-    }
 }
