@@ -44,6 +44,7 @@ internal static class JoinRoom
                 TextAlignment = Alignment.Center,
                 TextShrink = TextShrinkMode.HeightAndWidth,
                 Case = TextCase.Upper,
+                ClearAfterSend = false,
                 AdjustCaretHeightToFont = true,
             };
         },
