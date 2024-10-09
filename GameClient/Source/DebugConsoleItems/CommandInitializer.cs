@@ -1,17 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text;
-using GameClient.GameSceneComponents.PlayerBarComponents;
 using GameClient.Networking;
 using GameClient.Scenes;
 using GameClient.UI;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GameClient.DebugConsoleItems;
 
