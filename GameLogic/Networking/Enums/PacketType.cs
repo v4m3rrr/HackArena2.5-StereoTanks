@@ -179,10 +179,16 @@ public enum PacketType
     /// <summary>
     /// The invalid packet type.
     /// </summary>
+    /// <remarks>
+    /// Can be merged with <see cref="HasPayload"/>.
+    /// </remarks>
     InvalidPacketTypeError = ErrorGroup | 0x1,
 
     /// <summary>
     /// The invalid packet usage.
     /// </summary>
+    /// <remarks>
+    /// Can be merged with <see cref="HasPayload"/>.
+    /// </remarks>
     InvalidPacketUsageError = ErrorGroup | 0x2,
 }
