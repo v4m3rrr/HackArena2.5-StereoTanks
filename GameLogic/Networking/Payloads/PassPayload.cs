@@ -1,12 +1,12 @@
 ﻿namespace GameLogic.Networking;
 
 /// <summary>
-/// Represents a tank shoot payload.
+/// Represents a pass payload.
 /// </summary>
-public class TankShootPayload : IPacketPayload, IActionPayload
+public class PassPayload : IPacketPayload, IActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.TankShoot;
+    public PacketType Type => PacketType.Pass;
 
     /// <inheritdoc/>
     public string? GameStateId { get; init; }

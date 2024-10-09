@@ -15,7 +15,7 @@ internal class GameInputHandler
     private static readonly List<Func<IPacketPayload?>> Handlers = [
         () =>
         {
-            TankRotationPayload? payload = HandleTankRotationPayload();
+            RotationPayload? payload = HandleTankRotationPayload();
             payload = HandleTurretRotationPayload(payload);
             return payload;
         },
@@ -51,59 +51,59 @@ internal class GameInputHandler
         return payload;
     }
 
-    private static TankRotationPayload? HandleTankRotationPayload()
+    private static RotationPayload? HandleTankRotationPayload()
     {
-        TankRotationPayload? payload = null;
+        RotationPayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.A))
         {
-            return new TankRotationPayload() { TankRotation = Rotation.Left };
+            return new RotationPayload() { TankRotation = Rotation.Left };
         }
         else if (KeyboardController.IsKeyHit(Keys.D))
         {
-            return new TankRotationPayload() { TankRotation = Rotation.Right };
+            return new RotationPayload() { TankRotation = Rotation.Right };
         }
 
         return payload;
     }
 
-    private static TankRotationPayload? HandleTurretRotationPayload(TankRotationPayload? payload)
+    private static RotationPayload? HandleTurretRotationPayload(RotationPayload? payload)
     {
         if (KeyboardController.IsKeyHit(Keys.Q))
         {
-            payload = new TankRotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Left };
+            payload = new RotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Left };
         }
         else if (KeyboardController.IsKeyHit(Keys.E))
         {
-            payload = new TankRotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Right };
+            payload = new RotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Right };
         }
 
         return payload;
     }
 
-    private static TankMovementPayload? HandleTankMovementPayload()
+    private static MovementPayload? HandleTankMovementPayload()
     {
-        TankMovementPayload? payload = null;
+        MovementPayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.W))
         {
-            payload = new TankMovementPayload(TankMovement.Forward);
+            payload = new MovementPayload(MovementDirection.Forward);
         }
         else if (KeyboardController.IsKeyHit(Keys.S))
         {
-            payload = new TankMovementPayload(TankMovement.Backward);
+            payload = new MovementPayload(MovementDirection.Backward);
         }
 
         return payload;
     }
 
-    private static TankShootPayload? HandleTankShootPayload()
+    private static AbilityUsePayload? HandleTankShootPayload()
     {
-        TankShootPayload? payload = null;
+        AbilityUsePayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.Space))
         {
-            payload = new TankShootPayload();
+            payload = new AbilityUsePayload(AbilityType.FireBullet);
         }
 
         return payload;

@@ -1,12 +1,12 @@
 ﻿namespace GameLogic.Networking;
 
 /// <summary>
-/// Represents a tank rotation payload.
+/// Represents a rotation payload.
 /// </summary>
-public class TankRotationPayload : IPacketPayload, IActionPayload
+public class RotationPayload : IPacketPayload, IActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.TankRotation;
+    public PacketType Type => PacketType.Rotation;
 
     /// <inheritdoc/>
     public string? GameStateId { get; init; }
