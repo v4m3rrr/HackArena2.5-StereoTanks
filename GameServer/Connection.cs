@@ -74,6 +74,38 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
         }
     }
 
+    /// <summary>
+    /// Closes the connection.
+    /// </summary>
+    /// <param name="status">The status of the close.</param>
+    /// <param name="description">The description of the close.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task CloseAsync(
+        WebSocketCloseStatus status = WebSocketCloseStatus.NormalClosure,
+        string description = "Closing",
+        CancellationToken cancellationToken = default)
+    {
+        await this.SendPacketSemaphore.WaitAsync(cancellationToken);
+
+        try
+        {
+            await this.Socket.CloseAsync(status, description, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[ERROR] Error while closing the connection:");
+            Console.WriteLine("[^^^^^] Status: {0}", status);
+            Console.WriteLine("[^^^^^] Description: {0}", description);
+            Console.WriteLine("[^^^^^] Connection: {0}", this);
+            Console.WriteLine("[^^^^^] Message: {0}", ex.Message);
+        }
+        finally
+        {
+            _ = this.SendPacketSemaphore.Release();
+        }
+    }
+
     /// <inheritdoc/>
     public override string ToString()
     {

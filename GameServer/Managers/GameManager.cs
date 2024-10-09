@@ -63,7 +63,7 @@ internal class GameManager(GameInstance game)
             var task = Task.Run(async () =>
             {
                 await packet.SendAsync(connection);
-                await connection.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Game ended", CancellationToken.None);
+                await connection.CloseAsync(description: "Game ended");
             });
             tasks.Add(task);
         }

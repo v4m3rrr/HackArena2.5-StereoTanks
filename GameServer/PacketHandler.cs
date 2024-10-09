@@ -28,24 +28,29 @@ internal class PacketHandler(GameInstance game)
     /// <summary>
     /// Handles the connection.
     /// </summary>
-    /// <param name="socket">The socket of the connection.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task HandleConnection(WebSocket socket)
+    /// <param name="connection">The connection to handle.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task HandleConnection(Connection connection)
     {
-        while (socket.State == WebSocketState.Open)
+        while (connection.Socket.State == WebSocketState.Open)
         {
             var buffer = new byte[1024 * 32];
             WebSocketReceiveResult result;
             try
             {
-                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                result = await connection.Socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
             catch (WebSocketException ex)
             {
                 Console.WriteLine("[ERROR] Receiving a message failed: ");
                 Console.WriteLine("[^^^^^] {0}", ex.Message);
                 Console.WriteLine("[^^^^^] Closing the connection with InternalServerError.");
-                await socket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Internal server error", CancellationToken.None);
+
+                await connection.CloseAsync(
+                    WebSocketCloseStatus.InternalServerError,
+                    "Internal server error",
+                    CancellationToken.None);
+
                 break;
             }
 
@@ -53,19 +58,23 @@ internal class PacketHandler(GameInstance game)
             {
                 Console.WriteLine("[WARN] Received message is too big");
                 Console.WriteLine("[^^^^] Closing the connection with MessageTooBig.");
-                await socket.CloseAsync(WebSocketCloseStatus.MessageTooBig, "Message too big", CancellationToken.None);
+
+                await connection.CloseAsync(
+                    WebSocketCloseStatus.MessageTooBig,
+                    "Message too big",
+                    CancellationToken.None);
+
                 break;
             }
 
             if (result.MessageType == WebSocketMessageType.Text)
             {
-                var connection = game.GetConnection(socket);
                 this.HandleBuffer(connection, buffer);
             }
             else if (result.MessageType == WebSocketMessageType.Close)
             {
-                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-                game.RemoveConnection(socket);
+                await connection.CloseAsync();
+                game.RemoveConnection(connection.Socket);
             }
         }
     }

@@ -163,19 +163,6 @@ internal class GameInstance
     }
 
     /// <summary>
-    /// Gets a connection.
-    /// </summary>
-    /// <param name="socket">The socket of the connection to get.</param>
-    /// <returns>The connection.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown when the connection is not found.</exception>
-    public Connection GetConnection(WebSocket socket)
-    {
-        return !this.connections.TryGetValue(socket, out var connection)
-            ? throw new KeyNotFoundException($"Connection not found for socket: {socket}")
-            : connection;
-    }
-
-    /// <summary>
     /// Handles the start of the game.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
@@ -187,14 +174,5 @@ internal class GameInstance
         }
 
         this.GameManager.StartGame();
-    }
-
-    /// <summary>
-    /// Handles a connection.
-    /// </summary>
-    /// <param name="socket">The socket of the client to handle.</param>
-    public void HandleConnection(WebSocket socket)
-    {
-        _ = Task.Run(() => this.PacketHandler.HandleConnection(socket));
     }
 }

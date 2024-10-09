@@ -211,7 +211,7 @@ async Task<Task> HandlePlayerConnection(
 
     await AcceptConnection(connection);
     game.AddConnection(connection);
-    game.HandleConnection(socket);
+    _ = Task.Run(() => game.PacketHandler.HandleConnection(connection));
 
     var pingCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
     _ = Task.Run(() => PingClientLoop(connection, pingCts.Token), pingCts.Token);
@@ -256,7 +256,7 @@ async Task<Task> HandleSpectatorConnection(
     var connection = new SpectatorConnection(context, socket, connectionData);
     await AcceptConnection(connection);
     game.AddConnection(connection);
-    game.HandleConnection(socket);
+    _ = Task.Run(() => game.PacketHandler.HandleConnection(connection));
 
     var pingCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
     _ = Task.Run(() => PingClientLoop(connection, pingCts.Token), pingCts.Token);
@@ -328,7 +328,7 @@ async Task RejectConnection(Connection connection, string reason)
     var payload = new ConnectionRejectedPayload(reason);
     var packet = new ResponsePacket(payload);
     await packet.SendAsync(connection);
-    await connection.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
+    await connection.CloseAsync(description: reason);
 }
 
 /// <summary>
