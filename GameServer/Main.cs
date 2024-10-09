@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Specialized;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -13,7 +12,7 @@ if (opts is null)
     return;
 }
 
-Console.WriteLine($"Listening on http://{opts.Host}:{opts.Port}/");
+Console.WriteLine($"[INFO] Listening on http://{opts.Host}:{opts.Port}/\n");
 
 var listener = new HttpListener();
 listener.Prefixes.Add($"http://{opts.Host}:{opts.Port}/");
@@ -21,12 +20,24 @@ listener.Start();
 
 opts.Seed ??= new Random().Next();
 
-Console.WriteLine("Server started.");
-Console.WriteLine("Seed: " + opts.Seed);
-Console.WriteLine("Broadcast interval: " + opts.BroadcastInterval);
-Console.WriteLine("Ticks: " + opts.Ticks);
-Console.WriteLine("Join code: " + opts.JoinCode);
-Console.WriteLine("Number of players: " + opts.NumberOfPlayers);
+#if DEBUG
+Console.WriteLine("[INFO] Debug mode is enabled.");
+#endif
+
+#if HACKATHON
+Console.WriteLine("[INFO] Hackathon mode is enabled.");
+#endif
+
+#if DEBUG || HACKATHON
+Console.WriteLine();
+#endif
+
+Console.WriteLine("[INFO] Server started.");
+Console.WriteLine("[INFO] Seed: " + opts.Seed);
+Console.WriteLine("[INFO] Broadcast interval: " + opts.BroadcastInterval);
+Console.WriteLine("[INFO] Ticks: " + opts.Ticks);
+Console.WriteLine("[INFO] Join code: " + opts.JoinCode);
+Console.WriteLine("[INFO] Number of players: " + opts.NumberOfPlayers);
 
 string? saveReplayPath = null;
 if (opts.SaveReplay)
@@ -35,16 +46,20 @@ if (opts.SaveReplay)
         ? Path.GetFullPath(opts.ReplayFilepath)
         : Path.GetFullPath($"Replay_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json");
 
-    Console.WriteLine("The replay will be saved to: " + saveReplayPath);
+    Console.WriteLine("[INFO] Replay will be saved to:");
+    Console.WriteLine("[^^^^] " + saveReplayPath);
 }
 
 #if HACKATHON
-Console.WriteLine("Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
+Console.WriteLine("[INFO] Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
 #endif
 
-Console.WriteLine("\nPress Ctrl+C to stop the server.\n");
+Console.WriteLine("\n[INFO] Press Ctrl+C to stop the server.\n");
 
-var game = new GameInstance(opts, saveReplayPath);
+var game = saveReplayPath is not null 
+    ? new GameInstance(opts, saveReplayPath)
+    : new GameInstance(opts);
+
 game.Grid.GenerateMap();
 
 var failedAttempts = new ConcurrentDictionary<string, (int Attempts, DateTime LastAttempt)>();
@@ -59,7 +74,6 @@ while (true)
 
 async Task HandleRequest(HttpListenerContext context)
 {
-    string clientIP = context.Request.RemoteEndPoint.Address.ToString();
     string absolutePath = context.Request.Url?.AbsolutePath ?? string.Empty;
 
     if (!context.Request.IsWebSocketRequest)
@@ -73,13 +87,28 @@ async Task HandleRequest(HttpListenerContext context)
     }
 
     var webSocketContext = await context.AcceptWebSocketAsync(null);
-    var webSocket = webSocketContext.WebSocket;
+    var socket = webSocketContext.WebSocket;
 
-    Console.WriteLine($"Request from {clientIP} ({context.Request.Url})");
-
-    if (IsIpBlocked(clientIP))
+    if (!Enum.TryParse(
+        context.Request.QueryString["typeOfPacketType"] ?? "Int",
+        ignoreCase: true,
+        out TypeOfPacketType typeOfPacketType))
     {
-        await RejectConnection(context, webSocket, "TooManyFailedAttempts");
+        await RejectConnection(
+            new UnknownConnection(context, socket, typeOfPacketType),
+            "InvalidTypOfPacketType");
+        return;
+    }
+
+    var unknownConnection = new UnknownConnection(context, socket, typeOfPacketType);
+
+#if DEBUG
+    Console.WriteLine($"[INFO] Request from {unknownConnection.Ip} ({context.Request.Url})");
+#endif
+
+    if (IsIpBlocked(unknownConnection.Ip))
+    {
+        await RejectConnection(unknownConnection, "TooManyFailedAttempts");
         return;
     }
 
@@ -88,51 +117,49 @@ async Task HandleRequest(HttpListenerContext context)
     if (!IsJoinCodeValid(joinCode))
     {
         RegisterFailedAttempt(context.Request.RemoteEndPoint.Address.ToString());
-        await RejectConnection(context, webSocket, "InvalidJoinCode");
+        await RejectConnection(unknownConnection, "InvalidJoinCode");
         return;
     }
 
     if (absolutePath.Equals("/spectator", StringComparison.OrdinalIgnoreCase))
     {
-        await await HandleSpectatorConnection(context, webSocket);
+        await await HandleSpectatorConnection(context, socket, unknownConnection);
     }
     else if (absolutePath.Equals("/") || string.IsNullOrEmpty(absolutePath))
     {
-        await await HandlePlayerConnection(context, webSocket);
+        await await HandlePlayerConnection(context, socket, unknownConnection);
     }
     else
     {
-        await RejectConnection(context, webSocket, "InvalidUrlPath");
+        unknownConnection.TargetType = absolutePath[1..];
+        await RejectConnection(unknownConnection, "InvalidUrlPath");
     }
 }
 
-async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket webSocket)
+async Task<Task> HandlePlayerConnection(
+    HttpListenerContext context,
+    WebSocket socket,
+    UnknownConnection unknownConnection)
 {
-    if (!Enum.TryParse(
-        context.Request.QueryString["typeOfPacketType"] ?? "Int",
-        ignoreCase: true,
-        out TypeOfPacketType typeOfPacketType))
-    {
-        return RejectConnection(context, webSocket, "InvalidTypOfPacketType");
-    }
+    unknownConnection.TargetType = "Player";
 
     string? nickname = context.Request.QueryString["nickname"]?.ToUpper();
 
     if (string.IsNullOrEmpty(nickname))
     {
-        return RejectConnection(context, webSocket, "MissingNickname");
+        return RejectConnection(unknownConnection, "MissingNickname");
     }
 
     string? playerType = context.Request.QueryString["playerType"];
 
     if (string.IsNullOrEmpty(playerType))
     {
-        return RejectConnection(context, webSocket, "MissingPlayerType");
+        return RejectConnection(unknownConnection, "MissingPlayerType");
     }
 
     if (!Enum.TryParse(playerType, ignoreCase: true, out PlayerType type))
     {
-        return RejectConnection(context, webSocket, "InvalidPlayerType");
+        return RejectConnection(unknownConnection, "InvalidPlayerType");
     }
 
 #if DEBUG
@@ -140,12 +167,13 @@ async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket w
 #endif
 
     GameLogic.Player player;
+    PlayerConnection connection;
 
-    lock (game.PlayerManager.Players)
+    lock (game.Players)
     {
-        if (game.PlayerManager.Players.Count >= opts.NumberOfPlayers)
+        if (game.Players.Count() >= opts.NumberOfPlayers)
         {
-            return RejectConnection(context, webSocket, "GameFull");
+            return RejectConnection(unknownConnection, "GameFull");
         }
 
         if (NicknameAlreadyExists(nickname))
@@ -165,24 +193,28 @@ async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket w
             else
 #endif
             {
-                return RejectConnection(context, webSocket, "NicknameExists");
+                return RejectConnection(unknownConnection, "NicknameExists");
             }
         }
 
+        var connectionData = new ConnectionData.Player(nickname, type, unknownConnection.TypeOfPacketType)
 #if DEBUG
-        var playerConnectionData = new PlayerConnectionData(nickname, type, typeOfPacketType, quickJoin);
-#else
-        var playerConnectionData = new PlayerConnectionData(nickname, type, typeOfPacketType);
+        {
+            QuickJoin = quickJoin,
+        }
 #endif
+        ;
 
-        player = game.PlayerManager.AddPlayer(webSocket, playerConnectionData);
+        player = game.PlayerManager.CreatePlayer(socket, connectionData);
+        connection = new PlayerConnection(context, socket, connectionData, player);
     }
 
-    game.HandleConnection(webSocket);
-    await AcceptConnection(context, webSocket);
+    await AcceptConnection(connection);
+    game.AddConnection(connection);
+    _ = Task.Run(() => game.PacketHandler.HandleConnection(connection));
 
-    var playerCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
-    _ = Task.Run(() => game.PlayerManager.PingPlayerLoop(webSocket, playerCts.Token), playerCts.Token);
+    var pingCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
+    _ = Task.Run(() => PingClientLoop(connection, pingCts.Token), pingCts.Token);
 
     if (game.GameManager.Status is GameStatus.InLobby)
     {
@@ -193,24 +225,41 @@ async Task<Task> HandlePlayerConnection(HttpListenerContext context, WebSocket w
     if (quickJoin)
     {
         game.GameManager.StartGame();
-        _ = Task.Run(() => game.LobbyManager.SendLobbyDataToPlayer(webSocket, player.Id));
+        await game.LobbyManager.SendGameStartTo(connection);
     }
 #endif
 
     return Task.CompletedTask;
 }
 
-async Task<Task> HandleSpectatorConnection(HttpListenerContext context, WebSocket webSocket)
+async Task<Task> HandleSpectatorConnection(
+    HttpListenerContext context,
+    WebSocket socket,
+    UnknownConnection unknownConnection)
 {
+    unknownConnection.TargetType = "Spectator";
+
     string? joinCode = context.Request.QueryString["joinCode"];
 
 #if DEBUG
     _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
 #endif
 
-    game.SpectatorManager.AddSpectator(webSocket);
-    game.HandleConnection(webSocket);
-    await AcceptConnection(context, webSocket);
+    var connectionData = new ConnectionData(unknownConnection.TypeOfPacketType)
+#if DEBUG
+    {
+        QuickJoin = quickJoin,
+    }
+#endif
+    ;
+
+    var connection = new SpectatorConnection(context, socket, connectionData);
+    await AcceptConnection(connection);
+    game.AddConnection(connection);
+    _ = Task.Run(() => game.PacketHandler.HandleConnection(connection));
+
+    var pingCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
+    _ = Task.Run(() => PingClientLoop(connection, pingCts.Token), pingCts.Token);
 
 #if DEBUG
     if (quickJoin)
@@ -222,7 +271,7 @@ async Task<Task> HandleSpectatorConnection(HttpListenerContext context, WebSocke
     await Task.Delay(500);
 #endif
 
-    await game.LobbyManager.SendLobbyDataToSpectator(webSocket);
+    await game.LobbyManager.SendLobbyDataTo(connection);
 
     return Task.CompletedTask;
 }
@@ -234,7 +283,7 @@ bool IsJoinCodeValid(string? joinCode)
 
 bool NicknameAlreadyExists(string nickname)
 {
-    return game.PlayerManager.Players.Values.Any(p => p.Instance.Nickname == nickname);
+    return game.Players.Any(p => p.Instance.Nickname == nickname);
 }
 
 bool IsIpBlocked(string clientIP)
@@ -263,42 +312,57 @@ void RegisterFailedAttempt(string clientIP)
         (key, oldValue) => (oldValue.Attempts + 1, DateTime.Now));
 }
 
-async Task AcceptConnection(HttpListenerContext context, WebSocket socket)
+async Task AcceptConnection(Connection connection)
 {
-    var typeOfPacketType = GetTypeOfPacketTypeFromQueryString(context.Request.QueryString);
     var payload = new EmptyPayload() { Type = PacketType.ConnectionAccepted };
-    var options = new SerializationOptions() { TypeOfPacketType = typeOfPacketType };
-    var buffer = PacketSerializer.ToByteArray(payload, [], options);
-
-    Console.WriteLine($"Connection from {context.Request.RemoteEndPoint.Address} accepted.");
-
-    Monitor.Enter(socket);
-
-    try
-    {
-        await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-    }
-    finally
-    {
-        Monitor.Exit(socket);
-    }
+    var packet = new ResponsePacket(payload);
+    await packet.SendAsync(connection);
 }
 
-async Task RejectConnection(HttpListenerContext context, WebSocket socket, string message)
+async Task RejectConnection(Connection connection, string reason)
 {
-    var typeOfPacketType = GetTypeOfPacketTypeFromQueryString(context.Request.QueryString);
-    var payload = new ConnectionRejectedPayload(message);
-    var options = new SerializationOptions() { TypeOfPacketType = typeOfPacketType };
-    var buffer = PacketSerializer.ToByteArray(payload, [], options);
+    Console.WriteLine("[INFO] Connection rejected.");
+    Console.WriteLine("[^^^^] Client: {0}", connection);
+    Console.WriteLine("[^^^^] Reason: {0}", reason);
 
-    Console.WriteLine($"Connection from {context.Request.RemoteEndPoint.Address} rejected: {message}.");
-
-    await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+    var payload = new ConnectionRejectedPayload(reason);
+    var packet = new ResponsePacket(payload);
+    await packet.SendAsync(connection);
+    await connection.CloseAsync(description: reason);
 }
 
-TypeOfPacketType GetTypeOfPacketTypeFromQueryString(NameValueCollection queryString)
+/// <summary>
+/// Pings a player in a loop.
+/// </summary>
+/// <param name="socket">The socket of the player.</param>
+/// <param name="cancellationToken">The cancellation token that can be used to cancel the ping loop.</param>
+/// <returns>A task representing the asynchronous operation.</returns>
+async Task PingClientLoop(Connection connection, CancellationToken cancellationToken)
 {
-    return Enum.TryParse(queryString["typeOfPacketType"], ignoreCase: true, out TypeOfPacketType t)
-        ? t : TypeOfPacketType.Int;
+    const int pingInterval = 1000;
+
+    while (!cancellationToken.IsCancellationRequested && connection.Socket.State == WebSocketState.Open)
+    {
+        try
+        {
+            var payload = new EmptyPayload() { Type = PacketType.Ping };
+            var packet = new ResponsePacket(payload);
+            await packet.SendAsync(connection);
+            connection.LastPingSentTime = DateTime.UtcNow;
+            await Task.Delay(pingInterval, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            break;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[WARN] Failed to ping client.");
+            Console.WriteLine("[^^^^] Client: {0}", connection);
+            Console.WriteLine("[^^^^] Exception: {0}", ex.Message);
+
+            // A small delay to prevent tight loop in case of persistent errors
+            await Task.Delay(100, cancellationToken);
+        }
+    }
 }
