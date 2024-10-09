@@ -1,7 +1,8 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
-using Newtonsoft.Json;
 
 namespace GameServer;
 
@@ -10,12 +11,13 @@ namespace GameServer;
 /// </summary>
 internal class GameInstance
 {
+    private readonly ConcurrentDictionary<WebSocket, Connection> connections = new();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
     /// <param name="options">The command line options.</param>
-    /// <param name="replayPath">The path to save the replay.</param>
-    public GameInstance(CommandLineOptions options, string? saveReplayPath)
+    public GameInstance(CommandLineOptions options)
     {
         int seed = options.Seed!.Value;
         int dimension = options.GridDimension;
@@ -37,19 +39,51 @@ internal class GameInstance
         this.Grid = new Grid(dimension, seed);
 
         this.LobbyManager = new LobbyManager(this);
-        this.GameManager = new GameManager(this, saveReplayPath);
+        this.GameManager = new GameManager(this);
         this.PlayerManager = new PlayerManager(this);
-        this.SpectatorManager = new SpectatorManager();
         this.PacketHandler = new PacketHandler(this);
+        this.PayloadHelper = new PayloadHelper(this);
 
         PacketSerializer.ExceptionThrew += (Exception ex) =>
         {
-            Console.WriteLine(
-                $"[ERROR] An error has been thrown in the PacketSerializer: {ex.Message}");
+            Console.WriteLine("[ERROR] An error has been thrown in the PacketSerializer:");
+            Console.WriteLine("[^^^^^] {0}", ex.Message);
         };
 
         _ = Task.Run(this.HandleStartGame);
     }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GameInstance"/> class.
+    /// </summary>
+    /// <param name="options">The command line options.</param>
+    /// <param name="replayPath">The path to save the replay.</param>
+    public GameInstance(CommandLineOptions options, string replayPath)
+        : this(options)
+    {
+        Debug.Assert(options.SaveReplay, "Replay path provided without saving replay.");
+        this.ReplayManager = new ReplayManager(this, replayPath);
+    }
+
+    /// <summary>
+    /// Gets the connections.
+    /// </summary>
+    public IEnumerable<Connection> Connections => this.connections.Values;
+
+    /// <summary>
+    /// Gets the connection sockets.
+    /// </summary>
+    public IEnumerable<WebSocket> ConnectionSockets => this.connections.Keys;
+
+    /// <summary>
+    /// Gets the player connections.
+    /// </summary>
+    public IEnumerable<PlayerConnection> Players => this.connections.Values.OfType<PlayerConnection>();
+
+    /// <summary>
+    /// Gets the spectator connections.
+    /// </summary>
+    public IEnumerable<SpectatorConnection> Spectators => this.connections.Values.OfType<SpectatorConnection>();
 
     /// <summary>
     /// Gets the lobby manager.
@@ -67,9 +101,9 @@ internal class GameInstance
     public PlayerManager PlayerManager { get; }
 
     /// <summary>
-    /// Gets the spectator manager.
+    /// Gets the replay manager.
     /// </summary>
-    public SpectatorManager SpectatorManager { get; }
+    public ReplayManager? ReplayManager { get; }
 
     /// <summary>
     /// Gets the packet handler.
@@ -82,9 +116,64 @@ internal class GameInstance
     public ServerSettings Settings { get; }
 
     /// <summary>
+    /// Gets the payload helper.
+    /// </summary>
+    public PayloadHelper PayloadHelper { get; }
+
+    /// <summary>
     /// Gets the grid of the game.
     /// </summary>
     public Grid Grid { get; private set; }
+
+    /// <summary>
+    /// Adds a connection.
+    /// </summary>
+    /// <param name="connection">The connection to add.</param>
+    public void AddConnection(Connection connection)
+    {
+        if (this.connections.TryAdd(connection.Socket, connection))
+        {
+            Console.WriteLine($"[INFO] Connection added: {connection}");
+        }
+        else
+        {
+            Console.WriteLine($"[ERROR] Failed to add connection: {connection}");
+        }
+    }
+
+    /// <summary>
+    /// Removes a connection.
+    /// </summary>
+    /// <param name="socket">The socket of the connection to remove.</param>
+    public void RemoveConnection(WebSocket socket)
+    {
+        if (this.connections.TryRemove(socket, out var connection))
+        {
+            Console.WriteLine($"[INFO] Connection removed: {connection}.");
+        }
+        else
+        {
+            Console.WriteLine($"[ERROR] Failed to remove connection: {connection}.");
+        }
+
+        if (connection is PlayerConnection player)
+        {
+            this.PlayerManager.RemovePlayer(player);
+        }
+    }
+
+    /// <summary>
+    /// Gets a connection.
+    /// </summary>
+    /// <param name="socket">The socket of the connection to get.</param>
+    /// <returns>The connection.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the connection is not found.</exception>
+    public Connection GetConnection(WebSocket socket)
+    {
+        return !this.connections.TryGetValue(socket, out var connection)
+            ? throw new KeyNotFoundException($"Connection not found for socket: {socket}")
+            : connection;
+    }
 
     /// <summary>
     /// Handles the start of the game.
@@ -92,7 +181,7 @@ internal class GameInstance
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task HandleStartGame()
     {
-        while (this.GameManager.Status is GameStatus.InLobby && this.PlayerManager.Players.Count < this.Settings.NumberOfPlayers)
+        while (this.GameManager.Status is GameStatus.InLobby && this.Players.Count() < this.Settings.NumberOfPlayers)
         {
             await Task.Delay(1000);
         }
@@ -107,93 +196,5 @@ internal class GameInstance
     public void HandleConnection(WebSocket socket)
     {
         _ = Task.Run(() => this.PacketHandler.HandleConnection(socket));
-    }
-
-    /// <summary>
-    /// Sends a packet to a player or a spectator.
-    /// </summary>
-    /// <param name="socket">The socket of the player or spectator to send the packet to.</param>
-    /// <param name="packet">The packet to send.</param>
-    /// <param name="converters">The converters to use when serializing the packet.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task SendPacketAsync(
-        WebSocket socket,
-        IPacketPayload packet,
-        List<JsonConverter>? converters = null)
-    {
-        if (this.PlayerManager.Players.ContainsKey(socket))
-        {
-            await this.SendPlayerPacketAsync(socket, packet, converters);
-        }
-        else if (this.SpectatorManager.Spectators.ContainsKey(socket))
-        {
-            await this.SendSpectatorPacketAsync(socket, packet, converters);
-        }
-        else
-        {
-            Console.WriteLine(
-                "ERROR WHILE SENDING PACKET (SendPacketAsync): The socket is not a player or a spectator.");
-        }
-    }
-
-    /// <summary>
-    /// Sends a packet to a player.
-    /// </summary>
-    /// <param name="socket">The socket of the player to send the packet to.</param>
-    /// <param name="packet">The packet to send.</param>
-    /// <param name="converters">The converters to use when serializing the packet.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task SendPlayerPacketAsync(
-        WebSocket socket,
-        IPacketPayload packet,
-        List<JsonConverter>? converters = null)
-    {
-        var options = new SerializationOptions() { TypeOfPacketType = this.PlayerManager.Players[socket].ConnectionData.TypeOfPacketType };
-        var buffer = PacketSerializer.ToByteArray(packet, converters ?? [], options);
-
-        Monitor.Enter(socket);
-
-        try
-        {
-            await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("ERROR WHILE SENDING PACKET (SendPlayerPacketAsync): " + e.Message);
-        }
-        finally
-        {
-            Monitor.Exit(socket);
-        }
-    }
-
-    /// <summary>
-    /// Sends a packet to a spectator.
-    /// </summary>
-    /// <param name="socket">The socket of the spectator to send the packet to.</param>
-    /// <param name="packet">The packet to send.</param>
-    /// <param name="converters">The converters to use when serializing the packet.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task SendSpectatorPacketAsync(
-        WebSocket socket,
-        IPacketPayload packet,
-        List<JsonConverter>? converters = null)
-    {
-        var buffer = PacketSerializer.ToByteArray(packet, converters ?? [], SerializationOptions.Default);
-
-        Monitor.Enter(socket);
-
-        try
-        {
-            await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("ERROR WHILE SENDING PACKET (SendSpectatorPacketAsync): " + e.Message);
-        }
-        finally
-        {
-            Monitor.Exit(socket);
-        }
     }
 }

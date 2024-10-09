@@ -16,12 +16,12 @@ internal class PacketHandler(GameInstance game)
     /// <summary>
     /// Occurs when a bot made an action.
     /// </summary>
-    public event EventHandler<Player>? HackathonBotMadeAction;
+    public event EventHandler<PlayerConnection>? HackathonBotMadeAction;
 
     /// <summary>
     /// Gets the hackathon bot actions.
     /// </summary>
-    public ConcurrentDictionary<Player, Action> HackathonBotActions { get; } = new();
+    public ConcurrentDictionary<PlayerConnection, Action> HackathonBotActions { get; } = new();
 
 #endif
 
@@ -40,73 +40,83 @@ internal class PacketHandler(GameInstance game)
             {
                 result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
-            catch (WebSocketException)
+            catch (WebSocketException ex)
             {
+                Console.WriteLine("[ERROR] Receiving a message failed: ");
+                Console.WriteLine("[^^^^^] {0}", ex.Message);
+                Console.WriteLine("[^^^^^] Closing the connection with InternalServerError.");
                 await socket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Internal server error", CancellationToken.None);
+                break;
+            }
+
+            if (!result.EndOfMessage)
+            {
+                Console.WriteLine("[WARN] Received message is too big");
+                Console.WriteLine("[^^^^] Closing the connection with MessageTooBig.");
+                await socket.CloseAsync(WebSocketCloseStatus.MessageTooBig, "Message too big", CancellationToken.None);
                 break;
             }
 
             if (result.MessageType == WebSocketMessageType.Text)
             {
-                await this.HandleBuffer(socket, buffer);
+                var connection = game.GetConnection(socket);
+                this.HandleBuffer(connection, buffer);
             }
             else if (result.MessageType == WebSocketMessageType.Close)
             {
-                var isSpectator = game.SpectatorManager.IsSpectator(socket);
-
-                if (isSpectator)
-                {
-                    game.SpectatorManager.RemoveSpectator(socket);
-                    Console.WriteLine("Spectator disconnected");
-                }
-                else
-                {
-                    var player = game.PlayerManager.Players[socket];
-                    game.PlayerManager.RemovePlayer(socket);
-                    Console.WriteLine($"Player {player.Instance.Nickname} disconnected");
-                }
+                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                game.RemoveConnection(socket);
             }
         }
     }
 
-    private async Task HandleBuffer(WebSocket socket, byte[] buffer)
+    private void HandleBuffer(Connection connection, byte[] buffer)
     {
-        Packet packet;
+        GameLogic.Networking.Packet packet;
+
         try
         {
             packet = PacketSerializer.Deserialize(buffer);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine("ERROR WHILE DESERIALIZING PACKET (HandleBuffer): " + e.Message);
+            Console.WriteLine("[ERROR] Packet deserialization failed: ");
+            Console.WriteLine("[^^^^^] Sender: {0}", connection);
+            Console.WriteLine("[^^^^^] Message: {0}", ex.Message);
             return;
         }
 
         bool isHandled = false;
 
-        if (!game.SpectatorManager.IsSpectator(socket))
+        if (connection is PlayerConnection player)
         {
-            isHandled = this.HandlePlayerPacket(socket, packet);
+            isHandled = this.HandlePlayerPacket(player, packet);
+        }
+        else if (connection is SpectatorConnection spectator)
+        {
+            isHandled = this.HandleSpectatorPacket(spectator, packet);
         }
 
-        isHandled |= await this.HandleOtherPacket(socket, packet);
+#if DEBUG
+        isHandled |= this.HandleDebugPacket(connection, packet);
+#endif
 
         if (!isHandled)
         {
-            Console.WriteLine($"Invalid packet type ({packet.Type})");
+            Console.WriteLine($"[WARN] Packet type ({packet.Type}) cannot be handled.");
+            Console.WriteLine($"[^^^^] Sender: {connection}");
 
             var payload = new ErrorPayload(
-                PacketType.InvalidPacketTypeError,
+                PacketType.InvalidPacketTypeError | PacketType.HasPayload,
                 $"Packet type ({packet.Type}) cannot be handled");
 
-            await game.SendPlayerPacketAsync(socket, payload);
+            var responsePacket = new ResponsePacket(payload);
+            _ = responsePacket.SendAsync(connection);
         }
     }
 
-    private bool HandlePlayerPacket(WebSocket socket, Packet packet)
+    private bool HandlePlayerPacket(PlayerConnection player, GameLogic.Networking.Packet packet)
     {
-        Player player = game.PlayerManager.Players[socket];
-
         if (packet.Type == PacketType.Pong)
         {
             player.HasSentPong = true;
@@ -118,11 +128,13 @@ internal class PacketHandler(GameInstance game)
         {
             try
             {
-                this.HandlePlayerActionPacket(socket, player, packet);
+                this.HandlePlayerActionPacket(player, packet);
             }
             catch (Exception e)
             {
-                Console.WriteLine("ERROR WHILE HANDLING PLAYER MOVEMENT PACKET: " + e.Message);
+                Console.WriteLine("[ERROR] Handling player response action packet failed: ");
+                Console.WriteLine("[^^^^^] Player: {0}", player);
+                Console.WriteLine("[^^^^^] Message: {0}", e.Message);
                 throw;
             }
 
@@ -132,56 +144,71 @@ internal class PacketHandler(GameInstance game)
         return false;
     }
 
-    private async Task<bool> HandleOtherPacket(WebSocket socket, Packet packet)
+    private bool HandleSpectatorPacket(SpectatorConnection spectator, Packet packet)
     {
+        if (packet.Type == PacketType.Pong)
+        {
+            spectator.HasSentPong = true;
+            return true;
+        }
+
+        return false;
+    }
+
 #if DEBUG
+
+    private bool HandleDebugPacket(Connection connection, Packet packet)
+    {
         if (packet.Type is PacketType.ForceEndGame)
         {
             if (game.GameManager.Status is not GameStatus.Running)
             {
                 var payload = new ErrorPayload(
-                    PacketType.InvalidPacketUsageError,
+                    PacketType.InvalidPacketUsageError | PacketType.HasPayload,
                     "Cannot force end the game when it is not running");
 
-                await game.SendPacketAsync(socket, payload);
+                var responsePacket = new ResponsePacket(payload);
+                _ = responsePacket.SendAsync(connection);
+                return true;
             }
 
+            Console.WriteLine($"[DEBUG] End game forced by: {connection}");
             game.GameManager.EndGame();
-
-            Console.WriteLine("Forced end game");
-
             return true;
         }
 
         if (packet.Type is PacketType.SetPlayerScore)
         {
             var payload = packet.GetPayload<SetPlayerScorePayload>();
-            var player = game.PlayerManager.Players.Values.FirstOrDefault(
+            var player = game.Players.First(
                 p => p.Instance.Nickname.Equals(payload.PlayerNick, StringComparison.OrdinalIgnoreCase));
 
             if (player is null)
             {
                 var errorPayload = new ErrorPayload(
-                    PacketType.InvalidPacketUsageError,
+                    PacketType.InvalidPacketUsageError | PacketType.HasPayload,
                     $"Player with nickname '{payload.PlayerNick}' not found");
 
-                await game.SendPacketAsync(socket, errorPayload);
+                var responsePacket = new ResponsePacket(errorPayload);
+                _ = responsePacket.SendAsync(connection);
                 return true;
             }
 
             var scoreProperty = player.Instance.GetType().GetProperty(nameof(GameLogic.Player.Score));
             scoreProperty!.SetValue(player.Instance, payload.Score);
 
-            Console.WriteLine($"Set score of player '{player.Instance.Nickname}' to {payload.Score}");
+            Console.WriteLine($"[DEBUG] Score '{player.Instance.Nickname}' set to {payload.Score}");
+            Console.WriteLine($" [^^^^] by: {connection}");
 
             return true;
         }
-#endif
 
         return false;
     }
 
-    private void HandlePlayerActionPacket(WebSocket socket, Player player, Packet packet)
+#endif
+
+    private void HandlePlayerActionPacket(PlayerConnection player, Packet packet)
     {
 #if HACKATHON
 
@@ -189,7 +216,8 @@ internal class PacketHandler(GameInstance game)
 
         if (player.IsHackathonBot)
         {
-            var responseGameStateId = (string?)packet.Payload[JsonNamingPolicy.CamelCase.ConvertName(nameof(IActionPayload.GameStateId))];
+            var gameStateIdPropertyName = JsonNamingPolicy.CamelCase.ConvertName(nameof(IActionPayload.GameStateId));
+            var responseGameStateId = (string?)packet.Payload[gameStateIdPropertyName];
 
             lock (game.GameManager.CurrentGameStateId!)
             {
@@ -199,11 +227,15 @@ internal class PacketHandler(GameInstance game)
 
             if (responseGameStateId is null)
             {
-                _ = game.SendPlayerPacketAsync(socket, new CustomWarningPayload("GameStateId is missing in the payload"));
+                var payload = new CustomWarningPayload("GameStateId is missing in the payload");
+                var responsePacket = new ResponsePacket(payload);
+                _ = responsePacket.SendAsync(player);
             }
             else if (!(bool)responsedToCurrentGameState)
             {
-                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.SlowResponseWarning });
+                var payload = new CustomWarningPayload("GameStateId is not the current game state id");
+                var responsePacket = new ResponsePacket(payload);
+                _ = responsePacket.SendAsync(player);
             }
         }
 
@@ -213,14 +245,18 @@ internal class PacketHandler(GameInstance game)
         {
             if (player.HasMadeActionThisTick)
             {
-                _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.PlayerAlreadyMadeActionWarning });
+                var payload = new EmptyPayload() { Type = PacketType.PlayerAlreadyMadeActionWarning };
+                var responsePacket = new ResponsePacket(payload);
+                _ = responsePacket.SendAsync(player);
                 return;
             }
         }
 
         if (player.Instance.IsDead && packet.Type is not PacketType.ResponsePass)
         {
-            _ = game.SendPlayerPacketAsync(socket, new EmptyPayload() { Type = PacketType.ActionIgnoredDueToDeadWarning });
+            var payload = new EmptyPayload() { Type = PacketType.ActionIgnoredDueToDeadWarning };
+            var responsePacket = new ResponsePacket(payload);
+            _ = responsePacket.SendAsync(player);
         }
         else
         {
@@ -235,14 +271,14 @@ internal class PacketHandler(GameInstance game)
                     break;
 
                 case PacketType.TankShoot:
-                    this.HandleShootTank(player);
+                    this.HandleShootTank(player, packet);
                     break;
 
                 case PacketType.ResponsePass:
                     break;
 
                 default:
-                    Console.WriteLine($"Invalid packet type ({packet.Type}) in PlayerResponseGroup");
+                    Console.WriteLine($"[WARN] Packet type '{packet.Type}' cannot be handled.");
                     return;
             }
         }
@@ -263,7 +299,7 @@ internal class PacketHandler(GameInstance game)
 #endif
     }
 
-    private void HandleMoveTank(Player player, Packet packet)
+    private void HandleMoveTank(PlayerConnection player, GameLogic.Networking.Packet packet)
     {
         var movement = packet.GetPayload<TankMovementPayload>();
         void Action() => game.Grid.TryMoveTank(player.Instance.Tank, movement.Direction);
@@ -285,7 +321,7 @@ internal class PacketHandler(GameInstance game)
 #endif
     }
 
-    private void HandleRotateTank(Player player, Packet packet)
+    private void HandleRotateTank(PlayerConnection player, GameLogic.Networking.Packet packet)
     {
         var rotation = packet.GetPayload<TankRotationPayload>();
         var actions = new List<Action>();
@@ -322,7 +358,7 @@ internal class PacketHandler(GameInstance game)
 #endif
     }
 
-    private void HandleShootTank(Player player)
+    private void HandleShootTank(PlayerConnection player, GameLogic.Networking.Packet packet)
     {
         GameLogic.Bullet? Action() => player.Instance.Tank.Turret.TryShoot();
 

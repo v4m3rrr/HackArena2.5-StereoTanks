@@ -1,5 +1,4 @@
-﻿using System.Net.WebSockets;
-using GameLogic.Networking;
+﻿using GameLogic.Networking;
 
 namespace GameServer;
 
@@ -12,49 +11,58 @@ internal class LobbyManager(GameInstance game)
     /// <summary>
     /// Sends the lobby data to all players and spectators.
     /// </summary>
-    public void SendLobbyDataToAll()
+    /// <returns>A task representing the asynchronous operations.</returns>
+    public async Task SendLobbyDataToAll()
     {
-        foreach (var player in game.PlayerManager.Players)
+        var tasks = new List<Task>();
+
+        foreach (var connection in game.Connections)
         {
-            _ = this.SendLobbyDataToPlayer(player.Key, player.Value.Instance.Id);
+            var task = this.SendLobbyDataTo(connection);
+            tasks.Add(task);
         }
 
-        foreach (var spectator in game.SpectatorManager.Spectators.Keys)
-        {
-            _ = this.SendLobbyDataToSpectator(spectator);
-        }
+        await Task.WhenAll(tasks);
     }
 
     /// <summary>
-    /// Sends the lobby data to a player.
+    /// Sends the lobby data to a connection.
     /// </summary>
-    /// <param name="player">The player to send the lobby data to.</param>
-    /// <param name="playerId">The ID of the player.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task SendLobbyDataToPlayer(WebSocket player, string playerId)
+    /// <param name="connection">The connection to send the lobby data to.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task SendLobbyDataTo(Connection connection)
     {
-        var lobbyData = new LobbyDataPayload(
-            playerId,
-            [.. game.PlayerManager.Players.Values.Select(x => x.Instance)],
-            game.Settings);
-
-        var converters = LobbyDataPayload.GetConverters();
-        await game.SendPlayerPacketAsync(player, lobbyData, converters);
+        var payload = game.PayloadHelper.GetLobbyDataPayload(connection, out var converters);
+        var packet = new ResponsePacket(payload, converters);
+        await packet.SendAsync(connection);
     }
 
     /// <summary>
-    /// Sends the lobby data to a spectator.
+    /// Sends the game start to all players and spectators.
     /// </summary>
-    /// <param name="spectator">The spectator to send the lobby data to.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task SendLobbyDataToSpectator(WebSocket spectator)
+    /// <returns>A tasks representing the asynchronous operations.</returns>
+    public async Task SendGameStartToAll()
     {
-        var lobbyData = new LobbyDataPayload(
-            PlayerId: null,
-            [.. game.PlayerManager.Players.Values.Select(x => x.Instance)],
-            game.Settings);
+        var tasks = new List<Task>();
 
-        var converters = LobbyDataPayload.GetConverters();
-        await game.SendSpectatorPacketAsync(spectator, lobbyData, converters);
+        foreach (var connection in game.Connections)
+        {
+            var task = this.SendGameStartTo(connection);
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    /// Sends the game start to a connection.
+    /// </summary>
+    /// <param name="connection">The connection to send the game start to.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task SendGameStartTo(Connection connection)
+    {
+        var payload = new EmptyPayload() { Type = PacketType.GameStart };
+        var packet = new ResponsePacket(payload);
+        await packet.SendAsync(connection);
     }
 }
