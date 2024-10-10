@@ -138,8 +138,8 @@ public class MonoTanks : Game
         var spriteBatch = new SpriteBatch(this.GraphicsDevice);
         SpriteBatchController.Initialize(spriteBatch);
 
-        PacketSerializer.ExceptionThrew += DebugConsole.ThrowError;
-        Packet.GetPayloadFailed += DebugConsole.ThrowError;
+        PacketSerializer.ExceptionThrew += (e) => DebugConsole.ThrowError(e);
+        Packet.GetPayloadFailed += (e) => DebugConsole.ThrowError(e);
 
         ServerConnection.MessageReceived += (s, e) =>
         {
