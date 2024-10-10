@@ -56,7 +56,7 @@ Console.WriteLine("[INFO] Eager broadcast: " + (opts.EagerBroadcast ? "on" : "of
 
 Console.WriteLine("\n[INFO] Press Ctrl+C to stop the server.\n");
 
-var game = saveReplayPath is not null 
+var game = saveReplayPath is not null
     ? new GameInstance(opts, saveReplayPath)
     : new GameInstance(opts);
 
@@ -169,7 +169,7 @@ async Task<Task> HandlePlayerConnection(
     GameLogic.Player player;
     PlayerConnection connection;
 
-    lock (game.Players)
+    lock (game.PlayerManager)
     {
         if (game.Players.Count() >= opts.NumberOfPlayers)
         {
@@ -207,10 +207,10 @@ async Task<Task> HandlePlayerConnection(
 
         player = game.PlayerManager.CreatePlayer(socket, connectionData);
         connection = new PlayerConnection(context, socket, connectionData, player);
+        game.AddConnection(connection);
     }
 
     await AcceptConnection(connection);
-    game.AddConnection(connection);
     _ = Task.Run(() => game.PacketHandler.HandleConnection(connection));
 
     var pingCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
@@ -225,7 +225,7 @@ async Task<Task> HandlePlayerConnection(
     if (quickJoin)
     {
         game.GameManager.StartGame();
-        await game.LobbyManager.SendGameStartTo(connection);
+        await game.LobbyManager.SendLobbyDataTo(connection);
     }
 #endif
 
