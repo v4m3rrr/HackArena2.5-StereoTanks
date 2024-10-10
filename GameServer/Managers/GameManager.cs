@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using System.Net.WebSockets;
+using GameLogic;
 
 namespace GameServer;
 
@@ -14,6 +14,7 @@ internal class GameManager(GameInstance game)
     private readonly Random random = new(game.Settings.Seed);
 #endif
 
+    private readonly LogicUpdater logicUpdater = new(game.Grid);
     private int tick = 0;
 
     /// <summary>
@@ -96,8 +97,6 @@ internal class GameManager(GameInstance game)
 
             stopwatch.Restart();
 
-            var grid = game.Grid;
-
 #if HACKATHON
             var actionList = game.PacketHandler.HackathonBotActions.ToList();
             actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
@@ -112,12 +111,7 @@ internal class GameManager(GameInstance game)
             game.PacketHandler.HackathonBotActions.Clear();
 #endif
 
-            // Update game logic
-            grid.UpdateBullets(1f);
-            grid.RegeneratePlayersBullets();
-            grid.UpdateTanksRegenerationProgress();
-            grid.UpdatePlayersVisibilityGrids();
-            grid.UpdateZones();
+            this.logicUpdater.UpdateGrid();
 
             // Broadcast the game state
             lock (this.CurrentGameStateId ?? new object())
