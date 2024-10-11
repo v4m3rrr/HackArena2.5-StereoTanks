@@ -29,4 +29,9 @@ public enum CollisionType
     /// Collision with a bullet.
     /// </summary>
     Bullet,
+
+    /// <summary>
+    /// Collision with a laser.
+    /// </summary>
+    Laser,
 }

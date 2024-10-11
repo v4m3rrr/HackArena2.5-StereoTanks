@@ -20,7 +20,7 @@ internal class PlayerStatsBar : PlayerBar
         var topRow = new FlexListBox
         {
             Parent = this.Background,
-            Orientation = Orientation.Horizontal,
+            Orientation = MonoRivUI.Orientation.Horizontal,
             Spacing = 5,
             Transform =
             {

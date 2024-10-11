@@ -11,16 +11,18 @@ namespace GameClient.GameSceneComponents.PlayerBarComponents;
 /// </summary>
 internal class SecondaryItems : PlayerBarComponent
 {
-    private static readonly RoundedSolidColor Background;
     private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
+    private static readonly ScalableTexture2D.Static LaserStaticTexture;
 
     private readonly ListBox listBox;
 
     static SecondaryItems()
     {
-        Background = new RoundedSolidColor(Color.White, 5);
         DoubleBulletStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/double_bullet.svg");
         DoubleBulletStaticTexture.Load();
+
+        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/laser.svg");
+        LaserStaticTexture.Load();
     }
 
     /// <summary>
@@ -33,7 +35,7 @@ internal class SecondaryItems : PlayerBarComponent
         this.listBox = new FlexListBox
         {
             Parent = this,
-            Orientation = Orientation.Horizontal,
+            Orientation = MonoRivUI.Orientation.Horizontal,
             Spacing = 5,
             Transform =
             {
@@ -46,7 +48,14 @@ internal class SecondaryItems : PlayerBarComponent
             if (e is ScalableTexture2D texture)
             {
                 DoubleBulletStaticTexture.Transform.Size = texture.Transform.Size;
+                LaserStaticTexture.Transform.Size = texture.Transform.Size;
             }
+        };
+
+        // Laser
+        _ = new Item(player, SecondaryItemType.Laser, LaserStaticTexture)
+        {
+            Parent = this.listBox.ContentContainer,
         };
 
         // Double bullet
@@ -57,8 +66,9 @@ internal class SecondaryItems : PlayerBarComponent
 
         this.listBox.Components.Last().Transform.SizeChanged += (s, e) =>
         {
-            DoubleBulletStaticTexture.Transform.Size = (s as Transform)!.Size;
-            Background.Transform.Size = (s as Transform)!.Size;
+            var size = (s as Transform)!.Size;
+            DoubleBulletStaticTexture.Transform.Size = size;
+            LaserStaticTexture.Transform.Size = size;
         };
     }
 

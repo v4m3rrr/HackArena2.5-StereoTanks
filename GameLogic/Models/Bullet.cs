@@ -118,17 +118,17 @@ public class Bullet : IEquatable<Bullet>
     /// <summary>
     /// Gets the id of the owner of the bullet.
     /// </summary>
-    public string? ShooterId { get; }
+    internal string? ShooterId { get; }
 
     /// <summary>
-    /// Gets the tank that shot the bullet.
+    /// Gets or sets the tank that shot the bullet.
     /// </summary>
     /// <remarks>
-    /// The setter is internal because the owner is set
-    /// in the <see cref="Grid.UpdateFromGameStatePayload"/> method,
-    /// if the <see cref="ShooterId"/> is known.
+    /// This value should be set in the
+    /// <see cref="Grid.UpdateFromGameStatePayload"/>
+    /// method, if the <see cref="ShooterId"/> is known.
     /// </remarks>
-    public Player? Shooter { get; internal set; }
+    internal Player? Shooter { get; set; }
 
     /// <summary>
     /// Updates the bullet's position based on the current direction, speed and delta time.

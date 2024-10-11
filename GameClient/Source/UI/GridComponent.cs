@@ -17,11 +17,12 @@ internal class GridComponent : Component
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
     private readonly List<Sprites.Zone> zones = [];
+    private readonly List<Sprites.Laser> lasers = [];
     private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
 
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
-    private List<Sprites.SecondaryMapItem> mapItems = [];
+    private List<Sprites.SecondaryItem> mapItems = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
@@ -64,13 +65,14 @@ internal class GridComponent : Component
             lock (this.syncLock)
             {
                 return this.zones.Cast<Sprite>()
-                .Concat(this.mapItems)
-                .Concat(this.tanks)
-                .Concat(this.bullets)
-                .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
-                .Concat(this.borderWalls.Cast<Sprite>())
-                .Concat(this.fogsOfWar.Values)
-                .Where(x => x is not null)!;
+                    .Concat(this.mapItems)
+                    .Concat(this.tanks)
+                    .Concat(this.bullets)
+                    .Concat(this.lasers)
+                    .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
+                    .Concat(this.borderWalls.Cast<Sprite>())
+                    .Concat(this.fogsOfWar.Values)
+                    .Where(x => x is not null)!;
             }
         }
     }
@@ -174,6 +176,7 @@ internal class GridComponent : Component
                 this.SyncWalls();
                 this.SyncTanks();
                 this.SyncBullets();
+                this.SyncLasers();
                 this.SyncZones();
                 this.SyncMapItems();
             }
@@ -272,14 +275,28 @@ internal class GridComponent : Component
         this.mapItems.Clear();
         foreach (var item in this.Logic.Items)
         {
-            Sprites.SecondaryMapItem sprite = item.Type switch
-            {
-                SecondaryItemType.DoubleBullet => new Sprites.DoubleBulletMapItem(item, this),
-                _ => throw new NotImplementedException(),
-            };
-
+            var sprite = new Sprites.SecondaryItem(item, this);
             this.mapItems.Add(sprite);
         }
+    }
+
+    private void SyncLasers()
+    {
+        foreach (var laser in this.Logic.Lasers)
+        {
+            var laserSprite = this.lasers.FirstOrDefault(l => l.Logic.Equals(laser));
+            if (laserSprite == null)
+            {
+                laserSprite = new Sprites.Laser(laser, this);
+                this.lasers.Add(laserSprite);
+            }
+            else
+            {
+                laserSprite.UpdateLogic(laser);
+            }
+        }
+
+        _ = this.lasers.RemoveAll(l => !this.Logic.Lasers.Any(l2 => l2.Equals(l.Logic)));
     }
 
     private void UpdateDrawData()

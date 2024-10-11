@@ -9,4 +9,9 @@ public enum SecondaryItemType
     /// The double bullet item.
     /// </summary>
     DoubleBullet,
+
+    /// <summary>
+    /// The laser item.
+    /// </summary>
+    Laser,
 }

@@ -7,6 +7,8 @@ namespace GameLogic;
 /// </summary>
 public class Tank : IEquatable<Tank>
 {
+    private readonly Dictionary<IStunEffect, int> remainingStuns = [];
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Tank"/> class.
     /// </summary>
@@ -35,7 +37,7 @@ public class Tank : IEquatable<Tank>
     /// <para>
     /// This constructor should be used when creating a tank
     /// from player perspective, because they shouldn't know
-    /// the <see cref="Health"/> and <see cref="SecondaryMapItem"/>
+    /// the <see cref="Health"/> and <see cref="SecondaryItem"/>
     /// (these will be set to <see langword="null"/>).
     /// </para>
     /// <para>
@@ -187,8 +189,17 @@ public class Tank : IEquatable<Tank>
     /// Rotates the tank.
     /// </summary>
     /// <param name="rotation">The rotation to apply.</param>
+    /// <remarks>
+    /// The rotation is ignored if the tank is stunned by the
+    /// <see cref="StunBlockEffect.TankRotation"/> effect.
+    /// </remarks>
     public void Rotate(Rotation rotation)
     {
+        if (this.IsBlockedByStun(StunBlockEffect.TankRotation))
+        {
+            return;
+        }
+
         this.Direction = rotation switch
         {
             Rotation.Left => EnumUtils.Previous(this.Direction),
@@ -201,18 +212,43 @@ public class Tank : IEquatable<Tank>
     /// Reduces the health of the tank.
     /// </summary>
     /// <param name="damage">The amount of damage to take.</param>
-    internal void TakeDamage(int damage)
+    /// <param name="damager">The player that made the damage.</param>
+    /// <returns>The amount of damage taken.</returns>
+    internal int TakeDamage(int damage, Player? damager = null)
+    {
+        return this.TakeDamage(damage, damager, out _);
+    }
+
+    /// <summary>
+    /// Reduces the health of the tank.
+    /// </summary>
+    /// <param name="damage">The amount of damage to take.</param>
+    /// <param name="damager">The player that made the damage.</param>
+    /// <param name="killed">A value indicating whether the tank was killed.</param>
+    /// <returns>The amount of damage taken.</returns>
+    internal int TakeDamage(int damage, Player? damager, out bool killed)
     {
         Debug.Assert(damage >= 0, "Damage cannot be negative.");
 
+        var damageTaken = Math.Min(this.Health!.Value, damage);
+
         this.Health -= damage;
+        killed = false;
 
         if (this.Health <= 0)
         {
             this.SetPosition(-1, -1);
             this.Health = 0;
+            killed = true;
             this.Died?.Invoke(this, EventArgs.Empty);
+
+            if (damager is not null)
+            {
+                damager.Kills++;
+            }
         }
+
+        return damageTaken;
     }
 
     /// <summary>
@@ -238,5 +274,46 @@ public class Tank : IEquatable<Tank>
     {
         this.X = x;
         this.Y = y;
+    }
+
+    /// <summary>
+    /// Stuns the tank.
+    /// </summary>
+    /// <param name="stuns">
+    /// The stuns to apply to the tank.
+    /// </param>
+    internal void Stun(IEnumerable<IStunEffect> stuns)
+    {
+        foreach (var stun in stuns)
+        {
+            this.remainingStuns[stun] = stun.StunTicks;
+        }
+    }
+
+    /// <summary>
+    /// Updates the stun effects.
+    /// </summary>
+    internal void UpdateStunables()
+    {
+        foreach (var stunable in this.remainingStuns.Keys.ToList())
+        {
+            if (--this.remainingStuns[stunable] <= 0)
+            {
+                _ = this.remainingStuns.Remove(stunable);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the tank is blocked by the specified stun effect.
+    /// </summary>
+    /// <param name="effect">The stun effect to check.</param>
+    /// <returns>
+    /// <see langword="true"/> if the tank is blocked by the specified stun effect;
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
+    internal bool IsBlockedByStun(StunBlockEffect effect = StunBlockEffect.All)
+    {
+        return this.remainingStuns.Keys.Any(stun => stun.StunBlockEffect.HasFlag(effect));
     }
 }

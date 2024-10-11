@@ -117,6 +117,10 @@ internal class GameInputHandler(Player player)
         {
             payload = new AbilityUsePayload(AbilityType.FireBullet);
         }
+        else if (KeyboardController.IsKeyHit(Keys.D1))
+        {
+            payload = new AbilityUsePayload(AbilityType.UseLaser);
+        }
         else if (KeyboardController.IsKeyHit(Keys.D2))
         {
             payload = new AbilityUsePayload(AbilityType.FireDoubleBullet);
@@ -136,7 +140,11 @@ internal class GameInputHandler(Player player)
 
         GiveSecondaryItemPayload? payload = null;
 
-        if (KeyboardController.IsKeyHit(Keys.D2))
+        if (KeyboardController.IsKeyHit(Keys.D1))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.Laser);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D2))
         {
             payload = new GiveSecondaryItemPayload(SecondaryItemType.DoubleBullet);
         }

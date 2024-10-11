@@ -16,12 +16,23 @@ public class LogicUpdater(Grid grid)
     /// </summary>
     public void UpdateGrid()
     {
-        grid.UpdateBullets(this.BulletDeltaTime);
-        grid.RegeneratePlayersBullets();
-        grid.UpdateTanksRegenerationProgress();
-        grid.UpdatePlayersVisibilityGrids();
-        grid.UpdateZones();
-        grid.PickUpItems();
-        grid.GenerateNewItemOnMap();
+        try
+        {
+            grid.UpdateBullets(this.BulletDeltaTime);
+            grid.UpdateLasers();
+            grid.UpdatePlayersStunEffects();
+            grid.RegeneratePlayersBullets();
+            grid.UpdateTanksRegenerationProgress();
+            grid.UpdatePlayersVisibilityGrids();
+            grid.UpdateZones();
+            grid.PickUpItems();
+            grid.GenerateNewItemOnMap();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("[ERROR] Failed to update grid.");
+            Console.WriteLine("[^^^^^] Message: {0}", e.Message);
+            Console.WriteLine("[^^^^^] Stack trace: {0}", e.StackTrace);
+        }
     }
 }

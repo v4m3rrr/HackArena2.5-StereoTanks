@@ -184,6 +184,10 @@ internal class PacketHandler(GameInstance game)
                         _ = player.Instance.Tank.Turret.TryFireDoubleBullet();
                         break;
 
+                    case AbilityType.UseLaser:
+                        _ = player.Instance.Tank.Turret.TryUseLaser(game.Grid.WallGrid);
+                        break;
+
                     default:
                         Console.WriteLine($"[WARN] Ability type '{payload.AbilityType}' cannot be handled.");
                         break;
@@ -419,6 +423,7 @@ internal class PacketHandler(GameInstance game)
         {
             AbilityType.FireBullet => player.Instance.Tank.Turret.TryFireBullet,
             AbilityType.FireDoubleBullet => player.Instance.Tank.Turret.TryFireDoubleBullet,
+            AbilityType.UseLaser => () => player.Instance.Tank.Turret.TryUseLaser(game.Grid.WallGrid),
             _ => throw new NotImplementedException($"Ability type '{payload.AbilityType}' is not implemented"),
         };
 

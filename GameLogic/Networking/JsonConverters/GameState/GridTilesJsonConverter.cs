@@ -51,7 +51,8 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         var wallGrid = new Wall?[jObject.Count, (jObject[0] as JArray)!.Count];
         List<Tank> tanks = [];
         List<Bullet> bullets = [];
-        List<SecondaryMapItem> items = [];
+        List<Laser> lasers = [];
+        List<SecondaryItem> items = [];
 
         for (int i = 0; i < jObject.Count; i++)
         {
@@ -82,11 +83,18 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
                             var bullet = bulletPayload.ToObject<Bullet>(serializer)!;
                             bullets.Add(bullet);
                             break;
+                        case "laser":
+                            var laserPayload = item["payload"] ?? new JObject();
+                            laserPayload["x"] = i;
+                            laserPayload["y"] = j;
+                            var laser = laserPayload.ToObject<Laser>(serializer)!;
+                            lasers.Add(laser);
+                            break;
                         case "item":
                             var itemPayload = item["payload"]!;
                             itemPayload["x"] = i;
                             itemPayload["y"] = j;
-                            var mapItem = itemPayload.ToObject<SecondaryMapItem>(serializer)!;
+                            var mapItem = itemPayload.ToObject<SecondaryItem>(serializer)!;
                             items.Add(mapItem);
                             break;
                     }
@@ -94,7 +102,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             }
         }
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, items);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, items);
     }
 
     private Grid.TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
@@ -110,9 +118,10 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         var tanks = jObject["tanks"]!.ToObject<List<Tank>>(serializer)!;
         var bullets = jObject["bullets"]!.ToObject<List<Bullet>>(serializer)!;
-        var items = jObject["items"]!.ToObject<List<SecondaryMapItem>>(serializer)!;
+        var lasers = jObject["lasers"]!.ToObject<List<Laser>>(serializer)!;
+        var items = jObject["items"]!.ToObject<List<SecondaryItem>>(serializer)!;
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, items);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, items);
     }
 
     private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
@@ -173,7 +182,22 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             });
         }
 
-        foreach (SecondaryMapItem item in value.Items)
+        foreach (Laser laser in value.Lasers)
+        {
+            if (!FogOfWarManager.IsElementVisible(visibilityGrid, laser.X, laser.Y))
+            {
+                continue;
+            }
+
+            var obj = JObject.FromObject(laser, serializer);
+            (jObject[laser.X][laser.Y] as JArray)!.Add(new JObject
+            {
+                { "type", "laser" },
+                { "payload", obj },
+            });
+        }
+
+        foreach (SecondaryItem item in value.Items)
         {
             if (!FogOfWarManager.IsElementVisible(visibilityGrid, item.X, item.Y))
             {
@@ -195,11 +219,12 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
     {
         var jObject = new JObject
         {
-            ["bullets"] = JArray.FromObject(value!.Bullets, serializer),
-            ["tanks"] = JArray.FromObject(value.Tanks, serializer),
+            ["gridDimensions"] = new JArray(value!.WallGrid.GetLength(0), value.WallGrid.GetLength(1)),
             ["walls"] = JArray.FromObject(value.WallGrid.Cast<Wall?>().Where(w => w is not null), serializer),
+            ["tanks"] = JArray.FromObject(value.Tanks, serializer),
+            ["bullets"] = JArray.FromObject(value.Bullets, serializer),
+            ["lasers"] = JArray.FromObject(value.Lasers, serializer),
             ["items"] = JArray.FromObject(value.Items, serializer),
-            ["gridDimensions"] = new JArray(value.WallGrid.GetLength(0), value.WallGrid.GetLength(1)),
         };
 
         jObject.WriteTo(writer);

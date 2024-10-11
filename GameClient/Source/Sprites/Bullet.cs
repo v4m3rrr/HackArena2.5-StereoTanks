@@ -20,7 +20,7 @@ internal class Bullet : Sprite
     private Vector2 position;
     private bool skipNextPositionUpdate;
     private bool isOutOfBounds;
-    private ICollision? collision;
+    private Collision? collision;
 
     static Bullet()
     {
