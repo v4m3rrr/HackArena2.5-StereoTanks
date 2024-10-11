@@ -10,7 +10,8 @@ namespace GameClient.Scenes.GameCore;
 /// <summary>
 /// Represents the keyboard handler.
 /// </summary>
-internal class GameInputHandler
+/// <param name="player">The player.</param>
+internal class GameInputHandler(Player player)
 {
     private static readonly List<Func<IPacketPayload?>> Handlers = [
         () =>
@@ -19,8 +20,11 @@ internal class GameInputHandler
             payload = HandleTurretRotationPayload(payload);
             return payload;
         },
-        HandleTankMovementPayload,
-        HandleTankShootPayload,
+        HandleMovementPayload,
+#if DEBUG
+        HandleGiveSecondaryItemPayload,
+#endif
+        HandleAbilityUsePayload,
     ];
 
     /// <summary>
@@ -38,16 +42,24 @@ internal class GameInputHandler
             payload = handler();
             if (payload != null)
             {
-                return payload;
+                break;
             }
         }
 
 #if DEBUG
-        if (KeyboardController.IsKeyHit(Keys.T))
+
+        if (KeyboardController.IsKeyDown(Keys.LeftShift))
         {
-            payload = new EmptyPayload() { Type = PacketType.ShootAll };
+            payload = payload switch
+            {
+                AbilityUsePayload a => new GlobalAbilityUsePayload(a.AbilityType),
+                GiveSecondaryItemPayload g => new GlobalGiveSecondaryItemPayload(g.Item),
+                _ => payload,
+            };
         }
+
 #endif
+
         return payload;
     }
 
@@ -81,7 +93,7 @@ internal class GameInputHandler
         return payload;
     }
 
-    private static MovementPayload? HandleTankMovementPayload()
+    private static MovementPayload? HandleMovementPayload()
     {
         MovementPayload? payload = null;
 
@@ -97,7 +109,7 @@ internal class GameInputHandler
         return payload;
     }
 
-    private static AbilityUsePayload? HandleTankShootPayload()
+    private static AbilityUsePayload? HandleAbilityUsePayload()
     {
         AbilityUsePayload? payload = null;
 
@@ -105,7 +117,32 @@ internal class GameInputHandler
         {
             payload = new AbilityUsePayload(AbilityType.FireBullet);
         }
+        else if (KeyboardController.IsKeyHit(Keys.D2))
+        {
+            payload = new AbilityUsePayload(AbilityType.FireDoubleBullet);
+        }
 
         return payload;
     }
+
+#if DEBUG
+
+    private static GiveSecondaryItemPayload? HandleGiveSecondaryItemPayload()
+    {
+        if (!KeyboardController.IsKeyDown(Keys.LeftControl))
+        {
+            return null;
+        }
+
+        GiveSecondaryItemPayload? payload = null;
+
+        if (KeyboardController.IsKeyHit(Keys.D2))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.DoubleBullet);
+        }
+
+        return payload;
+    }
+
+#endif
 }

@@ -17,28 +17,49 @@ internal class PlayerStatsBar : PlayerBar
     public PlayerStatsBar(Player player)
         : base(player)
     {
-        // Bullet count
-        _ = new BulletCount(player)
+        var topRow = new FlexListBox
         {
             Parent = this.Background,
-            Transform =
-            {
-                RelativeSize = new Vector2(1f, 0.35f),
-                Alignment = Alignment.TopLeft,
-                RelativeOffset = new Vector2(0.05f, 0.1f),
-            },
-        };
-
-        // Score
-        _ = new Score(player)
-        {
-            Parent = this.Background,
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
-                Alignment = Alignment.TopRight,
+                Alignment = Alignment.Top,
+                RelativeOffset = new Vector2(0.0f, 0.05f),
             },
         };
+
+        var bulletCount = new BulletCount(player)
+        {
+            Parent = topRow.ContentContainer,
+            Transform =
+            {
+                RelativePadding = new Vector4(0.18f),
+            },
+        };
+
+        var secondaryItems = new SecondaryItems(player)
+        {
+            Parent = topRow.ContentContainer,
+            Transform =
+            {
+                RelativePadding = new Vector4(0.06f),
+            },
+        };
+
+        var score = new Score(player)
+        {
+            Parent = topRow.ContentContainer,
+            Transform =
+            {
+                RelativePadding = new Vector4(0.1f),
+            },
+        };
+
+        topRow.SetResizeFactor(bulletCount, 2.8f);
+        topRow.SetResizeFactor(secondaryItems, 7);
+        topRow.SetResizeFactor(score, 4);
 
         // Health bar
         _ = new HealthBar(player)

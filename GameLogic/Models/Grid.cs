@@ -11,10 +11,12 @@ public class Grid(int dimension, int seed)
 {
     private readonly Queue<Bullet> queuedBullets = new();
     private readonly Random random = new(seed);
+    private readonly MapGenerator generator = new(dimension, seed);
 
     private List<Zone> zones = [];
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
+    private List<SecondaryMapItem> items = [];
 
     private FogOfWarManager fogOfWarManager = new(new bool[0, 0]);
 
@@ -72,6 +74,11 @@ public class Grid(int dimension, int seed)
     /// Gets the bullets.
     /// </summary>
     public IEnumerable<Bullet> Bullets => this.bullets;
+
+    /// <summary>
+    /// Gets the items.
+    /// </summary>
+    public IEnumerable<SecondaryMapItem> Items => this.items;
 
     /// <summary>
     /// Updates the grid state from a payload.
@@ -194,6 +201,9 @@ public class Grid(int dimension, int seed)
             }
         }
 
+        // Update the items.
+        this.items = [.. tiles.Items];
+
         this.StateUpdated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -202,12 +212,10 @@ public class Grid(int dimension, int seed)
     /// </summary>
     public void GenerateMap()
     {
-        var generator = new MapGenerator(this.Dim, this.Seed);
+        var walls = this.generator.GenerateWalls();
+        this.zones = this.generator.GenerateZones();
 
-        var walls = generator.GenerateWalls();
-        this.zones = generator.GenerateZones();
-
-        generator.RemoveSomeWallsFromZones(walls, this.zones);
+        this.generator.RemoveSomeWallsFromZones(walls, this.zones);
 
         this.fogOfWarManager = new FogOfWarManager(walls);
 
@@ -221,26 +229,28 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
-    /// Gets the neighbors of a wall.
+    /// Generates a new item on the map.
     /// </summary>
-    /// <param name="wall">The wall to get the neighbors of.</param>
-    /// <returns>The neighbors of the wall.</returns>
-    public Wall?[] GetWallNeighbors(Wall wall)
+    public void GenerateNewItemOnMap()
     {
-        var neighbors = new Wall?[4];
-        var directions = new (int Dx, int Dy)[4] { (1, 0), (0, 1), (-1, 0), (0, -1) };
+        var doubleBulletProbability = 0.0009;
 
-        for (int i = 0; i < directions.Length; i++)
+        if (this.random.NextDouble() > doubleBulletProbability)
         {
-            int x = wall.X - directions[i].Dx;
-            int y = wall.Y - directions[i].Dy;
-            if (x >= 0 && x < this.Dim && y >= 0 && y < this.Dim && this.WallGrid[x, y] is Wall w)
-            {
-                neighbors[i] = w;
-            }
+            return;
         }
 
-        return neighbors;
+        int x, y;
+        int triesLeft = 100;
+        do
+        {
+            (x, y) = this.GetRandomEmptyCell();
+        } while ((this.GetCellObjects(x, y).Any() || this.IsVisibleByTank(x, y)) && triesLeft-- > 0);
+
+        if (triesLeft > 0)
+        {
+            this.items.Add(new SecondaryMapItem(x, y, SecondaryItemType.DoubleBullet));
+        }
     }
 
     /// <summary>
@@ -292,14 +302,14 @@ public class Grid(int dimension, int seed)
     /// </summary>
     /// <param name="tank">The tank to move.</param>
     /// <param name="movement">The movement direction.</param>
-    public void TryMoveTank(Tank tank, TankMovement movement)
+    public void TryMoveTank(Tank tank, MovementDirection movement)
     {
         var (dx, dy) = DirectionUtils.Normal(tank.Direction);
         int step = -((int)movement * 2) + 1;
         int x = tank.X + (dx * step);
         int y = tank.Y + (dy * step);
 
-        if (this.IsCellEmpty(x, y))
+        if (!this.GetCellObjects(x, y).Any(x => x is Wall or Tank))
         {
             tank.SetPosition(x, y);
         }
@@ -312,7 +322,7 @@ public class Grid(int dimension, int seed)
     /// This method regenerates the dead tanks
     /// by calling the <see cref="Player.UpdateRegenerationProgress"/> method.
     /// </remarks>
-    public void UpdateTanksRegenerationProgress()
+    internal void UpdateTanksRegenerationProgress()
     {
         this.Tanks
             .Select(x => x.Owner)
@@ -324,7 +334,7 @@ public class Grid(int dimension, int seed)
     /// Updates the bullets.
     /// </summary>
     /// <param name="deltaTime">The time elapsed since the last update.</param>
-    public void UpdateBullets(float deltaTime)
+    internal void UpdateBullets(float deltaTime)
     {
         Dictionary<Bullet, List<(int X, int Y)>> trajectories = [];
 
@@ -376,7 +386,7 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Regenerates the players' bullets.
     /// </summary>
-    public void RegeneratePlayersBullets()
+    internal void RegeneratePlayersBullets()
     {
         foreach (Tank tank in this.tanks)
         {
@@ -387,7 +397,7 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Updates the players' visibility grids.
     /// </summary>
-    public void UpdatePlayersVisibilityGrids()
+    internal void UpdatePlayersVisibilityGrids()
     {
         foreach (Tank tank in this.tanks)
         {
@@ -398,11 +408,36 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Updates the zones.
     /// </summary>
-    public void UpdateZones()
+    internal void UpdateZones()
     {
         foreach (Zone zone in this.zones)
         {
             zone.UpdateCapturingStatus(this.tanks);
+        }
+    }
+
+    /// <summary>
+    /// Picks up the items that are on the same cell as the tanks
+    /// and sets the tanks' secondary item type.
+    /// </summary>
+    internal void PickUpItems()
+    {
+        foreach (Tank tank in this.tanks)
+        {
+            if (tank.SecondaryItemType is not null)
+            {
+                continue;
+            }
+
+            SecondaryMapItem? item = this.items.FirstOrDefault(i => i.X == tank.X && i.Y == tank.Y);
+
+            if (item is null)
+            {
+                continue;
+            }
+
+            tank.SecondaryItemType = item.Type;
+            _ = this.items.Remove(item);
         }
     }
 
@@ -416,25 +451,56 @@ public class Grid(int dimension, int seed)
         var visibility = player is not null
             ? new VisibilityPayload(player!.VisibilityGrid!)
             : null;
-        var tiles = new TilesPayload(this.WallGrid, this.tanks, this.bullets);
+        var tiles = new TilesPayload(this.WallGrid, this.tanks, this.bullets, this.items);
         return new MapPayload(visibility, tiles, this.zones);
     }
 
-    private bool IsCellEmpty(int x, int y)
+    private bool IsVisibleByTank(int x, int y)
     {
-        var isWithinBounds = x >= 0 && x < this.Dim && y >= 0 && y < this.Dim;
-        var isNotOccupied = !this.tanks.Any(t => t.X == x && t.Y == y);
-        return isWithinBounds && isNotOccupied && this.WallGrid[x, y] is null;
+        return this.tanks.Any(t => t.Owner.VisibilityGrid is not null && t.Owner.VisibilityGrid[x, y]);
+    }
+
+    private IEnumerable<object> GetCellObjects(int x, int y)
+    {
+        Wall? wall = this.WallGrid[x, y];
+        if (wall is not null)
+        {
+            yield return wall;
+        }
+
+        Tank? tank = this.tanks.FirstOrDefault(t => t.X == x && t.Y == y);
+        if (tank is not null)
+        {
+            yield return tank;
+        }
+
+        Bullet? bullet = this.bullets.FirstOrDefault(b => b.X == x && b.Y == y);
+        if (bullet is not null)
+        {
+            yield return bullet;
+        }
+
+        IEnumerable<SecondaryMapItem> items = this.items.Where(i => i.X == x && i.Y == y);
+        foreach (SecondaryMapItem item in items)
+        {
+            yield return item;
+        }
+    }
+
+    private bool IsCellWithinBounds(int x, int y)
+    {
+        return x >= 0 && x < this.Dim && y >= 0 && y < this.Dim;
     }
 
     private List<Bullet> HandleBulletCollision(Bullet bullet, ICollision collision)
     {
-        var destroyedBullets = new List<Bullet> { bullet };
+        var destroyedBullets = new List<Bullet>();
         _ = this.bullets.Remove(bullet);
 
         switch (collision)
         {
             case TankCollision tankCollision:
+                destroyedBullets.Add(bullet);
                 bullet.Shooter!.Score += bullet.Damage!.Value / 2;
                 tankCollision.Tank.TakeDamage(bullet.Damage.Value);
                 if (tankCollision.Tank.IsDead)
@@ -447,13 +513,34 @@ public class Grid(int dimension, int seed)
             case BulletCollision bulletCollision:
                 _ = this.bullets.Remove(bulletCollision.Bullet);
                 destroyedBullets.Add(bulletCollision.Bullet);
+                destroyedBullets.Add(bullet);
+
+                if (!(bullet is DoubleBullet ^ bulletCollision.Bullet is DoubleBullet))
+                {
+                    break;
+                }
+
+                var bulletToDowngrade = bullet is DoubleBullet
+                    ? bullet
+                    : bulletCollision.Bullet;
+
+                var newBullet = new Bullet(
+                    bulletToDowngrade.X,
+                    bulletToDowngrade.Y,
+                    bulletToDowngrade.Direction,
+                    bulletToDowngrade.Speed,
+                    bulletToDowngrade.Damage!.Value / 2,
+                    bulletToDowngrade.Shooter!);
+
+                this.bullets.Add(newBullet);
+
                 break;
         }
 
         return destroyedBullets;
     }
 
-    private (int X, int Y) GetRandomEmptyCell()
+    private (int X, int Y) GetRandomEmptyCell(int? maxTries = 100)
     {
         int x, y;
         do
@@ -461,9 +548,11 @@ public class Grid(int dimension, int seed)
             x = this.random.Next(this.Dim);
             y = this.random.Next(this.Dim);
         }
-        while (!this.IsCellEmpty(x, y));
+        while (maxTries-- > 0 && (!this.IsCellWithinBounds(x, y) || this.GetCellObjects(x, y).Any()));
 
-        return (x, y);
+        return maxTries > 0
+            ? ((int X, int Y))(x, y)
+            : throw new InvalidOperationException("Failed to find an empty cell.");
     }
 
     /// <summary>
@@ -480,7 +569,8 @@ public class Grid(int dimension, int seed)
     /// <param name="WallGrid">The wall grid of the grid.</param>
     /// <param name="Tanks">The tanks of the grid.</param>
     /// <param name="Bullets">The bullets of the grid.</param>
-    internal record class TilesPayload(Wall?[,] WallGrid, List<Tank> Tanks, List<Bullet> Bullets);
+    /// <param name="Items">The items on the grid.</param>
+    internal record class TilesPayload(Wall?[,] WallGrid, List<Tank> Tanks, List<Bullet> Bullets, List<SecondaryMapItem> Items);
 
     /// <summary>
     /// Represents a visibility payload for the grid.

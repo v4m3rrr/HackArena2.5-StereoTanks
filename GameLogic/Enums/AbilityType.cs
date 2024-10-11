@@ -9,4 +9,9 @@ public enum AbilityType
     /// Fires a bullet.
     /// </summary>
     FireBullet,
+
+    /// <summary>
+    /// Fires double bullets.
+    /// </summary>
+    FireDoubleBullet,
 }

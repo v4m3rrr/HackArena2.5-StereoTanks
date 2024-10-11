@@ -26,8 +26,6 @@ internal class Bullet : Sprite
     {
         StaticTexture = new ScalableTexture2D.Static("Images/Game/bullet_ts.svg");
 
-
-
         MonoTanks.InvokeOnMainThread(() =>
         {
             StaticTexture.Load();
@@ -64,8 +62,22 @@ internal class Bullet : Sprite
     /// <param name="logic">The bullet logic.</param>
     /// <param name="grid">The grid component.</param>
     public Bullet(GameLogic.Bullet logic, GridComponent grid)
+        : this(logic, grid, StaticTexture)
     {
-        this.texture = new ScalableTexture2D(StaticTexture)
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Bullet"/> class.
+    /// </summary>
+    /// <param name="logic">The bullet logic.</param>
+    /// <param name="grid">The grid component.</param>
+    /// <param name="staticTexture">
+    /// The static texture that will be used
+    /// to create a new scalable texture for the bullet.
+    /// </param>
+    protected Bullet(GameLogic.Bullet logic, GridComponent grid, ScalableTexture2D.Static staticTexture)
+    {
+        this.texture = new ScalableTexture2D(staticTexture)
         {
             RelativeOrigin = new Vector2(0.5f),
             CenterOrigin = true,

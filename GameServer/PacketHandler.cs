@@ -169,6 +169,49 @@ internal class PacketHandler(GameInstance game)
 
     private bool HandleDebugPacket(Connection connection, Packet packet)
     {
+        if (packet.Type is PacketType.GlobalAbilityUse)
+        {
+            foreach (var player in game.Players)
+            {
+                var payload = packet.GetPayload<AbilityUsePayload>();
+                switch (payload.AbilityType)
+                {
+                    case AbilityType.FireBullet:
+                        _ = player.Instance.Tank.Turret.TryFireBullet();
+                        break;
+
+                    case AbilityType.FireDoubleBullet:
+                        _ = player.Instance.Tank.Turret.TryFireDoubleBullet();
+                        break;
+
+                    default:
+                        Console.WriteLine($"[WARN] Ability type '{payload.AbilityType}' cannot be handled.");
+                        break;
+                }
+            }
+
+            return true;
+        }
+
+        if (packet.Type is PacketType.GiveSecondaryItem)
+        {
+            var player = game.Players.First(p => p.Socket == connection.Socket);
+            var payload = packet.GetPayload<GiveSecondaryItemPayload>();
+            player.Instance.Tank.SecondaryItemType = payload.Item;
+            return true;
+        }
+
+        if (packet.Type is PacketType.GlobalGiveSecondaryItem)
+        {
+            foreach (var player in game.Players)
+            {
+                var payload = packet.GetPayload<GlobalGiveSecondaryItemPayload>();
+                player.Instance.Tank.SecondaryItemType = payload.Item;
+            }
+
+            return true;
+        }
+
         if (packet.Type is PacketType.ForceEndGame)
         {
             if (game.GameManager.Status is not GameStatus.Running)
@@ -372,12 +415,12 @@ internal class PacketHandler(GameInstance game)
     {
         var payload = packet.GetPayload<AbilityUsePayload>();
 
-        if (payload.AbilityType is not AbilityType.FireBullet)
+        Func<dynamic?> action = payload.AbilityType switch
         {
-            throw new NotImplementedException("Ability type is not implemented");
-        }
-
-        Bullet? Action() => player.Instance.Tank.Turret.TryShoot();
+            AbilityType.FireBullet => player.Instance.Tank.Turret.TryFireBullet,
+            AbilityType.FireDoubleBullet => player.Instance.Tank.Turret.TryFireDoubleBullet,
+            _ => throw new NotImplementedException($"Ability type '{payload.AbilityType}' is not implemented"),
+        };
 
 #if HACKATHON
         if (player.IsHackathonBot)
@@ -386,7 +429,7 @@ internal class PacketHandler(GameInstance game)
             {
                 lock (game.Grid)
                 {
-                    Action();
+                    action();
                 }
             };
         }
@@ -395,7 +438,7 @@ internal class PacketHandler(GameInstance game)
 #endif
             lock (game.Grid)
             {
-                Action();
+                action();
             }
 #if HACKATHON
         }

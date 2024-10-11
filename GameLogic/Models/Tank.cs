@@ -35,8 +35,8 @@ public class Tank : IEquatable<Tank>
     /// <para>
     /// This constructor should be used when creating a tank
     /// from player perspective, because they shouldn't know
-    /// the <see cref="Health"/>
-    /// (it will be set to <see langword="null"/>).
+    /// the <see cref="Health"/> and <see cref="SecondaryMapItem"/>
+    /// (these will be set to <see langword="null"/>).
     /// </para>
     /// <para>
     /// The <see cref="Owner"/> property is set to <see langword="null"/>.
@@ -58,6 +58,7 @@ public class Tank : IEquatable<Tank>
     /// <param name="health">The health of the tank.</param>
     /// <param name="direction">The direction of the tank.</param>
     /// <param name="turret">The turret of the tank.</param>
+    /// <param name="secondaryItemType">The secondary item type of the tank.</param>
     /// <remarks>
     /// <para>
     /// This constructor should be used when creating a tank
@@ -69,10 +70,18 @@ public class Tank : IEquatable<Tank>
     /// See its documentation for more information.
     /// </para>
     /// </remarks>
-    internal Tank(int x, int y, string ownerId, int health, Direction direction, Turret turret)
+    internal Tank(
+        int x,
+        int y,
+        string ownerId,
+        int health,
+        Direction direction,
+        Turret turret,
+        SecondaryItemType? secondaryItemType)
         : this(x, y, ownerId, direction, turret)
     {
         this.Health = health;
+        this.SecondaryItemType = secondaryItemType;
     }
 
     private Tank(int x, int y, string ownerId, Direction direction)
@@ -128,6 +137,18 @@ public class Tank : IEquatable<Tank>
     /// Gets the turret of the tank.
     /// </summary>
     public Turret Turret { get; private set; }
+
+#if DEBUG
+    /// <summary>
+    /// Gets or sets the secondary item of the tank.
+    /// </summary>
+    public SecondaryItemType? SecondaryItemType { get; set; }
+#else
+    /// <summary>
+    /// Gets the secondary item of the tank.
+    /// </summary>
+    public SecondaryItemType? SecondaryItemType { get; internal set; }
+#endif
 
     /// <summary>
     /// Gets the owner ID of the tank.

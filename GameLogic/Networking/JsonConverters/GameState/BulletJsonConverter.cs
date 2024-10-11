@@ -19,26 +19,38 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
         var y = jObject["y"]!.Value<int>();
         var speed = jObject["speed"]!.Value<float>()!;
         var direction = (Direction)jObject["direction"]!.Value<int>()!;
+        var type = jObject["type"]!.Value<string>()!;
 
         if (context is GameSerializationContext.Player)
         {
-            return new Bullet(id, x, y, direction, speed);
+            return type == "doubleBullet"
+                ? new DoubleBullet(id, x, y, direction, speed)
+                : new Bullet(id, x, y, direction, speed);
         }
 
         var damage = jObject["damage"]!.Value<int>();
         var shooterId = jObject["shooterId"]!.Value<string>()!;
 
-        return new Bullet(id, x, y, direction, speed, damage, shooterId);
+        return type == "doubleBullet"
+                ? new DoubleBullet(id, x, y, direction, speed, damage, shooterId)
+                : new Bullet(id, x, y, direction, speed, damage, shooterId);
     }
 
     /// <inheritdoc/>
     public override void WriteJson(JsonWriter writer, Bullet? value, JsonSerializer serializer)
     {
+        var type = value switch
+        {
+            DoubleBullet => "doubleBullet",
+            _ => "bullet",
+        };
+
         var jObject = new JObject
         {
             ["id"] = value!.Id,
             ["speed"] = value!.Speed,
             ["direction"] = (int)value.Direction,
+            ["type"] = type,
         };
 
         if (context is GameSerializationContext.Spectator)

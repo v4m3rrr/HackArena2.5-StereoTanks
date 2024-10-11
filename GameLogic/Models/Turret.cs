@@ -13,6 +13,8 @@ public class Turret
     public const int MaxBulletCount = 3;
 
     private const int BulletRegenTicks = 10;
+    private const int BulletDamage = 20;
+    private const float BulletSpeed = 2f;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Turret"/> class.
@@ -142,7 +144,7 @@ public class Turret
     /// and invokes the <see cref="Shot"/> event,
     /// if the tank has bullets.
     /// </remarks>
-    public Bullet? TryShoot()
+    public Bullet? TryFireBullet()
     {
         if (!this.HasBullets)
         {
@@ -154,8 +156,8 @@ public class Turret
             this.Tank.X + nx,
             this.Tank.Y + ny,
             this.Direction,
-            speed: 2f,
-            damage: 20,
+            speed: BulletSpeed,
+            damage: BulletDamage,
             this.Tank.Owner);
 
         this.BulletCount--;
@@ -163,6 +165,40 @@ public class Turret
         this.Shot?.Invoke(bullet);
 
         return bullet;
+    }
+
+    /// <summary>
+    /// Tries to shoot a double bullet.
+    /// </summary>
+    /// <returns>
+    /// The double bullet that was shot,
+    /// or <see langword="null"/> if the tank has no double bullet.
+    /// </returns>
+    /// <remarks>
+    /// This method creates a double bullet
+    /// and invokes the <see cref="Shot"/> event,
+    /// if the tank has double bullet.
+    /// </remarks>
+    public DoubleBullet? TryFireDoubleBullet()
+    {
+        if (this.Tank.SecondaryItemType is not SecondaryItemType.DoubleBullet)
+        {
+            return null;
+        }
+
+        var (nx, ny) = DirectionUtils.Normal(this.Direction);
+        var doubleBullet = new DoubleBullet(
+            this.Tank.X + nx,
+            this.Tank.Y + ny,
+            this.Direction,
+            BulletSpeed,
+            BulletDamage * 2,
+            this.Tank.Owner);
+
+        this.Tank.SecondaryItemType = null;
+        this.Shot?.Invoke(doubleBullet);
+
+        return doubleBullet;
     }
 
     /// <summary>

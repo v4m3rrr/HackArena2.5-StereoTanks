@@ -21,6 +21,7 @@ public class LogicUpdater(Grid grid)
         grid.UpdateTanksRegenerationProgress();
         grid.UpdatePlayersVisibilityGrids();
         grid.UpdateZones();
+        grid.PickUpItems();
         grid.GenerateNewItemOnMap();
     }
 }

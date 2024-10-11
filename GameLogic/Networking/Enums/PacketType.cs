@@ -131,14 +131,24 @@ public enum PacketType
     DebugGroup = 0xD0,
 
     /// <summary>
-    /// The shoot all packet type (debug).
+    /// The global ability use packet type.
     /// </summary>
-    ShootAll = DebugGroup | 0x3,
+    GlobalAbilityUse = DebugGroup | HasPayload | 0x3,
 
     /// <summary>
     /// The force end game packet type (debug).
     /// </summary>
     ForceEndGame = DebugGroup | 0x4,
+
+    /// <summary>
+    /// The give ability packet type.
+    /// </summary>
+    GiveSecondaryItem = DebugGroup | HasPayload | 0x5,
+
+    /// <summary>
+    /// The global give ability packet type.
+    /// </summary>
+    GlobalGiveSecondaryItem = DebugGroup | HasPayload | 0x6,
 
 #endif
 

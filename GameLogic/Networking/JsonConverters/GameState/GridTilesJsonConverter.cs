@@ -51,6 +51,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         var wallGrid = new Wall?[jObject.Count, (jObject[0] as JArray)!.Count];
         List<Tank> tanks = [];
         List<Bullet> bullets = [];
+        List<SecondaryMapItem> items = [];
 
         for (int i = 0; i < jObject.Count; i++)
         {
@@ -81,12 +82,19 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
                             var bullet = bulletPayload.ToObject<Bullet>(serializer)!;
                             bullets.Add(bullet);
                             break;
+                        case "item":
+                            var itemPayload = item["payload"]!;
+                            itemPayload["x"] = i;
+                            itemPayload["y"] = j;
+                            var mapItem = itemPayload.ToObject<SecondaryMapItem>(serializer)!;
+                            items.Add(mapItem);
+                            break;
                     }
                 }
             }
         }
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, items);
     }
 
     private Grid.TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
@@ -102,8 +110,9 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         var tanks = jObject["tanks"]!.ToObject<List<Tank>>(serializer)!;
         var bullets = jObject["bullets"]!.ToObject<List<Bullet>>(serializer)!;
+        var items = jObject["items"]!.ToObject<List<SecondaryMapItem>>(serializer)!;
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, items);
     }
 
     private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
@@ -164,6 +173,21 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             });
         }
 
+        foreach (SecondaryMapItem item in value.Items)
+        {
+            if (!FogOfWarManager.IsElementVisible(visibilityGrid, item.X, item.Y))
+            {
+                continue;
+            }
+
+            var obj = JObject.FromObject(item, serializer);
+            (jObject[item.X][item.Y] as JArray)!.Add(new JObject
+            {
+                { "type", "item" },
+                { "payload", obj },
+            });
+        }
+
         jObject.WriteTo(writer);
     }
 
@@ -174,6 +198,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             ["bullets"] = JArray.FromObject(value!.Bullets, serializer),
             ["tanks"] = JArray.FromObject(value.Tanks, serializer),
             ["walls"] = JArray.FromObject(value.WallGrid.Cast<Wall?>().Where(w => w is not null), serializer),
+            ["items"] = JArray.FromObject(value.Items, serializer),
             ["gridDimensions"] = new JArray(value.WallGrid.GetLength(0), value.WallGrid.GetLength(1)),
         };
 

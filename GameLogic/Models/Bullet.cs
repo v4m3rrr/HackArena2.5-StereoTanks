@@ -187,6 +187,11 @@ public class Bullet : IEquatable<Bullet>
         int sy = startY < this.Y ? 1 : -1;
         int err = dx - dy;
 
+        if (startX == this.X && startY == this.Y)
+        {
+            coords.Add(new(startX, startY));
+        }
+
         while (startX != this.X || startY != this.Y)
         {
             int e2 = 2 * err;

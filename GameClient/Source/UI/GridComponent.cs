@@ -12,13 +12,16 @@ namespace GameClient;
 /// </summary>
 internal class GridComponent : Component
 {
+    private readonly object syncLock = new();
+
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
     private readonly List<Sprites.Zone> zones = [];
+    private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
 
-    private Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
+    private List<Sprites.SecondaryMapItem> mapItems = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
@@ -54,13 +57,23 @@ internal class GridComponent : Component
     /// <value>The draw offset in pixels to center the grid.</value>
     public int DrawOffset { get; private set; }
 
-    private IEnumerable<Sprite> Sprites => this.zones.Cast<Sprite>()
-        .Concat(this.tanks)
-        .Concat(this.bullets)
-        .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
-        .Concat(this.borderWalls.Cast<Sprite>())
-        .Concat(this.fogsOfWar.Values)
-        .Where(x => x is not null)!;
+    private IEnumerable<Sprite> Sprites
+    {
+        get
+        {
+            lock (this.syncLock)
+            {
+                return this.zones.Cast<Sprite>()
+                .Concat(this.mapItems)
+                .Concat(this.tanks)
+                .Concat(this.bullets)
+                .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
+                .Concat(this.borderWalls.Cast<Sprite>())
+                .Concat(this.fogsOfWar.Values)
+                .Where(x => x is not null)!;
+            }
+        }
+    }
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -154,10 +167,21 @@ internal class GridComponent : Component
 
     private void Logic_StateDeserialized(object? sender, EventArgs args)
     {
-        this.SyncWalls();
-        this.SyncTanks();
-        this.SyncBullets();
-        this.SyncZones();
+        try
+        {
+            lock (this.syncLock)
+            {
+                this.SyncWalls();
+                this.SyncTanks();
+                this.SyncBullets();
+                this.SyncZones();
+                this.SyncMapItems();
+            }
+        }
+        catch (Exception e)
+        {
+            DebugConsole.ThrowError(e);
+        }
     }
 
     private void SyncWalls()
@@ -210,7 +234,9 @@ internal class GridComponent : Component
             var bulletSprite = this.bullets.FirstOrDefault(b => b.Logic.Equals(bullet));
             if (bulletSprite == null)
             {
-                bulletSprite = new Sprites.Bullet(bullet, this);
+                bulletSprite = bullet is DoubleBullet doubleBullet
+                    ? new Sprites.DoubleBullet(doubleBullet, this)
+                    : new Sprites.Bullet(bullet, this);
                 this.bullets.Add(bulletSprite);
             }
             else
@@ -239,6 +265,21 @@ internal class GridComponent : Component
         }
 
         _ = this.zones.RemoveAll(z => !this.Logic.Zones.Any(z2 => z2.Equals(z.Logic)));
+    }
+
+    private void SyncMapItems()
+    {
+        this.mapItems.Clear();
+        foreach (var item in this.Logic.Items)
+        {
+            Sprites.SecondaryMapItem sprite = item.Type switch
+            {
+                SecondaryItemType.DoubleBullet => new Sprites.DoubleBulletMapItem(item, this),
+                _ => throw new NotImplementedException(),
+            };
+
+            this.mapItems.Add(sprite);
+        }
     }
 
     private void UpdateDrawData()
