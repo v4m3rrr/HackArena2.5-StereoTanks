@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text.Json;
+using GameLogic;
 using GameLogic.Networking;
 
 namespace GameServer;
@@ -81,7 +82,7 @@ internal class PacketHandler(GameInstance game)
 
     private void HandleBuffer(Connection connection, byte[] buffer)
     {
-        GameLogic.Networking.Packet packet;
+        Packet packet;
 
         try
         {
@@ -124,7 +125,7 @@ internal class PacketHandler(GameInstance game)
         }
     }
 
-    private bool HandlePlayerPacket(PlayerConnection player, GameLogic.Networking.Packet packet)
+    private bool HandlePlayerPacket(PlayerConnection player, Packet packet)
     {
         if (packet.Type == PacketType.Pong)
         {
@@ -168,6 +169,37 @@ internal class PacketHandler(GameInstance game)
 
     private bool HandleDebugPacket(Connection connection, Packet packet)
     {
+        if (packet.Type is PacketType.GlobalAbilityUse)
+        {
+            foreach (var player in game.Players)
+            {
+                var payload = packet.GetPayload<AbilityUsePayload>();
+                var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
+                action();
+            }
+
+            return true;
+        }
+
+        if (packet.Type is PacketType.GiveSecondaryItem)
+        {
+            var player = game.Players.First(p => p.Socket == connection.Socket);
+            var payload = packet.GetPayload<GiveSecondaryItemPayload>();
+            player.Instance.Tank.SecondaryItemType = payload.Item;
+            return true;
+        }
+
+        if (packet.Type is PacketType.GlobalGiveSecondaryItem)
+        {
+            foreach (var player in game.Players)
+            {
+                var payload = packet.GetPayload<GlobalGiveSecondaryItemPayload>();
+                player.Instance.Tank.SecondaryItemType = payload.Item;
+            }
+
+            return true;
+        }
+
         if (packet.Type is PacketType.ForceEndGame)
         {
             if (game.GameManager.Status is not GameStatus.Running)
@@ -261,7 +293,7 @@ internal class PacketHandler(GameInstance game)
             }
         }
 
-        if (player.Instance.IsDead && packet.Type is not PacketType.ResponsePass)
+        if (player.Instance.IsDead && packet.Type is not PacketType.Pass)
         {
             var payload = new EmptyPayload() { Type = PacketType.ActionIgnoredDueToDeadWarning };
             var responsePacket = new ResponsePacket(payload);
@@ -271,19 +303,19 @@ internal class PacketHandler(GameInstance game)
         {
             switch (packet.Type)
             {
-                case PacketType.TankMovement:
-                    this.HandleMoveTank(player, packet);
+                case PacketType.Movement:
+                    this.HandleMovement(player, packet);
                     break;
 
-                case PacketType.TankRotation:
-                    this.HandleRotateTank(player, packet);
+                case PacketType.Rotation:
+                    this.HandleRotation(player, packet);
                     break;
 
-                case PacketType.TankShoot:
-                    this.HandleShootTank(player, packet);
+                case PacketType.AbilityUse:
+                    this.HandleAbilityUse(player, packet);
                     break;
 
-                case PacketType.ResponsePass:
+                case PacketType.Pass:
                     break;
 
                 default:
@@ -308,9 +340,9 @@ internal class PacketHandler(GameInstance game)
 #endif
     }
 
-    private void HandleMoveTank(PlayerConnection player, GameLogic.Networking.Packet packet)
+    private void HandleMovement(PlayerConnection player, Packet packet)
     {
-        var movement = packet.GetPayload<TankMovementPayload>();
+        var movement = packet.GetPayload<MovementPayload>();
         void Action() => game.Grid.TryMoveTank(player.Instance.Tank, movement.Direction);
 
 #if HACKATHON
@@ -330,9 +362,9 @@ internal class PacketHandler(GameInstance game)
 #endif
     }
 
-    private void HandleRotateTank(PlayerConnection player, GameLogic.Networking.Packet packet)
+    private void HandleRotation(PlayerConnection player, Packet packet)
     {
-        var rotation = packet.GetPayload<TankRotationPayload>();
+        var rotation = packet.GetPayload<RotationPayload>();
         var actions = new List<Action>();
 
         if (rotation.TankRotation is { } tankRotation)
@@ -367,9 +399,10 @@ internal class PacketHandler(GameInstance game)
 #endif
     }
 
-    private void HandleShootTank(PlayerConnection player, GameLogic.Networking.Packet packet)
+    private void HandleAbilityUse(PlayerConnection player, Packet packet)
     {
-        GameLogic.Bullet? Action() => player.Instance.Tank.Turret.TryShoot();
+        var payload = packet.GetPayload<AbilityUsePayload>();
+        var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
 
 #if HACKATHON
         if (player.IsHackathonBot)
@@ -378,7 +411,7 @@ internal class PacketHandler(GameInstance game)
             {
                 lock (game.Grid)
                 {
-                    Action();
+                    action();
                 }
             };
         }
@@ -387,10 +420,23 @@ internal class PacketHandler(GameInstance game)
 #endif
             lock (game.Grid)
             {
-                Action();
+                action();
             }
 #if HACKATHON
         }
 #endif
+    }
+
+    private Func<dynamic?> GetAbilityAction(AbilityType type, Player player)
+    {
+        return type switch
+        {
+            AbilityType.FireBullet => player.Tank.Turret.TryFireBullet,
+            AbilityType.FireDoubleBullet => player.Tank.Turret.TryFireDoubleBullet,
+            AbilityType.UseLaser => () => player.Tank.Turret.TryUseLaser(game.Grid.WallGrid),
+            AbilityType.UseRadar => () => player.Tank.TryUseRadar(),
+            AbilityType.DropMine => player.Tank.TryDropMine,
+            _ => throw new NotImplementedException($"Ability type '{type}' is not implemented"),
+        };
     }
 }

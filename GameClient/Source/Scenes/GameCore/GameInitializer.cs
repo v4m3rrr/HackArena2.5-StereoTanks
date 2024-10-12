@@ -41,7 +41,7 @@ internal class GameInitializer(Game game)
     public Tuple<PlayerBarPanel<PlayerIdentityBar>, PlayerBarPanel<PlayerStatsBar>> CreatePlayerBarPanels()
     {
         var boxRelativeSize = new Vector2(0.23f, 1.0f);
-        var boxRelativePadding = new Vector4(0.05f);
+        var boxRelativePadding = new Vector4(0.1f);
         var boxSpacing = 8;
         var boxElementsAlignment = Alignment.Center;
 

@@ -9,7 +9,7 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a bullet sprite.
 /// </summary>
-internal class Bullet : Sprite
+internal class Bullet : Sprite, IDetectableByRadar
 {
     private static readonly ScalableTexture2D.Static StaticTexture;
     private static float heightPercentage;
@@ -20,13 +20,11 @@ internal class Bullet : Sprite
     private Vector2 position;
     private bool skipNextPositionUpdate;
     private bool isOutOfBounds;
-    private ICollision? collision;
+    private Collision? collision;
 
     static Bullet()
     {
         StaticTexture = new ScalableTexture2D.Static("Images/Game/bullet_ts.svg");
-
-
 
         MonoTanks.InvokeOnMainThread(() =>
         {
@@ -64,8 +62,22 @@ internal class Bullet : Sprite
     /// <param name="logic">The bullet logic.</param>
     /// <param name="grid">The grid component.</param>
     public Bullet(GameLogic.Bullet logic, GridComponent grid)
+        : this(logic, grid, StaticTexture)
     {
-        this.texture = new ScalableTexture2D(StaticTexture)
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Bullet"/> class.
+    /// </summary>
+    /// <param name="logic">The bullet logic.</param>
+    /// <param name="grid">The grid component.</param>
+    /// <param name="staticTexture">
+    /// The static texture that will be used
+    /// to create a new scalable texture for the bullet.
+    /// </param>
+    protected Bullet(GameLogic.Bullet logic, GridComponent grid, ScalableTexture2D.Static staticTexture)
+    {
+        this.texture = new ScalableTexture2D(staticTexture)
         {
             RelativeOrigin = new Vector2(0.5f),
             CenterOrigin = true,
@@ -91,7 +103,20 @@ internal class Bullet : Sprite
     /// </summary>
     public GameLogic.Bullet Logic { get; private set; } = default!;
 
+    /// <inheritdoc/>
+    float IDetectableByRadar.Opacity
+    {
+        get => this.texture.Opacity;
+        set => this.texture.Opacity = value;
+    }
+
     private bool IsCollisionDetected => this.collision is not null;
+
+    /// <inheritdoc/>
+    IDetectableByRadar IDetectableByRadar.Copy()
+    {
+        return new Bullet(this.Logic, this.grid);
+    }
 
     /// <summary>
     /// Updates the bullet logic.

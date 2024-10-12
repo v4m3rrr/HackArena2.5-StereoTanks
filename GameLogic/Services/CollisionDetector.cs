@@ -12,7 +12,7 @@ public static class CollisionDetector
     /// <param name="grid">The grid with all collidable objects.</param>
     /// <param name="trajectories">\The trajectories of the bullets.</param>
     /// <returns>The collision that occurred, or <see langword="null"/> if no collision occurred.</returns>
-    public static ICollision? CheckBulletCollision(
+    public static Collision? CheckBulletCollision(
         Bullet bullet,
         Grid grid,
         Dictionary<Bullet, List<(int X, int Y)>> trajectories)
@@ -30,13 +30,17 @@ public static class CollisionDetector
 
             if (x < 0 || x >= grid.Dim || y < 0 || y >= grid.Dim)
             {
-                return new BorderCollision(x, y);
+                return new Collision(CollisionType.Border);
             }
 
-            Wall? wall = grid.WallGrid[x, y];
-            if (wall is not null)
+            if (grid.WallGrid[x, y] is not null)
             {
-                return new WallCollision(wall);
+                return new Collision(CollisionType.Wall);
+            }
+
+            if (grid.Lasers.FirstOrDefault(l => l.X == x && l.Y == y) is not null)
+            {
+                return new Collision(CollisionType.Laser);
             }
 
             foreach (var otherBullet in trajectories.Keys.Where(x => x != bullet))

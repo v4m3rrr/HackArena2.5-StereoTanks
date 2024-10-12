@@ -46,6 +46,7 @@ public abstract class GameSerializationContext
         {
             this.Id = player.Id;
             this.VisibilityGrid = player.VisibilityGrid;
+            this.IsUsingRadar = player.IsUsingRadar;
         }
 
         /// <summary>
@@ -60,6 +61,11 @@ public abstract class GameSerializationContext
         /// On the client side, this property is always <see langword="null"/>.
         /// </remarks>
         public bool[,]? VisibilityGrid { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the player is using radar.
+        /// </summary>
+        public bool IsUsingRadar { get; }
     }
 
     /// <summary>

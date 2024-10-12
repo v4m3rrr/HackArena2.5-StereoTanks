@@ -67,6 +67,8 @@ public class GameStatePayload : IPacketPayload
             new GridVisibilityJsonConverter(context),
             new MapJsonConverter(context),
             new BulletJsonConverter(context),
+            new LaserJsonConverter(context),
+            new MineJsonConverter(context),
             new WallJsonConverter(context),
             new ZoneJsonConverter(context),
             new PlayerJsonConverter(context)];

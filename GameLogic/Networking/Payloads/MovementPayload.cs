@@ -1,13 +1,13 @@
 ﻿namespace GameLogic.Networking;
 
 /// <summary>
-/// Represents a tank movement direction payload.
+/// Represents a movement payload.
 /// </summary>
 /// <param name="direction">The tank movement direction.</param>
-public class TankMovementPayload(TankMovement direction) : IPacketPayload, IActionPayload
+public class MovementPayload(MovementDirection direction) : IPacketPayload, IActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.TankMovement;
+    public PacketType Type => PacketType.Movement;
 
     /// <inheritdoc/>
     public string? GameStateId { get; init; }
@@ -15,5 +15,5 @@ public class TankMovementPayload(TankMovement direction) : IPacketPayload, IActi
     /// <summary>
     /// Gets the tank movement direction.
     /// </summary>
-    public TankMovement Direction { get; } = direction;
+    public MovementDirection Direction { get; } = direction;
 }

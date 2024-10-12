@@ -35,7 +35,7 @@ internal class BulletCount : PlayerBarComponent
         this.listBox = new ListBox
         {
             Parent = this,
-            Orientation = Orientation.Horizontal,
+            Orientation = MonoRivUI.Orientation.Horizontal,
             Spacing = 5,
             Transform =
             {

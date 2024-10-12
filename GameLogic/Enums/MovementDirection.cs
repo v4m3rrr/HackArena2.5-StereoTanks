@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the movement direction of the tank.
 /// </summary>
-public enum TankMovement
+public enum MovementDirection
 {
     /// <summary>
     /// Forward movement.

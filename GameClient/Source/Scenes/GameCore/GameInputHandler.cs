@@ -10,17 +10,20 @@ namespace GameClient.Scenes.GameCore;
 /// <summary>
 /// Represents the keyboard handler.
 /// </summary>
-internal class GameInputHandler
+internal static class GameInputHandler
 {
     private static readonly List<Func<IPacketPayload?>> Handlers = [
         () =>
         {
-            TankRotationPayload? payload = HandleTankRotationPayload();
+            RotationPayload? payload = HandleTankRotationPayload();
             payload = HandleTurretRotationPayload(payload);
             return payload;
         },
-        HandleTankMovementPayload,
-        HandleTankShootPayload,
+        HandleMovementPayload,
+#if DEBUG
+        HandleGiveSecondaryItemPayload,
+#endif
+        HandleAbilityUsePayload,
     ];
 
     /// <summary>
@@ -38,74 +41,131 @@ internal class GameInputHandler
             payload = handler();
             if (payload != null)
             {
-                return payload;
+                break;
             }
         }
 
 #if DEBUG
-        if (KeyboardController.IsKeyHit(Keys.T))
+
+        if (KeyboardController.IsKeyDown(Keys.LeftShift))
         {
-            payload = new EmptyPayload() { Type = PacketType.ShootAll };
+            payload = payload switch
+            {
+                AbilityUsePayload a => new GlobalAbilityUsePayload(a.AbilityType),
+                GiveSecondaryItemPayload g => new GlobalGiveSecondaryItemPayload(g.Item),
+                _ => payload,
+            };
         }
+
 #endif
+
         return payload;
     }
 
-    private static TankRotationPayload? HandleTankRotationPayload()
+    private static RotationPayload? HandleTankRotationPayload()
     {
-        TankRotationPayload? payload = null;
+        RotationPayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.A))
         {
-            return new TankRotationPayload() { TankRotation = Rotation.Left };
+            return new RotationPayload() { TankRotation = Rotation.Left };
         }
         else if (KeyboardController.IsKeyHit(Keys.D))
         {
-            return new TankRotationPayload() { TankRotation = Rotation.Right };
+            return new RotationPayload() { TankRotation = Rotation.Right };
         }
 
         return payload;
     }
 
-    private static TankRotationPayload? HandleTurretRotationPayload(TankRotationPayload? payload)
+    private static RotationPayload? HandleTurretRotationPayload(RotationPayload? payload)
     {
         if (KeyboardController.IsKeyHit(Keys.Q))
         {
-            payload = new TankRotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Left };
+            payload = new RotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Left };
         }
         else if (KeyboardController.IsKeyHit(Keys.E))
         {
-            payload = new TankRotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Right };
+            payload = new RotationPayload() { TankRotation = payload?.TankRotation, TurretRotation = Rotation.Right };
         }
 
         return payload;
     }
 
-    private static TankMovementPayload? HandleTankMovementPayload()
+    private static MovementPayload? HandleMovementPayload()
     {
-        TankMovementPayload? payload = null;
+        MovementPayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.W))
         {
-            payload = new TankMovementPayload(TankMovement.Forward);
+            payload = new MovementPayload(MovementDirection.Forward);
         }
         else if (KeyboardController.IsKeyHit(Keys.S))
         {
-            payload = new TankMovementPayload(TankMovement.Backward);
+            payload = new MovementPayload(MovementDirection.Backward);
         }
 
         return payload;
     }
 
-    private static TankShootPayload? HandleTankShootPayload()
+    private static AbilityUsePayload? HandleAbilityUsePayload()
     {
-        TankShootPayload? payload = null;
+        AbilityUsePayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.Space))
         {
-            payload = new TankShootPayload();
+            payload = new AbilityUsePayload(AbilityType.FireBullet);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D1))
+        {
+            payload = new AbilityUsePayload(AbilityType.UseLaser);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D2))
+        {
+            payload = new AbilityUsePayload(AbilityType.FireDoubleBullet);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D3))
+        {
+            payload = new AbilityUsePayload(AbilityType.UseRadar);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D4))
+        {
+            payload = new AbilityUsePayload(AbilityType.DropMine);
         }
 
         return payload;
     }
+
+#if DEBUG
+
+    private static GiveSecondaryItemPayload? HandleGiveSecondaryItemPayload()
+    {
+        if (!KeyboardController.IsKeyDown(Keys.LeftControl))
+        {
+            return null;
+        }
+
+        GiveSecondaryItemPayload? payload = null;
+
+        if (KeyboardController.IsKeyHit(Keys.D1))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.Laser);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D2))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.DoubleBullet);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D3))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.Radar);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D4))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.Mine);
+        }
+
+        return payload;
+    }
+
+#endif
 }

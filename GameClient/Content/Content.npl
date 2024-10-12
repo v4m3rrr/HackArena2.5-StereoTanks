@@ -4,17 +4,30 @@
 	[
 
 	],
-	"content":
-	{
-		"textures":
-		{
+	"content": {
+		"textures": {
 			"path": "Images/*.png",
 			"recursive": "True",
 			"action": "build",
 			"importer": "TextureImporter",
 			"processor": "TextureProcessor",
-			"processorParam":
-			{
+			"processorParam": {
+				"ColorKeyColor": "255,0,255,255",
+				"ColorKeyEnabled": "True",
+				"GenerateMipmaps": "False",
+				"PremultiplyAlpha": "True",
+				"ResizeToPowerOfTwo": "False",
+				"MakeSquare": "False",
+				"TextureFormat": "Color"
+			}
+		},
+		"animationTextures": {
+			"path": "Animations/*.png",
+			"recursive": "True",
+			"action": "build",
+			"importer": "TextureImporter",
+			"processor": "TextureProcessor",
+			"processorParam": {
 				"ColorKeyColor": "255,0,255,255",
 				"ColorKeyEnabled": "True",
 				"GenerateMipmaps": "False",

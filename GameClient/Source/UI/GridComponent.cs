@@ -12,14 +12,20 @@ namespace GameClient;
 /// </summary>
 internal class GridComponent : Component
 {
+    private readonly object syncLock = new();
+
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
     private readonly List<Sprites.Zone> zones = [];
+    private readonly List<Sprites.Laser> lasers = [];
+    private readonly List<Sprites.Mine> mines = [];
+    private readonly List<Sprites.RadarEffect> radarEffects = [];
+    private readonly List<Sprites.SecondaryItem> mapItems = [];
+    private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
 
-    private Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
-
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
     /// </summary>
@@ -54,13 +60,26 @@ internal class GridComponent : Component
     /// <value>The draw offset in pixels to center the grid.</value>
     public int DrawOffset { get; private set; }
 
-    private IEnumerable<Sprite> Sprites => this.zones.Cast<Sprite>()
-        .Concat(this.tanks)
-        .Concat(this.bullets)
-        .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
-        .Concat(this.borderWalls.Cast<Sprite>())
-        .Concat(this.fogsOfWar.Values)
-        .Where(x => x is not null)!;
+    private IEnumerable<Sprite> Sprites
+    {
+        get
+        {
+            lock (this.syncLock)
+            {
+                return this.zones.Cast<Sprite>()
+                    .Concat(this.mapItems)
+                    .Concat(this.mines)
+                    .Concat(this.tanks)
+                    .Concat(this.bullets)
+                    .Concat(this.lasers)
+                    .Concat(this.radarEffects)
+                    .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
+                    .Concat(this.borderWalls.Cast<Sprite>())
+                    .Concat(this.fogsOfWar.Values)
+                    .Where(x => x is not null)!;
+            }
+        }
+    }
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -154,10 +173,24 @@ internal class GridComponent : Component
 
     private void Logic_StateDeserialized(object? sender, EventArgs args)
     {
-        this.SyncWalls();
-        this.SyncTanks();
-        this.SyncBullets();
-        this.SyncZones();
+        try
+        {
+            lock (this.syncLock)
+            {
+                this.SyncWalls();
+                this.SyncTanks();
+                this.SyncBullets();
+                this.SyncLasers();
+                this.SyncZones();
+                this.SyncMapItems();
+                this.SyncMines();
+                this.SyncRadarEffect();
+            }
+        }
+        catch (Exception e)
+        {
+            DebugConsole.ThrowError(e);
+        }
     }
 
     private void SyncWalls()
@@ -210,7 +243,9 @@ internal class GridComponent : Component
             var bulletSprite = this.bullets.FirstOrDefault(b => b.Logic.Equals(bullet));
             if (bulletSprite == null)
             {
-                bulletSprite = new Sprites.Bullet(bullet, this);
+                bulletSprite = bullet is DoubleBullet doubleBullet
+                    ? new Sprites.DoubleBullet(doubleBullet, this)
+                    : new Sprites.Bullet(bullet, this);
                 this.bullets.Add(bulletSprite);
             }
             else
@@ -239,6 +274,81 @@ internal class GridComponent : Component
         }
 
         _ = this.zones.RemoveAll(z => !this.Logic.Zones.Any(z2 => z2.Equals(z.Logic)));
+    }
+
+    private void SyncMapItems()
+    {
+        this.mapItems.Clear();
+        foreach (var item in this.Logic.Items)
+        {
+            var sprite = new Sprites.SecondaryItem(item, this);
+            this.mapItems.Add(sprite);
+        }
+    }
+
+    private void SyncLasers()
+    {
+        foreach (var laser in this.Logic.Lasers)
+        {
+            var laserSprite = this.lasers.FirstOrDefault(l => l.Logic.Equals(laser));
+            if (laserSprite == null)
+            {
+                laserSprite = new Sprites.Laser(laser, this);
+                this.lasers.Add(laserSprite);
+            }
+            else
+            {
+                laserSprite.UpdateLogic(laser);
+            }
+        }
+
+        _ = this.lasers.RemoveAll(l => !this.Logic.Lasers.Any(l2 => l2.Equals(l.Logic)));
+    }
+
+    private void SyncRadarEffect()
+    {
+        foreach (var effect in this.radarEffects.ToList())
+        {
+            var newTank = this.Logic.Tanks.FirstOrDefault(t => t.Equals(effect.Tank));
+
+            if (effect.IsExpired || newTank is null)
+            {
+                _ = this.radarEffects.Remove(effect);
+            }
+            else
+            {
+                effect.UpdateTank(newTank);
+            }
+        }
+
+        foreach (var tank in this.Logic.Tanks)
+        {
+            if (tank.Owner.IsUsingRadar)
+            {
+                var effect = new Sprites.RadarEffect(tank, this, this.Sprites);
+                this.radarEffects.Add(effect);
+            }
+        }
+    }
+
+    private void SyncMines()
+    {
+        foreach (var mine in this.Logic.Mines)
+        {
+            var mineSprite = this.mines.FirstOrDefault(m => m.Logic.Equals(mine));
+            if (mineSprite == null)
+            {
+                mineSprite = new Sprites.Mine(mine, this);
+                this.mines.Add(mineSprite);
+            }
+            else
+            {
+                mineSprite.UpdateLogic(mine);
+            }
+        }
+
+        _ = this.mines.RemoveAll(m => m.IsFullyExploded);
+        _ = this.mines.RemoveAll(m => !this.Logic.Mines.Any(m2 => m2.Equals(m.Logic)));
     }
 
     private void UpdateDrawData()
