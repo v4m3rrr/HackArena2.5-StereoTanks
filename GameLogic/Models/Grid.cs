@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace GameLogic;
 
@@ -517,6 +516,18 @@ public class Grid(int dimension, int seed)
                     {
                         mine.Explode(tankInMine);
                     }
+                }
+            }
+
+            // Remove duplicate mines.
+            // Reverse the list to remove the last mine in case of duplicates.
+            var mines = this.mines.ToList();
+            mines.Reverse();
+            foreach (Mine mine in mines)
+            {
+                if (this.mines.Any(m => m.X == mine.X && m.Y == mine.Y && m != mine))
+                {
+                    _ = this.mines.Remove(mine);
                 }
             }
         }

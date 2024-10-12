@@ -22,6 +22,7 @@ internal class Mine : Sprite, IDetectableByRadar
 
     private Rectangle destRectangle;
     private float explosionProgress;
+    private float baseOpacity = 1f;
 
     static Mine()
     {
@@ -56,6 +57,7 @@ internal class Mine : Sprite, IDetectableByRadar
 
         this.innerTexture = new ScalableTexture2D(InnerStaticTexture)
         {
+            Color = Color.Red,
             Transform =
             {
                 Type = TransformType.Absolute,
@@ -81,8 +83,8 @@ internal class Mine : Sprite, IDetectableByRadar
     /// <inheritdoc/>
     float IDetectableByRadar.Opacity
     {
-        get => this.outerTexture.Opacity;
-        set => this.outerTexture.Opacity = this.innerTexture.Opacity = value;
+        get => this.baseOpacity;
+        set => this.baseOpacity = value;
     }
 
     /// <summary>
@@ -123,6 +125,11 @@ internal class Mine : Sprite, IDetectableByRadar
             this.destRectangle = new Rectangle(
                 this.outerTexture.Transform.Location - (this.outerTexture.Transform.Size / new Point(2)),
                 this.outerTexture.Transform.Size * new Point(2));
+        }
+        else
+        {
+            var eff = Animations.EaseInOut((float)gameTime.TotalGameTime.Milliseconds / 1000f);
+            this.innerTexture.Opacity = this.baseOpacity * (1f - eff);
         }
     }
 

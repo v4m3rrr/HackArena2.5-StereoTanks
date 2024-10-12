@@ -206,6 +206,7 @@ public class Mine : IStunEffect, IEquatable<Mine>
             this.Layer!.Score += damageTaken;
         }
 
+        tank.Stun(this);
         this.ExplosionRemainingTicks = ExplosionTicks;
     }
 
