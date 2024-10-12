@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Net.WebSockets;
-using GameLogic.Networking;
+﻿using System.Net.WebSockets;
 
 namespace GameServer;
 
@@ -15,19 +13,18 @@ internal class PlayerManager(GameInstance game)
     private static readonly uint[] Colors =
     [
         /* ABGR */
-        0xFFFFA600,
-        0xFFFF5AF9,
-        0xFF1A9BF9,
-        0xFF3FD47A,
+        0xFFFF48C5,
+        0xFF1F2AFF,
+        0xFF2ACBEB,
+        0xFF36DE27,
     ];
 
     /// <summary>
     /// Adds a player.
     /// </summary>
-    /// <param name="socket">The socket of the player.</param>
     /// <param name="connectionData">The connection data of the player.</param>
     /// <returns>The player instance.</returns>
-    public GameLogic.Player CreatePlayer(WebSocket socket, ConnectionData.Player connectionData)
+    public GameLogic.Player CreatePlayer(ConnectionData.Player connectionData)
     {
         string id;
         do

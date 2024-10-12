@@ -205,7 +205,7 @@ async Task<Task> HandlePlayerConnection(
 #endif
         ;
 
-        player = game.PlayerManager.CreatePlayer(socket, connectionData);
+        player = game.PlayerManager.CreatePlayer(connectionData);
         connection = new PlayerConnection(context, socket, connectionData, player);
         game.AddConnection(connection);
     }

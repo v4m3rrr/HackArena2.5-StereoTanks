@@ -43,7 +43,7 @@ public class MonoTanks : Game
     /// Gets the theme color of the game.
     /// </summary>
 #if DEBUG
-    public static Color ThemeColor { get; } = new(255, 155, 26);
+    public static Color ThemeColor { get; } = (new Color(0xFF, 0x9B, 0x1A) * 0.7f).WithAlpha(255);
 #else
     public static Color ThemeColor { get; } = new(0, 166, 255);
 #endif
