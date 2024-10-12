@@ -19,4 +19,9 @@ public enum SecondaryItemType
     /// The radar item.
     /// </summary>
     Radar,
+
+    /// <summary>
+    /// The mine item.
+    /// </summary>
+    Mine,
 }

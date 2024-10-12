@@ -10,8 +10,7 @@ namespace GameClient.Scenes.GameCore;
 /// <summary>
 /// Represents the keyboard handler.
 /// </summary>
-/// <param name="player">The player.</param>
-internal class GameInputHandler(Player player)
+internal static class GameInputHandler
 {
     private static readonly List<Func<IPacketPayload?>> Handlers = [
         () =>
@@ -129,6 +128,10 @@ internal class GameInputHandler(Player player)
         {
             payload = new AbilityUsePayload(AbilityType.UseRadar);
         }
+        else if (KeyboardController.IsKeyHit(Keys.D4))
+        {
+            payload = new AbilityUsePayload(AbilityType.DropMine);
+        }
 
         return payload;
     }
@@ -155,6 +158,10 @@ internal class GameInputHandler(Player player)
         else if (KeyboardController.IsKeyHit(Keys.D3))
         {
             payload = new GiveSecondaryItemPayload(SecondaryItemType.Radar);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D4))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.Mine);
         }
 
         return payload;

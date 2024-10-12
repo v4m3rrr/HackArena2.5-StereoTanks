@@ -52,6 +52,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         List<Tank> tanks = [];
         List<Bullet> bullets = [];
         List<Laser> lasers = [];
+        List<Mine> mines = [];
         List<SecondaryItem> items = [];
 
         for (int i = 0; i < jObject.Count; i++)
@@ -90,6 +91,13 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
                             var laser = laserPayload.ToObject<Laser>(serializer)!;
                             lasers.Add(laser);
                             break;
+                        case "mine":
+                            var minePayload = item["payload"] ?? new JObject();
+                            minePayload["x"] = i;
+                            minePayload["y"] = j;
+                            var mine = minePayload.ToObject<Mine>(serializer)!;
+                            mines.Add(mine);
+                            break;
                         case "item":
                             var itemPayload = item["payload"]!;
                             itemPayload["x"] = i;
@@ -102,7 +110,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             }
         }
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, items);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines, items);
     }
 
     private Grid.TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
@@ -119,9 +127,10 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         var tanks = jObject["tanks"]!.ToObject<List<Tank>>(serializer)!;
         var bullets = jObject["bullets"]!.ToObject<List<Bullet>>(serializer)!;
         var lasers = jObject["lasers"]!.ToObject<List<Laser>>(serializer)!;
+        var mines = jObject["mines"]!.ToObject<List<Mine>>(serializer)!;
         var items = jObject["items"]!.ToObject<List<SecondaryItem>>(serializer)!;
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, items);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines, items);
     }
 
     private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
@@ -204,6 +213,21 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             });
         }
 
+        foreach (Mine mine in value.Mines)
+        {
+            if (!IsVisible(mine.X, mine.Y))
+            {
+                continue;
+            }
+
+            var obj = JObject.FromObject(mine, serializer);
+            (jObject[mine.X][mine.Y] as JArray)!.Add(new JObject
+            {
+                { "type", "mine" },
+                { "payload", obj },
+            });
+        }
+
         foreach (SecondaryItem item in value.Items)
         {
             if (!IsVisible(item.X, item.Y))
@@ -231,6 +255,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             ["tanks"] = JArray.FromObject(value.Tanks, serializer),
             ["bullets"] = JArray.FromObject(value.Bullets, serializer),
             ["lasers"] = JArray.FromObject(value.Lasers, serializer),
+            ["mines"] = JArray.FromObject(value.Mines, serializer),
             ["items"] = JArray.FromObject(value.Items, serializer),
         };
 

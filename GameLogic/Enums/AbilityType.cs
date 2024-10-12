@@ -24,4 +24,9 @@ public enum AbilityType
     /// Uses a radar.
     /// </summary>
     UseRadar,
+
+    /// <summary>
+    /// Drops a mine.
+    /// </summary>
+    DropMine,
 }

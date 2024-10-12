@@ -20,6 +20,7 @@ public class LogicUpdater(Grid grid)
         {
             grid.UpdateBullets(this.BulletDeltaTime);
             grid.UpdateLasers();
+            grid.UpdateMines();
             grid.UpdatePlayersStunEffects();
             grid.RegeneratePlayersBullets();
             grid.UpdateTanksRegenerationProgress();

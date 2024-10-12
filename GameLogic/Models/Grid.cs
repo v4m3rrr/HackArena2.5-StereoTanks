@@ -11,6 +11,7 @@ namespace GameLogic;
 public class Grid(int dimension, int seed)
 {
     private readonly object lasersLock = new();
+    private readonly object minesLock = new();
 
     private readonly ConcurrentQueue<Bullet> queuedBullets = new();
     private readonly Random random = new(seed);
@@ -20,6 +21,7 @@ public class Grid(int dimension, int seed)
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
     private List<Laser> lasers = [];
+    private List<Mine> mines = [];
     private List<SecondaryItem> items = [];
 
     private FogOfWarManager fogOfWarManager = new(new bool[0, 0]);
@@ -83,6 +85,11 @@ public class Grid(int dimension, int seed)
     /// Gets the lasers.
     /// </summary>
     public IEnumerable<Laser> Lasers => this.lasers;
+
+    /// <summary>
+    /// Gets the mines.
+    /// </summary>
+    public IEnumerable<Mine> Mines => this.mines;
 
     /// <summary>
     /// Gets the items.
@@ -157,24 +164,46 @@ public class Grid(int dimension, int seed)
         // Update the bullets.
         this.bullets = tiles.Bullets;
 
-        // Update the lasers.
-        this.lasers = tiles.Lasers;
-
         // Set the bullets' shooters.
         foreach (Bullet bullet in this.bullets)
         {
             if (bullet.ShooterId is null)
             {
-                // ShooterId is null for players.
-                // Only spectators have bullets with ShooterId.
-                Debug.Assert(
-                    payload is Networking.GameStatePayload.ForPlayer,
-                    "Bullet shooter ID is null for player payload.");
                 continue;
             }
 
             var shooter = payload.Players.First(p => p.Id == bullet.ShooterId);
             bullet.Shooter = shooter;
+        }
+
+        // Update the lasers.
+        this.lasers = tiles.Lasers;
+
+        // Update the lasers' shooters.
+        foreach (Laser laser in this.lasers)
+        {
+            if (laser.ShooterId is null)
+            {
+                continue;
+            }
+
+            var shooter = payload.Players.First(p => p.Id == laser.ShooterId);
+            laser.Shooter = shooter;
+        }
+
+        // Update the mines.
+        this.mines = tiles.Mines;
+
+        // Update the mines' layers.
+        foreach (Mine mine in this.mines)
+        {
+            if (mine.LayerId is null)
+            {
+                continue;
+            }
+
+            var layer = payload.Players.First(p => p.Id == mine.LayerId);
+            mine.Layer = layer;
         }
 
         // Update the zones.
@@ -258,11 +287,20 @@ public class Grid(int dimension, int seed)
         this.tanks.Add(tank);
 
         tank.Turret.BulletShot += this.queuedBullets.Enqueue;
+
         tank.Turret.LaserUsed += (lasers) =>
         {
             lock (this.lasersLock)
             {
                 this.lasers.AddRange(lasers);
+            }
+        };
+
+        tank.MineDropped += (sender, mine) =>
+        {
+            lock (this.minesLock)
+            {
+                this.mines.Add(mine);
             }
         };
 
@@ -324,12 +362,13 @@ public class Grid(int dimension, int seed)
     /// </summary>
     internal void GenerateNewItemOnMap()
     {
-        var nullWeight = 0.99f;
+        var nullWeight = 99.5f;
         var itemWeights = new Dictionary<SecondaryItemType, double>
         {
-            { SecondaryItemType.Laser, 0.0009 },
-            { SecondaryItemType.DoubleBullet, 0.009 },
-            { SecondaryItemType.Radar, 0.004 },
+            { SecondaryItemType.Laser, 0.09 },
+            { SecondaryItemType.DoubleBullet, 0.9 },
+            { SecondaryItemType.Radar, 0.3 },
+            { SecondaryItemType.Mine, 0.5 },
         };
 
         double totalWeight = itemWeights.Values.Sum() + nullWeight;
@@ -446,6 +485,44 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
+    /// Updates the mines.
+    /// </summary>
+    internal void UpdateMines()
+    {
+        lock (this.minesLock)
+        {
+            foreach (Mine mine in this.mines.ToList())
+            {
+                // Remove if the mine is on a wall.
+                if (this.WallGrid[mine.X, mine.Y] is not null)
+                {
+                    _ = this.mines.Remove(mine);
+                    continue;
+                }
+
+                mine.DecreaseExplosionTicks();
+
+                // Remove if the mine is fully exploded.
+                if (mine.IsFullyExploded)
+                {
+                    _ = this.mines.Remove(mine);
+                    continue;
+                }
+
+                // Explode the mine if a tank is on it.
+                if (!mine.IsExploded)
+                {
+                    var tankInMine = this.tanks.FirstOrDefault(t => t.X == mine.X && t.Y == mine.Y);
+                    if (tankInMine is not null)
+                    {
+                        mine.Explode(tankInMine);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Regenerates the players' bullets.
     /// </summary>
     internal void RegeneratePlayersBullets()
@@ -503,6 +580,9 @@ public class Grid(int dimension, int seed)
         }
     }
 
+    /// <summary>
+    /// Updates the players' stun effects.
+    /// </summary>
     internal void UpdatePlayersStunEffects()
     {
         foreach (Tank tank in this.tanks)
@@ -527,6 +607,7 @@ public class Grid(int dimension, int seed)
             this.tanks,
             this.bullets,
             this.lasers,
+            this.mines,
             this.items);
 
         return new MapPayload(visibility, tiles, this.zones);
@@ -660,12 +741,14 @@ public class Grid(int dimension, int seed)
     /// <param name="Tanks">The tanks of the grid.</param>
     /// <param name="Bullets">The bullets of the grid.</param>
     /// <param name="Lasers">The lasers on the grid.</param>
+    /// <param name="Mines">The mines on the grid.</param>
     /// <param name="Items">The items on the grid.</param>
     internal record class TilesPayload(
         Wall?[,] WallGrid,
         List<Tank> Tanks,
         List<Bullet> Bullets,
         List<Laser> Lasers,
+        List<Mine> Mines,
         List<SecondaryItem> Items);
 
     /// <summary>

@@ -174,28 +174,8 @@ internal class PacketHandler(GameInstance game)
             foreach (var player in game.Players)
             {
                 var payload = packet.GetPayload<AbilityUsePayload>();
-                switch (payload.AbilityType)
-                {
-                    case AbilityType.FireBullet:
-                        _ = player.Instance.Tank.Turret.TryFireBullet();
-                        break;
-
-                    case AbilityType.FireDoubleBullet:
-                        _ = player.Instance.Tank.Turret.TryFireDoubleBullet();
-                        break;
-
-                    case AbilityType.UseLaser:
-                        _ = player.Instance.Tank.Turret.TryUseLaser(game.Grid.WallGrid);
-                        break;
-
-                    case AbilityType.UseRadar:
-                        player.Instance.Tank.TryUseRadar();
-                        break;
-
-                    default:
-                        Console.WriteLine($"[WARN] Ability type '{payload.AbilityType}' cannot be handled.");
-                        break;
-                }
+                var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
+                action();
             }
 
             return true;
@@ -422,15 +402,7 @@ internal class PacketHandler(GameInstance game)
     private void HandleAbilityUse(PlayerConnection player, Packet packet)
     {
         var payload = packet.GetPayload<AbilityUsePayload>();
-
-        Func<dynamic?> action = payload.AbilityType switch
-        {
-            AbilityType.FireBullet => player.Instance.Tank.Turret.TryFireBullet,
-            AbilityType.FireDoubleBullet => player.Instance.Tank.Turret.TryFireDoubleBullet,
-            AbilityType.UseLaser => () => player.Instance.Tank.Turret.TryUseLaser(game.Grid.WallGrid),
-            AbilityType.UseRadar => () => player.Instance.Tank.TryUseRadar(),
-            _ => throw new NotImplementedException($"Ability type '{payload.AbilityType}' is not implemented"),
-        };
+        var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
 
 #if HACKATHON
         if (player.IsHackathonBot)
@@ -453,5 +425,18 @@ internal class PacketHandler(GameInstance game)
 #if HACKATHON
         }
 #endif
+    }
+
+    private Func<dynamic?> GetAbilityAction(AbilityType type, Player player)
+    {
+        return type switch
+        {
+            AbilityType.FireBullet => player.Tank.Turret.TryFireBullet,
+            AbilityType.FireDoubleBullet => player.Tank.Turret.TryFireDoubleBullet,
+            AbilityType.UseLaser => () => player.Tank.Turret.TryUseLaser(game.Grid.WallGrid),
+            AbilityType.UseRadar => () => player.Tank.TryUseRadar(),
+            AbilityType.DropMine => player.Tank.TryDropMine,
+            _ => throw new NotImplementedException($"Ability type '{type}' is not implemented"),
+        };
     }
 }

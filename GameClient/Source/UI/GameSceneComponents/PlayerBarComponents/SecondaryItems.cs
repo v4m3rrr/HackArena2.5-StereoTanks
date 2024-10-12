@@ -14,6 +14,7 @@ internal class SecondaryItems : PlayerBarComponent
     private static readonly ScalableTexture2D.Static LaserStaticTexture;
     private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
     private static readonly ScalableTexture2D.Static RadarStaticTexture;
+    private static readonly ScalableTexture2D.Static MineStaticTexture;
 
     private readonly ListBox listBox;
 
@@ -27,6 +28,9 @@ internal class SecondaryItems : PlayerBarComponent
 
         RadarStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/radar.svg");
         RadarStaticTexture.Load();
+
+        MineStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/mine.svg");
+        MineStaticTexture.Load();
     }
 
     /// <summary>
@@ -74,11 +78,19 @@ internal class SecondaryItems : PlayerBarComponent
             Parent = this.listBox.ContentContainer,
         };
 
+        // Mine
+        _ = new Item(player, SecondaryItemType.Mine, MineStaticTexture)
+        {
+            Parent = this.listBox.ContentContainer,
+        };
+
         this.listBox.Components.Last().Transform.SizeChanged += (s, e) =>
         {
             var size = (s as Transform)!.Size;
             DoubleBulletStaticTexture.Transform.Size = size;
             LaserStaticTexture.Transform.Size = size;
+            RadarStaticTexture.Transform.Size = size;
+            MineStaticTexture.Transform.Size = size;
         };
     }
 

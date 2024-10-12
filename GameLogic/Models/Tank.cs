@@ -7,6 +7,7 @@ namespace GameLogic;
 /// </summary>
 public class Tank : IEquatable<Tank>
 {
+    private const int MineDamage = 50;
     private readonly Dictionary<IStunEffect, int> remainingStuns = [];
 
     /// <summary>
@@ -100,6 +101,11 @@ public class Tank : IEquatable<Tank>
     /// Occurs when the tank dies.
     /// </summary>
     internal event EventHandler? Died;
+
+    /// <summary>
+    /// Occurs when the mine has been dropped;
+    /// </summary>
+    internal event EventHandler<Mine>? MineDropped;
 
     /// <summary>
     /// Gets the x coordinate of the tank.
@@ -236,11 +242,48 @@ public class Tank : IEquatable<Tank>
     }
 
     /// <summary>
+    /// Tries to drop a mine.
+    /// </summary>
+    /// <returns>
+    /// The mine that was dropped, or <see langword="null"/>
+    /// if the tank is stunned with the <see cref="StunBlockEffect.AbilityUse"/>
+    /// block effect or the tank doesn't have a mine.
+    /// </returns>
+    public Mine? TryDropMine()
+    {
+        if (this.IsBlockedByStun(StunBlockEffect.AbilityUse))
+        {
+            return null;
+        }
+
+        if (this.SecondaryItemType is not GameLogic.SecondaryItemType.Mine)
+        {
+            return null;
+        }
+
+        var (nx, ny) = DirectionUtils.Normal(this.Direction);
+        var mine = new Mine(
+            this.X - nx,
+            this.Y - ny,
+            MineDamage,
+            this.Owner);
+
+        this.SecondaryItemType = null;
+        this.MineDropped?.Invoke(this, mine);
+
+        return mine;
+    }
+
+    /// <summary>
     /// Reduces the health of the tank.
     /// </summary>
     /// <param name="damage">The amount of damage to take.</param>
     /// <param name="damager">The player that made the damage.</param>
     /// <returns>The amount of damage taken.</returns>
+    /// <remarks>
+    /// If the damager is provided, the kills of the damager
+    /// are increased by one if the tank is killed.
+    /// </remarks>
     internal int TakeDamage(int damage, Player? damager = null)
     {
         return this.TakeDamage(damage, damager, out _);
@@ -253,6 +296,10 @@ public class Tank : IEquatable<Tank>
     /// <param name="damager">The player that made the damage.</param>
     /// <param name="killed">A value indicating whether the tank was killed.</param>
     /// <returns>The amount of damage taken.</returns>
+    /// <remarks>
+    /// If the damager is provided, the kills of the damager
+    /// are increased by one if the tank is killed.
+    /// </remarks>
     internal int TakeDamage(int damage, Player? damager, out bool killed)
     {
         Debug.Assert(damage >= 0, "Damage cannot be negative.");
@@ -306,6 +353,17 @@ public class Tank : IEquatable<Tank>
     /// <summary>
     /// Stuns the tank.
     /// </summary>
+    /// <param name="stun">
+    /// The stun to apply to the tank.
+    /// </param>
+    internal void Stun(IStunEffect stun)
+    {
+        this.remainingStuns[stun] = stun.StunTicks;
+    }
+
+    /// <summary>
+    /// Stuns the tank.
+    /// </summary>
     /// <param name="stuns">
     /// The stuns to apply to the tank.
     /// </param>
@@ -313,7 +371,7 @@ public class Tank : IEquatable<Tank>
     {
         foreach (var stun in stuns)
         {
-            this.remainingStuns[stun] = stun.StunTicks;
+            this.Stun(stun);
         }
     }
 

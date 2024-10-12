@@ -13,6 +13,7 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
     private static readonly ScalableTexture2D.Static LaserStaticTexture;
     private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
     private static readonly ScalableTexture2D.Static RadarStaticTexture;
+    private static readonly ScalableTexture2D.Static MineStaticTexture;
 
     private readonly ScalableTexture2D texture;
     private readonly GameLogic.SecondaryItem logic;
@@ -28,6 +29,9 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
 
         RadarStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/radar.svg");
         RadarStaticTexture.Load();
+
+        MineStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/mine.svg");
+        MineStaticTexture.Load();
     }
 
     /// <summary>
@@ -79,6 +83,7 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
             SecondaryItemType.DoubleBullet => DoubleBulletStaticTexture,
             SecondaryItemType.Laser => LaserStaticTexture,
             SecondaryItemType.Radar => RadarStaticTexture,
+            SecondaryItemType.Mine => MineStaticTexture,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
     }
@@ -88,6 +93,7 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
         LaserStaticTexture.Transform.Size = size;
         DoubleBulletStaticTexture.Transform.Size = size;
         RadarStaticTexture.Transform.Size = size;
+        MineStaticTexture.Transform.Size = size;
     }
 
     private void UpdateDestination()

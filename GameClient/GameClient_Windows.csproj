@@ -89,7 +89,10 @@
     <None Update="Content\Localization\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-	<None Update="Content\Images\**\*">
+	<None Update="Content\Images\**\*.svg">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	<None Update="Content\Animations\**\*.svg">
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</None>
   </ItemGroup>

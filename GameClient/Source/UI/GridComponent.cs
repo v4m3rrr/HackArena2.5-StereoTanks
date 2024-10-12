@@ -18,13 +18,14 @@ internal class GridComponent : Component
     private readonly List<Sprites.Bullet> bullets = [];
     private readonly List<Sprites.Zone> zones = [];
     private readonly List<Sprites.Laser> lasers = [];
+    private readonly List<Sprites.Mine> mines = [];
     private readonly List<Sprites.RadarEffect> radarEffects = [];
+    private readonly List<Sprites.SecondaryItem> mapItems = [];
     private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
 
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
-    private List<Sprites.SecondaryItem> mapItems = [];
-
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
     /// </summary>
@@ -67,6 +68,7 @@ internal class GridComponent : Component
             {
                 return this.zones.Cast<Sprite>()
                     .Concat(this.mapItems)
+                    .Concat(this.mines)
                     .Concat(this.tanks)
                     .Concat(this.bullets)
                     .Concat(this.lasers)
@@ -181,6 +183,7 @@ internal class GridComponent : Component
                 this.SyncLasers();
                 this.SyncZones();
                 this.SyncMapItems();
+                this.SyncMines();
                 this.SyncRadarEffect();
             }
         }
@@ -326,6 +329,26 @@ internal class GridComponent : Component
                 this.radarEffects.Add(effect);
             }
         }
+    }
+
+    private void SyncMines()
+    {
+        foreach (var mine in this.Logic.Mines)
+        {
+            var mineSprite = this.mines.FirstOrDefault(m => m.Logic.Equals(mine));
+            if (mineSprite == null)
+            {
+                mineSprite = new Sprites.Mine(mine, this);
+                this.mines.Add(mineSprite);
+            }
+            else
+            {
+                mineSprite.UpdateLogic(mine);
+            }
+        }
+
+        _ = this.mines.RemoveAll(m => m.IsFullyExploded);
+        _ = this.mines.RemoveAll(m => !this.Logic.Mines.Any(m2 => m2.Equals(m.Logic)));
     }
 
     private void UpdateDrawData()
