@@ -105,6 +105,12 @@ internal class Mine : Sprite, IDetectableByRadar
         ? new Color(this.Logic.Layer.Color)
         : MonoTanks.ThemeColor;
 
+    /// <inheritdoc/>
+    IDetectableByRadar IDetectableByRadar.Copy()
+    {
+        return new Mine(this.Logic, this.grid);
+    }
+
     /// <summary>
     /// Updates the logic of the mine.
     /// </summary>

@@ -79,6 +79,14 @@ internal class RadarEffect : Sprite
 
         this.UpdateEffect(gameTime);
 
+        if (this.IsPlayerTank && !this.Tank.Owner.IsUsingRadar)
+        {
+            foreach (IDetectableByRadar sprite in this.detectedSprites)
+            {
+                sprite.Update(gameTime);
+            }
+        }
+
         if (this.IsPlayerTank)
         {
             this.UpdateDetection(gameTime);
@@ -116,7 +124,7 @@ internal class RadarEffect : Sprite
 
             if (sprite is IDetectableByRadar radarDetectable)
             {
-                detectedSprites.Add(radarDetectable);
+                detectedSprites.Add(radarDetectable.Copy());
             }
         }
 

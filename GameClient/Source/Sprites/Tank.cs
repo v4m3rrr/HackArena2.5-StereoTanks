@@ -62,6 +62,12 @@ internal class Tank : Sprite, IDetectableByRadar
         set => this.tankTexture.Opacity = this.turretTexture.Opacity = value;
     }
 
+    /// <inheritdoc/>
+    IDetectableByRadar IDetectableByRadar.Copy()
+    {
+        return new Tank(this.Logic, this.grid);
+    }
+
     /// <summary>
     /// Updates the tank logic.
     /// </summary>

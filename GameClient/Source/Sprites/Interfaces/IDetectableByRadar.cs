@@ -26,4 +26,10 @@ internal interface IDetectableByRadar
     /// </summary>
     /// <param name="gameTime">The game time.</param>
     void Draw(GameTime gameTime);
+
+    /// <summary>
+    /// Copies the sprite.
+    /// </summary>
+    /// <returns>The copy of the sprite.</returns>
+    IDetectableByRadar Copy();
 }

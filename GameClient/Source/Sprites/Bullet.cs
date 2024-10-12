@@ -112,6 +112,12 @@ internal class Bullet : Sprite, IDetectableByRadar
 
     private bool IsCollisionDetected => this.collision is not null;
 
+    /// <inheritdoc/>
+    IDetectableByRadar IDetectableByRadar.Copy()
+    {
+        return new Bullet(this.Logic, this.grid);
+    }
+
     /// <summary>
     /// Updates the bullet logic.
     /// </summary>

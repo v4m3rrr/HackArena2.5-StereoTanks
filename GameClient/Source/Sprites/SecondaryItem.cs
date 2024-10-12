@@ -65,6 +65,12 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
     }
 
     /// <inheritdoc/>
+    IDetectableByRadar IDetectableByRadar.Copy()
+    {
+        return new SecondaryItem(this.logic, this.grid);
+    }
+
+    /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
         this.texture.Update(gameTime);

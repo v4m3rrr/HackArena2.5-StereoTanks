@@ -32,6 +32,12 @@ internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite, IDetec
         set => this.opacity = value;
     }
 
+    /// <inheritdoc/>
+    IDetectableByRadar IDetectableByRadar.Copy()
+    {
+        return new Laser(this.Logic, grid);
+    }
+
     /// <summary>
     /// Updates the logic of the laser.
     /// </summary>
