@@ -231,11 +231,18 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         foreach (SecondaryItem item in value.Items)
         {
             if (!IsVisible(item.X, item.Y))
-                {
+            {
                 continue;
             }
 
-            var obj = JObject.FromObject(item, serializer);
+            var isCovered = value.Tanks.Any(t => t.X == item.X && t.Y == item.Y)
+                || value.Mines.Any(m => m.X == item.X && m.Y == item.Y);
+
+            var itemToSerialize = isCovered
+                ? new SecondaryItem(item.X, item.Y, SecondaryItemType.Unknown)
+                : item;
+
+            var obj = JObject.FromObject(itemToSerialize, serializer);
             (jObject[item.X][item.Y] as JArray)!.Add(new JObject
             {
                 { "type", "item" },

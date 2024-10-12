@@ -10,6 +10,7 @@ namespace GameClient.Sprites;
 /// </summary>
 internal class SecondaryItem : Sprite, IDetectableByRadar
 {
+    private static readonly ScalableTexture2D.Static UnknownStaticTexture;
     private static readonly ScalableTexture2D.Static LaserStaticTexture;
     private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
     private static readonly ScalableTexture2D.Static RadarStaticTexture;
@@ -21,6 +22,9 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
 
     static SecondaryItem()
     {
+        UnknownStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/unknown.svg");
+        UnknownStaticTexture.Load();
+
         LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/laser.svg");
         LaserStaticTexture.Load();
 
@@ -86,6 +90,7 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
     {
         return type switch
         {
+            SecondaryItemType.Unknown => UnknownStaticTexture,
             SecondaryItemType.DoubleBullet => DoubleBulletStaticTexture,
             SecondaryItemType.Laser => LaserStaticTexture,
             SecondaryItemType.Radar => RadarStaticTexture,
@@ -96,6 +101,7 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
 
     private static void UpdateStaticTextureSize(Point size)
     {
+        UnknownStaticTexture.Transform.Size = size;
         LaserStaticTexture.Transform.Size = size;
         DoubleBulletStaticTexture.Transform.Size = size;
         RadarStaticTexture.Transform.Size = size;

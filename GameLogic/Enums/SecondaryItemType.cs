@@ -6,6 +6,11 @@
 public enum SecondaryItemType
 {
     /// <summary>
+    /// The item is unknown.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
     /// The double bullet item.
     /// </summary>
     DoubleBullet,
