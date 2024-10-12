@@ -9,7 +9,7 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a bullet sprite.
 /// </summary>
-internal class Bullet : Sprite
+internal class Bullet : Sprite, IDetectableByRadar
 {
     private static readonly ScalableTexture2D.Static StaticTexture;
     private static float heightPercentage;
@@ -102,6 +102,13 @@ internal class Bullet : Sprite
     /// Gets the bullet logic.
     /// </summary>
     public GameLogic.Bullet Logic { get; private set; } = default!;
+
+    /// <inheritdoc/>
+    float IDetectableByRadar.Opacity
+    {
+        get => this.texture.Opacity;
+        set => this.texture.Opacity = value;
+    }
 
     private bool IsCollisionDetected => this.collision is not null;
 

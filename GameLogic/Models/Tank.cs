@@ -209,6 +209,33 @@ public class Tank : IEquatable<Tank>
     }
 
     /// <summary>
+    /// Tries to use the radar.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> if the radar was used;
+    /// otherwise, <see langword="false"/>.
+    /// <remarks>
+    /// The radar is used only if the tank
+    /// has a radar and is not stunned with the
+    /// <see cref="StunBlockEffect.AbilityUse"/> block effect.
+    public bool TryUseRadar()
+    {
+        if (this.IsBlockedByStun(StunBlockEffect.AbilityUse))
+        {
+            return false;
+        }
+
+        if (this.SecondaryItemType is not GameLogic.SecondaryItemType.Radar)
+        {
+            return false;
+        }
+
+        this.Owner.IsUsingRadar = true;
+        this.SecondaryItemType = null;
+        return true;
+    }
+
+    /// <summary>
     /// Reduces the health of the tank.
     /// </summary>
     /// <param name="damage">The amount of damage to take.</param>

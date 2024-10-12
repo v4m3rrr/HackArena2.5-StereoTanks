@@ -19,7 +19,11 @@ internal class PlayerJsonConverter : JsonConverter<Player>
         var score = jObject["score"]!.Value<int>()!;
         var kills = jObject["kills"]!.Value<int>()!;
 
-        return new Player(id, nickname, color) { Score = score };
+        return new Player(id, nickname, color)
+        {
+            Score = score,
+            Kills = kills,
+        };
     }
 
     /// <inheritdoc/>

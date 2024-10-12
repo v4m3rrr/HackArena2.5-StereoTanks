@@ -327,8 +327,9 @@ public class Grid(int dimension, int seed)
         var nullWeight = 0.99f;
         var itemWeights = new Dictionary<SecondaryItemType, double>
         {
-            { SecondaryItemType.DoubleBullet, 0.009 },
             { SecondaryItemType.Laser, 0.0009 },
+            { SecondaryItemType.DoubleBullet, 0.009 },
+            { SecondaryItemType.Radar, 0.004 },
         };
 
         double totalWeight = itemWeights.Values.Sum() + nullWeight;

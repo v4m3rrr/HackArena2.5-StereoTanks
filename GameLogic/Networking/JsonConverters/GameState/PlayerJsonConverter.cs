@@ -25,6 +25,7 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         {
             var score = jObject["score"]!.Value<int>()!;
             var remainingTicksToRegen = jObject["ticksToRegen"]!.Value<int?>();
+            var isUsingRadar = jObject["isUsingRadar"]!.Value<bool>();
 
             if (context is GameSerializationContext.Spectator)
             {
@@ -35,6 +36,7 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
             {
                 Ping = ping,
                 Score = score,
+                IsUsingRadar = isUsingRadar,
             };
         }
 
@@ -59,6 +61,7 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         {
             jObject["score"] = value.Score;
             jObject["ticksToRegen"] = value.RemainingTicksToRegen;
+            jObject["isUsingRadar"] = value.IsUsingRadar;
         }
 
         if (context is GameSerializationContext.Spectator)

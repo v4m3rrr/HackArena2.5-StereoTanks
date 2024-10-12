@@ -19,4 +19,9 @@ public enum AbilityType
     /// Uses a laser.
     /// </summary>
     UseLaser,
+
+    /// <summary>
+    /// Uses a radar.
+    /// </summary>
+    UseRadar,
 }

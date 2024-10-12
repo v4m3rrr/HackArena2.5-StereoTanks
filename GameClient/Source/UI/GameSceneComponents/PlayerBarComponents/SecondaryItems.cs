@@ -11,18 +11,22 @@ namespace GameClient.GameSceneComponents.PlayerBarComponents;
 /// </summary>
 internal class SecondaryItems : PlayerBarComponent
 {
-    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
     private static readonly ScalableTexture2D.Static LaserStaticTexture;
+    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
+    private static readonly ScalableTexture2D.Static RadarStaticTexture;
 
     private readonly ListBox listBox;
 
     static SecondaryItems()
     {
+        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/laser.svg");
+        LaserStaticTexture.Load();
+
         DoubleBulletStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/double_bullet.svg");
         DoubleBulletStaticTexture.Load();
 
-        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/laser.svg");
-        LaserStaticTexture.Load();
+        RadarStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/radar.svg");
+        RadarStaticTexture.Load();
     }
 
     /// <summary>
@@ -60,6 +64,12 @@ internal class SecondaryItems : PlayerBarComponent
 
         // Double bullet
         _ = new Item(player, SecondaryItemType.DoubleBullet, DoubleBulletStaticTexture)
+        {
+            Parent = this.listBox.ContentContainer,
+        };
+
+        // Radar
+        _ = new Item(player, SecondaryItemType.Radar, RadarStaticTexture)
         {
             Parent = this.listBox.ContentContainer,
         };

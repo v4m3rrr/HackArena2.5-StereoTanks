@@ -126,7 +126,14 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
     private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
     {
-        var visibilityGrid = (context as GameSerializationContext.Player)!.VisibilityGrid!;
+        var playerContext = (context as GameSerializationContext.Player)!;
+        var visibilityGrid = playerContext.VisibilityGrid!;
+
+        bool IsVisible(int x, int y)
+        {
+            return playerContext.IsUsingRadar
+                || FogOfWarManager.IsElementVisible(visibilityGrid, x, y);
+        }
 
         var jObject = new JArray();
 
@@ -154,7 +161,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         foreach (Tank tank in value.Tanks.Where(x => !x.IsDead))
         {
-            if (!FogOfWarManager.IsElementVisible(visibilityGrid, tank.X, tank.Y))
+            if (!IsVisible(tank.X, tank.Y))
             {
                 continue;
             }
@@ -169,7 +176,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         foreach (Bullet bullet in value.Bullets)
         {
-            if (!FogOfWarManager.IsElementVisible(visibilityGrid, bullet.X, bullet.Y))
+            if (!IsVisible(bullet.X, bullet.Y))
             {
                 continue;
             }
@@ -184,7 +191,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         foreach (Laser laser in value.Lasers)
         {
-            if (!FogOfWarManager.IsElementVisible(visibilityGrid, laser.X, laser.Y))
+            if (!IsVisible(laser.X, laser.Y))
             {
                 continue;
             }
@@ -199,8 +206,8 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         foreach (SecondaryItem item in value.Items)
         {
-            if (!FogOfWarManager.IsElementVisible(visibilityGrid, item.X, item.Y))
-            {
+            if (!IsVisible(item.X, item.Y))
+                {
                 continue;
             }
 

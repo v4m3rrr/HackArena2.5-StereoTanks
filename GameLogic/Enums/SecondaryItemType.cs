@@ -14,4 +14,9 @@ public enum SecondaryItemType
     /// The laser item.
     /// </summary>
     Laser,
+
+    /// <summary>
+    /// The radar item.
+    /// </summary>
+    Radar,
 }

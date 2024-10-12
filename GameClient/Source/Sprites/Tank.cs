@@ -7,7 +7,7 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a tank sprite.
 /// </summary>
-internal class Tank : Sprite
+internal class Tank : Sprite, IDetectableByRadar
 {
     private readonly ScalableTexture2D tankTexture;
     private readonly ScalableTexture2D turretTexture;
@@ -54,6 +54,13 @@ internal class Tank : Sprite
     /// Gets the tank logic.
     /// </summary>
     public GameLogic.Tank Logic { get; private set; }
+
+    /// <inheritdoc/>
+    float IDetectableByRadar.Opacity
+    {
+        get => this.tankTexture.Opacity;
+        set => this.tankTexture.Opacity = this.turretTexture.Opacity = value;
+    }
 
     /// <summary>
     /// Updates the tank logic.

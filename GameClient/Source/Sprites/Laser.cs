@@ -9,7 +9,7 @@ namespace GameClient.Sprites;
 /// </summary>
 /// <param name="logic">The logic of the laser.</param>
 /// <param name="grid">The grid component.</param>
-internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite
+internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite, IDetectableByRadar
 {
     private const float OffsetFactor1 = 0.45f;
     private const float OffsetFactor2 = 0.40f;
@@ -18,11 +18,19 @@ internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite
 
     private Rectangle innerDestRectangle;
     private Rectangle outerDestRectangle;
+    private float opacity = 1f;
 
     /// <summary>
     /// Gets the logic of the laser.
     /// </summary>
     public GameLogic.Laser Logic { get; private set; } = logic;
+
+    /// <inheritdoc/>
+    float IDetectableByRadar.Opacity
+    {
+        get => this.opacity;
+        set => this.opacity = value;
+    }
 
     /// <summary>
     /// Updates the logic of the laser.
@@ -74,7 +82,7 @@ internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite
             SpriteBatchController.WhitePixel,
             this.outerDestRectangle,
             null,
-            Color.White * 0.75f,
+            Color.White * 0.75f * this.opacity,
             0f,
             Vector2.Zero,
             SpriteEffects.None,
@@ -84,7 +92,7 @@ internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite
             SpriteBatchController.WhitePixel,
             this.innerDestRectangle,
             null,
-            Color.White,
+            Color.White * this.opacity,
             0f,
             Vector2.Zero,
             SpriteEffects.None,

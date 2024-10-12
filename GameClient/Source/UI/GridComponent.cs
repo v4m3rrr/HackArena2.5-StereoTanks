@@ -18,6 +18,7 @@ internal class GridComponent : Component
     private readonly List<Sprites.Bullet> bullets = [];
     private readonly List<Sprites.Zone> zones = [];
     private readonly List<Sprites.Laser> lasers = [];
+    private readonly List<Sprites.RadarEffect> radarEffects = [];
     private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
 
     private Sprites.Wall.Solid?[,] solidWalls;
@@ -69,6 +70,7 @@ internal class GridComponent : Component
                     .Concat(this.tanks)
                     .Concat(this.bullets)
                     .Concat(this.lasers)
+                    .Concat(this.radarEffects)
                     .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
                     .Concat(this.borderWalls.Cast<Sprite>())
                     .Concat(this.fogsOfWar.Values)
@@ -179,6 +181,7 @@ internal class GridComponent : Component
                 this.SyncLasers();
                 this.SyncZones();
                 this.SyncMapItems();
+                this.SyncRadarEffect();
             }
         }
         catch (Exception e)
@@ -297,6 +300,32 @@ internal class GridComponent : Component
         }
 
         _ = this.lasers.RemoveAll(l => !this.Logic.Lasers.Any(l2 => l2.Equals(l.Logic)));
+    }
+
+    private void SyncRadarEffect()
+    {
+        foreach (var effect in this.radarEffects.ToList())
+        {
+            var newTank = this.Logic.Tanks.FirstOrDefault(t => t.Equals(effect.Tank));
+
+            if (effect.IsExpired || newTank is null)
+            {
+                _ = this.radarEffects.Remove(effect);
+            }
+            else
+            {
+                effect.UpdateTank(newTank);
+            }
+        }
+
+        foreach (var tank in this.Logic.Tanks)
+        {
+            if (tank.Owner.IsUsingRadar)
+            {
+                var effect = new Sprites.RadarEffect(tank, this, this.Sprites);
+                this.radarEffects.Add(effect);
+            }
+        }
     }
 
     private void UpdateDrawData()

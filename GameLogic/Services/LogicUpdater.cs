@@ -35,4 +35,19 @@ public class LogicUpdater(Grid grid)
             Console.WriteLine("[^^^^^] Stack trace: {0}", e.StackTrace);
         }
     }
+
+    /// <summary>
+    /// Resets the player radar usage.
+    /// </summary>
+    /// <remarks>
+    /// This method should be called after creating
+    /// a game state packet.
+    /// </remarks>
+    public void ResetPlayerRadarUsage()
+    {
+        foreach (Tank tank in grid.Tanks)
+        {
+            tank.Owner.IsUsingRadar = false;
+        }
+    }
 }

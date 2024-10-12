@@ -125,6 +125,7 @@ internal class GameManager(GameInstance game)
             }
 
             var broadcast = this.BroadcastGameStateAsync();
+            this.logicUpdater.ResetPlayerRadarUsage();
             game.ReplayManager?.AddGameState(this.tick, this.CurrentGameStateId);
 
             await Task.WhenAll(broadcast);
@@ -165,9 +166,8 @@ internal class GameManager(GameInstance game)
             {
                 var broadcastTime = stopwatch.ElapsedMilliseconds;
                 var broadcastInterval = game.Settings.BroadcastInterval;
-                Console.WriteLine(
-                    "[WARN] Game state broadcast took longer than expected! " +
-                    $"[^^^^] Tick {this.tick}, {broadcastTime}/{broadcastInterval} ms");
+                Console.WriteLine("[WARN] Game state broadcast took longer than expected!");
+                Console.WriteLine($"[^^^^] Tick {this.tick}, {broadcastTime}/{broadcastInterval} ms");
             }
         }
     }

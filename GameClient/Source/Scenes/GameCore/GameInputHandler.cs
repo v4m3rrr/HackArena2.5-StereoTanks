@@ -125,6 +125,10 @@ internal class GameInputHandler(Player player)
         {
             payload = new AbilityUsePayload(AbilityType.FireDoubleBullet);
         }
+        else if (KeyboardController.IsKeyHit(Keys.D3))
+        {
+            payload = new AbilityUsePayload(AbilityType.UseRadar);
+        }
 
         return payload;
     }
@@ -147,6 +151,10 @@ internal class GameInputHandler(Player player)
         else if (KeyboardController.IsKeyHit(Keys.D2))
         {
             payload = new GiveSecondaryItemPayload(SecondaryItemType.DoubleBullet);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D3))
+        {
+            payload = new GiveSecondaryItemPayload(SecondaryItemType.Radar);
         }
 
         return payload;

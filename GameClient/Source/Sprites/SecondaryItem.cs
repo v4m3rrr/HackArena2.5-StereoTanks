@@ -8,10 +8,11 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a secondary map item sprite.
 /// </summary>
-internal class SecondaryItem : Sprite
+internal class SecondaryItem : Sprite, IDetectableByRadar
 {
-    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
     private static readonly ScalableTexture2D.Static LaserStaticTexture;
+    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
+    private static readonly ScalableTexture2D.Static RadarStaticTexture;
 
     private readonly ScalableTexture2D texture;
     private readonly GameLogic.SecondaryItem logic;
@@ -19,11 +20,14 @@ internal class SecondaryItem : Sprite
 
     static SecondaryItem()
     {
+        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/laser.svg");
+        LaserStaticTexture.Load();
+
         DoubleBulletStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/double_bullet.svg");
         DoubleBulletStaticTexture.Load();
 
-        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/laser.svg");
-        LaserStaticTexture.Load();
+        RadarStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/radar.svg");
+        RadarStaticTexture.Load();
     }
 
     /// <summary>
@@ -50,6 +54,13 @@ internal class SecondaryItem : Sprite
     }
 
     /// <inheritdoc/>
+    float IDetectableByRadar.Opacity
+    {
+        get => this.texture.Opacity;
+        set => this.texture.Opacity = value;
+    }
+
+    /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
         this.texture.Update(gameTime);
@@ -61,9 +72,24 @@ internal class SecondaryItem : Sprite
         this.texture.Draw(gameTime);
     }
 
-    /// <summary>
-    /// Updates the destination of the map item.
-    /// </summary>
+    private static ScalableTexture2D.Static GetStaticTexture(SecondaryItemType type)
+    {
+        return type switch
+        {
+            SecondaryItemType.DoubleBullet => DoubleBulletStaticTexture,
+            SecondaryItemType.Laser => LaserStaticTexture,
+            SecondaryItemType.Radar => RadarStaticTexture,
+            _ => throw new ArgumentOutOfRangeException(nameof(type)),
+        };
+    }
+
+    private static void UpdateStaticTextureSize(Point size)
+    {
+        LaserStaticTexture.Transform.Size = size;
+        DoubleBulletStaticTexture.Transform.Size = size;
+        RadarStaticTexture.Transform.Size = size;
+    }
+
     private void UpdateDestination()
     {
         int tileSize = this.grid.TileSize;
@@ -80,21 +106,5 @@ internal class SecondaryItem : Sprite
         this.texture.Transform.Location = location;
 
         UpdateStaticTextureSize(size);
-    }
-
-    private static ScalableTexture2D.Static GetStaticTexture(SecondaryItemType type)
-    {
-        return type switch
-        {
-            SecondaryItemType.DoubleBullet => DoubleBulletStaticTexture,
-            SecondaryItemType.Laser => LaserStaticTexture,
-            _ => throw new ArgumentOutOfRangeException(nameof(type)),
-        };
-    }
-
-    private static void UpdateStaticTextureSize(Point size)
-    {
-        LaserStaticTexture.Transform.Size = size;
-        DoubleBulletStaticTexture.Transform.Size = size;
     }
 }
