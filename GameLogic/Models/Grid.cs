@@ -350,7 +350,8 @@ public class Grid(int dimension, int seed)
         int x = tank.X + (dx * step);
         int y = tank.Y + (dy * step);
 
-        if (!this.GetCellObjects(x, y).Any(x => x is Wall or Tank))
+        if (this.IsCellWithinBounds(x, y)
+            && !this.GetCellObjects(x, y).Any(x => x is Wall or Tank))
         {
             tank.SetPosition(x, y);
         }
