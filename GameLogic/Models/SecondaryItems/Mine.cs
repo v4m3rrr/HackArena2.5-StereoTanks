@@ -192,21 +192,21 @@ public class Mine : IStunEffect, IEquatable<Mine>
     /// the kill count is not increased and the tank is not awarded points.
     /// </para>
     /// </remarks>
-    internal void Explode(Tank tank)
+    internal void Explode(Tank? tank)
     {
-        var suicide = this.LayerId == tank.Owner.Id;
+        var suicide = tank is not null && this.LayerId == tank.Owner.Id;
 
         // Do not increase the kill count if it was a suicide
         var damager = suicide ? null : this.Layer;
-        var damageTaken = tank.TakeDamage(this.Damage!.Value, damager);
+        var damageTaken = tank?.TakeDamage(this.Damage!.Value, damager);
 
         // Do not award points if it was suicide
-        if (damager is not null)
+        if (damager is not null && damageTaken is not null)
         {
-            this.Layer!.Score += damageTaken;
+            damager.Score += damageTaken.Value;
         }
 
-        tank.Stun(this);
+        tank?.Stun(this);
         this.ExplosionRemainingTicks = ExplosionTicks;
     }
 

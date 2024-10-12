@@ -479,6 +479,18 @@ public class Grid(int dimension, int seed)
                     var damageTaken = tank.TakeDamage(laser.Damage!.Value, laser.Shooter);
                     laser.Shooter!.Score += damageTaken;
                 }
+
+                lock (this.minesLock)
+                {
+                    var minesInLaser = this.mines.Where(m => m.X == laser.X && m.Y == laser.Y);
+                    foreach (Mine mine in minesInLaser)
+                    {
+                        if (!mine.IsExploded)
+                        {
+                            mine.Explode(null);
+                        }
+                    }
+                }
             }
         }
     }
