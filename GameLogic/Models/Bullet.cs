@@ -131,6 +131,11 @@ public class Bullet : IEquatable<Bullet>
     internal Player? Shooter { get; set; }
 
     /// <summary>
+    /// Gets the type of the bullet.
+    /// </summary>
+    internal virtual BulletType Type => BulletType.Basic;
+
+    /// <summary>
     /// Updates the bullet's position based on the current direction, speed and delta time.
     /// </summary>
     /// <param name="deltaTime">The time elapsed since the last update.</param>

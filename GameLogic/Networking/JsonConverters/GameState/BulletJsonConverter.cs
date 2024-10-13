@@ -19,11 +19,11 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
         var y = jObject["y"]!.Value<int>();
         var speed = jObject["speed"]!.Value<float>()!;
         var direction = JsonConverterUtils.ReadEnum<Direction>(jObject["direction"]!);
-        var type = jObject["type"]!.Value<string>()!;
+        var type = JsonConverterUtils.ReadEnum<BulletType>(jObject["type"]!);
 
         if (context is GameSerializationContext.Player)
         {
-            return type == "doubleBullet"
+            return type == BulletType.Double
                 ? new DoubleBullet(id, x, y, direction, speed)
                 : new Bullet(id, x, y, direction, speed);
         }
@@ -31,7 +31,7 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
         var damage = jObject["damage"]!.Value<int>();
         var shooterId = jObject["shooterId"]!.Value<string>()!;
 
-        return type == "doubleBullet"
+        return type == BulletType.Double
                 ? new DoubleBullet(id, x, y, direction, speed, damage, shooterId)
                 : new Bullet(id, x, y, direction, speed, damage, shooterId);
     }
@@ -39,18 +39,12 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
     /// <inheritdoc/>
     public override void WriteJson(JsonWriter writer, Bullet? value, JsonSerializer serializer)
     {
-        var type = value switch
-        {
-            DoubleBullet => "doubleBullet",
-            _ => "bullet",
-        };
-
         var jObject = new JObject
         {
             ["id"] = value!.Id,
             ["speed"] = value!.Speed,
             ["direction"] = JsonConverterUtils.WriteEnum(value!.Direction, context.EnumSerialization),
-            ["type"] = type,
+            ["type"] = JsonConverterUtils.WriteEnum(value!.Type, context.EnumSerialization),
         };
 
         if (context is GameSerializationContext.Spectator)
