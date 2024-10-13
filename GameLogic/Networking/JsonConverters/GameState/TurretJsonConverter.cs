@@ -13,9 +13,7 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
     public override Turret? ReadJson(JsonReader reader, Type objectType, Turret? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
         var jsonObject = JObject.Load(reader);
-
-        var direction = (Direction)jsonObject["direction"]!.Value<int>()!;
-
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
         var bulletCount = jsonObject["bulletCount"]?.Value<int>();
         var remainingTicksToRegenBullet = jsonObject["ticksToRegenBullet"]?.Value<int?>();
 
@@ -33,7 +31,7 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
     {
         var jObject = new JObject
         {
-            ["direction"] = (int)value!.Direction,
+            ["direction"] = JsonConverterUtils.WriteEnum(value!.Direction, context.EnumSerialization),
         };
 
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Tank.Owner.Id))

@@ -18,7 +18,7 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
         var x = jObject["x"]!.Value<int>();
         var y = jObject["y"]!.Value<int>();
         var speed = jObject["speed"]!.Value<float>()!;
-        var direction = (Direction)jObject["direction"]!.Value<int>()!;
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jObject["direction"]!);
         var type = jObject["type"]!.Value<string>()!;
 
         if (context is GameSerializationContext.Player)
@@ -49,7 +49,7 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
         {
             ["id"] = value!.Id,
             ["speed"] = value!.Speed,
-            ["direction"] = (int)value.Direction,
+            ["direction"] = JsonConverterUtils.WriteEnum(value!.Direction, context.EnumSerialization),
             ["type"] = type,
         };
 

@@ -18,7 +18,7 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         int y = jsonObject["y"]?.Value<int>() ?? -1;
 
         var ownerId = jsonObject["ownerId"]!.Value<string>()!;
-        var direction = (Direction)jsonObject["direction"]!.Value<int>()!;
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
 
         Turret turret = jsonObject["turret"]!.ToObject<Turret>(serializer)!;
 
@@ -44,7 +44,7 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         var jObject = new JObject
         {
             ["ownerId"] = value!.OwnerId,
-            ["direction"] = (int)value.Direction,
+            ["direction"] = JsonConverterUtils.WriteEnum(value.Direction, context.EnumSerialization),
             ["turret"] = JObject.FromObject(value.Turret, serializer),
         };
 

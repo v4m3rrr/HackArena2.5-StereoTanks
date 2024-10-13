@@ -3,7 +3,8 @@
 /// <summary>
 /// Represents a game serialization context.
 /// </summary>
-public abstract class GameSerializationContext
+public abstract class GameSerializationContext(EnumSerializationFormat enumSerialization)
+    : SerializationContext(enumSerialization)
 {
     /// <summary>
     /// Determines whether the context is a player with the specified id.
@@ -31,6 +32,7 @@ public abstract class GameSerializationContext
         /// This constructor should be used on the client side.
         /// </remarks>
         public Player(string id)
+            : base(EnumSerializationFormat.Int)
         {
             this.Id = id;
         }
@@ -39,10 +41,12 @@ public abstract class GameSerializationContext
         /// Initializes a new instance of the <see cref="Player"/> class.
         /// </summary>
         /// <param name="player">The player to create the context for.</param>
+        /// <param name="enumSerialization">The enum serialization format.</param>
         /// <remarks>
         /// This constructor should be used on the server side.
         /// </remarks>
-        public Player(GameLogic.Player player)
+        public Player(GameLogic.Player player, EnumSerializationFormat enumSerialization)
+            : base(enumSerialization)
         {
             this.Id = player.Id;
             this.VisibilityGrid = player.VisibilityGrid;
@@ -71,7 +75,7 @@ public abstract class GameSerializationContext
     /// <summary>
     /// Represents a spectator serialization context.
     /// </summary>
-    public class Spectator : GameSerializationContext
+    public class Spectator() : GameSerializationContext(EnumSerializationFormat.Int)
     {
     }
 }

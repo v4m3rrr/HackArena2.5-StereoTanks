@@ -75,7 +75,7 @@ internal class PayloadHelper(GameInstance game)
     public GameStatePayload GetGameStatePayload(Connection? connection, int tick, string gameStateId, out List<JsonConverter> converters)
     {
         GameSerializationContext context = connection is PlayerConnection player
-            ? new GameSerializationContext.Player(player.Instance)
+            ? new GameSerializationContext.Player(player.Instance, connection.Data.EnumSerialization)
             : new GameSerializationContext.Spectator();
 
         converters = GameStatePayload.GetConverters(context);

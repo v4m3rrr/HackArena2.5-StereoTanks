@@ -17,7 +17,7 @@ internal class LaserJsonConverter(GameSerializationContext context) : JsonConver
         var id = jObject["id"]!.Value<int>()!;
         var x = jObject["x"]!.Value<int>();
         var y = jObject["y"]!.Value<int>();
-        var orientation = (Orientation)jObject["orientation"]!.Value<int>()!;
+        var orientation = JsonConverterUtils.ReadEnum<Orientation>(jObject["orientation"]!);
 
         if (context is GameSerializationContext.Player)
         {
@@ -36,7 +36,7 @@ internal class LaserJsonConverter(GameSerializationContext context) : JsonConver
         var jObject = new JObject
         {
             ["id"] = value!.Id,
-            ["orientation"] = (int)value.Orientation,
+            ["orientation"] = JsonConverterUtils.WriteEnum(value!.Orientation, context.EnumSerialization),
         };
 
         if (context is GameSerializationContext.Spectator)

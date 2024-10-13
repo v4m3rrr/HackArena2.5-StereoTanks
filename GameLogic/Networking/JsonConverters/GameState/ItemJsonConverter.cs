@@ -15,7 +15,7 @@ internal class ItemJsonConverter(GameSerializationContext context) : JsonConvert
         var jObject = JObject.Load(reader);
         var x = jObject["x"]?.Value<int>() ?? -1;
         var y = jObject["y"]?.Value<int>() ?? -1;
-        var type = (SecondaryItemType)jObject["type"]!.Value<int>()!;
+        var type = JsonConverterUtils.ReadEnum<SecondaryItemType>(jObject["type"]!);
 
         return new SecondaryItem(x, y, type);
     }
@@ -25,7 +25,7 @@ internal class ItemJsonConverter(GameSerializationContext context) : JsonConvert
     {
         var jObject = new JObject()
         {
-            ["type"] = (int)value!.Type,
+            ["type"] = JsonConverterUtils.WriteEnum(value!.Type, context.EnumSerialization),
         };
 
         if (context is GameSerializationContext.Spectator)

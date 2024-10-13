@@ -45,7 +45,7 @@ public static class PacketSerializer
     /// <param name="payload">The payload to serialize.</param>
     /// <param name="converters">The converters to use during serialization.</param>
     /// <param name="options">The serialization options.</param>
-    /// <returns>The serialized payload.</returns>
+    /// <returns>The serialized packet.</returns>
     public static string Serialize(
         IPacketPayload payload,
         IEnumerable<JsonConverter>? converters = null,
@@ -58,10 +58,10 @@ public static class PacketSerializer
     /// Serializes the specified payload with the specified converters.
     /// </summary>
     /// <param name="payload">The payload to serialize.</param>
+    /// <param name="serializedPayload">The serialized payload.</param>
     /// <param name="converters">The converters to use during serialization.</param>
     /// <param name="options">The serialization options.</param>
-    /// <param name="serializedPayload">The serialized payload.</param>
-    /// <returns>The serialized payload.</returns>
+    /// <returns>The serialized packet.</returns>
     public static string Serialize(
         IPacketPayload payload,
         out JObject serializedPayload,
@@ -81,7 +81,7 @@ public static class PacketSerializer
                 Payload = serializedPayload,
             };
 
-            var context = new PacketSerializationContext(options.TypeOfPacketType);
+            var context = new SerializationContext(options.EnumSerialization);
 
             var settings = new JsonSerializerSettings()
             {

@@ -45,7 +45,7 @@ internal record class ResponsePacket(IPacketPayload Payload, List<JsonConverter>
     {
         return new SerializationOptions()
         {
-            TypeOfPacketType = connection.Data.TypeOfPacketType,
+            EnumSerialization = connection.Data.EnumSerialization,
         };
     }
 }

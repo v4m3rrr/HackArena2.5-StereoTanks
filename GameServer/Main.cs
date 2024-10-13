@@ -90,17 +90,17 @@ async Task HandleRequest(HttpListenerContext context)
     var socket = webSocketContext.WebSocket;
 
     if (!Enum.TryParse(
-        context.Request.QueryString["typeOfPacketType"] ?? "Int",
+        context.Request.QueryString["enumSerializationFormat"] ?? "Int",
         ignoreCase: true,
-        out TypeOfPacketType typeOfPacketType))
+        out EnumSerializationFormat enumSerialization))
     {
         await RejectConnection(
-            new UnknownConnection(context, socket, typeOfPacketType),
-            "InvalidTypOfPacketType");
+            new UnknownConnection(context, socket, enumSerialization),
+            "InvalidEnumSerializationFormat");
         return;
     }
 
-    var unknownConnection = new UnknownConnection(context, socket, typeOfPacketType);
+    var unknownConnection = new UnknownConnection(context, socket, enumSerialization);
 
 #if DEBUG
     Console.WriteLine($"[INFO] Request from {unknownConnection.Ip} ({context.Request.Url})");
@@ -197,7 +197,7 @@ async Task<Task> HandlePlayerConnection(
             }
         }
 
-        var connectionData = new ConnectionData.Player(nickname, type, unknownConnection.TypeOfPacketType)
+        var connectionData = new ConnectionData.Player(nickname, type, unknownConnection.EnumSerialization)
 #if DEBUG
         {
             QuickJoin = quickJoin,
@@ -245,7 +245,7 @@ async Task<Task> HandleSpectatorConnection(
     _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
 #endif
 
-    var connectionData = new ConnectionData(unknownConnection.TypeOfPacketType)
+    var connectionData = new ConnectionData(unknownConnection.EnumSerialization)
 #if DEBUG
     {
         QuickJoin = quickJoin,

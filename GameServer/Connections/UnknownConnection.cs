@@ -9,12 +9,12 @@ namespace GameServer;
 /// </summary>
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
-/// <param name="TypeOfPacketType">The type of packet type.</param>
+/// <param name="EnumSerialization">The enum serialization format.</param>
 internal record class UnknownConnection(
     HttpListenerContext Context,
     WebSocket Socket,
-    TypeOfPacketType TypeOfPacketType)
-    : Connection(Context, Socket, new ConnectionData(TypeOfPacketType))
+    EnumSerializationFormat EnumSerialization)
+    : Connection(Context, Socket, new ConnectionData(EnumSerialization))
 {
     /// <summary>
     /// Gets or sets the target type of the connection.
