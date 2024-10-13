@@ -18,7 +18,7 @@ internal record class ResponsePacket(IPacketPayload Payload, List<JsonConverter>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task SendAsync(Connection connection)
     {
-        var options = this.GetSerializationOptions(connection);
+        var options = GetSerializationOptions(connection);
         var buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
 
         await connection.SendPacketSemaphore.WaitAsync();
@@ -41,13 +41,11 @@ internal record class ResponsePacket(IPacketPayload Payload, List<JsonConverter>
         }
     }
 
-    private SerializationOptions GetSerializationOptions(Connection connection)
+    private static SerializationOptions GetSerializationOptions(Connection connection)
     {
-        return connection is not PlayerConnection playerConnection
-            ? SerializationOptions.Default
-            : new SerializationOptions()
-            {
-                TypeOfPacketType = playerConnection.Data.TypeOfPacketType,
-            };
+        return new SerializationOptions()
+        {
+            TypeOfPacketType = connection.Data.TypeOfPacketType,
+        };
     }
 }
