@@ -69,6 +69,7 @@ public class GameStatePayload : IPacketPayload
             new BulletJsonConverter(context),
             new LaserJsonConverter(context),
             new MineJsonConverter(context),
+            new ItemJsonConverter(context),
             new WallJsonConverter(context),
             new ZoneJsonConverter(context),
             new PlayerJsonConverter(context)];
