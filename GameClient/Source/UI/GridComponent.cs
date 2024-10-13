@@ -175,6 +175,10 @@ internal class GridComponent : Component
     {
         try
         {
+            // A temporary solution to fix builds on Linux.
+            // Loading textures on a separate thread causes a crash.
+            // In the future, all textures will be loaded before the game starts.
+#if WINDOWS
             lock (this.syncLock)
             {
                 this.SyncWalls();
@@ -186,6 +190,20 @@ internal class GridComponent : Component
                 this.SyncMines();
                 this.SyncRadarEffect();
             }
+#else
+            MonoTanks.InvokeOnMainThread(() =>
+            {
+                // Do we need lock here?
+                this.SyncWalls();
+                this.SyncTanks();
+                this.SyncBullets();
+                this.SyncLasers();
+                this.SyncZones();
+                this.SyncMapItems();
+                this.SyncMines();
+                this.SyncRadarEffect();
+            });
+#endif
         }
         catch (Exception e)
         {
