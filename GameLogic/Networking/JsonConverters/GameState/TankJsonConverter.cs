@@ -26,10 +26,7 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(ownerId))
         {
             var health = jsonObject["health"]!.Value<int?>();
-            SecondaryItemType? secondaryItemType =
-                Enum.TryParse<SecondaryItemType>(jsonObject["secondaryItem"]!.Value<string?>(), ignoreCase: true, out var type)
-                ? type
-                : null;
+            var secondaryItemType = (SecondaryItemType?)jsonObject["secondaryItem"]?.Value<int?>()!;
 
             tank = new Tank(x, y, ownerId, health ?? 0, direction, turret, secondaryItemType);
         }
@@ -60,11 +57,7 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Owner.Id))
         {
             jObject["health"] = value.Health;
-
-            var secondaryItemType = value.SecondaryItemType?.ToString();
-            jObject["secondaryItem"] = secondaryItemType is not null
-                ? char.ToLowerInvariant(secondaryItemType[0]) + secondaryItemType[1..]
-                : null;
+            jObject["secondaryItem"] = (int?)value.SecondaryItemType;
         }
 
         jObject.WriteTo(writer);

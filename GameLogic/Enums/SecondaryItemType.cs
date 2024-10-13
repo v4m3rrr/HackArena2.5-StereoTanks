@@ -11,14 +11,14 @@ public enum SecondaryItemType
     Unknown,
 
     /// <summary>
-    /// The double bullet item.
-    /// </summary>
-    DoubleBullet,
-
-    /// <summary>
     /// The laser item.
     /// </summary>
     Laser,
+
+    /// <summary>
+    /// The double bullet item.
+    /// </summary>
+    DoubleBullet,
 
     /// <summary>
     /// The radar item.

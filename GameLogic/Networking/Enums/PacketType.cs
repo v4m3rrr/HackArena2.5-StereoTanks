@@ -101,7 +101,7 @@ public enum PacketType
 
     /// <summary>
     /// The use packet type.
-    /// </summary
+    /// </summary>
     AbilityUse = PlayerResponseActionGroup | HasPayload | 0x3,
 
     /// <summary>

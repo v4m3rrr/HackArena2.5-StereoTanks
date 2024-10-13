@@ -11,14 +11,14 @@ public enum AbilityType
     FireBullet,
 
     /// <summary>
-    /// Fires double bullets.
-    /// </summary>
-    FireDoubleBullet,
-
-    /// <summary>
     /// Uses a laser.
     /// </summary>
     UseLaser,
+
+    /// <summary>
+    /// Fires double bullets.
+    /// </summary>
+    FireDoubleBullet,
 
     /// <summary>
     /// Uses a radar.
