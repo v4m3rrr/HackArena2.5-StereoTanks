@@ -19,11 +19,6 @@
     <OutputPath>bin\$(Configuration)\Linux\$(Platform)\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DefineConstants>$(DefineConstants);CLIENT;LINUX</DefineConstants>
-    <OutputPath>bin\$(Configuration)\Linux\$(Platform)\</OutputPath>
-  </PropertyGroup>
-
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
