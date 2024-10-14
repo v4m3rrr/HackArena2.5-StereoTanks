@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using GameClient.UI;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -55,7 +55,7 @@ internal class RadarEffect : Sprite
     /// <remarks>
     /// The radar effect is expired when both the effect and detection times are over.
     /// </remarks>
-    public bool IsExpired => this.effectRemainingTime <= 0 && this.detectionRemainingTime <= 0;
+    public bool IsExpired => this.effectRemainingTime <= 0 && (this.detectionRemainingTime <= 0 || !this.IsPlayerTank);
 
     private bool IsPlayerTank => Scenes.Game.PlayerId == this.Tank.Owner.Id;
 
