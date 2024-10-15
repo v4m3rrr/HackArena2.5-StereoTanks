@@ -1,4 +1,4 @@
-﻿using GameClient.Networking;
+using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -130,9 +130,6 @@ internal class MainMenu : Scene
 
         var settingsBtn = CreateButton(new LocalizedString("Buttons.Settings"), listBox, "settings_icon");
         settingsBtn.Clicked += (s, e) => Change<Settings>();
-
-        var authorsBtn = CreateButton(new LocalizedString("Buttons.Authors"), listBox, "authors_icon");
-        authorsBtn.Clicked += (s, e) => Change<Authors>();
 
         var exitBtn = CreateButton(new LocalizedString("Buttons.Exit"), listBox, "exit_icon");
         exitBtn.Clicked += (s, e) => MonoTanks.Instance.Exit();
