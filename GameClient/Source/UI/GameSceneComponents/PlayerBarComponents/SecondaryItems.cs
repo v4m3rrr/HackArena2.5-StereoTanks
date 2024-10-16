@@ -36,15 +36,6 @@ internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
             },
         };
 
-        this.listBox.ComponentAdded += (s, e) =>
-        {
-            if (e is ScalableTexture2D texture)
-            {
-                DoubleBulletStaticTexture.Transform.Size = texture.Transform.Size;
-                LaserStaticTexture.Transform.Size = texture.Transform.Size;
-            }
-        };
-
         // Laser
         _ = new Item(player, SecondaryItemType.Laser, LaserStaticTexture)
         {

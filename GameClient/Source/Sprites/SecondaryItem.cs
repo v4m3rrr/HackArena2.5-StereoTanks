@@ -12,7 +12,7 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
 {
     private static readonly ScalableTexture2D.Static UnknownStaticTexture = new("Images/Game/MapItems/unknown.svg");
     private static readonly ScalableTexture2D.Static LaserStaticTexture = new("Images/Game/MapItems/laser.svg");
-    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture = new("Images/Game/MapItems/laser.svg");
+    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture = new("Images/Game/MapItems/double_bullet.svg");
     private static readonly ScalableTexture2D.Static RadarStaticTexture = new("Images/Game/MapItems/radar.svg");
     private static readonly ScalableTexture2D.Static MineStaticTexture = new("Images/Game/MapItems/mine.svg");
 
