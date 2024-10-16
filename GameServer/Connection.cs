@@ -13,7 +13,9 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
 {
     private readonly object lastPingSentTimeLock = new();
     private readonly object hasSentPongLock = new();
+    private readonly object readyLock = new();
 
+    private bool isReadyToReceiveGameState;
     private DateTime lastPingSendTime;
     private bool hasSentPong;
 
@@ -26,6 +28,29 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
     /// Gets the ip of the client.
     /// </summary>
     public string Ip { get; } = Context.Request.RemoteEndPoint.Address.ToString();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the client
+    /// is ready to receive the game state.
+    /// </summary>
+    public bool IsReadyToReceiveGameState
+    {
+        get
+        {
+            lock (this.readyLock)
+            {
+                return this.isReadyToReceiveGameState;
+            }
+        }
+
+        set
+        {
+            lock (this.readyLock)
+            {
+                this.isReadyToReceiveGameState = value;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets the time when the last ping was sent.

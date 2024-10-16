@@ -7,11 +7,14 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a tank sprite.
 /// </summary>
-internal class Tank : Sprite, IDetectableByRadar
+internal class Tank : ISprite, IDetectableByRadar
 {
+    private static readonly ScalableTexture2D.Static StaticTankTexture = new("Images/Game/tank.svg");
+    private static readonly ScalableTexture2D.Static StaticTurretTexture = new("Images/Game/turret.svg");
+
+    private readonly GridComponent grid;
     private readonly ScalableTexture2D tankTexture;
     private readonly ScalableTexture2D turretTexture;
-    private readonly GridComponent grid;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Tank"/> class.
@@ -23,7 +26,7 @@ internal class Tank : Sprite, IDetectableByRadar
         this.Logic = logic;
         this.grid = grid;
 
-        this.tankTexture = new ScalableTexture2D("Images/Game/tank.svg")
+        this.tankTexture = new ScalableTexture2D(StaticTankTexture)
         {
             Color = new Color(logic.Owner.Color),
             RelativeOrigin = new Vector2(0.5f),
@@ -35,7 +38,7 @@ internal class Tank : Sprite, IDetectableByRadar
             },
         };
 
-        this.turretTexture = new ScalableTexture2D("Images/Game/turret.svg")
+        this.turretTexture = new ScalableTexture2D(StaticTurretTexture)
         {
             RelativeOrigin = new Vector2(0.5f),
             CenterOrigin = true,
@@ -45,9 +48,6 @@ internal class Tank : Sprite, IDetectableByRadar
                 Size = new Point(grid.TileSize, grid.TileSize),
             },
         };
-
-        this.tankTexture.Load();
-        this.turretTexture.Load();
     }
 
     /// <summary>
@@ -60,6 +60,13 @@ internal class Tank : Sprite, IDetectableByRadar
     {
         get => this.tankTexture.Opacity;
         set => this.tankTexture.Opacity = this.turretTexture.Opacity = value;
+    }
+
+    /// <inheritdoc/>
+    public static void LoadContent()
+    {
+        StaticTankTexture.Load();
+        StaticTurretTexture.Load();
     }
 
     /// <inheritdoc/>
@@ -78,7 +85,7 @@ internal class Tank : Sprite, IDetectableByRadar
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         if (this.Logic.IsDead)
         {
@@ -101,12 +108,15 @@ internal class Tank : Sprite, IDetectableByRadar
         this.tankTexture.Transform.Size = this.turretTexture.Transform.Size
             = new Point(tileSize, tileSize);
 
+        StaticTankTexture.Transform.Size = new Point(this.grid.TileSize);
+        StaticTurretTexture.Transform.Size = new Point(this.grid.TileSize);
+
         this.tankTexture.Update(gameTime);
         this.turretTexture.Update(gameTime);
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         if (this.Logic.IsDead)
         {

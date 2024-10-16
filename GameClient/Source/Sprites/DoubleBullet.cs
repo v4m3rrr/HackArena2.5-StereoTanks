@@ -1,25 +1,27 @@
-﻿namespace GameClient.Sprites;
+﻿using Microsoft.Xna.Framework;
+
+namespace GameClient.Sprites;
 
 /// <summary>
 /// Represents a double bullet sprite.
 /// </summary>
-internal class DoubleBullet : Bullet
+/// <param name="logic">The double bullet logic.</param>
+/// <param name="grid">The grid component.</param>
+internal class DoubleBullet(GameLogic.DoubleBullet logic, GridComponent grid)
+    : Bullet(logic, grid, StaticTexture), ISprite
 {
-    private static readonly ScalableTexture2D.Static StaticTexture;
+    private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/double_bullet_ts.svg");
 
-    static DoubleBullet()
+    /// <inheritdoc/>
+    public static new void LoadContent()
     {
-        StaticTexture = new ScalableTexture2D.Static("Images/Game/double_bullet_ts.svg");
         StaticTexture.Load();
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DoubleBullet"/> class.
-    /// </summary>
-    /// <param name="logic">The double bullet logic.</param>
-    /// <param name="grid">The grid component.</param>
-    public DoubleBullet(GameLogic.DoubleBullet logic, GridComponent grid)
-        : base(logic, grid, StaticTexture)
+    /// <inheritdoc/>
+    public override void Update(GameTime gameTime)
     {
+        StaticTexture.Transform.Size = new Point(this.Grid.TileSize);
+        base.Update(gameTime);
     }
 }

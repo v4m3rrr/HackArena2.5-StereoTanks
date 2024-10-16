@@ -68,9 +68,9 @@ public enum PacketType
     GameStateGroup = 0x30,
 
     /// <summary>
-    /// The game start packet type.
+    /// The game started packet type.
     /// </summary>
-    GameStart = GameStateGroup | 0x1,
+    GameStarted = GameStateGroup | 0x1,
 
     /// <summary>
     /// The game state packet type.
@@ -81,6 +81,16 @@ public enum PacketType
     /// The game end packet type.
     /// </summary>
     GameEnd = GameStateGroup | HasPayload | 0x3,
+
+    /// <summary>
+    /// The game starting packet type.
+    /// </summary>
+    GameStarting = GameStateGroup | 0x4,
+
+    /// <summary>
+    /// The ready to receive game state packet type.
+    /// </summary>
+    ReadyToReceiveGameState = GameStateGroup | 0x5,
 
     // Player response group (range: 0x40 - 0x4F)
 

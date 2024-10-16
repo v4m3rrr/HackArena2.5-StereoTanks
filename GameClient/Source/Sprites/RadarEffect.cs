@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using GameClient.UI;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -8,7 +8,7 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a radar effect sprite.
 /// </summary>
-internal class RadarEffect : Sprite
+internal class RadarEffect : ISprite
 {
     private const int EffectDuration = 1700;
     private const int DetectionDuration = 3500;
@@ -27,7 +27,7 @@ internal class RadarEffect : Sprite
     /// <param name="tank">The tank that activated the radar effect.</param>
     /// <param name="grid">The grid component where the radar effect is displayed.</param>
     /// <param name="sprites">The sprites on the grid.</param>
-    public RadarEffect(GameLogic.Tank tank, GridComponent grid, IEnumerable<Sprite> sprites)
+    public RadarEffect(GameLogic.Tank tank, GridComponent grid, IEnumerable<ISprite> sprites)
     {
         this.detectedSprites = GetDetectedSprites(tank, sprites);
         this.grid = grid;
@@ -42,6 +42,8 @@ internal class RadarEffect : Sprite
                 Size = new Point(grid.TileSize),
             },
         };
+
+        this.circle.Load();
     }
 
     /// <summary>
@@ -69,7 +71,7 @@ internal class RadarEffect : Sprite
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         if (this.IsExpired)
         {
@@ -94,7 +96,7 @@ internal class RadarEffect : Sprite
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         if (this.IsExpired)
         {
@@ -112,7 +114,7 @@ internal class RadarEffect : Sprite
         this.circle.Draw(gameTime);
     }
 
-    private static List<IDetectableByRadar> GetDetectedSprites(GameLogic.Tank tank, IEnumerable<Sprite> sprites)
+    private static List<IDetectableByRadar> GetDetectedSprites(GameLogic.Tank tank, IEnumerable<ISprite> sprites)
     {
         var detectedSprites = new List<IDetectableByRadar>();
         foreach (var sprite in sprites)

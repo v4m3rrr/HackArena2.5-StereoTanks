@@ -10,11 +10,11 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a mine with an explosion animation.
 /// </summary>
-internal class Mine : Sprite, IDetectableByRadar
+internal class Mine : ISprite, IDetectableByRadar
 {
     private static readonly List<Texture2D> ExplosionTextures = [];
-    private static readonly ScalableTexture2D.Static InnerStaticTexture;
-    private static readonly ScalableTexture2D.Static OuterStaticTexture;
+    private static readonly ScalableTexture2D.Static InnerStaticTexture = new("Images/Game/mine_inner.svg");
+    private static readonly ScalableTexture2D.Static OuterStaticTexture = new("Images/Game/mine_outer.svg");
 
     private readonly ScalableTexture2D innerTexture;
     private readonly ScalableTexture2D outerTexture;
@@ -23,28 +23,6 @@ internal class Mine : Sprite, IDetectableByRadar
     private Rectangle destRectangle;
     private float explosionProgress;
     private float baseOpacity = 1f;
-
-    static Mine()
-    {
-        InnerStaticTexture = new ScalableTexture2D.Static("Images/Game/mine_inner.svg");
-        InnerStaticTexture.Load();
-
-        OuterStaticTexture = new ScalableTexture2D.Static("Images/Game/mine_outer.svg");
-        OuterStaticTexture.Load();
-
-        var content = ContentController.Content;
-        var directory = $"Animations/MineExplosion/";
-        var files = Directory.GetFiles($"{content.RootDirectory}/{directory}").ToList();
-        files.Sort();
-
-        foreach (var file in files)
-        {
-            var filename = Path.GetFileNameWithoutExtension(file);
-            var dupa = directory + filename;
-            var texture = content.Load<Texture2D>(dupa);
-            ExplosionTextures.Add(texture);
-        }
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Mine"/> class.
@@ -106,6 +84,25 @@ internal class Mine : Sprite, IDetectableByRadar
         : MonoTanks.ThemeColor;
 
     /// <inheritdoc/>
+    public static void LoadContent()
+    {
+        InnerStaticTexture.Load();
+        OuterStaticTexture.Load();
+
+        var content = ContentController.Content;
+        var directory = $"Animations/MineExplosion/";
+        var files = Directory.GetFiles($"{content.RootDirectory}/{directory}").ToList();
+        files.Sort();
+
+        foreach (var file in files)
+        {
+            var filename = Path.GetFileNameWithoutExtension(file);
+            var texture = content.Load<Texture2D>(directory + filename);
+            ExplosionTextures.Add(texture);
+        }
+    }
+
+    /// <inheritdoc/>
     IDetectableByRadar IDetectableByRadar.Copy()
     {
         return new Mine(this.Logic, this.grid);
@@ -122,7 +119,7 @@ internal class Mine : Sprite, IDetectableByRadar
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         if (this.Logic.IsExploded)
         {
@@ -140,7 +137,7 @@ internal class Mine : Sprite, IDetectableByRadar
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         if (this.Logic.IsExploded)
         {

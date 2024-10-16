@@ -9,52 +9,17 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a bullet sprite.
 /// </summary>
-internal class Bullet : Sprite, IDetectableByRadar
+internal class Bullet : ISprite, IDetectableByRadar
 {
-    private static readonly ScalableTexture2D.Static StaticTexture;
+    private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/bullet_ts.svg");
     private static float heightPercentage;
 
     private readonly ScalableTexture2D texture;
-    private readonly GridComponent grid;
 
     private Vector2 position;
     private bool skipNextPositionUpdate;
     private bool isOutOfBounds;
     private Collision? collision;
-
-    static Bullet()
-    {
-        StaticTexture = new ScalableTexture2D.Static("Images/Game/bullet_ts.svg");
-
-        MonoTanks.InvokeOnMainThread(() =>
-        {
-            StaticTexture.Load();
-
-            var data = new Color[StaticTexture.Texture.Width * StaticTexture.Texture.Height];
-            StaticTexture.Texture.GetData(data);
-
-            int firstHeight = -1;
-            int lastHeight = -1;
-
-            for (int i = 0; i < StaticTexture.Texture.Height; i++)
-            {
-                for (int j = 0; j < StaticTexture.Texture.Width; j++)
-                {
-                    if (data[(i * StaticTexture.Texture.Width) + j].A > 0)
-                    {
-                        if (firstHeight == -1)
-                        {
-                            firstHeight = i;
-                        }
-
-                        lastHeight = i;
-                    }
-                }
-            }
-
-            heightPercentage = (float)(lastHeight - firstHeight) / StaticTexture.Texture.Height;
-        });
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Bullet"/> class.
@@ -88,9 +53,7 @@ internal class Bullet : Sprite, IDetectableByRadar
             },
         };
 
-        this.texture.Load();
-
-        this.grid = grid;
+        this.Grid = grid;
         this.UpdateLogic(logic);
         this.position = new Vector2(this.Logic.X, this.Logic.Y);
         var (nx, ny) = DirectionUtils.Normal(this.Logic.Direction);
@@ -110,12 +73,47 @@ internal class Bullet : Sprite, IDetectableByRadar
         set => this.texture.Opacity = value;
     }
 
+    /// <summary>
+    /// Gets the grid component.
+    /// </summary>
+    protected GridComponent Grid { get; private set; }
+
     private bool IsCollisionDetected => this.collision is not null;
+
+    /// <inheritdoc/>
+    public static async void LoadContent()
+    {
+        StaticTexture.Load();
+
+        var data = new Color[StaticTexture.Texture.Width * StaticTexture.Texture.Height];
+        await MonoTanks.InvokeOnMainThreadAsync(() => StaticTexture.Texture.GetData(data));
+
+        int firstHeight = -1;
+        int lastHeight = -1;
+
+        for (int i = 0; i < StaticTexture.Texture.Height; i++)
+        {
+            for (int j = 0; j < StaticTexture.Texture.Width; j++)
+            {
+                if (data[(i * StaticTexture.Texture.Width) + j].A > 0)
+                {
+                    if (firstHeight == -1)
+                    {
+                        firstHeight = i;
+                    }
+
+                    lastHeight = i;
+                }
+            }
+        }
+
+        heightPercentage = (float)(lastHeight - firstHeight) / StaticTexture.Texture.Height;
+    }
 
     /// <inheritdoc/>
     IDetectableByRadar IDetectableByRadar.Copy()
     {
-        return new Bullet(this.Logic, this.grid);
+        return new Bullet(this.Logic, this.Grid);
     }
 
     /// <summary>
@@ -140,7 +138,7 @@ internal class Bullet : Sprite, IDetectableByRadar
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public virtual void Update(GameTime gameTime)
     {
         this.UpdatePosition(gameTime);
         this.CheckCollision();
@@ -150,10 +148,10 @@ internal class Bullet : Sprite, IDetectableByRadar
             return;
         }
 
-        int tileSize = this.grid.TileSize;
-        int drawOffset = this.grid.DrawOffset;
-        int gridLeft = this.grid.Transform.DestRectangle.Left;
-        int gridTop = this.grid.Transform.DestRectangle.Top;
+        int tileSize = this.Grid.TileSize;
+        int drawOffset = this.Grid.DrawOffset;
+        int gridLeft = this.Grid.Transform.DestRectangle.Left;
+        int gridTop = this.Grid.Transform.DestRectangle.Top;
 
         var location = new Point(
             gridLeft + ((int)(this.position.X * tileSize)) + drawOffset,
@@ -170,12 +168,12 @@ internal class Bullet : Sprite, IDetectableByRadar
 
         this.isOutOfBounds = this.position.X <= -0.5f
             || this.position.Y <= -0.5f
-            || this.position.X >= this.grid.Logic.Dim
-            || this.position.Y >= this.grid.Logic.Dim;
+            || this.position.X >= this.Grid.Logic.Dim
+            || this.position.Y >= this.Grid.Logic.Dim;
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         if (this.IsCollisionDetected || this.isOutOfBounds)
         {
@@ -209,7 +207,7 @@ internal class Bullet : Sprite, IDetectableByRadar
         // TODO: Add other bullets trajectories.
         // Currently, only collision with walls and tanks is checked.
         // A dictionary below is created to avoid errors in the CollisionDetector.
-        var gridDim = this.grid.Logic.Dim;
+        var gridDim = this.Grid.Logic.Dim;
 
         var posX = Math.Clamp((int)(this.position.X + 0.5f), -1, gridDim);
         var posY = Math.Clamp((int)(this.position.Y + 0.5f), -1, gridDim);
@@ -218,6 +216,6 @@ internal class Bullet : Sprite, IDetectableByRadar
             [this.Logic] = [(posX, posY)],
         };
 
-        this.collision = CollisionDetector.CheckBulletCollision(this.Logic, this.grid.Logic, trajectories);
+        this.collision = CollisionDetector.CheckBulletCollision(this.Logic, this.Grid.Logic, trajectories);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.WebSockets;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
@@ -12,6 +13,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the lobby scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class Lobby : Scene
 {
     private readonly LobbyComponents components;
@@ -39,7 +42,7 @@ internal class Lobby : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
@@ -50,10 +53,17 @@ internal class Lobby : Scene
         this.Hiding += this.Lobby_Hiding;
     }
 
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
+    }
+
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainMenu.Effect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
     }
 
     private static void Connection_ErrorThrew(string error)
@@ -98,7 +108,7 @@ internal class Lobby : Scene
                     LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out var serverSettings);
                     break;
 
-                case PacketType.GameStart:
+                case PacketType.GameStarting:
                     var displayArgs = new GameDisplayEventArgs(ServerConnection.Data.JoinCode, ServerConnection.Data.IsSpectator);
                     Change<Game>(displayArgs);
                     break;

@@ -3,8 +3,17 @@
 /// <summary>
 /// Represents a localized string.
 /// </summary>
-/// <param name="key">The key of the localized string.</param>
-internal class LocalizedString(string key)
+/// <param name="Key">The key of the localized string.</param>
+/// <param name="DefaultValue">The default value to use if the localized string is not available.</param>
+/// <remarks>
+/// <para>
+/// If the localized string is not available, the default value will be used.
+/// </para>
+/// <para>
+/// If the default value is not specified, the key will be used as the default value.
+/// </para>
+/// </remarks>
+internal record class LocalizedString(string Key, string? DefaultValue = null)
 {
     /// <summary>
     /// Gets the default localized string.
@@ -14,5 +23,11 @@ internal class LocalizedString(string key)
     /// <summary>
     /// Gets the localized string value.
     /// </summary>
-    public virtual string Value => Localization.Get(key);
+    /// <value>
+    /// The localized string value if it is available;
+    /// <see cref="DefaultValue"/> if value is not available,
+    /// but <see cref="DefaultValue"/> is specified;
+    /// otherwise, <see cref="Key"/>.
+    /// </value>
+    public virtual string Value => Localization.Get(this.Key) ?? this.DefaultValue ?? this.Key;
 }

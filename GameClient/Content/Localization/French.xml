@@ -43,9 +43,10 @@
 	</ConnectionRejectedReason>
 
 	<Other>
-		<NoDetails>Aucun détail</NoDetails>
+		<Loading>Chargement</Loading>
 		<Waiting>En attente</Waiting>
 		<Connecting>Connexion en cours</Connecting>
+		<NoDetails>Aucun détail</NoDetails>
 		<ServerNotResponding>Le serveur ne répond pas.</ServerNotResponding>
 	</Other>
 

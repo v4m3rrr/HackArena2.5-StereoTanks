@@ -1,4 +1,5 @@
-﻿using GameLogic;
+﻿using GameClient.GameSceneComponents.PlayerBarComponents;
+using GameLogic;
 using MonoRivUI;
 
 namespace GameClient.GameSceneComponents;
@@ -13,4 +14,13 @@ internal abstract class PlayerBarComponent(Player player) : Component
     /// Gets the player the component is associated with.
     /// </summary>
     public Player Player { get; private set; } = player;
+
+    /// <summary>
+    /// Loads the content of the component.
+    /// </summary>
+    public static void LoadContent()
+    {
+        BulletCount.LoadStaticContent();
+        SecondaryItems.LoadStaticContent();
+    }
 }

@@ -55,9 +55,10 @@
 
 	<xs:complexType name="Other">
 		<xs:sequence>
-			<xs:element name="NoDetails" type="xs:string"/>
+			<xs:element name="Loading" type="xs:string"/>
 			<xs:element name="Waiting" type="xs:string"/>
 			<xs:element name="Connecting" type="xs:string"/>
+			<xs:element name="NoDetails" type="xs:string"/>
 			<xs:element name="ServerNotResponding" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>

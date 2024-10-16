@@ -1,4 +1,5 @@
-﻿using GameClient.Networking;
+﻿using System.Linq;
+using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -7,6 +8,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the main menu scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class MainMenu : Scene
 {
     private Text title = default!;
@@ -17,42 +20,29 @@ internal class MainMenu : Scene
     /// Initializes a new instance of the <see cref="MainMenu"/> class.
     /// </summary>
     public MainMenu()
-        : base(Color.Black)
+        : base(Color.Transparent)
     {
     }
-
-    /// <summary>
-    /// Gets the background texture.
-    /// </summary>
-    public static ScalableTexture2D Effect { get; private set; } = default!;
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        Effect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation += 0.05f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
 
         base.Update(gameTime);
     }
 
     /// <inheritdoc/>
+    public override void Draw(GameTime gameTime)
+    {
+        MainEffect.Draw();
+        base.Draw(gameTime);
+    }
+
+    /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
-        Effect = new ScalableTexture2D("Images/MainMenu/effect.svg")
-        {
-            Parent = baseComponent,
-            Color = MonoTanks.ThemeColor,
-            Transform =
-            {
-                RelativeSize = new Vector2(1.924f, 2.206f),
-                Alignment = Alignment.Center,
-            },
-        };
-
-        Effect.Load();
-        Effect.RelativeOrigin = new Vector2(0.5f);
-        Effect.Transform.SetRelativeOffsetFromAbsolute(Effect.Texture.Bounds.Center);
-
         this.element = new ScalableTexture2D("Images/MainMenu/background_element.svg")
         {
             Parent = baseComponent,
@@ -63,8 +53,6 @@ internal class MainMenu : Scene
                 RelativeOffset = new Vector2(-0.08f, -0.14f),
             },
         };
-
-        this.element.Load();
 
         var titleFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 42);
         this.title = new Text(titleFont, Color.White)
@@ -111,8 +99,6 @@ internal class MainMenu : Scene
             },
         };
 
-        this.logo.Load();
-
         var listBox = new ListBox
         {
             Parent = baseComponent,
@@ -130,9 +116,6 @@ internal class MainMenu : Scene
 
         var settingsBtn = CreateButton(new LocalizedString("Buttons.Settings"), listBox, "settings_icon");
         settingsBtn.Clicked += (s, e) => Change<Settings>();
-
-        var authorsBtn = CreateButton(new LocalizedString("Buttons.Authors"), listBox, "authors_icon");
-        authorsBtn.Clicked += (s, e) => Change<Authors>();
 
         var exitBtn = CreateButton(new LocalizedString("Buttons.Exit"), listBox, "exit_icon");
         exitBtn.Clicked += (s, e) => MonoTanks.Instance.Exit();
@@ -241,13 +224,20 @@ internal class MainMenu : Scene
                 TextAlignment = Alignment.Center,
                 TextShrink = TextShrinkMode.Width,
                 Transform =
-            {
-                RelativeSize = new Vector2(1f, 0.5f),
-                Alignment = Alignment.Bottom,
-            },
+                {
+                    RelativeSize = new Vector2(1f, 0.5f),
+                    Alignment = Alignment.Bottom,
+                },
             };
         }
 #endif
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static IButton<Container> CreateButton(

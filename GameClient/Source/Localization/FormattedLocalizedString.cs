@@ -3,12 +3,16 @@
 /// <summary>
 /// Reprsents a formatted localized string.
 /// </summary>
-/// <param name="key">The key of the localized string.</param>
+/// <param name="Key">The key of the localized string.</param>
+/// <param name="DefaultValue">
+/// The default value to use if the localized string is not available.
+/// </param>
 /// <remarks>
 /// This class is used to represent a localized string
 /// that is formatted with a prefix and suffix.
 /// </remarks>
-internal class FormattedLocalizedString(string key) : LocalizedString(key)
+internal record class FormattedLocalizedString(string Key, string? DefaultValue = null)
+    : LocalizedString(Key, DefaultValue)
 {
     /// <summary>
     /// Gets or sets the prefix of the localized string.

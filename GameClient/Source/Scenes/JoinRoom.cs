@@ -3,12 +3,15 @@ using GameClient.Scenes.JoinRoomCore;
 using GameClient.UI;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
+using System.Linq;
 
 namespace GameClient.Scenes;
 
 /// <summary>
 /// Represents the join room scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class JoinRoom : Scene
 {
     private readonly JoinRoomInitializer initializer;
@@ -34,7 +37,7 @@ internal class JoinRoom : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
@@ -105,10 +108,17 @@ internal class JoinRoom : Scene
         this.Showed += this.JoinRoom_Showed;
     }
 
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
+    }
+
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainMenu.Effect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
     }
 
     private void JoinRoom_Showed(object? sender, SceneDisplayEventArgs? e)

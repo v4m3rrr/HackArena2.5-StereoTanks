@@ -111,6 +111,8 @@ internal class PacketHandler(GameInstance game)
         isHandled |= this.HandleDebugPacket(connection, packet);
 #endif
 
+        isHandled |= this.HandleOtherPacket(connection, packet);
+
         if (!isHandled)
         {
             Console.WriteLine($"[WARN] Packet type ({packet.Type}) cannot be handled.");
@@ -249,6 +251,17 @@ internal class PacketHandler(GameInstance game)
 
 #endif
 
+    private bool HandleOtherPacket(Connection connection, Packet packet)
+    {
+        if (packet.Type == PacketType.ReadyToReceiveGameState)
+        {
+            connection.IsReadyToReceiveGameState = true;
+            return true;
+        }
+
+        return false;
+    }
+
     private void HandlePlayerActionPacket(PlayerConnection player, Packet packet)
     {
 #if HACKATHON
@@ -274,7 +287,7 @@ internal class PacketHandler(GameInstance game)
             }
             else if (!(bool)responsedToCurrentGameState)
             {
-                var payload = new CustomWarningPayload("GameStateId is not the current game state id");
+                var payload = new EmptyPayload() { Type = PacketType.SlowResponseWarning };
                 var responsePacket = new ResponsePacket(payload);
                 _ = responsePacket.SendAsync(player);
             }
