@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -24,38 +24,25 @@ internal class MainMenu : Scene
     {
     }
 
-    /// <summary>
-    /// Gets the background texture.
-    /// </summary>
-    public static ScalableTexture2D Effect { get; private set; } = default!;
-
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        Effect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation += 0.05f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
 
         base.Update(gameTime);
     }
 
     /// <inheritdoc/>
+    public override void Draw(GameTime gameTime)
+    {
+        MainEffect.Draw();
+        base.Draw(gameTime);
+    }
+
+    /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
-        Effect = new ScalableTexture2D("Images/MainMenu/effect.svg")
-        {
-            Parent = baseComponent,
-            Color = MonoTanks.ThemeColor,
-            Transform =
-            {
-                RelativeSize = new Vector2(1.924f, 2.206f),
-                Alignment = Alignment.Center,
-            },
-        };
-
-        Effect.Load();
-        Effect.RelativeOrigin = new Vector2(0.5f);
-        Effect.Transform.SetRelativeOffsetFromAbsolute(Effect.Texture.Bounds.Center);
-
         this.element = new ScalableTexture2D("Images/MainMenu/background_element.svg")
         {
             Parent = baseComponent,

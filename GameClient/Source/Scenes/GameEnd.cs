@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using GameClient.Networking;
 using GameClient.Scenes.GameEndCore;
@@ -39,7 +39,7 @@ internal class GameEnd : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
@@ -59,8 +59,8 @@ internal class GameEnd : Scene
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainMenu.Effect.Rotation += 0.3f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation += 0.3f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
     }
 
     private static void Connection_ErrorThrew(string error)

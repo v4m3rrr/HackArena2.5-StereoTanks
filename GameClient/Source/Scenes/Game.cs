@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -63,7 +63,7 @@ internal class Game : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
 
         if (this.isContentLoading)
         {
@@ -100,12 +100,12 @@ internal class Game : Scene
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        if (MainMenu.Effect.Rotation != 0.0f)
+        if (MainEffect.Rotation != 0.0f)
         {
-            int sign = MainMenu.Effect.Rotation is > MathHelper.Pi or < 0 and > -MathHelper.Pi ? 1 : -1;
+            int sign = MainEffect.Rotation is > MathHelper.Pi or < 0 and > -MathHelper.Pi ? 1 : -1;
             var value = 0.25f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            MainMenu.Effect.Rotation += Math.Min(MainMenu.Effect.Rotation, Math.Min(value, 0.1f)) * sign;
-            MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+            MainEffect.Rotation += Math.Min(MainEffect.Rotation, Math.Min(value, 0.1f)) * sign;
+            MainEffect.Rotation %= MathHelper.TwoPi;
         }
     }
 

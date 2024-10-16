@@ -1,4 +1,4 @@
-using GameClient.Networking;
+﻿using GameClient.Networking;
 using GameClient.Scenes.JoinRoomCore;
 using GameClient.UI;
 using Microsoft.Xna.Framework;
@@ -37,7 +37,7 @@ internal class JoinRoom : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
@@ -117,8 +117,8 @@ internal class JoinRoom : Scene
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainMenu.Effect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
     }
 
     private void JoinRoom_Showed(object? sender, SceneDisplayEventArgs? e)

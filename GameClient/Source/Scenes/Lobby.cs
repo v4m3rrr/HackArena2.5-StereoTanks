@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.WebSockets;
 using GameClient.Networking;
@@ -42,7 +42,7 @@ internal class Lobby : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
@@ -62,8 +62,8 @@ internal class Lobby : Scene
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainMenu.Effect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
     }
 
     private static void Connection_ErrorThrew(string error)

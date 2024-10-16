@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -34,8 +34,8 @@ internal class Settings : Scene, IOverlayScene
     {
         if (!this.IsDisplayedOverlay)
         {
-            MainMenu.Effect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+            MainEffect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            MainEffect.Rotation %= MathHelper.TwoPi;
         }
 
         base.Update(gameTime);
@@ -48,7 +48,7 @@ internal class Settings : Scene, IOverlayScene
 
         if (!this.IsDisplayedOverlay)
         {
-            MainMenu.Effect.Draw(gameTime);
+            MainEffect.Draw();
         }
 
         base.Draw(gameTime);
