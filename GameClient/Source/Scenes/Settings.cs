@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -9,6 +9,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the settings scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class Settings : Scene, IOverlayScene
 {
     private readonly List<Component> overlayComponents = [];
@@ -248,6 +250,13 @@ internal class Settings : Scene, IOverlayScene
         }
 
         ResizeSections(listBox, sections);
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static void ResizeSections(ListBox baseListBox, IEnumerable<ListBox> sections)

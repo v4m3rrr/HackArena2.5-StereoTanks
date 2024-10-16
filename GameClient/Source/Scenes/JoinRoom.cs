@@ -1,14 +1,17 @@
-﻿using GameClient.Networking;
+using GameClient.Networking;
 using GameClient.Scenes.JoinRoomCore;
 using GameClient.UI;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
+using System.Linq;
 
 namespace GameClient.Scenes;
 
 /// <summary>
 /// Represents the join room scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class JoinRoom : Scene
 {
     private readonly JoinRoomInitializer initializer;
@@ -103,6 +106,13 @@ internal class JoinRoom : Scene
     protected override void Initialize(Component baseComponent)
     {
         this.Showed += this.JoinRoom_Showed;
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)

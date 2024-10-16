@@ -1,3 +1,4 @@
+using System.Linq;
 using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -7,6 +8,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the main menu scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class MainMenu : Scene
 {
     private Text title = default!;
@@ -17,7 +20,7 @@ internal class MainMenu : Scene
     /// Initializes a new instance of the <see cref="MainMenu"/> class.
     /// </summary>
     public MainMenu()
-        : base(Color.Black)
+        : base(Color.Transparent)
     {
     }
 
@@ -64,8 +67,6 @@ internal class MainMenu : Scene
             },
         };
 
-        this.element.Load();
-
         var titleFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 42);
         this.title = new Text(titleFont, Color.White)
         {
@@ -110,8 +111,6 @@ internal class MainMenu : Scene
                 RelativeOffset = new Vector2(-0.08f, 0.08f),
             },
         };
-
-        this.logo.Load();
 
         var listBox = new ListBox
         {
@@ -238,13 +237,20 @@ internal class MainMenu : Scene
                 TextAlignment = Alignment.Center,
                 TextShrink = TextShrinkMode.Width,
                 Transform =
-            {
-                RelativeSize = new Vector2(1f, 0.5f),
-                Alignment = Alignment.Bottom,
-            },
+                {
+                    RelativeSize = new Vector2(1f, 0.5f),
+                    Alignment = Alignment.Bottom,
+                },
             };
         }
 #endif
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static IButton<Container> CreateButton(

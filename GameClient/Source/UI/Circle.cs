@@ -17,7 +17,7 @@ internal class Circle : TextureComponent
     public Circle(int thickness)
     {
         this.Thickness = thickness;
-        this.Transform.SizeChanged += (s, e) => this.LoadTexture();
+        this.Transform.SizeChanged += (s, e) => this.Reload();
     }
 
     /// <summary>
@@ -36,10 +36,8 @@ internal class Circle : TextureComponent
     public int Thickness { get; }
 
     /// <inheritdoc/>
-    protected override void LoadTexture()
+    public override void Load()
     {
-        this.Texture?.Dispose();
-
         var radius = this.Radius;
         var diameter = radius * 2;
 
@@ -56,6 +54,17 @@ internal class Circle : TextureComponent
 
         texture.SetData(data);
         this.Texture = texture;
+        this.IsLoaded = true;
+    }
+
+    private void Reload()
+    {
+        if (this.IsLoaded)
+        {
+            this.IsLoaded = false;
+            this.Texture?.Dispose();
+            this.Load();
+        }
     }
 
     private void FillCircleOutline(float[] opacities)

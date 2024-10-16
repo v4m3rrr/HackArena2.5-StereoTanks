@@ -60,21 +60,21 @@ internal class GridComponent : Component
     /// <value>The draw offset in pixels to center the grid.</value>
     public int DrawOffset { get; private set; }
 
-    private IEnumerable<Sprite> Sprites
+    private IEnumerable<ISprite> Sprites
     {
         get
         {
             lock (this.syncLock)
             {
-                return this.zones.Cast<Sprite>()
+                return this.zones.Cast<ISprite>()
                     .Concat(this.mapItems)
                     .Concat(this.mines)
                     .Concat(this.tanks)
                     .Concat(this.bullets)
                     .Concat(this.lasers)
                     .Concat(this.radarEffects)
-                    .Concat(this.solidWalls.Cast<Sprite>().Where(x => x is not null))
-                    .Concat(this.borderWalls.Cast<Sprite>())
+                    .Concat(this.solidWalls.Cast<ISprite>().Where(x => x is not null))
+                    .Concat(this.borderWalls.Cast<ISprite>())
                     .Concat(this.fogsOfWar.Values)
                     .Where(x => x is not null)!;
             }
@@ -91,7 +91,7 @@ internal class GridComponent : Component
 
         base.Update(gameTime);
 
-        foreach (Sprite sprite in this.Sprites.ToList())
+        foreach (ISprite sprite in this.Sprites.ToList())
         {
             sprite.Update(gameTime);
         }
@@ -107,7 +107,7 @@ internal class GridComponent : Component
 
         base.Draw(gameTime);
 
-        foreach (Sprite sprite in this.Sprites.ToList())
+        foreach (ISprite sprite in this.Sprites.ToList())
         {
             sprite.Draw(gameTime);
         }

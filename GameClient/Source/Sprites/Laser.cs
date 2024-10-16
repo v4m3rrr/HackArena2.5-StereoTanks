@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
@@ -9,7 +10,7 @@ namespace GameClient.Sprites;
 /// </summary>
 /// <param name="logic">The logic of the laser.</param>
 /// <param name="grid">The grid component.</param>
-internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite, IDetectableByRadar
+internal class Laser(GameLogic.Laser logic, GridComponent grid) : ISprite, IDetectableByRadar
 {
     private const float OffsetFactor1 = 0.45f;
     private const float OffsetFactor2 = 0.40f;
@@ -48,7 +49,7 @@ internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite, IDetec
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         int tileSize = grid.TileSize;
         int drawOffset = grid.DrawOffset;
@@ -67,20 +68,20 @@ internal class Laser(GameLogic.Laser logic, GridComponent grid) : Sprite, IDetec
         {
             this.innerDestRectangle.Y += (int)(tileSize * OffsetFactor1);
             this.outerDestRectangle.Y += (int)(tileSize * OffsetFactor2);
-            this.innerDestRectangle.Height = (int)(tileSize * LaserThickness1);
+            this.innerDestRectangle.Height = (int)Math.Ceiling(tileSize * LaserThickness1);
             this.outerDestRectangle.Height = (int)(tileSize * LaserThickness2);
         }
         else if (this.Logic.Orientation is GameLogic.Orientation.Vertical)
         {
             this.innerDestRectangle.X += (int)(tileSize * OffsetFactor1);
             this.outerDestRectangle.X += (int)(tileSize * OffsetFactor2);
-            this.innerDestRectangle.Width = (int)(tileSize * LaserThickness1);
+            this.innerDestRectangle.Width = (int)Math.Ceiling(tileSize * LaserThickness1);
             this.outerDestRectangle.Width = (int)(tileSize * LaserThickness2);
         }
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         var spriteBatch = SpriteBatchController.SpriteBatch;
 

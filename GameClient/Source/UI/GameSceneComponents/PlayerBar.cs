@@ -26,6 +26,8 @@ internal abstract class PlayerBar : Component
                 RelativePadding = new Vector4(0.05f),
             },
         };
+
+        this.Background.Load();
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Net.WebSockets;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
@@ -12,6 +13,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the lobby scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class Lobby : Scene
 {
     private readonly LobbyComponents components;
@@ -48,6 +51,13 @@ internal class Lobby : Scene
     {
         this.Showing += this.Lobby_Showing;
         this.Hiding += this.Lobby_Hiding;
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
@@ -98,7 +108,7 @@ internal class Lobby : Scene
                     LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out var serverSettings);
                     break;
 
-                case PacketType.GameStart:
+                case PacketType.GameStarting:
                     var displayArgs = new GameDisplayEventArgs(ServerConnection.Data.JoinCode, ServerConnection.Data.IsSpectator);
                     Change<Game>(displayArgs);
                     break;

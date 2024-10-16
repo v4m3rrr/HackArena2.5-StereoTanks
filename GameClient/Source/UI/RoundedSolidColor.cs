@@ -22,7 +22,7 @@ internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
         : base(color)
     {
        this.Radius = radius;
-       this.Transform.SizeChanged += this.Transform_SizeChanged;
+       this.Transform.SizeChanged += (s, e) => this.Reload(e.Before);
     }
 
     /// <summary>
@@ -51,11 +51,7 @@ internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
     }
 
     /// <inheritdoc/>
-    /// <remarks>
-    /// If the texture is already loaded, it will
-    /// be disposed before loading a new one.
-    /// </remarks>
-    protected override void LoadTexture()
+    public override void Load()
     {
         var size = this.Transform.Size;
         var radius = Math.Min(this.Radius, Math.Min(size.X, size.Y) / 2);
@@ -65,11 +61,13 @@ internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
         {
             cacheValue.ReferenceCount++;
             this.Texture = cacheValue.Texture;
+            this.IsLoaded = true;
             return;
         }
 
         this.Texture = this.CreateTexture(radius);
         Cache[cacheKey] = new TextureCacheValue(this.Texture);
+        this.IsLoaded = true;
     }
 
     private static void FillRoundedCorners(float[] opacities, int width, int height, int radius)
@@ -187,11 +185,15 @@ internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
         return texture;
     }
 
-    private void Transform_SizeChanged(object? sender, TransformElementChangedEventArgs<Point> e)
+    private void Reload(Point sizeBefore)
     {
-        var cacheKey = new TextureCacheKey(e.Before, this.Radius);
-        RemoveOldTextureFromCache(cacheKey);
-        this.LoadTexture();
+        if (this.IsLoaded)
+        {
+            this.IsLoaded = false;
+            var cacheKey = new TextureCacheKey(sizeBefore, this.Radius);
+            RemoveOldTextureFromCache(cacheKey);
+            this.Load();
+        }
     }
 
     private record struct TextureCacheKey(Point Size, int Radius);

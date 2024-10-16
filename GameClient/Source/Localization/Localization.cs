@@ -14,21 +14,17 @@ internal static class Localization
     private static readonly Dictionary<Language, string> NativeNames = [];
     private static readonly Dictionary<string, string> Texts = [];
 
-    static Localization()
-    {
-        LoadLanguage();
-        LoadNativeLanguageNames();
-        GameSettings.LanguageChanged += (s, e) => LoadLanguage();
-    }
-
     /// <summary>
     /// Gets the localized string for the specified key.
     /// </summary>
     /// <param name="key">The key of the localized string.</param>
-    /// <returns>The localized string.</returns>
-    public static string Get(string key)
+    /// <returns>
+    /// The localized string if it is available;
+    /// otherwise, <see langword="null"/>.
+    /// </returns>
+    public static string? Get(string key)
     {
-        return Texts.TryGetValue(key, out var value) ? value : key;
+        return Texts.TryGetValue(key, out var value) ? value : null;
     }
 
     /// <summary>
@@ -42,6 +38,16 @@ internal static class Localization
     public static string GetNativeLanguageName(Language language)
     {
         return NativeNames.TryGetValue(language, out var value) ? value : language.ToString();
+    }
+
+    /// <summary>
+    /// Loads the localization content.
+    /// </summary>
+    public static void Initialize()
+    {
+        LoadNativeLanguageNames();
+        LoadLanguage();
+        GameSettings.LanguageChanged += (s, e) => LoadLanguage();
     }
 
     private static void LoadNativeLanguageNames()

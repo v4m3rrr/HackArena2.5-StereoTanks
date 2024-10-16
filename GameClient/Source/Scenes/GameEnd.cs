@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Linq;
 using GameClient.Networking;
 using GameClient.Scenes.GameEndCore;
 using Microsoft.Xna.Framework;
@@ -9,6 +10,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the game end scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class GameEnd : Scene
 {
     private readonly GameEndComponents components;
@@ -47,6 +50,13 @@ internal class GameEnd : Scene
         this.Hiding += this.GameEnd_Hiding;
     }
 
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
+    }
+
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
         MainMenu.Effect.Rotation += 0.3f * (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -70,6 +80,12 @@ internal class GameEnd : Scene
         }
 
         this.updater.UpdateScoreboard(args.Players);
+
+        this.components.Scoreboard
+            .GetAllDescendants<TextureComponent>()
+            .Where(x => !x.IsLoaded)
+            .ToList()
+            .ForEach(x => x.Load());
 
         ServerConnection.ErrorThrew += Connection_ErrorThrew;
     }

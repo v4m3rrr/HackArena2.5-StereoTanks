@@ -9,29 +9,14 @@ namespace GameClient.GameSceneComponents.PlayerBarComponents;
 /// <summary>
 /// Represents the secondary items of a player displayed on a player bar.
 /// </summary>
-internal class SecondaryItems : PlayerBarComponent
+internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
 {
-    private static readonly ScalableTexture2D.Static LaserStaticTexture;
-    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
-    private static readonly ScalableTexture2D.Static RadarStaticTexture;
-    private static readonly ScalableTexture2D.Static MineStaticTexture;
+    private static readonly ScalableTexture2D.Static LaserStaticTexture = new("Images/Game/PlayerBarIcons/laser.svg");
+    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture = new("Images/Game/PlayerBarIcons/double_bullet.svg");
+    private static readonly ScalableTexture2D.Static RadarStaticTexture = new("Images/Game/PlayerBarIcons/radar.svg");
+    private static readonly ScalableTexture2D.Static MineStaticTexture = new("Images/Game/PlayerBarIcons/mine.svg");
 
     private readonly ListBox listBox;
-
-    static SecondaryItems()
-    {
-        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/laser.svg");
-        LaserStaticTexture.Load();
-
-        DoubleBulletStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/double_bullet.svg");
-        DoubleBulletStaticTexture.Load();
-
-        RadarStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/radar.svg");
-        RadarStaticTexture.Load();
-
-        MineStaticTexture = new ScalableTexture2D.Static("Images/Game/PlayerBarIcons/mine.svg");
-        MineStaticTexture.Load();
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SecondaryItems"/> class.
@@ -94,6 +79,15 @@ internal class SecondaryItems : PlayerBarComponent
         };
     }
 
+    /// <inheritdoc/>
+    public static void LoadStaticContent()
+    {
+        LaserStaticTexture.Load();
+        DoubleBulletStaticTexture.Load();
+        RadarStaticTexture.Load();
+        MineStaticTexture.Load();
+    }
+
     private class Item : Component
     {
         private readonly Player player;
@@ -122,6 +116,7 @@ internal class SecondaryItems : PlayerBarComponent
             {
                 this.Background.Parent = null;
                 this.Background = this.CreateBackground();
+                this.Background.Load();
                 this.Texture.Parent = null;
                 this.Texture.Parent = this.Background;
                 this.ForceUpdate();

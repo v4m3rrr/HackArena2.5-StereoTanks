@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using GameClient.Networking;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
@@ -43,7 +44,7 @@ public class MonoTanks : Game
     /// Gets the theme color of the game.
     /// </summary>
 #if DEBUG
-    public static Color ThemeColor { get; } = (new Color(0xFF, 0x9B, 0x1A) * 0.7f).WithAlpha(255);
+    public static Color ThemeColor { get; } = (new Color(0xFF, 0x9B, 0x1A) * 0.9f).WithAlpha(255);
 #else
     public static Color ThemeColor { get; } = new(0, 166, 255);
 #endif
@@ -126,6 +127,85 @@ public class MonoTanks : Game
     }
 
     /// <summary>
+    /// Invokes a function on the main thread asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The type of the result.</typeparam>
+    /// <param name="func">The function to invoke.</param>
+    /// <returns>The result of the function.</returns>
+    /// <remarks>
+    /// If the function is called on the main thread,
+    /// it is executed immediately.
+    /// Otherwise, it is enqueued and executed on
+    /// the main thread at the end of the update loop.
+    /// </remarks>
+    public static Task<T> InvokeOnMainThreadAsync<T>(Func<T> func)
+    {
+        if (Thread.CurrentThread == mainThread)
+        {
+            return Task.FromResult(func());
+        }
+
+        var tcs = new TaskCompletionSource<T>();
+
+        var action = new Action(() =>
+        {
+            try
+            {
+                var result = func();
+                tcs.SetResult(result);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        });
+
+        MainThreadActions.Enqueue(action);
+        ActionEvent.Set();
+
+        return tcs.Task;
+    }
+
+    /// <summary>
+    /// Invokes an action on the main thread asynchronously.
+    /// </summary>
+    /// <param name="action">The action to invoke.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <remarks>
+    /// If the action is called on the main thread,
+    /// it is executed immediately.
+    /// Otherwise, it is enqueued and executed on
+    /// the main thread at the end of the update loop.
+    /// </remarks>
+    public static Task InvokeOnMainThreadAsync(Action action)
+    {
+        if (Thread.CurrentThread == mainThread)
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        var tcs = new TaskCompletionSource<bool>();
+
+        MainThreadActions.Enqueue(() =>
+        {
+            try
+            {
+                action();
+                tcs.SetResult(true);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        });
+
+        ActionEvent.Set();
+
+        return tcs.Task;
+    }
+
+    /// <summary>
     /// Initializes the game.
     /// </summary>
     protected override void Initialize()
@@ -137,6 +217,19 @@ public class MonoTanks : Game
 
         var spriteBatch = new SpriteBatch(this.GraphicsDevice);
         SpriteBatchController.Initialize(spriteBatch);
+
+        var dc = new DebugConsole();
+        dc.Initialize();
+        dc.LoadContent();
+        Scene.AddScene(dc);
+
+        var loading = new Scenes.Loading();
+        loading.Initialize();
+        loading.LoadContent();
+        Scene.AddScene(loading);
+        Scene.Change<Scenes.Loading>();
+
+        base.Initialize();
 
         PacketSerializer.ExceptionThrew += (e) => DebugConsole.ThrowError(e);
         Packet.GetPayloadFailed += (e) => DebugConsole.ThrowError(e);
@@ -150,15 +243,6 @@ public class MonoTanks : Game
             }
         };
 
-        var dc = new DebugConsole();
-        dc.Initialize();
-        Scene.AddScene(dc);
-
-        Scene.InitializeScenes(typeof(Scene).Assembly);
-        Scene.Change<Scenes.MainMenu>();
-
-        base.Initialize();
-
 #if DEBUG
         this.fpsInfo = new SolidColor(Color.Black * 0.1f)
         {
@@ -169,6 +253,9 @@ public class MonoTanks : Game
                 Size = new Point(65, 15),
             },
         };
+
+        this.fpsInfo.Load();
+
         _ = new Text(new ScalableFont("Content\\Fonts\\Consolas.ttf", 13), Color.White)
         {
             Parent = this.fpsInfo,
@@ -184,6 +271,9 @@ public class MonoTanks : Game
                 Size = new Point(130, 15),
             },
         };
+
+        this.runningSlowlyInfo.Load();
+
         ScreenController.ScreenChanged += (s, e) => this.runningSlowlyInfo.Transform.Location = new Point(ScreenController.Width - 131, 1);
         _ = new Text(new ScalableFont("Content\\Fonts\\Consolas.ttf", 13), Color.Yellow)
         {
@@ -199,6 +289,14 @@ public class MonoTanks : Game
     /// </summary>
     protected override void LoadContent()
     {
+        _ = Task.Run(() =>
+        {
+            Localization.Initialize();
+            GameSettings.LoadSettings();
+            Scene.InitializeScenes(typeof(Scene).Assembly);
+            Scene.LoadAllContent();
+            Scene.ChangeWithoutStack<Scenes.MainMenu>();
+        });
     }
 
     /// <summary>
@@ -257,7 +355,7 @@ public class MonoTanks : Game
     /// <remarks>It is called once per frame.</remarks>
     protected override void Draw(GameTime gameTime)
     {
-        this.GraphicsDevice.Clear(Color.CornflowerBlue);
+        this.GraphicsDevice.Clear(Color.Black);
 
         SpriteBatchController.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
 

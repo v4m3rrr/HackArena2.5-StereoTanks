@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
+using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
 using GameLogic;
@@ -13,11 +15,13 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the game scene.
 /// </summary>
+[AutoInitialize]
 internal class Game : Scene
 {
     private readonly Dictionary<string, Player> players = [];
     private readonly GameComponents components;
     private readonly GameUpdater updater;
+    private bool isContentLoading;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Game"/> class.
@@ -60,6 +64,12 @@ internal class Game : Scene
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
         MainMenu.Effect.Draw(gameTime);
+
+        if (this.isContentLoading)
+        {
+            return;
+        }
+
         base.Draw(gameTime);
     }
 
@@ -68,6 +78,24 @@ internal class Game : Scene
     {
         this.Showing += this.Game_Showing;
         this.Hiding += this.Game_Hiding;
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
+
+        GameSceneComponents.PlayerBarComponent.LoadContent();
+
+        Sprites.Bullet.LoadContent();
+        Sprites.DoubleBullet.LoadContent();
+        Sprites.FogOfWar.LoadContent();
+        Sprites.Mine.LoadContent();
+        Sprites.SecondaryItem.LoadContent();
+        Sprites.Tank.LoadContent();
+        Sprites.Wall.LoadContent();
+        Sprites.Zone.LoadContent();
     }
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
@@ -137,6 +165,19 @@ internal class Game : Scene
 
         ServerConnection.BufferSize = 1024 * 32;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
+
+        if (!this.IsContentLoaded)
+        {
+            this.isContentLoading = true;
+            ShowOverlay<Loading>();
+            await Task.Run(this.LoadContent);
+            HideOverlay<Loading>();
+            this.isContentLoading = false;
+        }
+
+        var gameSceneLoadedPayload = new EmptyPayload() { Type = PacketType.ReadyToReceiveGameState };
+        var packet = PacketSerializer.Serialize(gameSceneLoadedPayload);
+        await ServerConnection.SendAsync(packet);
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)

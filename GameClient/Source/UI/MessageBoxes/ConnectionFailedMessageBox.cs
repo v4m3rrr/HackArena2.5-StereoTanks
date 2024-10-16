@@ -48,7 +48,6 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
         };
 
         this.SetTextProperties(text);
-
         this.CreateOkButton();
     }
 
@@ -81,11 +80,14 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
         this.Box.Transform.MaxSize = new Point(1000, 612);
         this.Box.Transform.Alignment = Alignment.Center;
         this.Box.Transform.RelativePadding = new Vector4(0.04f);
+        this.Box.Load();
 
         this.Background = new SolidColor(MonoTanks.ThemeColor)
         {
             Opacity = 0.3f,
         };
+
+        this.Background.Load();
     }
 
     private void SetTextProperties(WrappedText text)

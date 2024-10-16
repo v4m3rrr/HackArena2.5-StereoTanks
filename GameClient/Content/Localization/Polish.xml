@@ -43,9 +43,10 @@
 	</ConnectionRejectedReason>
 
 	<Other>
-		<NoDetails>Brak szczegolow</NoDetails>
+		<Loading>Wczytywanie</Loading>
 		<Waiting>Oczekiwanie</Waiting>
 		<Connecting>Laczenie</Connecting>
+		<NoDetails>Brak szczegolow.</NoDetails>
 		<ServerNotResponding>Serwer nie odpowiada.</ServerNotResponding>
 	</Other>
 </Content>

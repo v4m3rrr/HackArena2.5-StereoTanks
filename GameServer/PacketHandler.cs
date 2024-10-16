@@ -111,6 +111,8 @@ internal class PacketHandler(GameInstance game)
         isHandled |= this.HandleDebugPacket(connection, packet);
 #endif
 
+        isHandled |= this.HandleOtherPacket(connection, packet);
+
         if (!isHandled)
         {
             Console.WriteLine($"[WARN] Packet type ({packet.Type}) cannot be handled.");
@@ -248,6 +250,17 @@ internal class PacketHandler(GameInstance game)
     }
 
 #endif
+
+    private bool HandleOtherPacket(Connection connection, Packet packet)
+    {
+        if (packet.Type == PacketType.ReadyToReceiveGameState)
+        {
+            connection.IsReadyToReceiveGameState = true;
+            return true;
+        }
+
+        return false;
+    }
 
     private void HandlePlayerActionPacket(PlayerConnection player, Packet packet)
     {

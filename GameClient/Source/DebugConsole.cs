@@ -14,7 +14,6 @@ namespace GameClient;
 /// <summary>
 /// Represents a debug console scene.
 /// </summary>
-[NoAutoInitialize]
 internal partial class DebugConsole : Scene, IOverlayScene
 {
     private Frame baseFrame = default!;
@@ -289,6 +288,13 @@ internal partial class DebugConsole : Scene, IOverlayScene
 #endif
 
         SendMessage("Type 'help' to get list of available commands.", Color.White);
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private void Close()

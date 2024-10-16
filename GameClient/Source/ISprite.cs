@@ -5,17 +5,24 @@ namespace GameClient;
 /// <summary>
 /// Represents a sprite.
 /// </summary>
-internal abstract class Sprite
+internal interface ISprite
 {
+    /// <summary>
+    /// Loads the content of the sprite.
+    /// </summary>
+    static virtual void LoadContent()
+    {
+    }
+
     /// <summary>
     /// Updates the sprite.
     /// </summary>
     /// <param name="gameTime">The game time.</param>
-    public abstract void Update(GameTime gameTime);
+    void Update(GameTime gameTime);
 
     /// <summary>
     /// Draws the sprite.
     /// </summary>
     /// <param name="gameTime">The game time.</param>
-    public abstract void Draw(GameTime gameTime);
+    void Draw(GameTime gameTime);
 }

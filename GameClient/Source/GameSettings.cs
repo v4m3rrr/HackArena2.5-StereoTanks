@@ -16,14 +16,6 @@ internal static class GameSettings
     private static SettingsData data;
 
     /// <summary>
-    /// Initializes static members of the <see cref="GameSettings"/> class.
-    /// </summary>
-    static GameSettings()
-    {
-        LoadSettings();
-    }
-
-    /// <summary>
     /// Occurs when the language is changing.
     /// </summary>
     public static event EventHandler? LanguageChanging;
@@ -137,7 +129,10 @@ internal static class GameSettings
         File.WriteAllText(SettingsFilePath, json);
     }
 
-    private static void LoadSettings()
+    /// <summary>
+    /// Loads settings from file.
+    /// </summary>
+    public static async void LoadSettings()
     {
         if (!File.Exists(SettingsFilePath))
         {
@@ -148,7 +143,7 @@ internal static class GameSettings
 
         try
         {
-            string json = File.ReadAllText(SettingsFilePath);
+            string json = await MonoTanks.InvokeOnMainThreadAsync(() => File.ReadAllText(SettingsFilePath));
             var settings = JsonSerializer.Deserialize<SettingsData>(json);
 
             Language = settings.Language;

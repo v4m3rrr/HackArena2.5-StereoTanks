@@ -8,19 +8,13 @@ namespace GameClient.GameSceneComponents.PlayerBarComponents;
 /// <summary>
 /// Represents the bullet count of a player displayed on a player bar.
 /// </summary>
-internal class BulletCount : PlayerBarComponent
+internal class BulletCount : PlayerBarComponent, ILoadStaticContent
 {
-    private static readonly ScalableTexture2D.Static StaticTexture;
+    private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/bullet.svg");
 
     private readonly ScalableTexture2D[] textures;
     private readonly ScalableTexture2D[] backgroundTextures;
     private readonly ListBox listBox;
-
-    static BulletCount()
-    {
-        StaticTexture = new ScalableTexture2D.Static("Images/Game/bullet.svg");
-        StaticTexture.Load();
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BulletCount"/> class.
@@ -71,6 +65,12 @@ internal class BulletCount : PlayerBarComponent
             var component = (s as Transform)!.Component as ScalableTexture2D;
             StaticTexture.Transform.Size = component!.Transform.Size;
         };
+    }
+
+    /// <inheritdoc/>
+    public static void LoadStaticContent()
+    {
+        StaticTexture.Load();
     }
 
     /// <inheritdoc/>

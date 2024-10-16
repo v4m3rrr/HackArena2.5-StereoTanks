@@ -8,35 +8,17 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a secondary map item sprite.
 /// </summary>
-internal class SecondaryItem : Sprite, IDetectableByRadar
+internal class SecondaryItem : ISprite, IDetectableByRadar
 {
-    private static readonly ScalableTexture2D.Static UnknownStaticTexture;
-    private static readonly ScalableTexture2D.Static LaserStaticTexture;
-    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture;
-    private static readonly ScalableTexture2D.Static RadarStaticTexture;
-    private static readonly ScalableTexture2D.Static MineStaticTexture;
+    private static readonly ScalableTexture2D.Static UnknownStaticTexture = new("Images/Game/MapItems/unknown.svg");
+    private static readonly ScalableTexture2D.Static LaserStaticTexture = new("Images/Game/MapItems/laser.svg");
+    private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture = new("Images/Game/MapItems/laser.svg");
+    private static readonly ScalableTexture2D.Static RadarStaticTexture = new("Images/Game/MapItems/radar.svg");
+    private static readonly ScalableTexture2D.Static MineStaticTexture = new("Images/Game/MapItems/mine.svg");
 
     private readonly ScalableTexture2D texture;
     private readonly GameLogic.SecondaryItem logic;
     private readonly GridComponent grid;
-
-    static SecondaryItem()
-    {
-        UnknownStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/unknown.svg");
-        UnknownStaticTexture.Load();
-
-        LaserStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/laser.svg");
-        LaserStaticTexture.Load();
-
-        DoubleBulletStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/double_bullet.svg");
-        DoubleBulletStaticTexture.Load();
-
-        RadarStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/radar.svg");
-        RadarStaticTexture.Load();
-
-        MineStaticTexture = new ScalableTexture2D.Static("Images/Game/MapItems/mine.svg");
-        MineStaticTexture.Load();
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SecondaryItem"/> class.
@@ -69,19 +51,29 @@ internal class SecondaryItem : Sprite, IDetectableByRadar
     }
 
     /// <inheritdoc/>
+    public static void LoadContent()
+    {
+        UnknownStaticTexture.Load();
+        LaserStaticTexture.Load();
+        DoubleBulletStaticTexture.Load();
+        RadarStaticTexture.Load();
+        MineStaticTexture.Load();
+    }
+
+    /// <inheritdoc/>
     IDetectableByRadar IDetectableByRadar.Copy()
     {
         return new SecondaryItem(this.logic, this.grid);
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         this.texture.Update(gameTime);
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         this.texture.Draw(gameTime);
     }

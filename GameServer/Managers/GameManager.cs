@@ -34,17 +34,29 @@ internal class GameManager(GameInstance game)
     {
         lock (this)
         {
-            if (this.Status is GameStatus.Running)
+            if (this.Status is GameStatus.Starting or GameStatus.Running)
             {
                 return;
             }
 
-            this.Status = GameStatus.Running;
+            this.Status = GameStatus.Starting;
         }
 
         game.ReplayManager?.SaveLobbyData();
+        await game.LobbyManager.SendGameStartingToAll();
 
-        await game.LobbyManager.SendGameStartToAll();
+        while (game.Players.Any(x => !x.IsReadyToReceiveGameState))
+        {
+            await Task.Delay(100);
+        }
+
+        _ = game.LobbyManager.SendGameStartedToAll();
+
+        lock (this)
+        {
+            this.Status = GameStatus.Running;
+        }
+
         _ = Task.Run(this.StartBroadcastingAsync);
     }
 
@@ -178,6 +190,11 @@ internal class GameManager(GameInstance game)
 
         foreach (Connection connection in game.Connections)
         {
+            if (!connection.IsReadyToReceiveGameState)
+            {
+                continue;
+            }
+
             var payload = game.PayloadHelper.GetGameStatePayload(
                 connection,
                 this.tick,
