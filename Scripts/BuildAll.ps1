@@ -1,6 +1,6 @@
 $platforms = @("x64", "arm64")
 $configurations = @("Debug", "Release", "HackathonDebug", "HackathonRelease")
-$systems = @("Windows", "Linux")
+$systems = @("Windows", "Linux", "macOS")
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 

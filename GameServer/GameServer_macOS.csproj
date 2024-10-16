@@ -15,8 +15,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);SERVER;LINUX</DefineConstants>
-    <OutputPath>bin\$(Configuration)\Linux\$(Platform)\</OutputPath>
+    <DefineConstants>$(DefineConstants);SERVER;OSX</DefineConstants>
+    <OutputPath>bin\$(Configuration)\macOS\$(Platform)\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
