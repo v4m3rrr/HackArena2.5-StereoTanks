@@ -287,7 +287,7 @@ internal class PacketHandler(GameInstance game)
             }
             else if (!(bool)responsedToCurrentGameState)
             {
-                var payload = new CustomWarningPayload("GameStateId is not the current game state id");
+                var payload = new EmptyPayload() { Type = PacketType.SlowResponseWarning };
                 var responsePacket = new ResponsePacket(payload);
                 _ = responsePacket.SendAsync(player);
             }
