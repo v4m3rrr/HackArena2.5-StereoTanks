@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Text;
 using System.Text.Json;
 using GameLogic;
 using GameLogic.Networking;
@@ -78,6 +79,25 @@ internal class PacketHandler(GameInstance game)
                 game.RemoveConnection(connection.Socket);
             }
         }
+    }
+
+    private static async void ResponseWithInvalidPayload(Connection connection, Exception exception)
+    {
+        var type = PacketType.InvalidPayloadError;
+
+        if (exception is not null)
+        {
+            type |= PacketType.HasPayload;
+        }
+
+        var sb = new StringBuilder()
+            .AppendLine("Invalid payload:")
+            .AppendLine(exception?.Message)
+            .AppendLine("Action ignored");
+
+        var payload = new ErrorPayload(type, sb.ToString());
+        var responsePacket = new ResponsePacket(payload);
+        await responsePacket.SendAsync(connection);
     }
 
     private void HandleBuffer(Connection connection, byte[] buffer)
@@ -355,7 +375,14 @@ internal class PacketHandler(GameInstance game)
 
     private void HandleMovement(PlayerConnection player, Packet packet)
     {
-        var movement = packet.GetPayload<MovementPayload>();
+        var movement = packet.GetPayload<MovementPayload>(out var exception);
+
+        if (exception is not null)
+        {
+            ResponseWithInvalidPayload(player, exception);
+            return;
+        }
+
         void Action() => game.Grid.TryMoveTank(player.Instance.Tank, movement.Direction);
 
 #if HACKATHON
@@ -377,7 +404,14 @@ internal class PacketHandler(GameInstance game)
 
     private void HandleRotation(PlayerConnection player, Packet packet)
     {
-        var rotation = packet.GetPayload<RotationPayload>();
+        var rotation = packet.GetPayload<RotationPayload>(out var exception);
+
+        if (exception is not null)
+        {
+            ResponseWithInvalidPayload(player, exception);
+            return;
+        }
+
         var actions = new List<Action>();
 
         if (rotation.TankRotation is { } tankRotation)
@@ -414,7 +448,14 @@ internal class PacketHandler(GameInstance game)
 
     private void HandleAbilityUse(PlayerConnection player, Packet packet)
     {
-        var payload = packet.GetPayload<AbilityUsePayload>();
+        var payload = packet.GetPayload<AbilityUsePayload>(out var exception);
+
+        if (exception is not null)
+        {
+            ResponseWithInvalidPayload(player, exception);
+            return;
+        }
+
         var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
 
 #if HACKATHON

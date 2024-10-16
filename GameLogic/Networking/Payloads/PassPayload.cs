@@ -10,4 +10,9 @@ public class PassPayload : IPacketPayload, IActionPayload
 
     /// <inheritdoc/>
     public string? GameStateId { get; init; }
+
+    /// <inheritdoc/>
+    public void ValidateEnums()
+    {
+    }
 }

@@ -27,7 +27,7 @@ public class ErrorPayload : IPacketPayload
             throw new ArgumentException("The packet type must be an error group type.", nameof(type));
         }
 
-        this.Type = type;
+        this.Type = this.ErrorType = type;
         this.Message = message ?? string.Empty;
     }
 

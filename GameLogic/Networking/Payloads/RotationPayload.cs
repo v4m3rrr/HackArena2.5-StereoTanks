@@ -28,4 +28,18 @@ public class RotationPayload : IPacketPayload, IActionPayload
     /// the turret rotation is not changed.
     /// </remarks>
     public Rotation? TurretRotation { get; init; }
+
+    /// <inheritdoc/>
+    void IActionPayload.ValidateEnums()
+    {
+        if (this.TankRotation is not null && !Enum.IsDefined(this.TankRotation.Value))
+        {
+            throw new Exceptions.ConvertEnumFailed<Rotation>(this.TankRotation.Value.ToString());
+        }
+
+        if (this.TurretRotation is not null && !Enum.IsDefined(this.TurretRotation.Value))
+        {
+            throw new Exceptions.ConvertEnumFailed<Rotation>(this.TurretRotation.Value.ToString());
+        }
+    }
 }

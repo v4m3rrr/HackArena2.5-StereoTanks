@@ -211,4 +211,12 @@ public enum PacketType
     /// Can be merged with <see cref="HasPayload"/>.
     /// </remarks>
     InvalidPacketUsageError = ErrorGroup | 0x2,
+
+    /// <summary>
+    /// The invalid payload.
+    /// </summary>
+    /// <remarks>
+    /// Can be merged with <see cref="HasPayload"/>.
+    /// </remarks>
+    InvalidPayloadError = ErrorGroup | 0x3,
 }

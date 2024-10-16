@@ -16,4 +16,13 @@ public class MovementPayload(MovementDirection direction) : IPacketPayload, IAct
     /// Gets the tank movement direction.
     /// </summary>
     public MovementDirection Direction { get; } = direction;
+
+    /// <inheritdoc/>
+    void IActionPayload.ValidateEnums()
+    {
+        if (!Enum.IsDefined(this.Direction))
+        {
+            throw new Exceptions.ConvertEnumFailed<MovementDirection>(this.Direction.ToString());
+        }
+    }
 }

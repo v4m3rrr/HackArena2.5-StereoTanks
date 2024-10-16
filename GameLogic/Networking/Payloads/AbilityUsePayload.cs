@@ -11,4 +11,13 @@ public record class AbilityUsePayload(AbilityType AbilityType) : IPacketPayload,
 
     /// <inheritdoc/>
     public string? GameStateId { get; init; }
+
+    /// <inheritdoc/>
+    void IActionPayload.ValidateEnums()
+    {
+        if (!Enum.IsDefined(this.AbilityType))
+        {
+            throw new Exceptions.ConvertEnumFailed<AbilityType>(this.AbilityType.ToString());
+        }
+    }
 }

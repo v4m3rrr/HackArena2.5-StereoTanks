@@ -9,5 +9,13 @@ public interface IActionPayload : IPacketPayload
     /// Gets the game state packet id,
     /// that this action is associated with.
     /// </summary>
-    public string? GameStateId { get; init; }
+    string? GameStateId { get; init; }
+
+    /// <summary>
+    /// Validates the enums in the payload.
+    /// </summary>
+    /// <remarks>
+    /// If the enums are invalid, the method raises the <see cref="ConvertEnumFailed"/> exception.
+    /// </remarks>
+    internal void ValidateEnums();
 }
