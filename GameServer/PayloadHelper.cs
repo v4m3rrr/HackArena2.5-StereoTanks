@@ -111,4 +111,36 @@ internal class PayloadHelper(GameInstance game)
         converters = GameEndPayload.GetConverters();
         return this.GetGameEndPayload();
     }
+
+#if HACKATHON
+
+    /// <summary>
+    /// Gets the game end results payload.
+    /// </summary>
+    /// <param name="converters">The list of converters to serialize with.</param>
+    /// <returns>The game end results payload.</returns>
+    internal GameEndPayload GetGameEndResultsPayload(out List<JsonConverter> converters)
+    {
+        converters = GameEndPayload.GetConverters();
+
+        var players = this.Players;
+        bool isValid = true;
+
+        if (game.DisconnectedInGamePlayers.Any())
+        {
+            isValid = false;
+            players.AddRange(game.DisconnectedInGamePlayers.Select(x => x.Instance));
+        }
+
+        players.Sort((x, y) => y.Score.CompareTo(x.Score));
+
+        return new GameEndResultsPayload(players, isValid);
+    }
+
+    private record class GameEndResultsPayload(List<GameLogic.Player> Players, bool IsValid)
+        : GameEndPayload(Players)
+    {
+    }
+
+#endif
 }

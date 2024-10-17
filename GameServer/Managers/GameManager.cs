@@ -67,20 +67,6 @@ internal class GameManager(GameInstance game)
     {
         this.Status = GameStatus.Ended;
 
-        var tasks = new List<Task>();
-
-        foreach (var connection in game.Connections)
-        {
-            var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
-            var packet = new ResponsePacket(payload, converters);
-            var task = Task.Run(async () =>
-            {
-                await packet.SendAsync(connection);
-                await connection.CloseAsync(description: "Game ended");
-            });
-            tasks.Add(task);
-        }
-
         game.ReplayManager?.SaveGameEnd();
         game.ReplayManager?.SaveReplay();
 
@@ -88,7 +74,27 @@ internal class GameManager(GameInstance game)
         game.ReplayManager?.SaveResults();
 #endif
 
+        var tasks = new List<Task>();
+
+        foreach (var connection in game.Connections)
+        {
+            var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
+            var packet = new ResponsePacket(payload, converters);
+            var task = packet.SendAsync(connection);
+            tasks.Add(task);
+        }
+
         await Task.WhenAll(tasks);
+
+        tasks.Clear();
+        foreach (var connection in game.Connections)
+        {
+            var task = connection.CloseAsync(description: "Game ended");
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks);
+
         Environment.Exit(0);
     }
 

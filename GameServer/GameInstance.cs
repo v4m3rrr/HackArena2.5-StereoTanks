@@ -12,6 +12,7 @@ namespace GameServer;
 internal class GameInstance
 {
     private readonly ConcurrentDictionary<WebSocket, Connection> connections = new();
+    private readonly ConcurrentBag<PlayerConnection> disconnectedConnectionsWhileInGame = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
@@ -87,6 +88,11 @@ internal class GameInstance
     public IEnumerable<SpectatorConnection> Spectators => this.connections.Values.OfType<SpectatorConnection>();
 
     /// <summary>
+    /// Gets the disconnected in game players.
+    /// </summary>
+    public IEnumerable<PlayerConnection> DisconnectedInGamePlayers => this.disconnectedConnectionsWhileInGame;
+
+    /// <summary>
     /// Gets the lobby manager.
     /// </summary>
     public LobbyManager LobbyManager { get; }
@@ -151,6 +157,13 @@ internal class GameInstance
         if (this.connections.TryRemove(socket, out var connection))
         {
             Console.WriteLine($"[INFO] Connection removed: {connection}.");
+
+            if (connection is PlayerConnection p && this.GameManager.Status is GameStatus.Running)
+            {
+                this.disconnectedConnectionsWhileInGame.Add(p);
+                Console.WriteLine(
+                    $"[INFO] Connection added as a disconnected while in game: {p}.");
+            }
         }
         else
         {

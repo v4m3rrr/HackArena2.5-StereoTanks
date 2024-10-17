@@ -62,9 +62,9 @@ internal class ReplayManager(GameInstance game, string replayPath)
 
         if (this.gameStates.Count < game.Settings.Ticks)
         {
-            Console.WriteLine("[WARN] Saving replay failed!");
+            Console.WriteLine("[WARN] Saving replay with missing game states.");
             Console.WriteLine(
-                "[^^^^] Some game states are missing (expected: {0}, actual: {1}).",
+                "[^^^^] Expected: {0}; Actual: {1}",
                 game.Settings.Ticks,
                 this.gameStates.Count);
         }
@@ -110,7 +110,7 @@ internal class ReplayManager(GameInstance game, string replayPath)
     public void SaveResults()
     {
         // Temporary solution for getting the results.
-        var gameEndPayload = game.PayloadHelper.GetGameEndPayload(out var converters);
+        var gameEndPayload = game.PayloadHelper.GetGameEndResultsPayload(out var converters);
         var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
         _ = PacketSerializer.Serialize(gameEndPayload, out var results, converters, options);
 
