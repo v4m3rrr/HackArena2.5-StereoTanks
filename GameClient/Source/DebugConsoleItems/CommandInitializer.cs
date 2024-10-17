@@ -75,8 +75,13 @@ internal static class CommandInitializer
 #pragma warning disable SA1201 // Elements should appear in the correct order
 
     [Command("Exit the game.")]
-    private static void Exit()
+    private static async void Exit()
     {
+        if (ServerConnection.IsConnected)
+        {
+            await ServerConnection.CloseAsync("Exit the game.");
+        }
+
         MonoTanks.Instance.Exit();
     }
 
@@ -238,18 +243,28 @@ internal static class CommandInitializer
     }
 
     [Command("Change to main menu scene.")]
-    private static void MainMenu()
+    private static async void MainMenu()
     {
-        Scene.ChangeWithoutStack<Scenes.MainMenu>();
+        if (ServerConnection.IsConnected)
+        {
+            await ServerConnection.CloseAsync("Leave the game.");
+        }
+
+        Scene.ChangeWithoutStack<MainMenu>();
         Scene.ResetSceneStack();
         DebugConsole.SendMessage("Changed to main menu scene.", Color.Green);
     }
 
     [Command("Change to previous scene.")]
-    private static void PreviousScene()
+    private static async void PreviousScene()
     {
         try
         {
+            if (ServerConnection.IsConnected)
+            {
+                await ServerConnection.CloseAsync("Leave the game.");
+            }
+
             Scene.ChangeToPrevious();
         }
         catch (InvalidOperationException ex)
@@ -265,7 +280,7 @@ internal static class CommandInitializer
         [Argument("A join code.")] string? joinCode = null)
     {
         GameSettings.ServerAddress = $"{ip}:{port}";
-        var args = new Scenes.GameDisplayEventArgs(joinCode, isSpectator: true);
+        var args = new GameDisplayEventArgs(joinCode, isSpectator: true);
         Scene.Change<Scenes.Game>(args);
     }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
 using GameClient.Scenes.LobbyCore;
@@ -51,6 +52,7 @@ internal class Lobby : Scene
     {
         this.Showing += this.Lobby_Showing;
         this.Hiding += this.Lobby_Hiding;
+        this.Hid += this.Lobby_Hid;
     }
 
     /// <inheritdoc/>
@@ -79,12 +81,19 @@ internal class Lobby : Scene
         ServerConnection.BufferSize = 1024 * 4;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
         ServerConnection.ErrorThrew += Connection_ErrorThrew;
+
+        _ = Task.Run(this.SendLobbyDataRequest);
     }
 
     private void Lobby_Hiding(object? sender, EventArgs e)
     {
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;
         ServerConnection.ErrorThrew -= Connection_ErrorThrew;
+    }
+
+    private void Lobby_Hid(object? sender, EventArgs e)
+    {
+        this.updater.ResetPlayerSlotPanels();
     }
 
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
@@ -105,7 +114,7 @@ internal class Lobby : Scene
                     break;
 
                 case PacketType.LobbyData:
-                    LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out var serverSettings);
+                    LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
                     break;
 
                 case PacketType.GameStarting:
@@ -124,5 +133,12 @@ internal class Lobby : Scene
                     break;
             }
         }
+    }
+
+    private void SendLobbyDataRequest()
+    {
+        var payload = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
+        var packet = PacketSerializer.Serialize(payload);
+        _ = ServerConnection.SendAsync(packet);
     }
 }

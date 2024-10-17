@@ -58,7 +58,7 @@ public enum PacketType
     /// <summary>
     /// The lobby deleted packet type.
     /// </summary>
-    LobbyDeleted = LobbyGroup | 0x2,
+    LobbyDataRequest = LobbyGroup | 0x2,
 
     // GameState group (range: 0x30 - 0x3F)
 

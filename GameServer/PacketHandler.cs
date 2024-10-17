@@ -273,6 +273,12 @@ internal class PacketHandler(GameInstance game)
 
     private bool HandleOtherPacket(Connection connection, Packet packet)
     {
+        if (packet.Type == PacketType.LobbyDataRequest)
+        {
+            _ = game.LobbyManager.SendLobbyDataTo(connection);
+            return true;
+        }
+
         if (packet.Type == PacketType.ReadyToReceiveGameState)
         {
             connection.IsReadyToReceiveGameState = true;
