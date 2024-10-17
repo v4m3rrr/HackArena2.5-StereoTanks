@@ -505,6 +505,13 @@ public class Grid(int dimension, int seed)
         {
             foreach (Mine mine in this.mines.ToList())
             {
+                // Remove mine outside the grid.
+                if (!this.IsCellWithinBounds(mine.X, mine.Y))
+                {
+                    _ = this.mines.Remove(mine);
+                    continue;
+                }
+
                 // Remove if the mine is on a wall.
                 if (this.WallGrid[mine.X, mine.Y] is not null)
                 {
