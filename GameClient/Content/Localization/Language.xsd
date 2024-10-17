@@ -14,8 +14,12 @@
 			<xs:element name="Authors" type="xs:string"/>
 			<xs:element name="Exit" type="xs:string"/>
 			<xs:element name="Back" type="xs:string"/>
+			<xs:element name="Close" type="xs:string"/>
 			<xs:element name="Leave" type="xs:string"/>
+			<xs:element name="LeaveMatch" type="xs:string"/>
+			<xs:element name="Stay" type="xs:string"/>
 			<xs:element name="Continue" type="xs:string"/>
+			<xs:element name="Menu" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 
@@ -53,6 +57,12 @@
 		</xs:sequence>
 	</xs:complexType>
 
+	<xs:complexType name="ConfirmQuestion">
+		<xs:sequence>
+			<xs:element name="LeaveMatch" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
 	<xs:complexType name="Other">
 		<xs:sequence>
 			<xs:element name="Loading" type="xs:string"/>
@@ -70,9 +80,12 @@
 				<xs:element name="Labels" type="mstns:Labels"/>
 				<xs:element name="MessageBoxLabels" type="mstns:MessageBoxLabels"/>
 				<xs:element name="ConnectionRejectedReason" type="mstns:ConnectionRejectedReason"/>
+				<xs:element name="ConfirmQuestion" type="mstns:ConfirmQuestion"/>
 				<xs:element name="Other" type="mstns:Other"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	
+	
 	
 </xs:schema>

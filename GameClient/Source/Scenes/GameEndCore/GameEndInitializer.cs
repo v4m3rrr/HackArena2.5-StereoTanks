@@ -50,7 +50,7 @@ internal class GameEndInitializer(GameEnd gameEnd)
         };
 
         var text = new LocalizedString("Buttons.Continue");
-        var iconPath = "Images/GameEnd/continue_icon.svg";
+        var iconPath = "Images/Icons/continue.svg";
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Right);
 
         button.ApplyStyle(style);

@@ -38,6 +38,9 @@ internal class MessageBox<T> : Component, IOverlayComponent, IStyleable<MessageB
     /// </summary>
     public T Box { get; }
 
+    /// <inheritdoc/>
+    public IComponent BaseComponent => this.Box;
+
     /// <summary>
     /// Gets the background of the message box.
     /// </summary>

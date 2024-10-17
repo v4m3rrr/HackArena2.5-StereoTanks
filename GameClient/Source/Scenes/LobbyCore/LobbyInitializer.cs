@@ -74,7 +74,7 @@ internal class LobbyInitializer(Lobby lobby)
         };
 
         var text = new LocalizedString("Buttons.Leave");
-        var iconPath = "Images/Lobby/leave_icon.svg";
+        var iconPath = "Images/Icons/leave.svg";
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Left);
         button.ApplyStyle(style);
 

@@ -54,7 +54,7 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        this.waitingIcon = new ScalableTexture2D("Images/waiting_icon.svg")
+        this.waitingIcon = new ScalableTexture2D("Images/Icons/waiting.svg")
         {
             Parent = this.iconBackground,
             RelativeOrigin = new Vector2(0.5f),

@@ -10,8 +10,12 @@
 		<Authors>Crédits</Authors>
 		<Exit>Sortir</Exit>
 		<Back>Retour</Back>
+		<Close>Fermer</Close>
 		<Leave>Quitter</Leave>
+		<LeaveMatch>Quitter le match</LeaveMatch>
+		<Stay>Rester</Stay>
 		<Continue>Continuer</Continue>
+		<Menu>Menu</Menu>
 	</Buttons>
 
 	<Labels>
@@ -41,6 +45,10 @@
 		<GameFull>La salle est pleine!</GameFull>
 		<TooManyFailedAttempts>Trop de tentatives échouées! Réessayez plus tard.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
+	
+	<ConfirmQuestion>
+		<LeaveMatch>Êtes-vous sûr de vouloir quitter le match?</LeaveMatch>
+	</ConfirmQuestion>
 
 	<Other>
 		<Loading>Chargement</Loading>

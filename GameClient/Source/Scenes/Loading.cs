@@ -67,7 +67,7 @@ internal class Loading : Scene, IOverlayScene
             },
         };
 
-        this.waitingIcon = new ScalableTexture2D("Images/waiting_icon.svg")
+        this.waitingIcon = new ScalableTexture2D("Images/Icons/waiting.svg")
         {
             Parent = this.background,
             RelativeOrigin = new Vector2(0.5f),

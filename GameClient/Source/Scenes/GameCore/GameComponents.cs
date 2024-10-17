@@ -24,6 +24,7 @@ internal class GameComponents
         this.Grid = initializer.CreateGridComponent();
         this.Timer = initializer.CreateTimer();
         this.MatchName = initializer.CreateMatchName();
+        this.MenuButton = initializer.CreateMenuButton();
     }
 
     /// <summary>
@@ -50,4 +51,9 @@ internal class GameComponents
     /// Gets the match name component.
     /// </summary>
     public Text MatchName { get; }
+
+    /// <summary>
+    /// Gets the menu button.
+    /// </summary>
+    public Button<Container> MenuButton { get; }
 }

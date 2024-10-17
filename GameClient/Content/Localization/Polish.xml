@@ -10,8 +10,12 @@
 		<Authors>Autorzy</Authors>
 		<Exit>Wyjscie</Exit>
 		<Back>Wroc</Back>
+		<Close>Zamknij</Close>
 		<Leave>Opusc</Leave>
+		<LeaveMatch>Opusc mecz</LeaveMatch>
+		<Stay>Zostan</Stay>
 		<Continue>Kontynuuj</Continue>
+		<Menu>Menu</Menu>
 	</Buttons>
 
 	<Labels>
@@ -41,6 +45,10 @@
 		<GameFull>Lobby jest pelne!</GameFull>
 		<TooManyFailedAttempts>Za duzo nieudanych prob! Spróbuj ponownie pozniej.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
+
+	<ConfirmQuestion>
+		<LeaveMatch>Czy na pewno chcesz opuscic mecz?</LeaveMatch>
+	</ConfirmQuestion>
 
 	<Other>
 		<Loading>Wczytywanie</Loading>

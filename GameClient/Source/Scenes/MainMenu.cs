@@ -111,13 +111,13 @@ internal class MainMenu : Scene
             },
         };
 
-        var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join_room_icon");
+        var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join");
         joinRoomBtn.Clicked += (s, e) => Change<JoinRoom>();
 
-        var settingsBtn = CreateButton(new LocalizedString("Buttons.Settings"), listBox, "settings_icon");
+        var settingsBtn = CreateButton(new LocalizedString("Buttons.Settings"), listBox, "settings");
         settingsBtn.Clicked += (s, e) => Change<Settings>();
 
-        var exitBtn = CreateButton(new LocalizedString("Buttons.Exit"), listBox, "exit_icon");
+        var exitBtn = CreateButton(new LocalizedString("Buttons.Exit"), listBox, "exit");
         exitBtn.Clicked += (s, e) => MonoTanks.Instance.Exit();
 
 #if DEBUG
@@ -254,7 +254,7 @@ internal class MainMenu : Scene
             },
         };
 
-        var iconPath = $"Images/MainMenu/{iconName}.svg";
+        var iconPath = $"Images/Icons/{iconName}.svg";
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Left);
         button.ApplyStyle(style);
 
