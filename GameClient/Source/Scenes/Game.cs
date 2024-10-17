@@ -21,7 +21,9 @@ internal class Game : Scene
     private readonly Dictionary<string, Player> players = [];
     private readonly GameComponents components;
     private readonly GameUpdater updater;
+
     private bool isContentLoading;
+    private bool isContentUpdatedAfterLoad;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Game"/> class.
@@ -61,6 +63,11 @@ internal class Game : Scene
             this.HandleInput();
         }
 
+        if (this.IsContentLoaded)
+        {
+            this.isContentUpdatedAfterLoad = true;
+        }
+
         base.Update(gameTime);
     }
 
@@ -70,7 +77,7 @@ internal class Game : Scene
         ScreenController.GraphicsDevice.Clear(Color.Black);
         MainEffect.Draw();
 
-        if (this.isContentLoading)
+        if (this.isContentLoading || !this.isContentUpdatedAfterLoad)
         {
             return;
         }
