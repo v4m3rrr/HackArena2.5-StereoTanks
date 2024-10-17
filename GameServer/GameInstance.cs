@@ -51,6 +51,7 @@ internal class GameInstance
         };
 
         _ = Task.Run(this.HandleStartGame);
+        _ = Task.Run(this.RemoveAbortedConnections);
     }
 
     /// <summary>
@@ -174,5 +175,23 @@ internal class GameInstance
         }
 
         this.GameManager.StartGame();
+    }
+
+    private async Task RemoveAbortedConnections()
+    {
+        while (true)
+        {
+            var abortedConnections = this.connections.Values
+            .Where(x => x.Socket.State is WebSocketState.Aborted)
+            .ToList();
+
+            foreach (Connection connection in abortedConnections)
+            {
+                Console.WriteLine($"[INFO] Removing aborted connection: {connection}");
+                this.RemoveConnection(connection.Socket);
+            }
+
+            await Task.Delay(1000);
+        }
     }
 }

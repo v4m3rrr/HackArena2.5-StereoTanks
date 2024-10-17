@@ -25,6 +25,12 @@ internal record class ResponsePacket(IPacketPayload Payload, List<JsonConverter>
 
         try
         {
+            if (connection.Socket.State is WebSocketState.Aborted)
+            {
+                Console.WriteLine("[INFO] Skipping sending packet to aborted connection: {0}", connection);
+                return;
+            }
+
             await connection.Socket.SendAsync(
                 new ArraySegment<byte>(buffer),
                 WebSocketMessageType.Text,
@@ -33,7 +39,9 @@ internal record class ResponsePacket(IPacketPayload Payload, List<JsonConverter>
         }
         catch (Exception e)
         {
-            Console.WriteLine("ERROR WHILE SENDING PACKET (Packet.SendAsync): " + e.Message);
+            Console.WriteLine("[ERROR] Error while sending a packet:");
+            Console.WriteLine("[^^^^^] Connection: {0}", connection);
+            Console.WriteLine("[^^^^^] Message: {0}", e.Message);
         }
         finally
         {
