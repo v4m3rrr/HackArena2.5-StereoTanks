@@ -18,14 +18,10 @@ internal class LobbyUpdater(LobbyComponents components)
     /// <param name="numberOfPlayers">The maximum number of players in the game.</param>
     public void UpdatePlayerSlotPanels(List<Player> player, int numberOfPlayers)
     {
-        for (int i = 0; i < numberOfPlayers; i++)
+        for (int i = 0; i < components.PlayerSlotPanels.Count; i++)
         {
             components.PlayerSlotPanels[i].IsEnabled = i < numberOfPlayers;
-        }
-
-        for (int i = 0; i < player.Count; i++)
-        {
-            components.PlayerSlotPanels[i].Player = player[i];
+            components.PlayerSlotPanels[i].Player = i < player.Count ? player[i] : null;
         }
     }
 
@@ -37,5 +33,17 @@ internal class LobbyUpdater(LobbyComponents components)
         string? joinCode = ServerConnection.Data.JoinCode;
         components.JoinCode.IsEnabled = !string.IsNullOrEmpty(joinCode);
         components.JoinCode.Value = joinCode ?? "-";
+    }
+
+    /// <summary>
+    /// Resets the player slot panels.
+    /// </summary>
+    public void ResetPlayerSlotPanels()
+    {
+        foreach (var playerSlotPanel in components.PlayerSlotPanels)
+        {
+            playerSlotPanel.IsEnabled = false;
+            playerSlotPanel.Player = null;
+        }
     }
 }

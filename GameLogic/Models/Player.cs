@@ -83,6 +83,11 @@ public class Player : IEquatable<Player>
     public int Ping { get; set; }
 
     /// <summary>
+    /// Gets a value indicating whether the player is using radar.
+    /// </summary>
+    public bool IsUsingRadar { get; internal set; }
+
+    /// <summary>
     /// Gets the regeneration progress of the tank.
     /// </summary>
     /// <value>

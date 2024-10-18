@@ -71,4 +71,21 @@ public static class DirectionUtils
     {
         return (int)a % 2 != (int)b % 2;
     }
+
+    /// <summary>
+    /// Converts a direction to an orientation.
+    /// </summary>
+    /// <param name="direction">The direction to convert.</param>
+    /// <returns>The orientation.</returns>
+    public static Orientation ToOrientation(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => Orientation.Vertical,
+            Direction.Down => Orientation.Vertical,
+            Direction.Left => Orientation.Horizontal,
+            Direction.Right => Orientation.Horizontal,
+            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+        };
+    }
 }

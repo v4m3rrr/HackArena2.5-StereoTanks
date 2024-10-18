@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using JsonNamingPolicy = System.Text.Json.JsonNamingPolicy;
 
 namespace GameLogic.Networking;
 
@@ -8,7 +7,7 @@ namespace GameLogic.Networking;
 /// Represents a packet json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class PacketJsonConverter(PacketSerializationContext context) : JsonConverter<Packet>
+internal class PacketJsonConverter(SerializationContext context) : JsonConverter<Packet>
 {
     /// <inheritdoc/>
     public override Packet? ReadJson(JsonReader reader, Type objectType, Packet? existingValue, bool hasExistingValue, JsonSerializer serializer)
@@ -16,12 +15,7 @@ internal class PacketJsonConverter(PacketSerializationContext context) : JsonCon
         var jObject = JObject.Load(reader);
 
         var rawType = jObject["type"]!.Value<string>()!;
-        PacketType type = context.TypeOfPacketType switch
-        {
-            TypeOfPacketType.Int => (PacketType)int.Parse(rawType),
-            TypeOfPacketType.String => Enum.Parse<PacketType>(rawType, ignoreCase: true),
-            _ => throw new InvalidOperationException("Invalid packet type."),
-        };
+        var type = JsonConverterUtils.ReadEnum<PacketType>(rawType);
 
         if (!type.HasPayload())
         {
@@ -42,12 +36,7 @@ internal class PacketJsonConverter(PacketSerializationContext context) : JsonCon
     {
         var jObject = new JObject
         {
-            ["type"] = context.TypeOfPacketType switch
-            {
-                TypeOfPacketType.Int => (int)value!.Type,
-                TypeOfPacketType.String => JsonNamingPolicy.CamelCase.ConvertName(value!.Type.ToString()),
-                _ => throw new InvalidOperationException("Invalid packet type."),
-            },
+            ["type"] = JsonConverterUtils.WriteEnum(value!.Type, context.EnumSerialization),
         };
 
         if (value!.Type.HasPayload())

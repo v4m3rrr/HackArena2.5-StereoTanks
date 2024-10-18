@@ -10,8 +10,12 @@
 		<Authors>Authors</Authors>
 		<Exit>Exit</Exit>
 		<Back>Back</Back>
+		<Close>Close</Close>
 		<Leave>Leave</Leave>
+		<LeaveMatch>Leave match</LeaveMatch>
+		<Stay>Stay</Stay>
 		<Continue>Continue</Continue>
+		<Menu>Menu</Menu>
 	</Buttons>
 
 	<Labels>
@@ -42,9 +46,15 @@
 		<TooManyFailedAttempts>Too many failed attempts! Try again later.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 
+	<ConfirmQuestion>
+		<LeaveMatch>Are you sure you want to leave the match?</LeaveMatch>
+	</ConfirmQuestion>
+
 	<Other>
+		<Loading>Loading</Loading>
 		<Waiting>Waiting</Waiting>
 		<Connecting>Connecting</Connecting>
+		<NoDetails>No details.</NoDetails>
 		<ServerNotResponding>Server is not responding.</ServerNotResponding>
 	</Other>
 

@@ -6,17 +6,12 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a wall sprite.
 /// </summary>
-internal abstract class Wall : Sprite
+internal abstract class Wall : ISprite
 {
-    private static readonly ScalableTexture2D.Static StaticTexture;
+    private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/wall.svg");
 
     private readonly ScalableTexture2D texture;
     private readonly GridComponent grid;
-
-    static Wall()
-    {
-        StaticTexture = new ScalableTexture2D.Static("Images/Game/wall.svg");
-    }
 
     private Wall(GridComponent grid)
     {
@@ -39,12 +34,18 @@ internal abstract class Wall : Sprite
     protected abstract Point Position { get; }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public static void LoadContent()
+    {
+        StaticTexture.Load();
+    }
+
+    /// <inheritdoc/>
+    public void Update(GameTime gameTime)
     {
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         this.texture.Draw(gameTime);
     }

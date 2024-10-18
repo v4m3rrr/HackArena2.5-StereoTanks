@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
 
 namespace GameLogic;
 
@@ -9,12 +9,19 @@ namespace GameLogic;
 /// <param name="seed">The seed of the grid.</param>
 public class Grid(int dimension, int seed)
 {
-    private readonly Queue<Bullet> queuedBullets = new();
+    private readonly object lasersLock = new();
+    private readonly object minesLock = new();
+
+    private readonly ConcurrentQueue<Bullet> queuedBullets = new();
     private readonly Random random = new(seed);
+    private readonly MapGenerator generator = new(dimension, seed);
 
     private List<Zone> zones = [];
     private List<Tank> tanks = [];
     private List<Bullet> bullets = [];
+    private List<Laser> lasers = [];
+    private List<Mine> mines = [];
+    private List<SecondaryItem> items = [];
 
     private FogOfWarManager fogOfWarManager = new(new bool[0, 0]);
 
@@ -72,6 +79,21 @@ public class Grid(int dimension, int seed)
     /// Gets the bullets.
     /// </summary>
     public IEnumerable<Bullet> Bullets => this.bullets;
+
+    /// <summary>
+    /// Gets the lasers.
+    /// </summary>
+    public IEnumerable<Laser> Lasers => this.lasers;
+
+    /// <summary>
+    /// Gets the mines.
+    /// </summary>
+    public IEnumerable<Mine> Mines => this.mines;
+
+    /// <summary>
+    /// Gets the items.
+    /// </summary>
+    public IEnumerable<SecondaryItem> Items => this.items;
 
     /// <summary>
     /// Updates the grid state from a payload.
@@ -146,16 +168,41 @@ public class Grid(int dimension, int seed)
         {
             if (bullet.ShooterId is null)
             {
-                // ShooterId is null for players.
-                // Only spectators have bullets with ShooterId.
-                Debug.Assert(
-                    payload is Networking.GameStatePayload.ForPlayer,
-                    "Bullet shooter ID is null for player payload.");
                 continue;
             }
 
             var shooter = payload.Players.First(p => p.Id == bullet.ShooterId);
             bullet.Shooter = shooter;
+        }
+
+        // Update the lasers.
+        this.lasers = tiles.Lasers;
+
+        // Update the lasers' shooters.
+        foreach (Laser laser in this.lasers)
+        {
+            if (laser.ShooterId is null)
+            {
+                continue;
+            }
+
+            var shooter = payload.Players.First(p => p.Id == laser.ShooterId);
+            laser.Shooter = shooter;
+        }
+
+        // Update the mines.
+        this.mines = tiles.Mines;
+
+        // Update the mines' layers.
+        foreach (Mine mine in this.mines)
+        {
+            if (mine.LayerId is null)
+            {
+                continue;
+            }
+
+            var layer = payload.Players.First(p => p.Id == mine.LayerId);
+            mine.Layer = layer;
         }
 
         // Update the zones.
@@ -194,6 +241,9 @@ public class Grid(int dimension, int seed)
             }
         }
 
+        // Update the items.
+        this.items = [.. tiles.Items];
+
         this.StateUpdated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -202,12 +252,10 @@ public class Grid(int dimension, int seed)
     /// </summary>
     public void GenerateMap()
     {
-        var generator = new MapGenerator(this.Dim, this.Seed);
+        var walls = this.generator.GenerateWalls();
+        this.zones = this.generator.GenerateZones();
 
-        var walls = generator.GenerateWalls();
-        this.zones = generator.GenerateZones();
-
-        generator.RemoveSomeWallsFromZones(walls, this.zones);
+        this.generator.RemoveSomeWallsFromZones(walls, this.zones);
 
         this.fogOfWarManager = new FogOfWarManager(walls);
 
@@ -218,29 +266,6 @@ public class Grid(int dimension, int seed)
                 this.WallGrid[x, y] = walls[x, y] ? new Wall() { X = x, Y = y } : null;
             }
         }
-    }
-
-    /// <summary>
-    /// Gets the neighbors of a wall.
-    /// </summary>
-    /// <param name="wall">The wall to get the neighbors of.</param>
-    /// <returns>The neighbors of the wall.</returns>
-    public Wall?[] GetWallNeighbors(Wall wall)
-    {
-        var neighbors = new Wall?[4];
-        var directions = new (int Dx, int Dy)[4] { (1, 0), (0, 1), (-1, 0), (0, -1) };
-
-        for (int i = 0; i < directions.Length; i++)
-        {
-            int x = wall.X - directions[i].Dx;
-            int y = wall.Y - directions[i].Dy;
-            if (x >= 0 && x < this.Dim && y >= 0 && y < this.Dim && this.WallGrid[x, y] is Wall w)
-            {
-                neighbors[i] = w;
-            }
-        }
-
-        return neighbors;
     }
 
     /// <summary>
@@ -260,7 +285,24 @@ public class Grid(int dimension, int seed)
         owner.Tank = tank;
         this.tanks.Add(tank);
 
-        tank.Turret.Shot += this.queuedBullets.Enqueue;
+        tank.Turret.BulletShot += this.queuedBullets.Enqueue;
+
+        tank.Turret.LaserUsed += (lasers) =>
+        {
+            lock (this.lasersLock)
+            {
+                this.lasers.AddRange(lasers);
+            }
+        };
+
+        tank.MineDropped += (sender, mine) =>
+        {
+            lock (this.minesLock)
+            {
+                this.mines.Add(mine);
+            }
+        };
+
         owner.TankRegenerated += (s, e) =>
         {
             var (x, y) = this.GetRandomEmptyCell();
@@ -292,16 +334,62 @@ public class Grid(int dimension, int seed)
     /// </summary>
     /// <param name="tank">The tank to move.</param>
     /// <param name="movement">The movement direction.</param>
-    public void TryMoveTank(Tank tank, TankMovement movement)
+    /// <remarks>
+    /// The movement is ignored if the tank is stunned by the
+    /// <see cref="StunBlockEffect.Movement"/> effect.
+    /// </remarks>
+    public void TryMoveTank(Tank tank, MovementDirection movement)
     {
+        if (tank.IsBlockedByStun(StunBlockEffect.Movement))
+        {
+            return;
+        }
+
         var (dx, dy) = DirectionUtils.Normal(tank.Direction);
         int step = -((int)movement * 2) + 1;
         int x = tank.X + (dx * step);
         int y = tank.Y + (dy * step);
 
-        if (this.IsCellEmpty(x, y))
+        if (this.IsCellWithinBounds(x, y)
+            && !this.GetCellObjects(x, y).Any(x => x is Wall or Tank))
         {
             tank.SetPosition(x, y);
+        }
+    }
+
+    /// <summary>
+    /// Generates a new item on the map.
+    /// </summary>
+    internal void GenerateNewItemOnMap()
+    {
+        var nullWeight = 99.5f;
+        var itemWeights = new Dictionary<SecondaryItemType, double>
+        {
+            { SecondaryItemType.Laser, 0.09 },
+            { SecondaryItemType.DoubleBullet, 0.9 },
+            { SecondaryItemType.Radar, 0.3 },
+            { SecondaryItemType.Mine, 0.5 },
+        };
+
+        double totalWeight = itemWeights.Values.Sum() + nullWeight;
+        double randomValue = this.random.NextDouble() * totalWeight;
+
+        var selectedItemType = GetRandomItemByWeight(itemWeights, randomValue);
+        if (selectedItemType == null)
+        {
+            return;
+        }
+
+        int x, y;
+        int triesLeft = 100;
+        do
+        {
+            (x, y) = this.GetRandomEmptyCell();
+        } while ((this.GetCellObjects(x, y).Any() || this.IsVisibleByTank(x, y)) && triesLeft-- > 0);
+
+        if (triesLeft > 0)
+        {
+            this.items.Add(new SecondaryItem(x, y, selectedItemType.Value));
         }
     }
 
@@ -312,7 +400,7 @@ public class Grid(int dimension, int seed)
     /// This method regenerates the dead tanks
     /// by calling the <see cref="Player.UpdateRegenerationProgress"/> method.
     /// </remarks>
-    public void UpdateTanksRegenerationProgress()
+    internal void UpdateTanksRegenerationProgress()
     {
         this.Tanks
             .Select(x => x.Owner)
@@ -324,7 +412,7 @@ public class Grid(int dimension, int seed)
     /// Updates the bullets.
     /// </summary>
     /// <param name="deltaTime">The time elapsed since the last update.</param>
-    public void UpdateBullets(float deltaTime)
+    internal void UpdateBullets(float deltaTime)
     {
         Dictionary<Bullet, List<(int X, int Y)>> trajectories = [];
 
@@ -344,7 +432,7 @@ public class Grid(int dimension, int seed)
                 continue;
             }
 
-            ICollision? collision = CollisionDetector.CheckBulletCollision(bullet, this, trajectories);
+            Collision? collision = CollisionDetector.CheckBulletCollision(bullet, this, trajectories);
 
             if (collision is not null)
             {
@@ -352,11 +440,9 @@ public class Grid(int dimension, int seed)
             }
         }
 
-        while (this.queuedBullets.Count > 0)
+        while (!this.queuedBullets.IsEmpty)
         {
-            var bullet = this.queuedBullets.Dequeue();
-
-            if (bullet is null)
+            if (!this.queuedBullets.TryDequeue(out var bullet) || bullet is null)
             {
                 continue;
             }
@@ -364,7 +450,7 @@ public class Grid(int dimension, int seed)
             this.bullets.Add(bullet);
             trajectories.Add(bullet, [(bullet.X, bullet.Y)]);
 
-            ICollision? collision = CollisionDetector.CheckBulletCollision(bullet, this, trajectories);
+            Collision? collision = CollisionDetector.CheckBulletCollision(bullet, this, trajectories);
 
             if (collision is not null)
             {
@@ -374,9 +460,103 @@ public class Grid(int dimension, int seed)
     }
 
     /// <summary>
+    /// Updates the lasers.
+    /// </summary>
+    internal void UpdateLasers()
+    {
+        lock (this.lasersLock)
+        {
+            foreach (Laser laser in this.lasers.ToList())
+            {
+                laser.DecreaseRemainingTicks();
+                if (laser.RemainingTicks <= 0)
+                {
+                    _ = this.lasers.Remove(laser);
+                }
+
+                var tanksInLaser = this.tanks.Where(t => t.X == laser.X && t.Y == laser.Y);
+                foreach (Tank tank in tanksInLaser)
+                {
+                    var damageTaken = tank.TakeDamage(laser.Damage!.Value, laser.Shooter);
+                    laser.Shooter!.Score += damageTaken;
+                }
+
+                lock (this.minesLock)
+                {
+                    var minesInLaser = this.mines.Where(m => m.X == laser.X && m.Y == laser.Y);
+                    foreach (Mine mine in minesInLaser)
+                    {
+                        if (!mine.IsExploded)
+                        {
+                            mine.Explode(null);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Updates the mines.
+    /// </summary>
+    internal void UpdateMines()
+    {
+        lock (this.minesLock)
+        {
+            foreach (Mine mine in this.mines.ToList())
+            {
+                // Remove mine outside the grid.
+                if (!this.IsCellWithinBounds(mine.X, mine.Y))
+                {
+                    _ = this.mines.Remove(mine);
+                    continue;
+                }
+
+                // Remove if the mine is on a wall.
+                if (this.WallGrid[mine.X, mine.Y] is not null)
+                {
+                    _ = this.mines.Remove(mine);
+                    continue;
+                }
+
+                mine.DecreaseExplosionTicks();
+
+                // Remove if the mine is fully exploded.
+                if (mine.IsFullyExploded)
+                {
+                    _ = this.mines.Remove(mine);
+                    continue;
+                }
+
+                // Explode the mine if a tank is on it.
+                if (!mine.IsExploded)
+                {
+                    var tankInMine = this.tanks.FirstOrDefault(t => t.X == mine.X && t.Y == mine.Y);
+                    if (tankInMine is not null)
+                    {
+                        mine.Explode(tankInMine);
+                    }
+                }
+            }
+
+            // Remove duplicate mines.
+            // Reverse the list to remove the last mine in case of duplicates.
+            var mines = this.mines.ToList();
+            mines.Reverse();
+            foreach (Mine mine in mines)
+            {
+                if (this.mines.Any(m => m.X == mine.X && m.Y == mine.Y && m != mine))
+                {
+                    _ = this.mines.Remove(mine);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Regenerates the players' bullets.
     /// </summary>
-    public void RegeneratePlayersBullets()
+    internal void RegeneratePlayersBullets()
     {
         foreach (Tank tank in this.tanks)
         {
@@ -387,7 +567,7 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Updates the players' visibility grids.
     /// </summary>
-    public void UpdatePlayersVisibilityGrids()
+    internal void UpdatePlayersVisibilityGrids()
     {
         foreach (Tank tank in this.tanks)
         {
@@ -398,11 +578,47 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Updates the zones.
     /// </summary>
-    public void UpdateZones()
+    internal void UpdateZones()
     {
         foreach (Zone zone in this.zones)
         {
             zone.UpdateCapturingStatus(this.tanks);
+        }
+    }
+
+    /// <summary>
+    /// Picks up the items that are on the same cell as the tanks
+    /// and sets the tanks' secondary item type.
+    /// </summary>
+    internal void PickUpItems()
+    {
+        foreach (Tank tank in this.tanks)
+        {
+            if (tank.SecondaryItemType is not null)
+            {
+                continue;
+            }
+
+            SecondaryItem? item = this.items.FirstOrDefault(i => i.X == tank.X && i.Y == tank.Y);
+
+            if (item is null)
+            {
+                continue;
+            }
+
+            tank.SecondaryItemType = item.Type;
+            _ = this.items.Remove(item);
+        }
+    }
+
+    /// <summary>
+    /// Updates the players' stun effects.
+    /// </summary>
+    internal void UpdatePlayersStunEffects()
+    {
+        foreach (Tank tank in this.tanks)
+        {
+            tank.UpdateStunables();
         }
     }
 
@@ -416,44 +632,117 @@ public class Grid(int dimension, int seed)
         var visibility = player is not null
             ? new VisibilityPayload(player!.VisibilityGrid!)
             : null;
-        var tiles = new TilesPayload(this.WallGrid, this.tanks, this.bullets);
+
+        var tiles = new TilesPayload(
+            this.WallGrid,
+            this.tanks,
+            this.bullets,
+            this.lasers,
+            this.mines,
+            this.items);
+
         return new MapPayload(visibility, tiles, this.zones);
     }
 
-    private bool IsCellEmpty(int x, int y)
+    private static SecondaryItemType? GetRandomItemByWeight(
+        Dictionary<SecondaryItemType, double> itemWeights,
+        double randomValue)
     {
-        var isWithinBounds = x >= 0 && x < this.Dim && y >= 0 && y < this.Dim;
-        var isNotOccupied = !this.tanks.Any(t => t.X == x && t.Y == y);
-        return isWithinBounds && isNotOccupied && this.WallGrid[x, y] is null;
+        double cumulativeWeight = 0.0;
+
+        foreach (var itemWeight in itemWeights)
+        {
+            cumulativeWeight += itemWeight.Value;
+            if (randomValue <= cumulativeWeight)
+            {
+                return itemWeight.Key;
+            }
+        }
+
+        return null;
     }
 
-    private List<Bullet> HandleBulletCollision(Bullet bullet, ICollision collision)
+    private bool IsVisibleByTank(int x, int y)
     {
-        var destroyedBullets = new List<Bullet> { bullet };
+        return this.tanks.Any(t => t.Owner.VisibilityGrid is not null && t.Owner.VisibilityGrid[x, y]);
+    }
+
+    private IEnumerable<object> GetCellObjects(int x, int y)
+    {
+        Wall? wall = this.WallGrid[x, y];
+        if (wall is not null)
+        {
+            yield return wall;
+        }
+
+        Tank? tank = this.tanks.FirstOrDefault(t => t.X == x && t.Y == y);
+        if (tank is not null)
+        {
+            yield return tank;
+        }
+
+        Bullet? bullet = this.bullets.FirstOrDefault(b => b.X == x && b.Y == y);
+        if (bullet is not null)
+        {
+            yield return bullet;
+        }
+
+        IEnumerable<SecondaryItem> items = this.items.Where(i => i.X == x && i.Y == y);
+        foreach (SecondaryItem item in items)
+        {
+            yield return item;
+        }
+    }
+
+    private bool IsCellWithinBounds(int x, int y)
+    {
+        return x >= 0 && x < this.Dim && y >= 0 && y < this.Dim;
+    }
+
+    private List<Bullet> HandleBulletCollision(Bullet bullet, Collision collision)
+    {
+        var destroyedBullets = new List<Bullet>();
         _ = this.bullets.Remove(bullet);
 
         switch (collision)
         {
             case TankCollision tankCollision:
-                bullet.Shooter!.Score += bullet.Damage!.Value / 2;
-                tankCollision.Tank.TakeDamage(bullet.Damage.Value);
-                if (tankCollision.Tank.IsDead)
-                {
-                    bullet.Shooter.Kills++;
-                }
-
+                destroyedBullets.Add(bullet);
+                var damageTaken = tankCollision.Tank.TakeDamage(bullet.Damage!.Value, bullet.Shooter);
+                bullet.Shooter!.Score += damageTaken / 2;
                 break;
 
             case BulletCollision bulletCollision:
                 _ = this.bullets.Remove(bulletCollision.Bullet);
                 destroyedBullets.Add(bulletCollision.Bullet);
+                destroyedBullets.Add(bullet);
+
+                if (!(bullet is DoubleBullet ^ bulletCollision.Bullet is DoubleBullet))
+                {
+                    break;
+                }
+
+                var bulletToDowngrade = bullet is DoubleBullet
+                    ? bullet
+                    : bulletCollision.Bullet;
+
+                var newBullet = new Bullet(
+                    bulletToDowngrade.X,
+                    bulletToDowngrade.Y,
+                    bulletToDowngrade.Direction,
+                    bulletToDowngrade.Speed,
+                    bulletToDowngrade.Damage!.Value / 2,
+                    bulletToDowngrade.Shooter!);
+
+                this.bullets.Add(newBullet);
+
                 break;
         }
 
         return destroyedBullets;
     }
 
-    private (int X, int Y) GetRandomEmptyCell()
+    private (int X, int Y) GetRandomEmptyCell(int? maxTries = 100)
     {
         int x, y;
         do
@@ -461,9 +750,11 @@ public class Grid(int dimension, int seed)
             x = this.random.Next(this.Dim);
             y = this.random.Next(this.Dim);
         }
-        while (!this.IsCellEmpty(x, y));
+        while (maxTries-- > 0 && (!this.IsCellWithinBounds(x, y) || this.GetCellObjects(x, y).Any()));
 
-        return (x, y);
+        return maxTries > 0
+            ? ((int X, int Y))(x, y)
+            : throw new InvalidOperationException("Failed to find an empty cell.");
     }
 
     /// <summary>
@@ -480,7 +771,16 @@ public class Grid(int dimension, int seed)
     /// <param name="WallGrid">The wall grid of the grid.</param>
     /// <param name="Tanks">The tanks of the grid.</param>
     /// <param name="Bullets">The bullets of the grid.</param>
-    internal record class TilesPayload(Wall?[,] WallGrid, List<Tank> Tanks, List<Bullet> Bullets);
+    /// <param name="Lasers">The lasers on the grid.</param>
+    /// <param name="Mines">The mines on the grid.</param>
+    /// <param name="Items">The items on the grid.</param>
+    internal record class TilesPayload(
+        Wall?[,] WallGrid,
+        List<Tank> Tanks,
+        List<Bullet> Bullets,
+        List<Laser> Lasers,
+        List<Mine> Mines,
+        List<SecondaryItem> Items);
 
     /// <summary>
     /// Represents a visibility payload for the grid.

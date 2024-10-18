@@ -16,8 +16,6 @@ namespace GameClient;
 /// </remarks>
 internal class ScalableTexture2D : TextureComponent
 {
-    private bool isLoaded;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="ScalableTexture2D"/> class.
     /// </summary>
@@ -26,7 +24,7 @@ internal class ScalableTexture2D : TextureComponent
     /// </remarks>
     public ScalableTexture2D()
     {
-        this.Transform.SizeChanged += this.Transform_SizeChanged;
+        this.Transform.SizeChanged += (s, e) => this.Reload();
         this.AssetPath = string.Empty;
     }
 
@@ -54,7 +52,7 @@ internal class ScalableTexture2D : TextureComponent
     {
         this.AssetPath = texture.AssetPath;
         this.Texture = texture.Texture;
-        this.isLoaded = true;
+        this.IsLoaded = true;
         this.Transform.Ratio = texture.Transform.Ratio;
         texture.TextureChanged += (s, e) => this.Texture = texture.Texture;
     }
@@ -63,6 +61,12 @@ internal class ScalableTexture2D : TextureComponent
     /// Gets or sets the path to the SVG asset that will be loaded as a texture.
     /// </summary>
     public string AssetPath { get; set; }
+
+    /// <inheritdoc/>
+    public override void Load()
+    {
+        this.Load();
+    }
 
     /// <summary>
     /// Loads the texture from the SVG asset.
@@ -109,32 +113,17 @@ internal class ScalableTexture2D : TextureComponent
         using var stream = image.AsStream();
         this.Texture = Texture2D.FromStream(ScreenController.GraphicsDevice, stream);
 
-        this.isLoaded = true;
+        this.IsLoaded = true;
     }
 
-    /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    private void Reload()
     {
-        if (!this.isLoaded)
+        if (this.IsLoaded)
         {
-            // TODO: Load the texture at the beginning of the game
-            // Line below is a temporary solution, mainly for Linux
+            this.IsLoaded = false;
+            this.Texture?.Dispose();
             this.Load();
         }
-
-        base.Draw(gameTime);
-    }
-
-    /// <inheritdoc/>
-    protected override void LoadTexture()
-    {
-        // Idk why it is empty
-    }
-
-    private void Transform_SizeChanged(object? sender, TransformElementChangedEventArgs<Point> e)
-    {
-        this.Texture?.Dispose();
-        this.Load();
     }
 
     /// <summary>

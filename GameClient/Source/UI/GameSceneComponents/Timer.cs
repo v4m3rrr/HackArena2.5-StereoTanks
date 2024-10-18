@@ -16,7 +16,7 @@ internal class Timer : Component
     public Timer()
     {
         // Timer icon
-        _ = new ScalableTexture2D("Images/timer_icon.svg")
+        _ = new ScalableTexture2D("Images/Icons/timer.svg")
         {
             Parent = this,
             Transform =

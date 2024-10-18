@@ -7,7 +7,7 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the event arguments for the <see cref="GameEnd"/> scene.
 /// </summary>
-internal class GameEndDisplayEventArgs(IEnumerable<Player> players) : SceneDisplayEventArgs
+internal class GameEndDisplayEventArgs(IEnumerable<Player> players) : SceneDisplayEventArgs(false)
 {
     /// <summary>
     /// Gets the join code to join the game.

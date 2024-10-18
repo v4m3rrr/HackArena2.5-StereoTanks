@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GameClient.LobbySceneComponents;
+using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -74,11 +75,15 @@ internal class LobbyInitializer(Lobby lobby)
         };
 
         var text = new LocalizedString("Buttons.Leave");
-        var iconPath = "Images/Lobby/leave_icon.svg";
+        var iconPath = "Images/Icons/leave.svg";
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Left);
         button.ApplyStyle(style);
 
-        button.Clicked += (s, e) => Scene.Change<MainMenu>();
+        button.Clicked += async (s, e) =>
+        {
+            _ = ServerConnection.CloseAsync("Leave lobby");
+            Scene.Change<MainMenu>();
+        };
 
         return button;
     }

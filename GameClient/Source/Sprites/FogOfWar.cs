@@ -11,18 +11,13 @@ namespace GameClient.Sprites;
 /// <param name="visibilityGrid">The visibility grid.</param>
 /// <param name="grid">The grid component.</param>
 /// <param name="color">The color of the fog of war.</param>
-internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color) : Sprite
+internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color) : ISprite
 {
-    private static readonly ScalableTexture2D.Static Texture;
+    private static readonly ScalableTexture2D.Static Texture = new("Images/Game/fog_of_war.svg");
 
     private readonly GridComponent grid = grid;
     private readonly List<Rectangle> destinationRects = [];
     private readonly Vector2 origin = Vector2.One / 2f;
-
-    static FogOfWar()
-    {
-        Texture = new ScalableTexture2D.Static("Images/Game/fog_of_war.svg");
-    }
 
     /// <summary>
     /// Gets or sets the visibility grid.
@@ -30,7 +25,13 @@ internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color)
     public bool[,] VisibilityGrid { get; set; } = visibilityGrid;
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public static void LoadContent()
+    {
+        Texture.Load();
+    }
+
+    /// <inheritdoc/>
+    public void Update(GameTime gameTime)
     {
         int tileSize = this.grid.TileSize;
         int drawOffset = this.grid.DrawOffset;
@@ -59,7 +60,7 @@ internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color)
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         var spriteBatch = SpriteBatchController.SpriteBatch;
 

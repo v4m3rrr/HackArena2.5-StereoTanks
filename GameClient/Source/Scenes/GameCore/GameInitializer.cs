@@ -41,7 +41,7 @@ internal class GameInitializer(Game game)
     public Tuple<PlayerBarPanel<PlayerIdentityBar>, PlayerBarPanel<PlayerStatsBar>> CreatePlayerBarPanels()
     {
         var boxRelativeSize = new Vector2(0.23f, 1.0f);
-        var boxRelativePadding = new Vector4(0.05f);
+        var boxRelativePadding = new Vector4(0.1f);
         var boxSpacing = 8;
         var boxElementsAlignment = Alignment.Center;
 
@@ -87,7 +87,7 @@ internal class GameInitializer(Game game)
             {
                 Alignment = Alignment.TopLeft,
                 RelativeSize = new Vector2(0.1f, 0.045f),
-                RelativeOffset = new Vector2(0.02f, 0.06f),
+                RelativeOffset = new Vector2(0.03f, 0.06f),
             },
         };
     }
@@ -112,5 +112,33 @@ internal class GameInitializer(Game game)
                 RelativeOffset = new Vector2(0.0f, 0.03f),
             },
         };
+    }
+
+    /// <summary>
+    /// Creates a menu button.
+    /// </summary>
+    /// <returns>The created menu button.</returns>
+    public Button<Container> CreateMenuButton()
+    {
+        var button = new Button<Container>(new Container())
+        {
+            Parent = game.BaseComponent,
+            Transform =
+            {
+                Alignment = Alignment.TopRight,
+                RelativeOffset = new Vector2(-0.03f, 0.06f),
+                RelativeSize = new Vector2(0.1f, 0.045f),
+            },
+        };
+
+        var text = new LocalizedString("Buttons.Menu");
+        var iconPath = "Images/Icons/menu.svg";
+        var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Right);
+        button.ApplyStyle(style);
+
+        var options = new OverlayShowOptions(BlockFocusOnUnderlyingScenes: true);
+        button.Clicked += (s, e) => Scene.ShowOverlay<GameOverlays.GameMenu>(options);
+
+        return button;
     }
 }

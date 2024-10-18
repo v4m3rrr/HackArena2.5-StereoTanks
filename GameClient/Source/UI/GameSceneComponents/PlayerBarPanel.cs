@@ -42,5 +42,14 @@ internal class PlayerBarPanel<T> : AlignedListBox
                 playerBar.Parent = null;
             }
         }
+
+        MonoTanks.InvokeOnMainThread(() =>
+        {
+            newPlayerBars
+                .SelectMany(pb => pb.GetAllDescendants<TextureComponent>())
+                .Where(x => !x.IsLoaded)
+                .ToList()
+                .ForEach(x => x.Load());
+        });
     }
 }

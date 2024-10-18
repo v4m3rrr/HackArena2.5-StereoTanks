@@ -58,7 +58,7 @@ public enum PacketType
     /// <summary>
     /// The lobby deleted packet type.
     /// </summary>
-    LobbyDeleted = LobbyGroup | 0x2,
+    LobbyDataRequest = LobbyGroup | 0x2,
 
     // GameState group (range: 0x30 - 0x3F)
 
@@ -68,9 +68,9 @@ public enum PacketType
     GameStateGroup = 0x30,
 
     /// <summary>
-    /// The game start packet type.
+    /// The game started packet type.
     /// </summary>
-    GameStart = GameStateGroup | 0x1,
+    GameStarted = GameStateGroup | 0x1,
 
     /// <summary>
     /// The game state packet type.
@@ -82,6 +82,16 @@ public enum PacketType
     /// </summary>
     GameEnd = GameStateGroup | HasPayload | 0x3,
 
+    /// <summary>
+    /// The game starting packet type.
+    /// </summary>
+    GameStarting = GameStateGroup | 0x4,
+
+    /// <summary>
+    /// The ready to receive game state packet type.
+    /// </summary>
+    ReadyToReceiveGameState = GameStateGroup | 0x5,
+
     // Player response group (range: 0x40 - 0x4F)
 
     /// <summary>
@@ -90,24 +100,24 @@ public enum PacketType
     PlayerResponseActionGroup = 0x40,
 
     /// <summary>
-    /// The tank movement packet type.
+    /// The move packet type.
     /// </summary>
-    TankMovement = PlayerResponseActionGroup | HasPayload | 0x1,
+    Movement = PlayerResponseActionGroup | HasPayload | 0x1,
 
     /// <summary>
-    /// The tank rotation packet type.
+    /// The rotation packet type.
     /// </summary>
-    TankRotation = PlayerResponseActionGroup | HasPayload | 0x2,
+    Rotation = PlayerResponseActionGroup | HasPayload | 0x2,
 
     /// <summary>
-    /// The tank shoot packet type.
+    /// The use packet type.
     /// </summary>
-    TankShoot = PlayerResponseActionGroup | HasPayload | 0x3,
+    AbilityUse = PlayerResponseActionGroup | HasPayload | 0x3,
 
     /// <summary>
-    /// The reponse pass packet type.
+    /// The pass packet type.
     /// </summary>
-    ResponsePass = PlayerResponseActionGroup | HasPayload | 0x7,
+    Pass = PlayerResponseActionGroup | HasPayload | 0x7,
 
 #if DEBUG
 
@@ -131,14 +141,24 @@ public enum PacketType
     DebugGroup = 0xD0,
 
     /// <summary>
-    /// The shoot all packet type (debug).
+    /// The global ability use packet type.
     /// </summary>
-    ShootAll = DebugGroup | 0x3,
+    GlobalAbilityUse = DebugGroup | HasPayload | 0x3,
 
     /// <summary>
     /// The force end game packet type (debug).
     /// </summary>
     ForceEndGame = DebugGroup | 0x4,
+
+    /// <summary>
+    /// The give ability packet type.
+    /// </summary>
+    GiveSecondaryItem = DebugGroup | HasPayload | 0x5,
+
+    /// <summary>
+    /// The global give ability packet type.
+    /// </summary>
+    GlobalGiveSecondaryItem = DebugGroup | HasPayload | 0x6,
 
 #endif
 
@@ -179,10 +199,24 @@ public enum PacketType
     /// <summary>
     /// The invalid packet type.
     /// </summary>
+    /// <remarks>
+    /// Can be merged with <see cref="HasPayload"/>.
+    /// </remarks>
     InvalidPacketTypeError = ErrorGroup | 0x1,
 
     /// <summary>
     /// The invalid packet usage.
     /// </summary>
+    /// <remarks>
+    /// Can be merged with <see cref="HasPayload"/>.
+    /// </remarks>
     InvalidPacketUsageError = ErrorGroup | 0x2,
+
+    /// <summary>
+    /// The invalid payload.
+    /// </summary>
+    /// <remarks>
+    /// Can be merged with <see cref="HasPayload"/>.
+    /// </remarks>
+    InvalidPayloadError = ErrorGroup | 0x3,
 }

@@ -11,6 +11,11 @@ internal enum GameStatus
     InLobby,
 
     /// <summary>
+    /// Represents the game is starting.
+    /// </summary>
+    Starting,
+
+    /// <summary>
     /// Represents the game is in progress.
     /// </summary>
     Running,

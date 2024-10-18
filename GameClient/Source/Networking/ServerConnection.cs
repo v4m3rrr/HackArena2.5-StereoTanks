@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -161,9 +161,9 @@ internal static class ServerConnection
                 await client.CloseAsync(WebSocketCloseStatus.NormalClosure, description, CancellationToken.None);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // pass
+            DebugConsole.ThrowError(ex);
         }
     }
 
@@ -191,10 +191,7 @@ internal static class ServerConnection
             }
             else if (packet.Type == PacketType.ConnectionRejected)
             {
-                await client.CloseAsync(
-                    WebSocketCloseStatus.NormalClosure,
-                    "Closing due to rejection",
-                    CancellationToken.None);
+                await CloseAsync("Closing due to rejection");
 
                 var payload = packet.GetPayload<ConnectionRejectedPayload>();
                 return new ConnectionStatus.Rejected(payload.Reason);

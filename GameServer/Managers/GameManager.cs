@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.Net.WebSockets;
-using GameLogic.Networking;
-using Newtonsoft.Json.Linq;
+using GameLogic;
 
 namespace GameServer;
 
@@ -9,17 +7,14 @@ namespace GameServer;
 /// Represents the game manager.
 /// </summary>
 /// <param name="game">The game instance.</param>
-/// <param name="saveReplayPath">The path to save the replay.</param>
-internal class GameManager(GameInstance game, string? saveReplayPath)
+internal class GameManager(GameInstance game)
 {
 #if HACKATHON
     // Used to shuffle the bot actions.
     private readonly Random random = new(game.Settings.Seed);
 #endif
 
-    private readonly List<string> gameStates = [];
-    private string lobbyData = string.Empty;
-
+    private readonly LogicUpdater logicUpdater = new(game.Grid);
     private int tick = 0;
 
     /// <summary>
@@ -35,32 +30,31 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
     /// <summary>
     /// Starts the game.
     /// </summary>
-    public void StartGame()
+    public async void StartGame()
     {
         lock (this)
         {
-            if (this.Status is GameStatus.Running)
+            if (this.Status is GameStatus.Starting or GameStatus.Running)
             {
                 return;
             }
 
-            this.Status = GameStatus.Running;
+            this.Status = GameStatus.Starting;
         }
 
-        var lobbyData = new LobbyDataPayload(
-            PlayerId: null,
-            [.. game.PlayerManager.Players.Values.Select(x => x.Instance)],
-            game.Settings);
+        game.ReplayManager?.SaveLobbyData();
+        await game.LobbyManager.SendGameStartingToAll();
 
-        var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
-        var converters = LobbyDataPayload.GetConverters();
-        _ = PacketSerializer.Serialize(lobbyData, out var lobbyDataObj, converters, options);
-        this.lobbyData = lobbyDataObj.ToString(options.Formatting);
-
-        foreach (var player in game.PlayerManager.Players.Keys)
+        while (game.Players.Any(x => !x.IsReadyToReceiveGameState))
         {
-            var packet = new EmptyPayload() { Type = PacketType.GameStart };
-            _ = game.SendPlayerPacketAsync(player, packet);
+            await Task.Delay(100);
+        }
+
+        _ = game.LobbyManager.SendGameStartedToAll();
+
+        lock (this)
+        {
+            this.Status = GameStatus.Running;
         }
 
         _ = Task.Run(this.StartBroadcastingAsync);
@@ -69,75 +63,37 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
     /// <summary>
     /// Ends the game.
     /// </summary>
-    public void EndGame()
+    public async void EndGame()
     {
         this.Status = GameStatus.Ended;
 
-        var players = game.PlayerManager.Players.Values.Select(x => x.Instance).ToList();
-        players.Sort((x, y) => y.Score.CompareTo(x.Score));
-
-        var payload = new GameEndPayload(players);
-        var converters = GameEndPayload.GetConverters();
-
-        foreach (var player in game.PlayerManager.Players.Keys)
-        {
-            _ = game.SendPlayerPacketAsync(player, payload, converters);
-        }
-
-        foreach (var spectator in game.SpectatorManager.Spectators.Keys)
-        {
-            _ = game.SendSpectatorPacketAsync(spectator, payload, converters);
-        }
-
-        var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
-
-        foreach (var client in clients)
-        {
-            _ = client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Game ended", CancellationToken.None);
-        }
-
-        JObject results = [];
-
-        if (saveReplayPath is not null)
-        {
-            try
-            {
-                var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
-
-                _ = PacketSerializer.Serialize(payload, out results, converters, options);
-
-                var jObject = new JObject()
-                {
-                    ["lobbyData"] = JObject.Parse(this.lobbyData),
-                    ["gameStates"] = JArray.Parse($"[{string.Join(",", this.gameStates)}]"),
-                    ["gameEnd"] = JObject.Parse(results.ToString()),
-                };
-
-                File.WriteAllText(saveReplayPath, jObject.ToString(options.Formatting));
-                Console.WriteLine($"Replay saved to {saveReplayPath}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error while saving replay: {e.Message}");
-            }
+        game.ReplayManager?.SaveGameEnd();
+        game.ReplayManager?.SaveReplay();
 
 #if HACKATHON
-            try
-            {
-                var path = Path.GetDirectoryName(saveReplayPath)!;
-                var fileName = Path.GetFileNameWithoutExtension(saveReplayPath);
-                var extension = Path.GetExtension(saveReplayPath);
-                var savePath = Path.Combine(path, $"{fileName}_results{extension}");
-                File.WriteAllText(savePath, results.ToString());
-
-                Console.WriteLine($"Results saved to {savePath}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error while saving results: {e.Message}");
-            }
+        game.ReplayManager?.SaveResults();
 #endif
+
+        var tasks = new List<Task>();
+
+        foreach (var connection in game.Connections)
+        {
+            var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
+            var packet = new ResponsePacket(payload, converters);
+            var task = packet.SendAsync(connection);
+            tasks.Add(task);
         }
+
+        await Task.WhenAll(tasks);
+
+        tasks.Clear();
+        foreach (var connection in game.Connections)
+        {
+            var task = connection.CloseAsync(description: "Game ended");
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks);
 
         Environment.Exit(0);
     }
@@ -159,11 +115,8 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
 
             stopwatch.Restart();
 
-            var grid = game.Grid;
-
 #if HACKATHON
-            var botActions = game.PacketHandler.HackathonBotActions;
-            var actionList = botActions.ToList();
+            var actionList = game.PacketHandler.HackathonBotActions.ToList();
             actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
             Action[] actions = actionList.Select(x => x.Value).ToArray();
             this.random.Shuffle(actions);
@@ -176,29 +129,24 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
             game.PacketHandler.HackathonBotActions.Clear();
 #endif
 
-            // Update game logic
-            grid.UpdateBullets(1f);
-            grid.RegeneratePlayersBullets();
-            grid.UpdateTanksRegenerationProgress();
-            grid.UpdatePlayersVisibilityGrids();
-            grid.UpdateZones();
+            this.logicUpdater.UpdateGrid();
 
             // Broadcast the game state
-            this.ResetPlayerGameTickProperties();
-            var broadcast = this.BroadcastGameStateAsync();
-
-            if (saveReplayPath is not null)
+            lock (this.CurrentGameStateId ?? new object())
             {
-                var payload = new GameStatePayload(this.tick, [.. game.PlayerManager.Players.Values.Select(x => x.Instance)], game.Grid);
-                var context = new GameSerializationContext.Spectator();
-                var converters = GameStatePayload.GetConverters(context);
-                var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
-                _ = PacketSerializer.Serialize(payload, out var gameState, converters, options);
-                this.gameStates.Add(gameState.ToString(options.Formatting));
+                this.CurrentGameStateId = Guid.NewGuid().ToString();
             }
 
-            await Task.WhenAll(broadcast);
+            foreach (PlayerConnection player in game.Players)
+            {
+                player.ResetGameTickProperties();
+            }
 
+            var broadcast = this.BroadcastGameStateAsync();
+            this.logicUpdater.ResetPlayerRadarUsage();
+            game.ReplayManager?.AddGameState(this.tick, this.CurrentGameStateId);
+
+            await Task.WhenAll(broadcast);
             stopwatch.Stop();
 
             var sleepTime = (int)(game.Settings.BroadcastInterval - stopwatch.ElapsedMilliseconds);
@@ -206,13 +154,13 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
 #if HACKATHON
             var tcs = new TaskCompletionSource<bool>();
 
-            void EagerBroadcast(object? sender, Player player)
+            void EagerBroadcast(object? sender, PlayerConnection player)
             {
                 lock (player)
                 {
                     if (this.tick > 5 // Warm-up period
                         && game.Settings.EagerBroadcast
-                        && game.PlayerManager.Players.Values.All(x => x.IsHackathonBot && x.HasMadeActionToCurrentGameState))
+                        && game.Players.All(x => x.IsHackathonBot && x.HasMadeActionToCurrentGameState))
                     {
                         _ = tcs.TrySetResult(true);
                     }
@@ -236,23 +184,8 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
             {
                 var broadcastTime = stopwatch.ElapsedMilliseconds;
                 var broadcastInterval = game.Settings.BroadcastInterval;
-                Console.WriteLine(
-                    $"[Tick {this.tick}] Game state broadcast took longer than expected! " +
-                    $"({broadcastTime}/{broadcastInterval} ms)");
-            }
-        }
-    }
-
-    private void ResetPlayerGameTickProperties()
-    {
-        foreach (Player player in game.PlayerManager.Players.Values)
-        {
-            lock (player)
-            {
-                player.HasMadeActionThisTick = false;
-#if HACKATHON
-                player.HasMadeActionToCurrentGameState = false;
-#endif
+                Console.WriteLine("[WARN] Game state broadcast took longer than expected!");
+                Console.WriteLine($"[^^^^] Tick {this.tick}, {broadcastTime}/{broadcastInterval} ms");
             }
         }
     }
@@ -261,38 +194,22 @@ internal class GameManager(GameInstance game, string? saveReplayPath)
     {
         var tasks = new List<Task>();
 
-        var players = game.PlayerManager.Players.ToDictionary(x => x.Key, x => x.Value.Instance);
-        var clients = game.PlayerManager.Players.Keys.Concat(game.SpectatorManager.Spectators.Keys).ToList();
-
-        lock (this.CurrentGameStateId ?? new object())
+        foreach (Connection connection in game.Connections)
         {
-            this.CurrentGameStateId = Guid.NewGuid().ToString();
-        }
-
-        foreach (WebSocket client in clients)
-        {
-            GameStatePayload packet;
-            GameSerializationContext context;
-
-            if (game.SpectatorManager.IsSpectator(client))
+            if (!connection.IsReadyToReceiveGameState)
             {
-                packet = new GameStatePayload(this.tick, [.. players.Values], game.Grid);
-                context = new GameSerializationContext.Spectator();
-            }
-            else
-            {
-                var player = players[client];
-                packet = new GameStatePayload.ForPlayer(this.CurrentGameStateId, this.tick, player, [.. players.Values], game.Grid);
-                context = new GameSerializationContext.Player(player);
+                continue;
             }
 
-            var converters = GameStatePayload.GetConverters(context);
+            var payload = game.PayloadHelper.GetGameStatePayload(
+                connection,
+                this.tick,
+                this.CurrentGameStateId!,
+                out var converters);
 
-            if (client.State == WebSocketState.Open)
-            {
-                var task = Task.Run(() => game.SendPacketAsync(client, packet, converters));
-                tasks.Add(task);
-            }
+            var packet = new ResponsePacket(payload, converters);
+            var task = packet.SendAsync(connection);
+            tasks.Add(task);
         }
 
         return tasks;

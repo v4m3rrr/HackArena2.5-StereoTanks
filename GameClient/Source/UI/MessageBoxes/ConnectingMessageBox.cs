@@ -25,6 +25,7 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
         this.Box.Transform.MaxSize = new Point(1000, 500);
         this.Box.Transform.Alignment = Alignment.Center;
         this.Box.Transform.RelativePadding = new Vector4(0.04f);
+        this.Box.Load();
 
         var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 14)
         {
@@ -48,6 +49,8 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
         {
             Opacity = 0.3f,
         };
+
+        this.Background.Load();
     }
 
     /// <summary>
@@ -68,7 +71,7 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
 
     private void UpdateText(GameTime gameTime)
     {
-        string locale = Localization.Get("Other.Connecting");
+        string locale = Localization.Get("Other.Connecting")!;
         string[] words = locale.Split(' ');
 
         var sb = words.Length < 2

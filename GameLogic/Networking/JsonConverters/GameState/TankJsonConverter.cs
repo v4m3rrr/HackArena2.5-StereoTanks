@@ -18,7 +18,7 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         int y = jsonObject["y"]?.Value<int>() ?? -1;
 
         var ownerId = jsonObject["ownerId"]!.Value<string>()!;
-        var direction = (Direction)jsonObject["direction"]!.Value<int>()!;
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
 
         Turret turret = jsonObject["turret"]!.ToObject<Turret>(serializer)!;
 
@@ -26,7 +26,13 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(ownerId))
         {
             var health = jsonObject["health"]!.Value<int?>();
-            tank = new Tank(x, y, ownerId, health ?? 0, direction, turret);
+
+            var secondaryItem = jsonObject["secondaryItem"]!;
+            SecondaryItemType? secondaryItemType = secondaryItem.Type is not JTokenType.Null
+                ? JsonConverterUtils.ReadEnum<SecondaryItemType>(jsonObject["secondaryItem"]!)
+                : null;
+
+            tank = new Tank(x, y, ownerId, health ?? 0, direction, turret, secondaryItemType);
         }
         else if (context is GameSerializationContext.Player)
         {
@@ -42,7 +48,7 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         var jObject = new JObject
         {
             ["ownerId"] = value!.OwnerId,
-            ["direction"] = (int)value.Direction,
+            ["direction"] = JsonConverterUtils.WriteEnum(value.Direction, context.EnumSerialization),
             ["turret"] = JObject.FromObject(value.Turret, serializer),
         };
 
@@ -55,6 +61,9 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Owner.Id))
         {
             jObject["health"] = value.Health;
+            jObject["secondaryItem"] = value.SecondaryItemType is not null
+                ? JsonConverterUtils.WriteEnum(value.SecondaryItemType.Value, context.EnumSerialization)
+                : null;
         }
 
         jObject.WriteTo(writer);

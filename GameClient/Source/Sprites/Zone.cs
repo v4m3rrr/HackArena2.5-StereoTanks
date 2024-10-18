@@ -8,22 +8,16 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a zone sprite.
 /// </summary>
-internal class Zone : Sprite
+internal class Zone : ISprite
 {
-    private static readonly ScalableTexture2D.Static StaticCornerTexture;
-    private static readonly ScalableTexture2D.Static StaticEdgeTexture;
+    private static readonly ScalableTexture2D.Static StaticCornerTexture = new($"Images/Game/zone_corner.svg");
+    private static readonly ScalableTexture2D.Static StaticEdgeTexture = new($"Images/Game/zone_edge.svg");
 
     private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 25);
 
     private readonly ScalableTexture2D[] textures = new ScalableTexture2D[8];
     private readonly GridComponent grid;
     private readonly Text index;
-
-    static Zone()
-    {
-        StaticCornerTexture = new ScalableTexture2D.Static($"Images/Game/zone_corner.svg");
-        StaticEdgeTexture = new ScalableTexture2D.Static($"Images/Game/zone_edge.svg");
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Zone"/> class.
@@ -78,6 +72,13 @@ internal class Zone : Sprite
     /// </summary>
     public GameLogic.Zone Logic { get; private set; }
 
+    /// <inheritdoc/>
+    public static void LoadContent()
+    {
+        StaticCornerTexture.Load();
+        StaticEdgeTexture.Load();
+    }
+
     /// <summary>
     /// Updates the zone logic.
     /// </summary>
@@ -88,7 +89,7 @@ internal class Zone : Sprite
     }
 
     /// <inheritdoc/>
-    public override void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         if (this.Logic.Status is ZoneStatus.Neutral)
         {
@@ -168,7 +169,7 @@ internal class Zone : Sprite
     }
 
     /// <inheritdoc/>
-    public override void Draw(GameTime gameTime)
+    public void Draw(GameTime gameTime)
     {
         foreach (ScalableTexture2D texture in this.textures)
         {

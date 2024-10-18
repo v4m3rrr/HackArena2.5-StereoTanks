@@ -12,14 +12,13 @@ internal static class LobbyServerMessageHandler
     /// </summary>
     /// <param name="packet">The packet containing the lobby data payload.</param>
     /// <param name="updater">The lobby updater.</param>
-    /// <param name="serverSettings">The server settings.</param>
-    public static void HandleLobbyDataPacket(Packet packet, LobbyUpdater updater, out ServerSettings serverSettings)
+    public static void HandleLobbyDataPacket(Packet packet, LobbyUpdater updater)
     {
         var converters = LobbyDataPayload.GetConverters();
         var serializers = PacketSerializer.GetSerializer(converters);
         var data = packet.GetPayload<LobbyDataPayload>(serializers);
 
-        serverSettings = data.ServerSettings;
+        var serverSettings = data.ServerSettings;
         Game.ServerBroadcastInterval = serverSettings.BroadcastInterval;
         Game.PlayerId = data.PlayerId;
 

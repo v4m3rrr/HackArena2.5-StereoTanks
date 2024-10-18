@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Net.WebSockets;
+using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
 using GameClient.Scenes.LobbyCore;
@@ -12,6 +14,8 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the lobby scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class Lobby : Scene
 {
     private readonly LobbyComponents components;
@@ -39,7 +43,7 @@ internal class Lobby : Scene
     public override void Draw(GameTime gameTime)
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
-        MainMenu.Effect.Draw(gameTime);
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
@@ -48,12 +52,20 @@ internal class Lobby : Scene
     {
         this.Showing += this.Lobby_Showing;
         this.Hiding += this.Lobby_Hiding;
+        this.Hid += this.Lobby_Hid;
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainMenu.Effect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+        MainEffect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
     }
 
     private static void Connection_ErrorThrew(string error)
@@ -69,12 +81,19 @@ internal class Lobby : Scene
         ServerConnection.BufferSize = 1024 * 4;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
         ServerConnection.ErrorThrew += Connection_ErrorThrew;
+
+        _ = Task.Run(this.SendLobbyDataRequest);
     }
 
     private void Lobby_Hiding(object? sender, EventArgs e)
     {
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;
         ServerConnection.ErrorThrew -= Connection_ErrorThrew;
+    }
+
+    private void Lobby_Hid(object? sender, EventArgs e)
+    {
+        this.updater.ResetPlayerSlotPanels();
     }
 
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
@@ -95,10 +114,10 @@ internal class Lobby : Scene
                     break;
 
                 case PacketType.LobbyData:
-                    LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater, out var serverSettings);
+                    LobbyServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
                     break;
 
-                case PacketType.GameStart:
+                case PacketType.GameStarting:
                     var displayArgs = new GameDisplayEventArgs(ServerConnection.Data.JoinCode, ServerConnection.Data.IsSpectator);
                     Change<Game>(displayArgs);
                     break;
@@ -114,5 +133,12 @@ internal class Lobby : Scene
                     break;
             }
         }
+    }
+
+    private void SendLobbyDataRequest()
+    {
+        var payload = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
+        var packet = PacketSerializer.Serialize(payload);
+        _ = ServerConnection.SendAsync(packet);
     }
 }

@@ -9,9 +9,11 @@ namespace GameClient.Scenes;
 /// <summary>
 /// Represents the settings scene.
 /// </summary>
+[AutoInitialize]
+[AutoLoadContent]
 internal class Settings : Scene, IOverlayScene
 {
-    private readonly List<Component> overlayComponents = [];
+    private SolidColor overlayBackground = default!;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Settings"/> class.
@@ -22,18 +24,18 @@ internal class Settings : Scene, IOverlayScene
     }
 
     /// <inheritdoc/>
-    public int Priority => 1;
+    public int Priority => 1 << 5;
 
     /// <inheritdoc/>
-    public IEnumerable<IComponent> OverlayComponents => this.overlayComponents;
+    public IEnumerable<IComponent> OverlayComponents => [this.BaseComponent];
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
         if (!this.IsDisplayedOverlay)
         {
-            MainMenu.Effect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            MainMenu.Effect.Rotation %= MathHelper.TwoPi;
+            MainEffect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            MainEffect.Rotation %= MathHelper.TwoPi;
         }
 
         base.Update(gameTime);
@@ -44,17 +46,20 @@ internal class Settings : Scene, IOverlayScene
     {
         ScreenController.GraphicsDevice.Clear(Color.Black);
 
-        if (!this.IsDisplayedOverlay)
+        if (this.IsDisplayedOverlay)
         {
-            MainMenu.Effect.Draw(gameTime);
+            this.overlayBackground.Draw(gameTime);
         }
 
+        MainEffect.Draw();
         base.Draw(gameTime);
     }
 
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
+        this.overlayBackground = new SolidColor(Color.Black * 0.95f);
+
         var titleFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 21);
         var title = new LocalizedText(titleFont, Color.White)
         {
@@ -76,24 +81,33 @@ internal class Settings : Scene, IOverlayScene
             Transform =
             {
                 Alignment = Alignment.BottomLeft,
-                RelativeOffset = new Vector2(0.08f, -0.08f),
                 RelativeSize = new Vector2(0.2f, 0.07f),
             },
         };
 
         backButton.ApplyStyle(Styles.UI.BackButtonStyle);
 
-        this.Showed += (s, e) =>
+        this.Showing += (s, e) =>
         {
-            if (this.IsDisplayedOverlay)
+            if (e?.Overlay ?? false)
             {
                 backButton.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Close");
-                backButton.GetDescendant<ScalableTexture2D>()!.AssetPath = "Images/close_icon.svg";
+                backButton.Transform.RelativeOffset = new Vector2(0.06f, -0.08f);
+                var texture = backButton.GetDescendant<ScalableTexture2D>()!;
+                texture.Texture?.Dispose();
+                texture.AssetPath = "Images/Icons/close.svg";
+                texture.Load();
+                baseComponent.ForceUpdate(withTransform: true);
             }
             else
             {
                 backButton.GetDescendant<LocalizedText>()!.Value = new LocalizedString("Buttons.Back");
-                backButton.GetDescendant<ScalableTexture2D>()!.AssetPath = "Images/back_icon.svg";
+                backButton.Transform.RelativeOffset = new Vector2(0.08f, -0.08f);
+                var texture = backButton.GetDescendant<ScalableTexture2D>()!;
+                texture.Texture?.Dispose();
+                texture.AssetPath = "Images/Icons/back.svg";
+                texture.Load();
+                baseComponent.ForceUpdate(withTransform: true);
             }
         };
 
@@ -248,6 +262,15 @@ internal class Settings : Scene, IOverlayScene
         }
 
         ResizeSections(listBox, sections);
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        this.overlayBackground.Load();
+
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static void ResizeSections(ListBox baseListBox, IEnumerable<ListBox> sections)

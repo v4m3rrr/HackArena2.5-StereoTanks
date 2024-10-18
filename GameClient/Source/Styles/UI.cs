@@ -56,7 +56,7 @@ internal static class UI
     {
         Action = (button) =>
         {
-            var style = GetButtonStyleWithIcon(new LocalizedString("Buttons.Back"), "Images/back_icon.svg", Alignment.Left);
+            var style = GetButtonStyleWithIcon(new LocalizedString("Buttons.Back"), "Images/Icons/back.svg", Alignment.Left);
             button.ApplyStyle(style);
         },
     };

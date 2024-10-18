@@ -108,7 +108,7 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
         };
 
         var text = new LocalizedString("Buttons.JoinGame");
-        var iconPath = "Images/JoinRoom/join_icon.svg";
+        var iconPath = "Images/Icons/join.svg";
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Right);
         button.ApplyStyle(style);
 
