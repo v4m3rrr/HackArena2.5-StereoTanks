@@ -74,8 +74,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
             Value = sb.ToString(),
             AdjustTransformSizeToText = AdjustSizeOption.OnlyHeight,
         };
-
-        ScrollToBottom();
     }
 
     /// <summary>
@@ -290,9 +288,16 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 ShowScrollBarIfNotNeeded = false,
             };
 
-            // After adding a new message, scroll to the bottom
-            // if the scroll bar is at the bottom or has just appeared
-            messages.ComponentAdded += (s, e) => ScrollToBottom();
+            float scrollPosition = 0f;
+            messages.ComponentAdding += (s, e) => scrollPosition = ((ScrollableListBox)Instance.messages).ScrollBar.Position;
+            messages.ComponentAdded += (s, e) =>
+            {
+                if (scrollPosition == 1.0f)
+                {
+                    messages.ForceUpdate();
+                    ScrollToBottom();
+                }
+            };
             ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => ScrollToBottom();
         }
 #if DEBUG
