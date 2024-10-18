@@ -129,6 +129,11 @@ internal partial class DebugConsole : Scene, IOverlayScene
             }
         }
 
+        if (KeyboardController.IsKeyHit(Keys.Tab))
+        {
+            Autocomplete();
+        }
+
         base.Update(gameTime);
     }
 
@@ -282,12 +287,53 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 DrawContentOnParentPadding = true,
                 ShowScrollBarIfNotNeeded = false,
             };
+
+            float scrollPosition = 0f;
+            messages.ComponentAdding += (s, e) => scrollPosition = ((ScrollableListBox)Instance.messages).ScrollBar.Position;
+            messages.ComponentAdded += (s, e) =>
+            {
+                if (scrollPosition == 1.0f)
+                {
+                    messages.ForceUpdate();
+                    ScrollToBottom();
+                }
+            };
+            ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => ScrollToBottom();
         }
 #if DEBUG
         SendMessage("You are running in the DEBUG mode.", Color.Yellow);
 #endif
 
         SendMessage("Type 'help' to get list of available commands.", Color.White);
+    }
+
+    private static void ScrollToBottom()
+    {
+        ((ScrollableListBox)Instance.messages).ScrollBar.ScrollTo(1.0f);
+    }
+
+    private static void Autocomplete()
+    {
+        var incompleteCommand = Instance.textInput.Value;
+
+        if (incompleteCommand.Length <= 4)
+        {
+            return;
+        }
+
+        var bestMatch = CommandParser.GetCommand(incompleteCommand, out int threshold);
+
+        if (bestMatch == null)
+        {
+            return;
+        }
+
+        if (bestMatch.FullName.Length < incompleteCommand.Length)
+        {
+            return;
+        }
+
+        Instance.textInput.SetText(bestMatch.FullName);
     }
 
     /// <inheritdoc/>

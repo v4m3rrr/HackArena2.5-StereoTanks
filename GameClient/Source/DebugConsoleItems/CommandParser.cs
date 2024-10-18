@@ -109,7 +109,13 @@ internal static class CommandParser
         DebugConsole.SendMessage($"Did you mean '{command.FullName}'?", Color.Orange);
     }
 
-    private static ICommand? GetCommand(string rawInput, out int threshold)
+    /// <summary>
+    /// Finds command that is closest to given input using Levenshtein distance.
+    /// </summary>
+    /// <param name="rawInput">Text that will be used for command matching.</param>
+    /// <param name="threshold">Levenshtein distance of found match.</param>
+    /// <returns>ICommand object based on raw text.</returns>
+    public static ICommand? GetCommand(string rawInput, out int threshold)
     {
         var segments = rawInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
