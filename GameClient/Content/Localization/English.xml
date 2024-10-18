@@ -43,6 +43,7 @@
 		<NicknameExists>Nickname already exists!</NicknameExists>
 		<InvalidUrlPath>Invalid URL path!</InvalidUrlPath>
 		<GameFull>Game is full!</GameFull>
+		<GameInProgress>Game is in progress!</GameInProgress>
 		<TooManyFailedAttempts>Too many failed attempts! Try again later.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 

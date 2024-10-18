@@ -43,6 +43,7 @@
 		<NicknameExists>Ce surnom est déjà utilisé.</NicknameExists>
 		<InvalidUrlPath>Chemin d'URL invalide!</InvalidUrlPath>
 		<GameFull>La salle est pleine!</GameFull>
+		<GameInProgress>La partie est en cours!</GameInProgress>
 		<TooManyFailedAttempts>Trop de tentatives échouées! Réessayez plus tard.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 	

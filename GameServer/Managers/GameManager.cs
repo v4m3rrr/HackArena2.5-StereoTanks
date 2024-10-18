@@ -28,6 +28,20 @@ internal class GameManager(GameInstance game)
     public string? CurrentGameStateId { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the game is in progress.
+    /// </summary>
+    public bool IsInProgess
+    {
+        get
+        {
+            lock (this)
+            {
+                return this.Status is GameStatus.Starting or GameStatus.Running;
+            }
+        }
+    }
+
+    /// <summary>
     /// Starts the game.
     /// </summary>
     public async void StartGame()

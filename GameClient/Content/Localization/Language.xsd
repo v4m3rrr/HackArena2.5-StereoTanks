@@ -53,6 +53,7 @@
 			<xs:element name="NicknameExists" type="xs:string"/>
 			<xs:element name="InvalidUrlPath" type="xs:string"/>
 			<xs:element name="GameFull" type="xs:string"/>
+			<xs:element name="GameInProgress" type="xs:string"/>
 			<xs:element name="TooManyFailedAttempts" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
@@ -85,7 +86,5 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-	
-	
 	
 </xs:schema>

@@ -164,21 +164,30 @@ async Task<Task> HandlePlayerConnection(
 
 #if DEBUG
     _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
+#else
+    bool quickJoin = false;
 #endif
 
     GameLogic.Player player;
     PlayerConnection connection;
 
+    if (!quickJoin)
+    {
+        if (game.GameManager.IsInProgess)
+        {
+            return RejectConnection(unknownConnection, "GameInProgress");
+        }
+    }
+
     lock (game.PlayerManager)
     {
-        if (game.Players.Count() >= opts.NumberOfPlayers)
+        if (!quickJoin && game.Players.Count() >= opts.NumberOfPlayers)
         {
             return RejectConnection(unknownConnection, "GameFull");
         }
 
         if (NicknameAlreadyExists(nickname))
         {
-#if DEBUG
             if (quickJoin)
             {
                 int i = 0;
@@ -191,19 +200,15 @@ async Task<Task> HandlePlayerConnection(
                 nickname = newNickname;
             }
             else
-#endif
             {
                 return RejectConnection(unknownConnection, "NicknameExists");
             }
         }
 
         var connectionData = new ConnectionData.Player(nickname, type, unknownConnection.EnumSerialization)
-#if DEBUG
         {
             QuickJoin = quickJoin,
-        }
-#endif
-        ;
+        };
 
         player = game.PlayerManager.CreatePlayer(connectionData);
         connection = new PlayerConnection(context, socket, connectionData, player);
@@ -221,13 +226,11 @@ async Task<Task> HandlePlayerConnection(
         _ = Task.Run(game.LobbyManager.SendLobbyDataToAll);
     }
 
-#if DEBUG
     if (quickJoin)
     {
         game.GameManager.StartGame();
         await game.LobbyManager.SendLobbyDataTo(connection);
     }
-#endif
 
     return Task.CompletedTask;
 }
@@ -243,15 +246,14 @@ async Task<Task> HandleSpectatorConnection(
 
 #if DEBUG
     _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
+#else
+    bool quickJoin = false;
 #endif
 
     var connectionData = new ConnectionData(unknownConnection.EnumSerialization)
-#if DEBUG
     {
         QuickJoin = quickJoin,
-    }
-#endif
-    ;
+    };
 
     var connection = new SpectatorConnection(context, socket, connectionData);
     await AcceptConnection(connection);
@@ -261,24 +263,18 @@ async Task<Task> HandleSpectatorConnection(
     var pingCts = CancellationTokenSource.CreateLinkedTokenSource(serverCts.Token);
     _ = Task.Run(() => PingClientLoop(connection, pingCts.Token), pingCts.Token);
 
-#if DEBUG
+    await game.LobbyManager.SendLobbyDataTo(connection);
+
     if (quickJoin)
     {
         game.GameManager.StartGame();
     }
-#endif
-
-    await game.LobbyManager.SendLobbyDataTo(connection);
-
-    bool gameStarted;
-    lock (game.GameManager)
+    else
     {
-        gameStarted = game.GameManager.Status is GameStatus.Starting or GameStatus.Running;
-    }
-
-    if (gameStarted)
-    {
-        await game.LobbyManager.SendGameStartedTo(connection);
+        if (game.GameManager.IsInProgess)
+        {
+            await game.LobbyManager.SendGameStartedTo(connection);
+        }
     }
 
     return Task.CompletedTask;

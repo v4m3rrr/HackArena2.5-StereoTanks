@@ -142,7 +142,12 @@ internal class MainMenu : Scene
             }
             else if (status is ConnectionStatus.Failed failed && failed.Exception is not null)
             {
+                DebugConsole.ThrowError("Connection failed!");
                 DebugConsole.ThrowError(failed.Exception);
+            }
+            else if (status is ConnectionStatus.Rejected rejected)
+            {
+                DebugConsole.ThrowError($"Connection rejected: {rejected.Reason}");
             }
             else
             {

@@ -43,6 +43,7 @@
 		<NicknameExists>Gracz o takiej nazwie juz istnieje!</NicknameExists>
 		<InvalidUrlPath>Nieprawidlowa sciezka URL!</InvalidUrlPath>
 		<GameFull>Lobby jest pelne!</GameFull>
+		<GameInProgress>Gra juz trwa!</GameInProgress>
 		<TooManyFailedAttempts>Za duzo nieudanych prob! Spróbuj ponownie pozniej.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 
