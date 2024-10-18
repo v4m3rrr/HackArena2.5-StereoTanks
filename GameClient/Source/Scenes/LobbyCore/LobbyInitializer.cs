@@ -12,6 +12,8 @@ namespace GameClient.Scenes.LobbyCore;
 /// <param name="lobby">The lobby to initialize.</param>
 internal class LobbyInitializer(Lobby lobby)
 {
+#if HACKATHON
+
     /// <summary>
     /// Creates a match name component.
     /// </summary>
@@ -33,6 +35,8 @@ internal class LobbyInitializer(Lobby lobby)
             },
         };
     }
+
+#endif
 
     /// <summary>
     /// Creates a join code component.

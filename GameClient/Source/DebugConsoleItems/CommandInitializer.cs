@@ -280,8 +280,7 @@ internal static class CommandInitializer
         [Argument("A join code.")] string? joinCode = null)
     {
         GameSettings.ServerAddress = $"{ip}:{port}";
-        var args = new GameDisplayEventArgs(joinCode, isSpectator: true);
-        Scene.Change<Scenes.Game>(args);
+        Scene.Change<Scenes.Game>();
     }
 
     [Command("Join to the server as a player.")]

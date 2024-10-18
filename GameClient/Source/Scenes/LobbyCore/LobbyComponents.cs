@@ -7,39 +7,32 @@ namespace GameClient.Scenes.LobbyCore;
 /// <summary>
 /// Represents the lobby components.
 /// </summary>
-internal class LobbyComponents
+/// <param name="initializer">
+/// The lobby initializer that will be used to create the lobby components.
+/// </param>
+internal class LobbyComponents(LobbyInitializer initializer)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LobbyComponents"/> class.
-    /// </summary>
-    /// <param name="initializer">
-    /// The lobby initializer that will be used to create the lobby components.
-    /// </param>
-    public LobbyComponents(LobbyInitializer initializer)
-    {
-        this.MatchName = initializer.CreateMatchName();
-        this.JoinCode = initializer.CreateJoinCode();
-        this.PlayerSlotPanels = initializer.CreatePlayerSlotPanels();
-        this.LeaveButton = initializer.CreateLeaveButton();
-    }
+#if HACKATHON
 
     /// <summary>
     /// Gets the match name text component.
     /// </summary>
-    public Text MatchName { get; }
+    public Text MatchName { get; } = initializer.CreateMatchName();
+
+#endif
 
     /// <summary>
     /// Gets the join code container component.
     /// </summary>
-    public Text JoinCode { get; }
+    public Text JoinCode { get; } = initializer.CreateJoinCode();
 
     /// <summary>
     /// Gets the player info components.
     /// </summary>
-    public List<PlayerSlotPanel> PlayerSlotPanels { get; }
+    public List<PlayerSlotPanel> PlayerSlotPanels { get; } = initializer.CreatePlayerSlotPanels();
 
     /// <summary>
     /// Gets the leave button component.
     /// </summary>
-    public Button<Container> LeaveButton { get; }
+    public Button<Container> LeaveButton { get; } = initializer.CreateLeaveButton();
 }

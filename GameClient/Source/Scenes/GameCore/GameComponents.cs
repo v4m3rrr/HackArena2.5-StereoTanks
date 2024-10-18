@@ -23,8 +23,11 @@ internal class GameComponents
 
         this.Grid = initializer.CreateGridComponent();
         this.Timer = initializer.CreateTimer();
-        this.MatchName = initializer.CreateMatchName();
         this.MenuButton = initializer.CreateMenuButton();
+
+#if HACKATHON
+        this.MatchName = initializer.CreateMatchName();
+#endif
     }
 
     /// <summary>
@@ -47,10 +50,14 @@ internal class GameComponents
     /// </summary>
     public Timer Timer { get; }
 
+#if HACKATHON
+
     /// <summary>
     /// Gets the match name component.
     /// </summary>
     public Text MatchName { get; }
+
+#endif
 
     /// <summary>
     /// Gets the menu button.

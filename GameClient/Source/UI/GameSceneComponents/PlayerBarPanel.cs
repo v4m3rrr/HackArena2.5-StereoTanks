@@ -51,5 +51,10 @@ internal class PlayerBarPanel<T> : AlignedListBox
                 .ToList()
                 .ForEach(x => x.Load());
         });
+
+        foreach (T playerBar in this.Bars.ToList())
+        {
+            playerBar.Transform.RecalculateIfNeeded();
+        }
     }
 }

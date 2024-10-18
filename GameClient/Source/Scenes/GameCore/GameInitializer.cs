@@ -92,6 +92,8 @@ internal class GameInitializer(Game game)
         };
     }
 
+#if HACKATHON
+
     /// <summary>
     /// Creates a match name.
     /// </summary>
@@ -113,6 +115,8 @@ internal class GameInitializer(Game game)
             },
         };
     }
+
+#endif
 
     /// <summary>
     /// Creates a menu button.

@@ -35,6 +35,20 @@ internal class LobbyUpdater(LobbyComponents components)
         components.JoinCode.Value = joinCode ?? "-";
     }
 
+#if HACKATHON
+
+    /// <summary>
+    /// Updates the match name.
+    /// </summary>
+    /// <param name="matchName">The match name to set.</param>
+    public void UpdateMatchName(string? matchName)
+    {
+        components.MatchName.IsEnabled = !string.IsNullOrEmpty(matchName);
+        components.MatchName.Value = matchName ?? "-";
+    }
+
+#endif
+
     /// <summary>
     /// Resets the player slot panels.
     /// </summary>

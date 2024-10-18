@@ -9,10 +9,16 @@
 /// <param name="Ticks">The number of ticks per game.</param>
 /// <param name="BroadcastInterval">The interval in milliseconds between broadcasts.</param>
 /// <param name="EagerBroadcast">Whether to broadcast the game state eagerly.</param>
+/// <param name="MatchName">The name of the match.</param>
+/// <remarks>
+/// <paramref name="EagerBroadcast"/> and <paramref name="MatchName"/>
+/// are only available in HACKATHON builds.
+/// </remarks>
 public record class ServerSettings(
     int GridDimension,
     int NumberOfPlayers,
     int Seed,
     int Ticks,
     int BroadcastInterval,
-    bool EagerBroadcast);
+    bool EagerBroadcast,
+    string? MatchName);

@@ -114,6 +114,21 @@ internal class CommandLineOptions
         Default = false)]
     public bool EagerBroadcast { get; private set; }
 
+    /// <summary>
+    /// Gets the name of the match.
+    /// </summary>
+    /// <value>
+    /// The name of the match if specified;
+    /// otherwise, <see langword="null"/>.
+    /// </value>
+    [Option(
+        'm',
+        "match-name",
+        Required = false,
+        HelpText = "The name of the match.",
+        Default = null)]
+    public string? MatchName { get; private set; }
+
 #endif
 
     /// <summary>

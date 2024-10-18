@@ -63,6 +63,20 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
             .ForEach(x => players.Remove(x.Key));
     }
 
+#if HACKATHON
+
+    /// <summary>
+    /// Updates the match name.
+    /// </summary>
+    /// <param name="matchName">The match name to set.</param>
+    public void UpdateMatchName(string? matchName)
+    {
+        components.MatchName.IsEnabled = matchName is not null;
+        components.MatchName.Value = matchName ?? "-";
+    }
+
+#endif
+
     /// <summary>
     /// Refreshes the player bar panels.
     /// </summary>

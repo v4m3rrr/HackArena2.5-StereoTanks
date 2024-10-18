@@ -10,6 +10,8 @@ namespace GameClient.Scenes.GameEndCore;
 /// <param name="gameEnd">The game end scene to initialize.</param>
 internal class GameEndInitializer(GameEnd gameEnd)
 {
+#if HACKATHON
+
     /// <summary>
     /// Creates a match name component.
     /// </summary>
@@ -31,6 +33,8 @@ internal class GameEndInitializer(GameEnd gameEnd)
             },
         };
     }
+
+#endif
 
     /// <summary>
     /// Creates a continue button.

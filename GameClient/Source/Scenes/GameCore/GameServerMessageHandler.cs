@@ -71,8 +71,12 @@ internal static class GameServerMessageHandler
         DebugConsole.SendMessage("Game ticks: " + data.ServerSettings.Ticks, Color.DarkGray);
         DebugConsole.SendMessage("Game time: " + (data.ServerSettings.Ticks / (1000f / data.ServerSettings.BroadcastInterval)) + "s", Color.DarkGray);
 
+        Game.Settings = data.ServerSettings;
         Game.PlayerId = data.PlayerId;
-        Game.ServerBroadcastInterval = data.ServerSettings.BroadcastInterval;
+
+#if HACKATHON
+        updater.UpdateMatchName(data.ServerSettings.MatchName);
+#endif
 
         updater.EnableGridComponent();
     }

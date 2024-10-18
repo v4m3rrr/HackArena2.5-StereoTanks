@@ -25,8 +25,10 @@ internal class GameInstance
 
 #if HACKATHON
         bool eagerBroadcast = options.EagerBroadcast;
+        string? matchName = options.MatchName;
 #else
         bool eagerBroadcast = false;
+        string? matchName = null;
 #endif
 
         this.Settings = new ServerSettings(
@@ -35,7 +37,8 @@ internal class GameInstance
             seed,
             options.Ticks,
             options.BroadcastInterval,
-            eagerBroadcast);
+            eagerBroadcast,
+            matchName);
 
         this.Grid = new Grid(dimension, seed);
 

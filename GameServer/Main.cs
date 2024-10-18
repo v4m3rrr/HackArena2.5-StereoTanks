@@ -206,9 +206,12 @@ async Task<Task> HandlePlayerConnection(
         }
 
         var connectionData = new ConnectionData.Player(nickname, type, unknownConnection.EnumSerialization)
+#if DEBUG
         {
             QuickJoin = quickJoin,
-        };
+        }
+#endif
+        ;
 
         player = game.PlayerManager.CreatePlayer(connectionData);
         connection = new PlayerConnection(context, socket, connectionData, player);
@@ -251,9 +254,12 @@ async Task<Task> HandleSpectatorConnection(
 #endif
 
     var connectionData = new ConnectionData(unknownConnection.EnumSerialization)
+#if DEBUG
     {
         QuickJoin = quickJoin,
-    };
+    }
+#endif
+    ;
 
     var connection = new SpectatorConnection(context, socket, connectionData);
     await AcceptConnection(connection);

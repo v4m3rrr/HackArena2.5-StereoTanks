@@ -37,13 +37,18 @@ internal class Game : Scene
     }
 
     /// <summary>
-    /// Gets or sets the server broadcast interval in milliseconds.
+    /// Gets or sets the server settings.
+    /// </summary>
+    public static ServerSettings? Settings { get; set; }
+
+    /// <summary>
+    /// Gets the server broadcast interval in milliseconds.
     /// </summary>
     /// <value>
     /// The server broadcast interval in seconds.
     /// When the value is -1, the server broadcast interval is not received yet.
     /// </value>
-    public static int ServerBroadcastInterval { get; set; } = -1;
+    public static int ServerBroadcastInterval => Settings?.BroadcastInterval ?? -1;
 
     /// <summary>
     /// Gets or sets the player ID.
@@ -186,14 +191,6 @@ internal class Game : Scene
 
     private async void Game_Showing(object? sender, SceneDisplayEventArgs? e)
     {
-        if (e is not GameDisplayEventArgs args)
-        {
-            DebugConsole.ThrowError(
-                $"Game scene requires {nameof(GameDisplayEventArgs)}.");
-            ChangeToPreviousOrDefault<MainMenu>();
-            return;
-        }
-
         ServerConnection.BufferSize = 1024 * 32;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
 
@@ -202,6 +199,11 @@ internal class Game : Scene
             this.isContentLoading = true;
             ShowOverlay<Loading>();
             await Task.Run(this.LoadContent);
+
+#if HACKATHON
+            this.updater.UpdateMatchName(Settings?.MatchName);
+#endif
+
             HideOverlay<Loading>();
             this.isContentLoading = false;
         }

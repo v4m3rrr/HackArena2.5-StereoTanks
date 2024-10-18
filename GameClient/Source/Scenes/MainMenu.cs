@@ -137,8 +137,7 @@ internal class MainMenu : Scene
 
             if (status is ConnectionStatus.Success)
             {
-                var args = new GameDisplayEventArgs(joinCode, isSpectator);
-                Change<T>(args);
+                Change<T>();
             }
             else if (status is ConnectionStatus.Failed failed && failed.Exception is not null)
             {

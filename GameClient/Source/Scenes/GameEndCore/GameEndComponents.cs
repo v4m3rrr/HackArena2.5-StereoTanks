@@ -11,10 +11,14 @@ namespace GameClient.Scenes.GameEndCore;
 /// </param>
 internal class GameEndComponents(GameEndInitializer initializer)
 {
+#if HACKATHON
+
     /// <summary>
     /// Gets the match name text component.
     /// </summary>
     public Text MatchName { get; } = initializer.CreateMatchName();
+
+#endif
 
     /// <summary>
     /// Gets the continue button component.

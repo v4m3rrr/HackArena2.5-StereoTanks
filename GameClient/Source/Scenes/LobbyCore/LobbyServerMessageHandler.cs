@@ -18,10 +18,13 @@ internal static class LobbyServerMessageHandler
         var serializers = PacketSerializer.GetSerializer(converters);
         var data = packet.GetPayload<LobbyDataPayload>(serializers);
 
-        var serverSettings = data.ServerSettings;
-        Game.ServerBroadcastInterval = serverSettings.BroadcastInterval;
+        Game.Settings = data.ServerSettings;
         Game.PlayerId = data.PlayerId;
 
-        updater.UpdatePlayerSlotPanels(data.Players, serverSettings.NumberOfPlayers);
+#if HACKATHON
+        updater.UpdateMatchName(data.ServerSettings.MatchName);
+#endif
+
+        updater.UpdatePlayerSlotPanels(data.Players, data.ServerSettings.NumberOfPlayers);
     }
 }
