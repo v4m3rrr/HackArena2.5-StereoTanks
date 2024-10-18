@@ -53,6 +53,8 @@ internal class PacketHandler(GameInstance game)
                     "Internal server error",
                     CancellationToken.None);
 
+                game.RemoveConnection(connection.Socket);
+
                 break;
             }
 
@@ -65,6 +67,8 @@ internal class PacketHandler(GameInstance game)
                     WebSocketCloseStatus.MessageTooBig,
                     "Message too big",
                     CancellationToken.None);
+
+                game.RemoveConnection(connection.Socket);
 
                 break;
             }
@@ -149,13 +153,6 @@ internal class PacketHandler(GameInstance game)
 
     private bool HandlePlayerPacket(PlayerConnection player, Packet packet)
     {
-        if (packet.Type == PacketType.Pong)
-        {
-            player.HasSentPong = true;
-            player.Instance.Ping = (int)(DateTime.UtcNow - player.LastPingSentTime)!.TotalMilliseconds;
-            return true;
-        }
-
         if (packet.Type.IsGroup(PacketType.PlayerResponseActionGroup))
         {
             try
@@ -178,12 +175,6 @@ internal class PacketHandler(GameInstance game)
 
     private bool HandleSpectatorPacket(SpectatorConnection spectator, Packet packet)
     {
-        if (packet.Type == PacketType.Pong)
-        {
-            spectator.HasSentPong = true;
-            return true;
-        }
-
         return false;
     }
 
@@ -273,6 +264,30 @@ internal class PacketHandler(GameInstance game)
 
     private bool HandleOtherPacket(Connection connection, Packet packet)
     {
+        if (packet.Type == PacketType.Pong)
+        {
+            if (connection.Socket.State is not WebSocketState.Open)
+            {
+                return true;
+            }
+
+            connection.HasSentPong = true;
+
+            if (connection is PlayerConnection player)
+            {
+                player.Instance.Ping = (int)(DateTime.UtcNow - player.LastPingSentTime)!.TotalMilliseconds;
+            }
+
+            if (connection.IsSecondPingAttempt)
+            {
+                connection.IsSecondPingAttempt = false;
+                Console.WriteLine("[INFO] Client responded to the second ping.");
+                Console.WriteLine("[^^^^] Connection: {0}", connection);
+            }
+
+            return true;
+        }
+
         if (packet.Type == PacketType.LobbyDataRequest)
         {
             _ = game.LobbyManager.SendLobbyDataTo(connection);

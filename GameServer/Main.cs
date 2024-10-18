@@ -342,23 +342,75 @@ async Task RejectConnection(Connection connection, string reason)
 }
 
 /// <summary>
-/// Pings a player in a loop.
+/// Pings a client in a loop.
 /// </summary>
-/// <param name="socket">The socket of the player.</param>
-/// <param name="cancellationToken">The cancellation token that can be used to cancel the ping loop.</param>
+/// <param name="connection">The connection to ping.</param>
+/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
 /// <returns>A task representing the asynchronous operation.</returns>
 async Task PingClientLoop(Connection connection, CancellationToken cancellationToken)
 {
     const int pingInterval = 1000;
+    const int pongTimeout = 10000;
+
+    await Task.Delay(500, cancellationToken);
+
+    void SendPing()
+    {
+        var payload = new EmptyPayload() { Type = PacketType.Ping };
+        var packet = new ResponsePacket(payload);
+        _ = packet.SendAsync(connection);
+    }
+
+    SendPing();
+    connection.LastPingSentTime = DateTime.UtcNow;
 
     while (!cancellationToken.IsCancellationRequested && connection.Socket.State == WebSocketState.Open)
     {
         try
         {
-            var payload = new EmptyPayload() { Type = PacketType.Ping };
-            var packet = new ResponsePacket(payload);
-            await packet.SendAsync(connection);
-            connection.LastPingSentTime = DateTime.UtcNow;
+            if (connection.HasSentPong)
+            {
+                connection.HasSentPong = false;
+                SendPing();
+                connection.LastPingSentTime = DateTime.UtcNow;
+            }
+            else
+            {
+                var timeout = pongTimeout * (connection.IsSecondPingAttempt ? 2 : 1);
+                if ((DateTime.UtcNow - connection.LastPingSentTime).TotalMilliseconds > timeout)
+                {
+                    if (!connection.IsSecondPingAttempt)
+                    {
+                        Console.WriteLine("[WARN] Client did not respond pong in {0}ms!", pongTimeout);
+                        Console.WriteLine("[^^^^] Sending second ping...");
+                        Console.WriteLine("[^^^^] Connection: {0}", connection);
+
+                        SendPing();
+                        connection.IsSecondPingAttempt = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[WARN] No pong response after second ping, disconnecting.");
+                        Console.WriteLine("[^^^^] Connection: {0}", connection);
+
+                        var token = new CancellationTokenSource(1000).Token;
+
+                        try
+                        {
+                            _ = connection.CloseAsync(description: "NoPongResponse", cancellationToken: token);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            Console.WriteLine("[ERROR] Failed to close connection normally, aborting.");
+                            Console.WriteLine("[^^^^^] Connection: {0}", connection);
+                        }
+
+                        game.RemoveConnection(connection.Socket);
+                        return;
+                    }
+                }
+            }
+
             await Task.Delay(pingInterval, cancellationToken);
         }
         catch (OperationCanceledException)

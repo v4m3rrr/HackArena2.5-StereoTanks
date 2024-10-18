@@ -11,12 +11,13 @@ namespace GameServer;
 /// <param name="Data">The connection data.</param>
 internal abstract record class Connection(HttpListenerContext Context, WebSocket Socket, ConnectionData Data)
 {
-    private readonly object lastPingSentTimeLock = new();
+    private readonly object pingSentLock = new();
     private readonly object hasSentPongLock = new();
     private readonly object readyLock = new();
 
     private bool isReadyToReceiveGameState;
     private DateTime lastPingSendTime;
+    private bool isSecondPingAttempt;
     private bool hasSentPong;
 
     /// <summary>
@@ -59,7 +60,7 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
     {
         get
         {
-            lock (this.lastPingSentTimeLock)
+            lock (this.pingSentLock)
             {
                 return this.lastPingSendTime;
             }
@@ -67,9 +68,31 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
 
         set
         {
-            lock (this.lastPingSentTimeLock)
+            lock (this.pingSentLock)
             {
                 this.lastPingSendTime = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the second ping attempt is sent.
+    /// </summary>
+    public bool IsSecondPingAttempt
+    {
+        get
+        {
+            lock (this.pingSentLock)
+            {
+                return this.isSecondPingAttempt;
+            }
+        }
+
+        set
+        {
+            lock (this.pingSentLock)
+            {
+                this.isSecondPingAttempt = value;
             }
         }
     }

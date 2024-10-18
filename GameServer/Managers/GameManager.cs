@@ -56,6 +56,8 @@ internal class GameManager(GameInstance game)
             this.Status = GameStatus.Starting;
         }
 
+        Console.WriteLine("[INFO] Game is starting...");
+
         game.ReplayManager?.SaveLobbyData();
         await game.LobbyManager.SendGameStartingToAll();
 
@@ -70,6 +72,8 @@ internal class GameManager(GameInstance game)
         {
             this.Status = GameStatus.Running;
         }
+
+        Console.WriteLine("[INFO] Game has started!");
 
         _ = Task.Run(this.StartBroadcastingAsync);
     }
