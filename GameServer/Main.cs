@@ -266,12 +266,20 @@ async Task<Task> HandleSpectatorConnection(
     {
         game.GameManager.StartGame();
     }
-
-    // A temporary solution allowing the client to change the game scene
-    await Task.Delay(500);
 #endif
 
     await game.LobbyManager.SendLobbyDataTo(connection);
+
+    bool gameStarted;
+    lock (game.GameManager)
+    {
+        gameStarted = game.GameManager.Status is GameStatus.Starting or GameStatus.Running;
+    }
+
+    if (gameStarted)
+    {
+        await game.LobbyManager.SendGameStartedTo(connection);
+    }
 
     return Task.CompletedTask;
 }

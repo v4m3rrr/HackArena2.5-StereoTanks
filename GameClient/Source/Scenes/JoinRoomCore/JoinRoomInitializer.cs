@@ -139,4 +139,35 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
 
         return button;
     }
+
+    /// <summary>
+    /// Creates the spectate button component.
+    /// </summary>
+    /// <returns></returns>
+    public Button<Container> CreateSpectateButton()
+    {
+        var button = new Button<Container>(new Container())
+        {
+            Parent = joinRoom.BaseComponent,
+            Transform =
+            {
+                Alignment = Alignment.TopRight,
+                RelativeOffset = new Vector2(-0.04f, 0.07f),
+                RelativeSize = new Vector2(0.055f),
+                Ratio = new Ratio(1, 1),
+            },
+        };
+
+        // Icon
+        _ = new ScalableTexture2D("Images/Icons/spectate.svg")
+        {
+            Parent = button.Component,
+        };
+
+        button.ApplyStyle(Styles.UI.ButtonStyle);
+
+        button.Clicked += (s, e) => joinRoom.JoinGameAsSpectator();
+
+        return button;
+    }
 }

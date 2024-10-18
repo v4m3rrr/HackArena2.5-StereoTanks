@@ -60,7 +60,7 @@ internal class Game : Scene
 
         if (!ScreenController.DisplayedOverlays.Any())
         {
-            this.HandleInput();
+            HandleInput();
         }
 
         if (this.IsContentLoaded)
@@ -121,6 +121,22 @@ internal class Game : Scene
         }
     }
 
+    private static async void HandleInput()
+    {
+        var payload = GameInputHandler.HandleInputPayload();
+
+        if (ServerConnection.Data.IsSpectator && payload is IActionPayload)
+        {
+            return;
+        }
+
+        if (payload is not null)
+        {
+            var message = PacketSerializer.Serialize(payload);
+            await ServerConnection.SendAsync(message);
+        }
+    }
+
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)
     {
         if (result.MessageType == WebSocketMessageType.Close)
@@ -147,10 +163,13 @@ internal class Game : Scene
                     break;
 
 #if DEBUG
-                case PacketType.LobbyData:
+                case PacketType.LobbyData when ServerConnection.Data.QuickJoin:
                     GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
                     break;
 #endif
+
+                case PacketType.GameStarted:
+                    break;
 
                 default:
                     if (!packet.Type.IsGroup(PacketType.ErrorGroup))
@@ -203,16 +222,5 @@ internal class Game : Scene
         }
 
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;
-    }
-
-    private async void HandleInput()
-    {
-        var payload = GameInputHandler.HandleInputPayload();
-
-        if (payload is not null)
-        {
-            var message = PacketSerializer.Serialize(payload);
-            await ServerConnection.SendAsync(message);
-        }
     }
 }

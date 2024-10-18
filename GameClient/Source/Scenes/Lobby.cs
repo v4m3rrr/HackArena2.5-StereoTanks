@@ -118,6 +118,7 @@ internal class Lobby : Scene
                     break;
 
                 case PacketType.GameStarting:
+                case PacketType.GameStarted when ServerConnection.Data.IsSpectator:
                     var displayArgs = new GameDisplayEventArgs(ServerConnection.Data.JoinCode, ServerConnection.Data.IsSpectator);
                     Change<Game>(displayArgs);
                     break;

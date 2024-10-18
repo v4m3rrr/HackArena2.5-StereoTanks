@@ -1,9 +1,10 @@
-﻿using GameClient.Networking;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using GameClient.Networking;
 using GameClient.Scenes.JoinRoomCore;
 using GameClient.UI;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
-using System.Linq;
 
 namespace GameClient.Scenes;
 
@@ -46,26 +47,62 @@ internal class JoinRoom : Scene
     /// </summary>
     public async void JoinGame()
     {
-        var nickname = this.components.NickNameSection.GetDescendant<TextInput>()!.Value;
-        string? joinCode = this.components.RoomCodeSection.GetDescendant<TextInput>()!.Value;
-        var address = this.components.AddressSection.GetDescendant<TextInput>()!.Value;
-
-        if (string.IsNullOrWhiteSpace(joinCode))
-        {
-            joinCode = null;
-        }
+        var nickname = this.GetNickname();
+        var address = this.GetAddress();
+        var joinCode = this.GetJoinCode();
 
 #if DEBUG
-        var connectionData = ConnectionData.ForPlayer(address, joinCode, nickname, false);
+        var data = ConnectionData.ForPlayer(address, joinCode, nickname, false);
 #else
-        var connectionData = ConnectionData.ForPlayer(address, joinCode, nickname);
+        var data = ConnectionData.ForPlayer(address, joinCode, nickname);
 #endif
 
+        await Join(data);
+    }
+
+    /// <summary>
+    /// Connects to the server and joins the game as a spectator.
+    /// </summary>
+    public async void JoinGameAsSpectator()
+    {
+        var address = this.GetAddress();
+        var joinCode = this.GetJoinCode();
+
+#if DEBUG
+        var data = ConnectionData.ForSpectator(address, joinCode, false);
+#else
+        var data = ConnectionData.ForSpectator(address, joinCode);
+#endif
+
+        await Join(data);
+    }
+
+    /// <inheritdoc/>
+    protected override void Initialize(Component baseComponent)
+    {
+        this.Showing += this.JoinRoom_Showing;
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
+    }
+
+    private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
+    {
+        MainEffect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation %= MathHelper.TwoPi;
+    }
+
+    private static async Task Join(ConnectionData data)
+    {
         ServerConnection.ErrorThrew += DebugConsole.ThrowError;
         var connectingMessageBox = new ConnectingMessageBox();
         ScreenController.ShowOverlay(connectingMessageBox);
 
-        ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData);
+        ConnectionStatus status = await ServerConnection.ConnectAsync(data);
 
         switch (status)
         {
@@ -102,27 +139,29 @@ internal class JoinRoom : Scene
         ScreenController.HideOverlay(connectingMessageBox);
     }
 
-    /// <inheritdoc/>
-    protected override void Initialize(Component baseComponent)
-    {
-        this.Showed += this.JoinRoom_Showed;
-    }
-
-    /// <inheritdoc/>
-    protected override void LoadSceneContent()
-    {
-        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
-        textures.ToList().ForEach(x => x.Load());
-    }
-
-    private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
-    {
-        MainEffect.Rotation += 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        MainEffect.Rotation %= MathHelper.TwoPi;
-    }
-
-    private void JoinRoom_Showed(object? sender, SceneDisplayEventArgs? e)
+    private void JoinRoom_Showing(object? sender, SceneDisplayEventArgs? e)
     {
         this.components.AddressSection.GetDescendant<TextInput>()!.SetText(GameSettings.ServerAddress);
+    }
+
+    private string GetNickname()
+    {
+        return this.components.NickNameSection.GetDescendant<TextInput>()!.Value;
+    }
+
+    private string? GetJoinCode()
+    {
+        string? joinCode = this.components.RoomCodeSection.GetDescendant<TextInput>()!.Value;
+        if (string.IsNullOrWhiteSpace(joinCode))
+        {
+            joinCode = null;
+        }
+
+        return joinCode;
+    }
+
+    private string GetAddress()
+    {
+        return this.components.AddressSection.GetDescendant<TextInput>()!.Value;
     }
 }

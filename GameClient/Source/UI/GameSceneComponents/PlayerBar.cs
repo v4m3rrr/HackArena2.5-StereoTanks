@@ -20,7 +20,7 @@ internal abstract class PlayerBar : Component
         this.Background = new RoundedSolidColor(MonoTanks.ThemeColor, 15)
         {
             Parent = this,
-            Opacity = 0.5f,
+            Opacity = 0.35f,
             Transform =
             {
                 RelativePadding = new Vector4(0.05f),

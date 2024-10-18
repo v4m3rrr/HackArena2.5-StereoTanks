@@ -23,6 +23,7 @@ internal class JoinRoomComponents
         this.AddressSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.ServerAddress"), 21);
         this.JoinButton = initializer.CreateJoinButton();
         this.BackButton = initializer.CreateBackButton();
+        this.SpectateButton = initializer.CreateSpectateButton();
     }
 
     /// <summary>
@@ -59,4 +60,9 @@ internal class JoinRoomComponents
     /// Gets the back button component.
     /// </summary>
     public Button<Container> BackButton { get; }
+
+    /// <summary>
+    /// Gets the spectate button component.
+    /// </summary>
+    public Button<Container> SpectateButton { get; }
 }
