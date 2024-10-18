@@ -289,13 +289,22 @@ public class MonoTanks : Game
     /// </summary>
     protected override void LoadContent()
     {
-        _ = Task.Run(() =>
+        _ = Task.Run(async () =>
         {
-            Localization.Initialize();
-            GameSettings.LoadSettings();
-            Scene.InitializeScenes(typeof(Scene).Assembly);
-            Scene.LoadAllContent();
-            Scene.ChangeWithoutStack<Scenes.MainMenu>();
+            try
+            {
+                Localization.Initialize();
+
+                await GameSettings.LoadSettings();
+
+                Scene.InitializeScenes(typeof(Scene).Assembly);
+                Scene.LoadAllContent();
+                Scene.ChangeWithoutStack<Scenes.MainMenu>();
+            }
+            catch (Exception ex)
+            {
+                DebugConsole.ThrowError(ex);
+            }
         });
     }
 

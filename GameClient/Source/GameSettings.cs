@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -75,8 +76,9 @@ internal static class GameSettings
     /// </summary>
     /// <param name="width">The width of the resolution.</param>
     /// <param name="height">The height of the resolution.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Width and height must be greater than 0.</exception>
-    public static void SetResolution(int width, int height)
+    public static async Task SetResolution(int width, int height)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
@@ -90,7 +92,9 @@ internal static class GameSettings
         data.ResolutionWidth = width;
         data.ResolutionHeight = height;
         ScreenController.Change(width, height);
-        ScreenController.ApplyChanges();
+
+        await MonoTanks.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
+
         ResolutionChanged?.Invoke(null, EventArgs.Empty);
     }
 
@@ -132,7 +136,8 @@ internal static class GameSettings
     /// <summary>
     /// Loads settings from file.
     /// </summary>
-    public static async void LoadSettings()
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public static async Task LoadSettings()
     {
         if (!File.Exists(SettingsFilePath))
         {
@@ -147,12 +152,13 @@ internal static class GameSettings
             var settings = JsonSerializer.Deserialize<SettingsData>(json);
 
             Language = settings.Language;
-            SetResolution(settings.ResolutionWidth, settings.ResolutionHeight);
+            await SetResolution(settings.ResolutionWidth, settings.ResolutionHeight);
             SetScreenType(settings.ScreenType);
         }
         catch (Exception ex)
         {
-            DebugConsole.SendMessage($"Failed to load settings. Default settings will be used.\n{ex.Message}", Color.Red);
+            DebugConsole.ThrowError($"Failed to load settings. Default settings will be used.");
+            DebugConsole.ThrowError(ex);
             SetDefaultSettings();
         }
     }
