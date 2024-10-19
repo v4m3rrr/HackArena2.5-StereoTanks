@@ -457,6 +457,7 @@ public class Grid(int dimension, int seed)
             }
         }
 
+        var newBullets = new List<Bullet>();
         while (!this.queuedBullets.IsEmpty)
         {
             if (!this.queuedBullets.TryDequeue(out var bullet) || bullet is null)
@@ -464,14 +465,18 @@ public class Grid(int dimension, int seed)
                 continue;
             }
 
+            newBullets.Add(bullet);
             this.bullets.Add(bullet);
             trajectories.Add(bullet, [(bullet.X, bullet.Y)]);
+        }
 
-            Collision? collision = CollisionDetector.CheckBulletCollision(bullet, this, trajectories);
+        foreach (Bullet newBullet in this.bullets)
+        {
+            Collision? collision = CollisionDetector.CheckBulletCollision(newBullet, this, trajectories);
 
             if (collision is not null)
             {
-                _ = this.HandleBulletCollision(bullet, collision);
+                _ = this.HandleBulletCollision(newBullet, collision);
             }
         }
     }

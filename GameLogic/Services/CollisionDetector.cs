@@ -48,10 +48,40 @@ public static class CollisionDetector
                 if (trajectories.TryGetValue(otherBullet, out var bullet2Trajectory))
                 {
                     bool arePerpendicular = DirectionUtils.ArePerpendicular(bullet.Direction, otherBullet.Direction);
-                    if ((arePerpendicular && i < bullet2Trajectory.Count && bullet2Trajectory[i].X == x && bullet2Trajectory[i].Y == y)
-                        || (!arePerpendicular && bullet2Trajectory.Any(c => c.X == x && c.Y == y)))
+                    bool perpendicularCollision = arePerpendicular && i < bullet2Trajectory.Count && bullet2Trajectory[i].X == x && bullet2Trajectory[i].Y == y;
+                    bool parallelCollision = !arePerpendicular && bullet2Trajectory.Any(c => c.X == x && c.Y == y);
+
+                    if (perpendicularCollision || parallelCollision)
                     {
                         return new BulletCollision(otherBullet);
+                    }
+
+                    /* REFACTOR !!!
+                     *
+                     * The code below fixes an edge case where bullets may pass through
+                     * each other without colliding, even though they should. This occurs
+                     * when they are on parallel trajectories and no tiles overlap, particularly
+                     * with a speed of 2 when they are 4 tiles apart.
+                     *
+                     * To improve this, it would be beneficial to refactor the entire collision
+                     * detection logic and consider implementing a more general approach to collision
+                     * detection that could better handle various types of interactions in the game.
+                     * 
+                     */
+
+                    bool areDirectlyOpposite = Math.Abs(bullet.Direction - otherBullet.Direction) == 2;
+                    if (areDirectlyOpposite)
+                    {
+                        var (bnx, bny) = DirectionUtils.Normal(bullet.Direction);
+                        var (b2nx, b2ny) = DirectionUtils.Normal(otherBullet.Direction);
+
+                        var bulletPos = (trajectory[0].X - bnx, trajectory[0].Y - bny);
+                        var bullet2Pos = (bullet2Trajectory[0].X - b2nx, bullet2Trajectory[0].Y - b2ny);
+
+                        if (trajectory.Contains(bullet2Pos) && bullet2Trajectory.Contains(bulletPos))
+                        {
+                            return new BulletCollision(otherBullet);
+                        }
                     }
                 }
             }
