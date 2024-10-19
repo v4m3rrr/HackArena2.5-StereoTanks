@@ -25,7 +25,7 @@ internal class GridComponent : Component
 
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GridComponent"/> class.
     /// </summary>
@@ -120,14 +120,17 @@ internal class GridComponent : Component
     /// <param name="visibilityGrid">The visibility grid.</param>
     public void UpdatePlayerFogOfWar(Player player, bool[,] visibilityGrid)
     {
-        if (!this.fogsOfWar.TryGetValue(player, out var fogOfWar))
+        lock (this.syncLock)
         {
-            fogOfWar = new Sprites.FogOfWar(visibilityGrid, this, new Color(player.Color));
-            this.fogsOfWar[player] = fogOfWar;
-        }
-        else
-        {
-            fogOfWar.VisibilityGrid = visibilityGrid;
+            if (!this.fogsOfWar.TryGetValue(player, out var fogOfWar))
+            {
+                fogOfWar = new Sprites.FogOfWar(visibilityGrid, this, new Color(player.Color));
+                this.fogsOfWar[player] = fogOfWar;
+            }
+            else
+            {
+                fogOfWar.VisibilityGrid = visibilityGrid;
+            }
         }
     }
 
@@ -136,7 +139,10 @@ internal class GridComponent : Component
     /// </summary>
     public void ResetAllFogsOfWar()
     {
-        this.fogsOfWar.Clear();
+        lock (this.syncLock)
+        {
+            this.fogsOfWar.Clear();
+        }
     }
 
     /// <summary>
@@ -146,6 +152,27 @@ internal class GridComponent : Component
     public void ResetFogOfWar(Player player)
     {
         _ = this.fogsOfWar.Remove(player);
+    }
+
+    /// <summary>
+    /// Clears all sprites.
+    /// </summary>
+    /// <remarks>
+    /// This method do not unload the textures.
+    /// </remarks>
+    public void ClearSprites()
+    {
+        lock (this.syncLock)
+        {
+            this.tanks.Clear();
+            this.bullets.Clear();
+            this.zones.Clear();
+            this.lasers.Clear();
+            this.mines.Clear();
+            this.radarEffects.Clear();
+            this.mapItems.Clear();
+            this.fogsOfWar.Clear();
+        }
     }
 
     private void Logic_DimensionsChanged(object? sender, EventArgs args)

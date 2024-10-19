@@ -14,6 +14,8 @@ namespace GameClient.GameSceneComponents;
 internal class PlayerBarPanel<T> : AlignedListBox
     where T : PlayerBar
 {
+    private readonly object syncLock = new();
+
     private IEnumerable<T> Bars => this.Components.Cast<T>();
 
     /// <summary>
@@ -22,7 +24,9 @@ internal class PlayerBarPanel<T> : AlignedListBox
     /// <param name="players">The players to display.</param>
     public void Refresh(Dictionary<string, Player> players)
     {
-        var newPlayerBars = players.Values
+        lock (this.syncLock)
+        {
+            var newPlayerBars = players.Values
             .Where(player => this.Bars.All(pb => pb.Player != player) && player is not null)
             .Select(player =>
             {
@@ -35,26 +39,27 @@ internal class PlayerBarPanel<T> : AlignedListBox
             })
             .ToList();
 
-        foreach (T playerBar in this.Bars.ToList())
-        {
-            if (!players.ContainsValue(playerBar.Player))
+            foreach (T playerBar in this.Bars.ToList())
             {
-                playerBar.Parent = null;
+                if (!players.ContainsValue(playerBar.Player))
+                {
+                    playerBar.Parent = null;
+                }
             }
-        }
 
-        MonoTanks.InvokeOnMainThread(() =>
-        {
-            newPlayerBars
-                .SelectMany(pb => pb.GetAllDescendants<TextureComponent>())
-                .Where(x => !x.IsLoaded)
-                .ToList()
-                .ForEach(x => x.Load());
-        });
+            MonoTanks.InvokeOnMainThread(() =>
+            {
+                newPlayerBars
+                    .SelectMany(pb => pb.GetAllDescendants<TextureComponent>())
+                    .Where(x => !x.IsLoaded)
+                    .ToList()
+                    .ForEach(x => x.Load());
 
-        foreach (T playerBar in this.Bars.ToList())
-        {
-            playerBar.Transform.RecalculateIfNeeded();
+                foreach (T playerBar in this.Bars.ToList())
+                {
+                    playerBar.Transform.RecalculateIfNeeded();
+                }
+            });
         }
     }
 }

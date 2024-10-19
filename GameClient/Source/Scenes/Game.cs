@@ -220,6 +220,12 @@ internal class Game : Scene
         this.components.Grid.ResetAllFogsOfWar();
         this.updater.DisableGridComponent();
 
+        /* TODO: Unload content */
+
+        this.components.Grid.ClearSprites();
+        this.components.PlayerIdentityBarPanel.Clear();
+        this.components.PlayerStatsBarPanel.Clear();
+
         if (ServerConnection.IsConnected)
         {
             await ServerConnection.CloseAsync();
