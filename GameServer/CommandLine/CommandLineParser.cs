@@ -105,13 +105,13 @@ internal static partial class CommandLineParser
         if (!opts.SaveReplay && opts.ReplayFilepath is not null)
         {
             log.Warning(
-                "Argument \"--replay-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
+                "Argument \"--replay-filepath\" provided without \"-r\" or \"--save-replay\", ignoring.");
         }
 
         if (!opts.SaveReplay && opts.OverwriteReplayFile)
         {
             log.Warning(
-                "Argument \"--override-record-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
+                "Argument \"--overwrite-record-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
         }
 
         if (opts.SaveReplay && opts.ReplayFilepath is not null)
@@ -120,7 +120,7 @@ internal static partial class CommandLineParser
 
             if (!opts.OverwriteReplayFile && File.Exists(replayPath))
             {
-                log.Error($"Record file '{replayPath}' already exists. Use --override-record-file to overwrite.");
+                log.Error($"Record file '{replayPath}' already exists. Use --overwrite-record-file to overwrite.");
                 return false;
             }
 

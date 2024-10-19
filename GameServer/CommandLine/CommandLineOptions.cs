@@ -164,13 +164,13 @@ internal class CommandLineOptions
     public string? ReplayFilepath { get; private set; }
 
     /// <summary>
-    /// Gets a value indicating whether to override
+    /// Gets a value indicating whether to overwrite
     /// the replay file if it already exists.
     /// </summary>
     [Option(
         "overwrite-replay-file",
         Required = false,
-        HelpText = "Whether to override the replay file if it already exists.",
+        HelpText = "Whether to overwrite the replay file if it already exists.",
         Default = false)]
     public bool OverwriteReplayFile { get; private set; }
 
