@@ -470,7 +470,7 @@ public class Grid(int dimension, int seed)
             trajectories.Add(bullet, [(bullet.X, bullet.Y)]);
         }
 
-        foreach (Bullet newBullet in this.bullets)
+        foreach (Bullet newBullet in this.bullets.ToList())
         {
             Collision? collision = CollisionDetector.CheckBulletCollision(newBullet, this, trajectories);
 
