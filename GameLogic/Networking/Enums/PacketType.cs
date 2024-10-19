@@ -134,7 +134,7 @@ public enum PacketType
     /// <summary>
     /// The game ended packet type.
     /// </summary>
-    GameEnded = GameStatusGroup | 0x5,
+    GameEnded = GameStatusGroup | HasPayload | 0x5,
 
     /// <summary>
     /// The game status request packet type.
