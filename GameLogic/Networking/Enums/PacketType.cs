@@ -119,17 +119,17 @@ public enum PacketType
     /// <summary>
     /// The game started packet type.
     /// </summary>
-    GameStarting = GameStateGroup | 0x2,
+    GameStarting = GameStatusGroup | 0x2,
 
     /// <summary>
     /// The game started packet type.
     /// </summary>
-    GameStarted = GameStateGroup | 0x3,
+    GameStarted = GameStatusGroup | 0x3,
 
     /// <summary>
     /// The game started packet type.
     /// </summary>
-    GameInProgress = GameStateGroup | 0x4,
+    GameInProgress = GameStatusGroup | 0x4,
 
     /// <summary>
     /// The game ended packet type.
