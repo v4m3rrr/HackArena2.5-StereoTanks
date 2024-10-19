@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GameLogic;
@@ -34,7 +35,15 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <param name="payload">The game state payload.</param>
     public void UpdateGridLogic(GameStatePayload payload)
     {
-        components.Grid.Logic.UpdateFromGameStatePayload(payload);
+        try
+        {
+            components.Grid.Logic.UpdateFromGameStatePayload(payload);
+        }
+        catch (Exception ex)
+        {
+            DebugConsole.ThrowError("An error occurred while updating the grid logic.");
+            DebugConsole.ThrowError(ex);
+        }
     }
 
     /// <summary>
@@ -60,7 +69,11 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
         players
             .Where(x => !updatedPlayers.Contains(x.Value))
             .ToList()
-            .ForEach(x => players.Remove(x.Key));
+            .ForEach(x =>
+            {
+                _ = players.Remove(x.Key);
+                components.Grid.ResetFogOfWar(x.Value);
+            });
     }
 
 #if HACKATHON

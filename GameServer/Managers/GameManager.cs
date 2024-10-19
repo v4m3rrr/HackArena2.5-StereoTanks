@@ -155,76 +155,79 @@ internal class GameManager(GameInstance game, Logger log)
 
             stopwatch.Restart();
 
-#if HACKATHON
-            log.Verbose("Processing hackathon bot actions...");
-
-            var actionList = game.PacketHandler.HackathonBotActions.ToList();
-            actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
-            Action[] actions = actionList.Select(x => x.Value).ToArray();
-            this.random.Shuffle(actions);
-
-            foreach (Action action in actions)
+            lock (game)
             {
-                action.Invoke();
-            }
+#if HACKATHON
+                log.Verbose("Processing hackathon bot actions...");
 
-            game.PacketHandler.HackathonBotActions.Clear();
+                var actionList = game.PacketHandler.HackathonBotActions.ToList();
+                actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
+                Action[] actions = actionList.Select(x => x.Value).ToArray();
+                this.random.Shuffle(actions);
 
-            log.Verbose("Hackathon bot actions processed.");
+                foreach (Action action in actions)
+                {
+                    action.Invoke();
+                }
+
+                game.PacketHandler.HackathonBotActions.Clear();
+
+                log.Verbose("Hackathon bot actions processed.");
 #endif
 
-            try
-            {
-                log.Verbose("Updating game logic...");
-                this.logicUpdater.UpdateGrid();
-                log.Verbose("Game logic updated.");
-            }
-            catch (Exception ex)
-            {
-                log.Error(ex, "An error occurred while updating the game logic.");
-            }
+                try
+                {
+                    log.Verbose("Updating game logic...");
+                    this.logicUpdater.UpdateGrid();
+                    log.Verbose("Game logic updated.");
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex, "An error occurred while updating the game logic.");
+                }
 
-            // Spawn new items on the map
-            log.Verbose("Generating new item on the map...");
+                // Spawn new items on the map
+                log.Verbose("Generating new item on the map...");
 
-            SecondaryItem? item = null;
-            if (game.Settings.SandboxMode)
-            {
-                // In sandbox mode, spawn new items only if there are players in the game
-                int playerCount = game.Players.Count();
-                if (playerCount > 0)
+                SecondaryItem? item = null;
+                if (game.Settings.SandboxMode)
+                {
+                    // In sandbox mode, spawn new items only if there are players in the game
+                    int playerCount = game.Players.Count();
+                    if (playerCount > 0)
+                    {
+                        item = game.Grid.GenerateNewItemOnMap();
+                    }
+                }
+                else
                 {
                     item = game.Grid.GenerateNewItemOnMap();
                 }
-            }
-            else
-            {
-                item = game.Grid.GenerateNewItemOnMap();
-            }
 
-            if (item is not null)
-            {
-                log.Verbose("New item generated on the map: {Item}", item);
+                if (item is not null)
+                {
+                    log.Verbose("New item generated on the map: {Item}", item);
+                }
+
+                // Broadcast the game state
+                lock (this.CurrentGameStateId ?? new object())
+                {
+                    this.CurrentGameStateId = Guid.NewGuid().ToString();
+                    log.Verbose("New game state id generated (tick: {tick}): {GameStateId}", this.tick, this.CurrentGameStateId);
+                }
+
+                log.Verbose("Resetting player game tick properties...");
+                foreach (PlayerConnection player in game.Players)
+                {
+                    player.ResetGameTickProperties();
+                }
+
+                log.Verbose("Broadcasting game state...");
+                var broadcast = this.BroadcastGameStateAsync();
+
+                log.Verbose("Resetting player radar usage...");
+                this.logicUpdater.ResetPlayerRadarUsage();
             }
-
-            // Broadcast the game state
-            lock (this.CurrentGameStateId ?? new object())
-            {
-                this.CurrentGameStateId = Guid.NewGuid().ToString();
-                log.Verbose("New game state id generated (tick: {tick}): {GameStateId}", this.tick, this.CurrentGameStateId);
-            }
-
-            log.Verbose("Resetting player game tick properties...");
-            foreach (PlayerConnection player in game.Players)
-            {
-                player.ResetGameTickProperties();
-            }
-
-            log.Verbose("Broadcasting game state...");
-            var broadcast = this.BroadcastGameStateAsync();
-
-            log.Verbose("Resetting player radar usage...");
-            this.logicUpdater.ResetPlayerRadarUsage();
 
             game.ReplayManager?.AddGameState(this.tick, this.CurrentGameStateId);
 

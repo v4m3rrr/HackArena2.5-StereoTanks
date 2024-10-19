@@ -48,7 +48,7 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Occurs when a generation warning is raised.
     /// </summary>
-    public event EventHandler<string> GenerationWarning;
+    public event EventHandler<string>? GenerationWarning;
 
     /// <summary>
     /// Gets an empty grid.
@@ -333,6 +333,22 @@ public class Grid(int dimension, int seed)
         if (tank is not null)
         {
             _ = this.tanks.Remove(tank);
+        }
+
+        foreach (Zone zone in this.zones)
+        {
+            switch (zone.Status)
+            {
+                case ZoneStatus.BeingCaptured beingCaptured when beingCaptured.Player == owner:
+                case ZoneStatus.Captured captured when captured.Player == owner:
+                case ZoneStatus.BeingContested beingContested when beingContested.CapturedBy == owner:
+                case ZoneStatus.BeingRetaken beingRetaken when beingRetaken.CapturedBy == owner:
+                    zone.Status = new ZoneStatus.Neutral();
+                    break;
+                case ZoneStatus.BeingRetaken beingRetaken when beingRetaken.RetakenBy == owner:
+                    zone.Status = new ZoneStatus.Captured(beingRetaken.CapturedBy);
+                    break;
+            }
         }
 
         return tank;

@@ -162,27 +162,34 @@ internal class GameInstance
     /// <param name="socket">The socket of the connection to remove.</param>
     public void RemoveConnection(WebSocket socket)
     {
-        if (this.connections.TryRemove(socket, out var connection))
-        {
-            this.log.Information($"Connection removed: {connection}");
+        bool removed;
+        Connection? connection;
 
-            if (connection is PlayerConnection p
-                && this.GameManager.Status is GameStatus.Running
-                && !this.Settings.SandboxMode)
+        lock (this)
+        {
+            removed = this.connections.TryRemove(socket, out connection);
+            if (removed)
             {
-                this.disconnectedConnectionsWhileInGame.Add(p);
-                this.log.Information(
-                    "Connection marked as a disconnected while in game: {p}.", p);
+                this.log.Information($"Connection removed: {connection}");
+
+                if (connection is PlayerConnection p)
+                {
+                    this.PlayerManager.RemovePlayer(p);
+                }
             }
         }
-        else
+
+        if (!removed)
         {
             this.log.Error($"Failed to remove connection: {connection}.");
         }
-
-        if (connection is PlayerConnection player)
+        else if (connection is PlayerConnection player
+            && this.GameManager.Status is GameStatus.Running
+            && !this.Settings.SandboxMode)
         {
-            this.PlayerManager.RemovePlayer(player);
+            this.disconnectedConnectionsWhileInGame.Add(player);
+            this.log.Information(
+                "Connection marked as a disconnected while in game: {player}.", player);
         }
     }
 
@@ -214,8 +221,11 @@ internal class GameInstance
 
             foreach (Connection connection in abortedConnections)
             {
-                this.log.Information($"Removing aborted connection: {connection}");
-                this.RemoveConnection(connection.Socket);
+                lock (this)
+                {
+                    this.log.Information($"Removing aborted connection: {connection}");
+                    this.RemoveConnection(connection.Socket);
+                }
             }
 
             await Task.Delay(1000);

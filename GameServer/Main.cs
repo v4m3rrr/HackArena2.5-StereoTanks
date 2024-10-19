@@ -6,10 +6,15 @@ using GameLogic.Networking;
 using GameServer;
 using Serilog;
 
+string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ffff");
 var log = new LoggerConfiguration()
+#if DEBUG
     .MinimumLevel.Debug()
+#else
+    .MinimumLevel.Information()
+#endif
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss:ffff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .WriteTo.File("logs/.log", rollingInterval: RollingInterval.Minute)
+    .WriteTo.File($"logs/{timestamp}.log")
     .CreateLogger();
 
 CommandLineOptions? opts = CommandLineParser.Parse(args, log);
@@ -225,9 +230,12 @@ async Task<Task> HandlePlayerConnection(
 #endif
         ;
 
-        player = game.PlayerManager.CreatePlayer(connectionData);
-        connection = new PlayerConnection(context, socket, connectionData, log, player);
-        game.AddConnection(connection);
+        lock (game)
+        {
+            player = game.PlayerManager.CreatePlayer(connectionData);
+            connection = new PlayerConnection(context, socket, connectionData, log, player);
+            game.AddConnection(connection);
+        }
     }
 
     await AcceptConnection(connection);

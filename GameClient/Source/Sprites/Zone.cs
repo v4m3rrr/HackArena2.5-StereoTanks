@@ -10,9 +10,11 @@ namespace GameClient.Sprites;
 /// </summary>
 internal class Zone : ISprite
 {
+    private const float TextureOpacity = 0.7f;
+    private const float IndexOpacity = 0.65f;
+
     private static readonly ScalableTexture2D.Static StaticCornerTexture = new($"Images/Game/zone_corner.svg");
     private static readonly ScalableTexture2D.Static StaticEdgeTexture = new($"Images/Game/zone_edge.svg");
-
     private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 25);
 
     private readonly ScalableTexture2D[] textures = new ScalableTexture2D[8];
@@ -33,7 +35,7 @@ internal class Zone : ISprite
                 Rotation = MathF.PI / 2 * i,
                 RelativeOrigin = new Vector2(0.5f),
                 CenterOrigin = true,
-                Opacity = 0.7f,
+                Opacity = TextureOpacity,
                 Transform =
                 {
                     Type = TransformType.Absolute,
@@ -45,7 +47,7 @@ internal class Zone : ISprite
                 Rotation = MathF.PI / 2 * i,
                 RelativeOrigin = new Vector2(0.5f),
                 CenterOrigin = true,
-                Opacity = 0.7f,
+                Opacity = TextureOpacity,
                 Transform =
                 {
                     Type = TransformType.Absolute,
@@ -93,6 +95,7 @@ internal class Zone : ISprite
     {
         if (this.Logic.Status is ZoneStatus.Neutral)
         {
+            this.index.Color = Color.White * IndexOpacity;
             foreach (ScalableTexture2D texture in this.textures)
             {
                 texture.Color = Color.White;
@@ -126,7 +129,7 @@ internal class Zone : ISprite
         if (this.Logic.Status is ZoneStatus.Captured captured)
         {
             var color = new Color(captured.Player.Color);
-            this.index.Color = color * 0.5f;
+            this.index.Color = color * IndexOpacity;
             foreach (ScalableTexture2D texture in this.textures)
             {
                 texture.Color = color;
@@ -136,7 +139,7 @@ internal class Zone : ISprite
         if (this.Logic.Status is ZoneStatus.BeingContested beingContested)
         {
             var color = beingContested.CapturedBy is not null ? new Color(beingContested.CapturedBy.Color) : Color.White;
-            this.index.Color = color * 0.5f;
+            this.index.Color = color * IndexOpacity;
             for (int i = 0; i < 4; i++)
             {
                 this.textures[i * 2].Color = color;
@@ -148,7 +151,7 @@ internal class Zone : ISprite
         {
             var capturedColor = new Color(beingRetaken.CapturedBy.Color);
             var retakenColor = new Color(beingRetaken.RetakenBy.Color);
-            this.index.Color = capturedColor * 0.5f;
+            this.index.Color = capturedColor * IndexOpacity;
 
             float progress = 1 - ((float)beingRetaken.RemainingTicks / GameLogic.Zone.TicksToCapture);
             float progressIndex = progress * this.textures.Length;

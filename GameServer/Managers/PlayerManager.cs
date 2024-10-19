@@ -36,10 +36,10 @@ internal class PlayerManager(GameInstance game, Logger log)
         } while (game.Players.Any(p => p.Instance.Id == id));
 
         var nickname = connectionData.Nickname;
-        log.Verbose("Player ID: {id} (nickname)", id, nickname);
+        log.Verbose("Player ID: {id} ({nickname})", id, nickname);
 
         var color = this.GetPlayerColor();
-        log.Verbose("Player color: {color} (nickname)", color, nickname);
+        log.Verbose("Player color: {color} ({nickname})", color, nickname);
 
         log.Verbose("Creating player instance for ({nickname})", nickname);
         var instance = new GameLogic.Player(id, connectionData.Nickname, color);
