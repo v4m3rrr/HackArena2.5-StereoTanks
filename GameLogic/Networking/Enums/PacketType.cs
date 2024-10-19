@@ -68,24 +68,9 @@ public enum PacketType
     GameStateGroup = 0x30,
 
     /// <summary>
-    /// The game started packet type.
-    /// </summary>
-    GameStarted = GameStateGroup | 0x1,
-
-    /// <summary>
     /// The game state packet type.
     /// </summary>
     GameState = GameStateGroup | HasPayload | 0x2,
-
-    /// <summary>
-    /// The game end packet type.
-    /// </summary>
-    GameEnd = GameStateGroup | HasPayload | 0x3,
-
-    /// <summary>
-    /// The game starting packet type.
-    /// </summary>
-    GameStarting = GameStateGroup | 0x4,
 
     /// <summary>
     /// The ready to receive game state packet type.
@@ -118,6 +103,43 @@ public enum PacketType
     /// The pass packet type.
     /// </summary>
     Pass = PlayerResponseActionGroup | HasPayload | 0x7,
+
+    // Game status group (range: 0x50 - 0x5F)
+
+    /// <summary>
+    /// The game status group packet type.
+    /// </summary>
+    GameStatusGroup = 0x50,
+
+    /// <summary>
+    /// The game not started packet type.
+    /// </summary>
+    GameNotStarted = GameStatusGroup | 0x1,
+
+    /// <summary>
+    /// The game started packet type.
+    /// </summary>
+    GameStarting = GameStateGroup | 0x2,
+
+    /// <summary>
+    /// The game started packet type.
+    /// </summary>
+    GameStarted = GameStateGroup | 0x3,
+
+    /// <summary>
+    /// The game started packet type.
+    /// </summary>
+    GameInProgress = GameStateGroup | 0x4,
+
+    /// <summary>
+    /// The game ended packet type.
+    /// </summary>
+    GameEnded = GameStatusGroup | 0x5,
+
+    /// <summary>
+    /// The game status request packet type.
+    /// </summary>
+    GameStatusRequest = GameStatusGroup | 0x7,
 
 #if DEBUG
 

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using GameLogic;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -7,7 +8,8 @@ namespace GameServer;
 /// Represents the game manager.
 /// </summary>
 /// <param name="game">The game instance.</param>
-internal class GameManager(GameInstance game)
+/// <param name="log">The logger.</param>
+internal class GameManager(GameInstance game, Logger log)
 {
 #if HACKATHON
     // Used to shuffle the bot actions.
@@ -56,14 +58,21 @@ internal class GameManager(GameInstance game)
             this.Status = GameStatus.Starting;
         }
 
-        Console.WriteLine("[INFO] Game is starting...");
+        log.Information("Game is starting...");
 
         game.ReplayManager?.SaveLobbyData();
         await game.LobbyManager.SendGameStartingToAll();
 
-        while (game.Players.Any(x => !x.IsReadyToReceiveGameState))
+        if (!game.Settings.SandboxMode)
         {
-            await Task.Delay(100);
+            log.Debug("Waiting for all players to be ready to receive the game state...");
+
+            while (game.Players.Any(x => !x.IsReadyToReceiveGameState))
+            {
+                await Task.Delay(100);
+            }
+
+            log.Debug("All players are ready to receive the game state.");
         }
 
         _ = game.LobbyManager.SendGameStartedToAll();
@@ -73,7 +82,7 @@ internal class GameManager(GameInstance game)
             this.Status = GameStatus.Running;
         }
 
-        Console.WriteLine("[INFO] Game has started!");
+        log.Information("Game has started!");
 
         _ = Task.Run(this.StartBroadcastingAsync);
     }
@@ -85,6 +94,8 @@ internal class GameManager(GameInstance game)
     {
         this.Status = GameStatus.Ended;
 
+        log.Information("Game has ended.");
+
         game.ReplayManager?.SaveGameEnd();
         game.ReplayManager?.SaveReplay();
 
@@ -93,16 +104,22 @@ internal class GameManager(GameInstance game)
 #endif
 
         var tasks = new List<Task>();
+        var cancellationTokenSource = new CancellationTokenSource(10_000);
+
+        log.Verbose("Sending game end to all clients...");
 
         foreach (var connection in game.Connections)
         {
             var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
-            var packet = new ResponsePacket(payload, converters);
-            var task = packet.SendAsync(connection);
+            var packet = new ResponsePacket(payload, log, converters);
+            var task = packet.SendAsync(connection, cancellationTokenSource.Token);
             tasks.Add(task);
         }
 
         await Task.WhenAll(tasks);
+
+        log.Verbose("Game end sent to all clients.");
+        log.Verbose("Closing all connections...");
 
         tasks.Clear();
         foreach (var connection in game.Connections)
@@ -113,11 +130,15 @@ internal class GameManager(GameInstance game)
 
         await Task.WhenAll(tasks);
 
+        log.Verbose("All connections closed.");
+        log.Debug("Exiting the game server...");
         Environment.Exit(0);
     }
 
     private async Task StartBroadcastingAsync()
     {
+        log.Debug("Starting game broadcasting...");
+
         // Give some time for the clients to load the game
         await PreciseTimer.PreciseDelay(game.Settings.BroadcastInterval);
 
@@ -127,6 +148,7 @@ internal class GameManager(GameInstance game)
         {
             if (this.tick++ >= game.Settings.Ticks)
             {
+                log.Verbose("Game has reached the maximum number of ticks.");
                 this.EndGame();
                 break;
             }
@@ -134,6 +156,8 @@ internal class GameManager(GameInstance game)
             stopwatch.Restart();
 
 #if HACKATHON
+            log.Verbose("Processing hackathon bot actions...");
+
             var actionList = game.PacketHandler.HackathonBotActions.ToList();
             actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
             Action[] actions = actionList.Select(x => x.Value).ToArray();
@@ -145,29 +169,70 @@ internal class GameManager(GameInstance game)
             }
 
             game.PacketHandler.HackathonBotActions.Clear();
+
+            log.Verbose("Hackathon bot actions processed.");
 #endif
 
-            this.logicUpdater.UpdateGrid();
+            try
+            {
+                log.Verbose("Updating game logic...");
+                this.logicUpdater.UpdateGrid();
+                log.Verbose("Game logic updated.");
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "An error occurred while updating the game logic.");
+            }
+
+            // Spawn new items on the map
+            log.Verbose("Generating new item on the map...");
+
+            SecondaryItem? item = null;
+            if (game.Settings.SandboxMode)
+            {
+                // In sandbox mode, spawn new items only if there are players in the game
+                int playerCount = game.Players.Count();
+                if (playerCount > 0)
+                {
+                    item = game.Grid.GenerateNewItemOnMap();
+                }
+            }
+            else
+            {
+                item = game.Grid.GenerateNewItemOnMap();
+            }
+
+            if (item is not null)
+            {
+                log.Verbose("New item generated on the map: {Item}", item);
+            }
 
             // Broadcast the game state
             lock (this.CurrentGameStateId ?? new object())
             {
                 this.CurrentGameStateId = Guid.NewGuid().ToString();
+                log.Verbose("New game state id generated (tick: {tick}): {GameStateId}", this.tick, this.CurrentGameStateId);
             }
 
+            log.Verbose("Resetting player game tick properties...");
             foreach (PlayerConnection player in game.Players)
             {
                 player.ResetGameTickProperties();
             }
 
+            log.Verbose("Broadcasting game state...");
             var broadcast = this.BroadcastGameStateAsync();
+
+            log.Verbose("Resetting player radar usage...");
             this.logicUpdater.ResetPlayerRadarUsage();
+
             game.ReplayManager?.AddGameState(this.tick, this.CurrentGameStateId);
 
-            await Task.WhenAll(broadcast);
+            log.Verbose("Game state broadcast completed.");
             stopwatch.Stop();
 
             var sleepTime = (int)(game.Settings.BroadcastInterval - stopwatch.ElapsedMilliseconds);
+            log.Verbose("Sleep time: {SleepTime} ms", sleepTime);
 
 #if HACKATHON
             var tcs = new TaskCompletionSource<bool>();
@@ -181,6 +246,7 @@ internal class GameManager(GameInstance game)
                         && game.Players.All(x => x.IsHackathonBot && x.HasMadeActionToCurrentGameState))
                     {
                         _ = tcs.TrySetResult(true);
+                        log.Verbose("Eager broadcast triggered.");
                     }
                 }
             }
@@ -202,8 +268,12 @@ internal class GameManager(GameInstance game)
             {
                 var broadcastTime = stopwatch.ElapsedMilliseconds;
                 var broadcastInterval = game.Settings.BroadcastInterval;
-                Console.WriteLine("[WARN] Game state broadcast took longer than expected!");
-                Console.WriteLine($"[^^^^] Tick {this.tick}, {broadcastTime}/{broadcastInterval} ms");
+                log.Warning(
+                    "Game state broadcast took longer than expected! " +
+                    "Tick: {Tick}, {BroadcastTime}/{BroadcastInterval} ms",
+                    this.tick,
+                    broadcastTime,
+                    broadcastInterval);
             }
         }
     }
@@ -211,6 +281,7 @@ internal class GameManager(GameInstance game)
     private List<Task> BroadcastGameStateAsync()
     {
         var tasks = new List<Task>();
+        var cancellationTokenSource = new CancellationTokenSource(game.Settings.BroadcastInterval * 100);
 
         foreach (Connection connection in game.Connections)
         {
@@ -219,14 +290,16 @@ internal class GameManager(GameInstance game)
                 continue;
             }
 
+            log.Verbose("Sending game state ({tick}) to {Connection}.", this.tick, connection);
+
             var payload = game.PayloadHelper.GetGameStatePayload(
                 connection,
                 this.tick,
                 this.CurrentGameStateId!,
                 out var converters);
 
-            var packet = new ResponsePacket(payload, converters);
-            var task = packet.SendAsync(connection);
+            var packet = new ResponsePacket(payload, log, converters);
+            var task = packet.SendAsync(connection, cancellationTokenSource.Token);
             tasks.Add(task);
         }
 

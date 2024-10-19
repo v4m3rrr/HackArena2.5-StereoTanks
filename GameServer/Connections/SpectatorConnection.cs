@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -9,8 +10,13 @@ namespace GameServer;
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
 /// <param name="Data">The connection data of the spectator.</param>
-internal record class SpectatorConnection(HttpListenerContext Context, WebSocket Socket, ConnectionData Data)
-    : Connection(Context, Socket, Data)
+/// <param name="Log">The logger.</param>
+internal record class SpectatorConnection(
+    HttpListenerContext Context,
+    WebSocket Socket,
+    ConnectionData Data,
+    Logger Log)
+    : Connection(Context, Socket, Data, Log)
 {
     /// <inheritdoc/>
     public override string ToString()

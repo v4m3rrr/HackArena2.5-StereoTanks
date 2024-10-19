@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
 using GameLogic;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -10,9 +11,15 @@ namespace GameServer;
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
 /// <param name="Instance">The player instance.</param>
+/// <param name="Log">The logger.</param>
 /// <param name="Data">The connection data of the player.</param>
-internal record class PlayerConnection(HttpListenerContext Context, WebSocket Socket, ConnectionData.Player Data, Player Instance)
-    : Connection(Context, Socket, Data)
+internal record class PlayerConnection(
+    HttpListenerContext Context,
+    WebSocket Socket,
+    ConnectionData.Player Data,
+    Logger Log,
+    Player Instance)
+    : Connection(Context, Socket, Data, Log)
 {
     /// <summary>
     /// Gets the player connection data.

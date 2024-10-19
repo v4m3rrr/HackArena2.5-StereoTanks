@@ -74,15 +74,32 @@ internal class Lobby : Scene
         ChangeToPreviousOrDefault<MainMenu>();
     }
 
+    private static async Task SendLobbyDataRequest()
+    {
+        var payload = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
+        var packet = PacketSerializer.Serialize(payload);
+        await ServerConnection.SendAsync(packet);
+    }
+
+    private static async Task SendGameStatusRequest()
+    {
+        var payload = new EmptyPayload() { Type = PacketType.GameStatusRequest };
+        var packet = PacketSerializer.Serialize(payload);
+        await ServerConnection.SendAsync(packet);
+    }
+
     private void Lobby_Showing(object? sender, SceneDisplayEventArgs? e)
     {
         this.updater.UpdateJoinCode();
 
-        ServerConnection.BufferSize = 1024 * 4;
         ServerConnection.MessageReceived += this.Connection_MessageReceived;
         ServerConnection.ErrorThrew += Connection_ErrorThrew;
 
-        _ = Task.Run(this.SendLobbyDataRequest);
+        _ = Task.Run(async () =>
+        {
+            await SendLobbyDataRequest();
+            await SendGameStatusRequest();
+        });
     }
 
     private void Lobby_Hiding(object? sender, EventArgs e)
@@ -118,6 +135,8 @@ internal class Lobby : Scene
                     break;
 
                 case PacketType.GameStarting:
+                case PacketType.GameInProgress when ServerConnection.Data.IsSpectator:
+                case PacketType.GameInProgress when Game.Settings?.SandboxMode ?? false:
                 case PacketType.GameStarted when ServerConnection.Data.IsSpectator:
                     Change<Game>();
                     break;
@@ -133,12 +152,5 @@ internal class Lobby : Scene
                     break;
             }
         }
-    }
-
-    private void SendLobbyDataRequest()
-    {
-        var payload = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
-        var packet = PacketSerializer.Serialize(payload);
-        _ = ServerConnection.SendAsync(packet);
     }
 }

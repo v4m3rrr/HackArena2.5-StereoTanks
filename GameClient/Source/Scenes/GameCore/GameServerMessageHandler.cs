@@ -75,7 +75,22 @@ internal static class GameServerMessageHandler
         Game.PlayerId = data.PlayerId;
 
 #if HACKATHON
-        updater.UpdateMatchName(data.ServerSettings.MatchName);
+
+        string? matchName = data.ServerSettings.MatchName;
+        if (data.ServerSettings.SandboxMode)
+        {
+            if (matchName is null)
+            {
+                matchName = "sandbox";
+            }
+            else
+            {
+                matchName += " [sandbox]";
+            }
+        }
+
+        updater.UpdateMatchName(matchName);
+
 #endif
 
         updater.EnableGridComponent();

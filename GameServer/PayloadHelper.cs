@@ -43,6 +43,27 @@ internal class PayloadHelper(GameInstance game)
     }
 
     /// <summary>
+    /// Gets the game status payload.
+    /// </summary>
+    /// <returns>The game status payload.</returns>
+    /// <remarks>
+    /// If the game status is invalid, an error payload will be returned.
+    /// </remarks>
+    public IPacketPayload GetGameStatusPayload()
+    {
+        return game.GameManager.Status switch
+        {
+            GameStatus.InLobby => new EmptyPayload() { Type = PacketType.GameNotStarted },
+            GameStatus.Starting => new EmptyPayload() { Type = PacketType.GameStarting },
+            GameStatus.Running => new EmptyPayload() { Type = PacketType.GameInProgress },
+            GameStatus.Ended => new EmptyPayload() { Type = PacketType.GameEnded },
+            _ => new ErrorPayload(
+                PacketType.InvalidPacketUsageError | PacketType.HasPayload,
+                "Invalid game status."),
+        };
+    }
+
+    /// <summary>
     /// Gets the game state payload.
     /// </summary>
     /// <param name="connection">The connection to get the game state for.</param>

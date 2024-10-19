@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using CommandLine;
 using CommandLine.Text;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -10,15 +11,20 @@ namespace GameServer;
 /// </summary>
 internal static partial class CommandLineParser
 {
+    private static Logger log = default!;
+
     /// <summary>
     /// Parses the command line arguments.
     /// </summary>
     /// <param name="args">The command line arguments.</param>
+    /// <param name="log">The log.</param>
     /// <returns>
     /// The parsed options or <see langword="null"/> if the options are invalid.
     /// </returns>
-    public static CommandLineOptions? Parse(string[] args)
+    public static CommandLineOptions? Parse(string[] args, Logger log)
     {
+        CommandLineParser.log = log;
+
         var parser = new Parser(with =>
         {
             with.HelpWriter = null;
@@ -49,6 +55,11 @@ internal static partial class CommandLineParser
         _ = parserResult.WithNotParsed(
             errs =>
             {
+                foreach (var err in errs)
+                {
+                    log.Error("{err}", err);
+                }
+
                 var helpText = GenerateHelpText(parserResult);
                 Console.WriteLine(helpText);
             });
@@ -63,26 +74,44 @@ internal static partial class CommandLineParser
     {
         if (!opts.SkipHostRegexValidation && !HostRegex().IsMatch(opts.Host))
         {
-            Console.WriteLine("Invalid host. Must be a valid IP address or 'localhost'.");
+            log.Error("Invalid host. Must be a valid IP address or 'localhost'.");
             return false;
         }
 
         if (opts.Port is < 1 or > 65535)
         {
-            Console.WriteLine("Invalid port. Must be between 1 and 65535.");
+            log.Error("Invalid port. Must be between 1 and 65535.");
             return false;
         }
 
-        if (opts.NumberOfPlayers is < 2 or > 4)
+        if (!opts.SandboxMode && opts.NumberOfPlayers is < 2 or > 4)
         {
-            Console.WriteLine("Invalid number of players. Must be between 2 and 4.");
+            log.Error("Invalid number of players. Must be between 2 and 4.");
             return false;
         }
 
         if (opts.BroadcastInterval <= 0)
         {
-            Console.WriteLine("Invalid broadcast interval. Must be at least 1.");
+            log.Error("Invalid broadcast interval. Must be at least 1.");
             return false;
+        }
+
+        if (opts.SandboxMode && opts.SaveReplay)
+        {
+            log.Error("Cannot save replay in sandbox mode.");
+            return false;
+        }
+
+        if (!opts.SaveReplay && opts.ReplayFilepath is not null)
+        {
+            log.Warning(
+                "Argument \"--replay-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
+        }
+
+        if (!opts.SaveReplay && opts.OverwriteReplayFile)
+        {
+            log.Warning(
+                "Argument \"--override-record-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
         }
 
         if (opts.SaveReplay && opts.ReplayFilepath is not null)
@@ -91,7 +120,7 @@ internal static partial class CommandLineParser
 
             if (!opts.OverwriteReplayFile && File.Exists(replayPath))
             {
-                Console.WriteLine($"Record file '{replayPath}' already exists. Use --override-record-file to overwrite.");
+                log.Error($"Record file '{replayPath}' already exists. Use --override-record-file to overwrite.");
                 return false;
             }
 
@@ -99,7 +128,7 @@ internal static partial class CommandLineParser
             var pathWithoutExtension = Path.GetFileNameWithoutExtension(replayPath);
             if (pathWithoutExtension.ToLower().EndsWith("_results"))
             {
-                Console.WriteLine("The record file cannot end with '_results'.");
+                log.Error("The record file cannot end with '_results'.");
                 return false;
             }
 #endif
@@ -110,7 +139,7 @@ internal static partial class CommandLineParser
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to create directory for record file '{replayPath}': {ex.Message}");
+                log.Error("Failed to create directory for record file '{replayPath}': {message}", replayPath, ex.Message);
                 return false;
             }
 
@@ -120,7 +149,7 @@ internal static partial class CommandLineParser
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to create record file '{replayPath}': {ex.Message}");
+                log.Error("Failed to create record file '{replayPath}': {message}", replayPath, ex.Message);
                 return false;
             }
         }

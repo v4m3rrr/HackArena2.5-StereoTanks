@@ -4,15 +4,22 @@ using System.Net.WebSockets;
 using System.Text;
 using GameLogic.Networking;
 using GameServer;
+using Serilog;
 
-CommandLineOptions? opts = CommandLineParser.Parse(args);
+var log = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss:ffff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/.log", rollingInterval: RollingInterval.Minute)
+    .CreateLogger();
+
+CommandLineOptions? opts = CommandLineParser.Parse(args, log);
 
 if (opts is null)
 {
     return;
 }
 
-Console.WriteLine($"[INFO] Listening on http://{opts.Host}:{opts.Port}/\n");
+log.Information("Listening on http://{host}:{port}/\n", opts.Host, opts.Port);
 
 var listener = new HttpListener();
 listener.Prefixes.Add($"http://{opts.Host}:{opts.Port}/");
@@ -21,23 +28,24 @@ listener.Start();
 opts.Seed ??= new Random().Next();
 
 #if DEBUG
-Console.WriteLine("[INFO] Debug mode is enabled.");
+log.Information("Debug mode is enabled.");
 #endif
 
 #if HACKATHON
-Console.WriteLine("[INFO] Hackathon mode is enabled.");
+log.Information("Hackathon mode is enabled.");
 #endif
 
 #if DEBUG || HACKATHON
 Console.WriteLine();
 #endif
 
-Console.WriteLine("[INFO] Server started.");
-Console.WriteLine("[INFO] Seed: " + opts.Seed);
-Console.WriteLine("[INFO] Broadcast interval: " + opts.BroadcastInterval);
-Console.WriteLine("[INFO] Ticks: " + opts.Ticks);
-Console.WriteLine("[INFO] Join code: " + opts.JoinCode);
-Console.WriteLine("[INFO] Number of players: " + opts.NumberOfPlayers);
+log.Information("Server started.");
+log.Information("Seed: {seed}", opts.Seed);
+log.Information("Broadcast interval: {interval}", opts.BroadcastInterval);
+log.Information("Ticks: {ticks}", opts.SandboxMode ? "n/a" : opts.Ticks);
+log.Information("Join code: {code}", opts.JoinCode ?? string.Empty);
+log.Information("Number of players: {number}", opts.NumberOfPlayers);
+log.Information("Sandbox mode: {mode}", opts.SandboxMode ? "on" : "off");
 
 string? saveReplayPath = null;
 if (opts.SaveReplay)
@@ -46,21 +54,28 @@ if (opts.SaveReplay)
         ? Path.GetFullPath(opts.ReplayFilepath)
         : Path.GetFullPath($"Replay_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json");
 
-    Console.WriteLine("[INFO] Replay will be saved to:");
-    Console.WriteLine("[^^^^] " + saveReplayPath);
+    log.Information("Replay will be saved to: {path}", saveReplayPath);
 }
 
 #if HACKATHON
-Console.WriteLine("[INFO] Eager broadcast: " + (opts.EagerBroadcast ? "on" : "off"));
+log.Information("Eager broadcast: {status}", opts.EagerBroadcast ? "on" : "off");
 #endif
 
-Console.WriteLine("\n[INFO] Press Ctrl+C to stop the server.\n");
+Console.WriteLine();
+
+log.Information("Press Ctrl+C to stop the server.\n");
 
 var game = saveReplayPath is not null
-    ? new GameInstance(opts, saveReplayPath)
-    : new GameInstance(opts);
+    ? new GameInstance(opts, log, saveReplayPath)
+    : new GameInstance(opts, log);
 
+game.Grid.GenerationWarning += (s, e) => log.Warning("Map generation: {e}", e);
 game.Grid.GenerateMap();
+
+if (opts.SandboxMode)
+{
+    game.GameManager.StartGame();
+}
 
 var failedAttempts = new ConcurrentDictionary<string, (int Attempts, DateTime LastAttempt)>();
 
@@ -95,16 +110,13 @@ async Task HandleRequest(HttpListenerContext context)
         out EnumSerializationFormat enumSerialization))
     {
         await RejectConnection(
-            new UnknownConnection(context, socket, enumSerialization),
+            new UnknownConnection(context, socket, enumSerialization, log),
             "InvalidEnumSerializationFormat");
         return;
     }
 
-    var unknownConnection = new UnknownConnection(context, socket, enumSerialization);
-
-#if DEBUG
-    Console.WriteLine($"[INFO] Request from {unknownConnection.Ip} ({context.Request.Url})");
-#endif
+    var unknownConnection = new UnknownConnection(context, socket, enumSerialization, log);
+    log.Debug("Request from {ip} ({url})", unknownConnection.Ip, context.Request.Url);
 
     if (IsIpBlocked(unknownConnection.Ip))
     {
@@ -171,7 +183,7 @@ async Task<Task> HandlePlayerConnection(
     GameLogic.Player player;
     PlayerConnection connection;
 
-    if (!quickJoin)
+    if (!quickJoin && !opts.SandboxMode)
     {
         if (game.GameManager.IsInProgess)
         {
@@ -188,7 +200,7 @@ async Task<Task> HandlePlayerConnection(
 
         if (NicknameAlreadyExists(nickname))
         {
-            if (quickJoin)
+            if (quickJoin || opts.SandboxMode)
             {
                 int i = 0;
                 string newNickname = nickname;
@@ -214,7 +226,7 @@ async Task<Task> HandlePlayerConnection(
         ;
 
         player = game.PlayerManager.CreatePlayer(connectionData);
-        connection = new PlayerConnection(context, socket, connectionData, player);
+        connection = new PlayerConnection(context, socket, connectionData, log, player);
         game.AddConnection(connection);
     }
 
@@ -261,7 +273,7 @@ async Task<Task> HandleSpectatorConnection(
 #endif
     ;
 
-    var connection = new SpectatorConnection(context, socket, connectionData);
+    var connection = new SpectatorConnection(context, socket, connectionData, log);
     await AcceptConnection(connection);
     game.AddConnection(connection);
     _ = Task.Run(() => game.PacketHandler.HandleConnection(connection));
@@ -316,6 +328,11 @@ bool IsIpBlocked(string clientIP)
 
 void RegisterFailedAttempt(string clientIP)
 {
+    log.Verbose(
+        "Failed attempt ({attempts}) from {ip}",
+        failedAttempts[clientIP].Attempts + 1,
+        clientIP);
+
     _ = failedAttempts.AddOrUpdate(
         clientIP,
         (1, DateTime.Now),
@@ -325,18 +342,16 @@ void RegisterFailedAttempt(string clientIP)
 async Task AcceptConnection(Connection connection)
 {
     var payload = new EmptyPayload() { Type = PacketType.ConnectionAccepted };
-    var packet = new ResponsePacket(payload);
+    var packet = new ResponsePacket(payload, log);
     await packet.SendAsync(connection);
 }
 
 async Task RejectConnection(Connection connection, string reason)
 {
-    Console.WriteLine("[INFO] Connection rejected.");
-    Console.WriteLine("[^^^^] Client: {0}", connection);
-    Console.WriteLine("[^^^^] Reason: {0}", reason);
+    log.Information("Connection rejected; {connection}; {reason}", connection, reason);
 
     var payload = new ConnectionRejectedPayload(reason);
-    var packet = new ResponsePacket(payload);
+    var packet = new ResponsePacket(payload, log);
     await packet.SendAsync(connection);
     await connection.CloseAsync(description: reason);
 }
@@ -356,9 +371,13 @@ async Task PingClientLoop(Connection connection, CancellationToken cancellationT
 
     void SendPing()
     {
+        log.Verbose("Sending ping to {connection}", connection);
+
         var payload = new EmptyPayload() { Type = PacketType.Ping };
-        var packet = new ResponsePacket(payload);
-        _ = packet.SendAsync(connection);
+        var packet = new ResponsePacket(payload, log);
+
+        var cancellationToken = new CancellationTokenSource(pongTimeout).Token;
+        _ = packet.SendAsync(connection, cancellationToken);
     }
 
     SendPing();
@@ -381,17 +400,14 @@ async Task PingClientLoop(Connection connection, CancellationToken cancellationT
                 {
                     if (!connection.IsSecondPingAttempt)
                     {
-                        Console.WriteLine("[WARN] Client did not respond pong in {0}ms!", pongTimeout);
-                        Console.WriteLine("[^^^^] Sending second ping...");
-                        Console.WriteLine("[^^^^] Connection: {0}", connection);
+                        log.Warning("Client did not respond pong in {time}ms! Sending second ping... ({connection})", pongTimeout, connection);
 
                         SendPing();
                         connection.IsSecondPingAttempt = true;
                     }
                     else
                     {
-                        Console.WriteLine("[WARN] No pong response after second ping, disconnecting.");
-                        Console.WriteLine("[^^^^] Connection: {0}", connection);
+                        log.Warning("No pong response after second ping, disconnecting... ({connection})", connection);
 
                         var token = new CancellationTokenSource(1000).Token;
 
@@ -399,10 +415,10 @@ async Task PingClientLoop(Connection connection, CancellationToken cancellationT
                         {
                             _ = connection.CloseAsync(description: "NoPongResponse", cancellationToken: token);
                         }
-                        catch (TaskCanceledException)
+                        catch (OperationCanceledException)
                         {
-                            Console.WriteLine("[ERROR] Failed to close connection normally, aborting.");
-                            Console.WriteLine("[^^^^^] Connection: {0}", connection);
+                            log.Error("Failed to close connection normally, aborting... ({connection}))", connection);
+                            connection.Socket.Abort();
                         }
 
                         game.RemoveConnection(connection.Socket);
@@ -415,15 +431,15 @@ async Task PingClientLoop(Connection connection, CancellationToken cancellationT
         }
         catch (OperationCanceledException)
         {
+            log.Debug("Ping loop canceled. ({connection})", connection);
             break;
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[WARN] Failed to ping client.");
-            Console.WriteLine("[^^^^] Client: {0}", connection);
-            Console.WriteLine("[^^^^] Exception: {0}", ex.Message);
+            log.Warning(ex, "Failed to ping client. ({connection})", connection);
 
             // A small delay to prevent tight loop in case of persistent errors
+            log.Verbose("Waiting for 100ms before retrying... ({connection})", connection);
             await Task.Delay(100, cancellationToken);
         }
     }

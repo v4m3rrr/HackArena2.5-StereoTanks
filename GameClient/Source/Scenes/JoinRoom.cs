@@ -103,11 +103,11 @@ internal class JoinRoom : Scene
         ScreenController.ShowOverlay(connectingMessageBox);
 
         ConnectionStatus status = await ServerConnection.ConnectAsync(data);
+        ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
 
         switch (status)
         {
             case ConnectionStatus.Success:
-                ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
                 Change<Lobby>();
                 break;
             case ConnectionStatus.Failed s:
@@ -122,18 +122,6 @@ internal class JoinRoom : Scene
             case ConnectionStatus.Rejected s:
                 ScreenController.ShowOverlay(new ConnectionRejectedMessageBox(s.Reason));
                 break;
-        }
-
-        if (status is ConnectionStatus.Success)
-        {
-            ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
-            Change<Lobby>();
-        }
-        else if (status is ConnectionStatus.Success)
-        {
-            var localizedString = new LocalizedString("Other.ServerNotResponding");
-            var connectionFailedMessageBox = new ConnectionFailedMessageBox(localizedString);
-            ScreenController.ShowOverlay(connectionFailedMessageBox);
         }
 
         ScreenController.HideOverlay(connectingMessageBox);

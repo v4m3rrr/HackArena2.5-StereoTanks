@@ -55,9 +55,13 @@ internal class Timer : Component
             return;
         }
 
-        var minutes = (int)(this.Time / 60000);
+        var hours = (int)(this.Time / (60 * 60 * 1000));
+        var minutes = (int)(this.Time / (60 * 1000)) % 60;
         var seconds = (int)(this.Time / 1000) % 60;
-        this.text.Value = $"{minutes:D2}:{seconds:D2}";
+
+        this.text.Value = hours > 0
+            ? $"{hours}:{minutes:D2}:{seconds:D2}"
+            : $"{minutes:D2}:{seconds:D2}";
 
         base.Update(gameTime);
     }

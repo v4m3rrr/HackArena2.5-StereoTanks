@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -9,7 +10,8 @@ namespace GameServer;
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
 /// <param name="Data">The connection data.</param>
-internal abstract record class Connection(HttpListenerContext Context, WebSocket Socket, ConnectionData Data)
+/// <param name="Log">The logger.</param>
+internal abstract record class Connection(HttpListenerContext Context, WebSocket Socket, ConnectionData Data, Logger log)
 {
     private readonly object pingSentLock = new();
     private readonly object hasSentPongLock = new();
@@ -138,15 +140,22 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
 
         try
         {
+            this.log.Debug(
+                "Closing connection: {status}, {description}, {connection}",
+                status,
+                description,
+                this);
+
             await this.Socket.CloseAsync(status, description, cancellationToken);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[ERROR] Error while closing the connection:");
-            Console.WriteLine("[^^^^^] Status: {0}", status);
-            Console.WriteLine("[^^^^^] Description: {0}", description);
-            Console.WriteLine("[^^^^^] Connection: {0}", this);
-            Console.WriteLine("[^^^^^] Message: {0}", ex.Message);
+            this.log.Error(
+                ex,
+                "Error while closing the connection: {status}, {description}, {connection}",
+                status,
+                description,
+                this);
         }
         finally
         {

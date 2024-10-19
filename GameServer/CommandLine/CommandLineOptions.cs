@@ -96,6 +96,17 @@ internal class CommandLineOptions
         HelpText = "The seed to use for random number generation.")]
     public int? Seed { get; set; }
 
+    /// <summary>
+    /// Gets a value indicating whether to run the game in sandbox mode.
+    /// </summary>
+    [Option(
+        'x',
+        "sandbox",
+        Required = false,
+        HelpText = "Whether to run the game in sandbox mode.",
+        Default = false)]
+    public bool SandboxMode { get; private set; }
+
 #if HACKATHON
 
     /// <summary>

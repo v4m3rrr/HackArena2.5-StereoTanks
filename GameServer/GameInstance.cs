@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using GameLogic;
 using GameLogic.Networking;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -13,13 +14,16 @@ internal class GameInstance
 {
     private readonly ConcurrentDictionary<WebSocket, Connection> connections = new();
     private readonly ConcurrentBag<PlayerConnection> disconnectedConnectionsWhileInGame = [];
+    private readonly Logger log;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
     /// <param name="options">The command line options.</param>
-    public GameInstance(CommandLineOptions options)
+    /// <param name="log">The logger.</param>
+    public GameInstance(CommandLineOptions options, Logger log)
     {
+        this.log = log;
         int seed = options.Seed!.Value;
         int dimension = options.GridDimension;
 
@@ -35,23 +39,23 @@ internal class GameInstance
             dimension,
             options.NumberOfPlayers,
             seed,
-            options.Ticks,
+            options.SandboxMode ? null : options.Ticks,
             options.BroadcastInterval,
+            options.SandboxMode,
             eagerBroadcast,
             matchName);
 
         this.Grid = new Grid(dimension, seed);
 
-        this.LobbyManager = new LobbyManager(this);
-        this.GameManager = new GameManager(this);
-        this.PlayerManager = new PlayerManager(this);
-        this.PacketHandler = new PacketHandler(this);
+        this.LobbyManager = new LobbyManager(this, log);
+        this.GameManager = new GameManager(this, log);
+        this.PlayerManager = new PlayerManager(this, log);
+        this.PacketHandler = new PacketHandler(this, log);
         this.PayloadHelper = new PayloadHelper(this);
 
         PacketSerializer.ExceptionThrew += (Exception ex) =>
         {
-            Console.WriteLine("[ERROR] An error has been thrown in the PacketSerializer:");
-            Console.WriteLine("[^^^^^] {0}", ex.Message);
+            log.Error(ex, "An error has been thrown in PacketSerializer.");
         };
 
         _ = Task.Run(this.HandleStartGame);
@@ -62,12 +66,13 @@ internal class GameInstance
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
     /// <param name="options">The command line options.</param>
+    /// <param name="log">The logger.</param>
     /// <param name="replayPath">The path to save the replay.</param>
-    public GameInstance(CommandLineOptions options, string replayPath)
-        : this(options)
+    public GameInstance(CommandLineOptions options, Logger log, string replayPath)
+        : this(options, log)
     {
         Debug.Assert(options.SaveReplay, "Replay path provided without saving replay.");
-        this.ReplayManager = new ReplayManager(this, replayPath);
+        this.ReplayManager = new ReplayManager(this, replayPath, log);
     }
 
     /// <summary>
@@ -143,11 +148,11 @@ internal class GameInstance
     {
         if (this.connections.TryAdd(connection.Socket, connection))
         {
-            Console.WriteLine($"[INFO] Connection added: {connection}");
+            this.log.Information($"Connection added: {connection}");
         }
         else
         {
-            Console.WriteLine($"[ERROR] Failed to add connection: {connection}");
+            this.log.Error($"Failed to add connection: {connection}");
         }
     }
 
@@ -159,18 +164,20 @@ internal class GameInstance
     {
         if (this.connections.TryRemove(socket, out var connection))
         {
-            Console.WriteLine($"[INFO] Connection removed: {connection}.");
+            this.log.Information($"Connection removed: {connection}");
 
-            if (connection is PlayerConnection p && this.GameManager.Status is GameStatus.Running)
+            if (connection is PlayerConnection p
+                && this.GameManager.Status is GameStatus.Running
+                && !this.Settings.SandboxMode)
             {
                 this.disconnectedConnectionsWhileInGame.Add(p);
-                Console.WriteLine(
-                    $"[INFO] Connection added as a disconnected while in game: {p}.");
+                this.log.Information(
+                    "Connection marked as a disconnected while in game: {p}.", p);
             }
         }
         else
         {
-            Console.WriteLine($"[ERROR] Failed to remove connection: {connection}.");
+            this.log.Error($"Failed to remove connection: {connection}.");
         }
 
         if (connection is PlayerConnection player)
@@ -197,13 +204,17 @@ internal class GameInstance
     {
         while (true)
         {
+            this.log.Verbose("Checking for aborted connections.");
+
             var abortedConnections = this.connections.Values
             .Where(x => x.Socket.State is WebSocketState.Aborted)
             .ToList();
 
+            this.log.Verbose($"Found {abortedConnections.Count} aborted connections.");
+
             foreach (Connection connection in abortedConnections)
             {
-                Console.WriteLine($"[INFO] Removing aborted connection: {connection}");
+                this.log.Information($"Removing aborted connection: {connection}");
                 this.RemoveConnection(connection.Socket);
             }
 

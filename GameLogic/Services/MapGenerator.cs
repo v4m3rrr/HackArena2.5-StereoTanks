@@ -14,6 +14,11 @@ internal class MapGenerator(int dimension, int seed)
     private readonly Random random = new(seed);
 
     /// <summary>
+    /// Occurs when the generation warning is raised.
+    /// </summary>
+    public event EventHandler<string>? GenerationWarning;
+
+    /// <summary>
     /// Generates a new wall grid.
     /// </summary>
     /// <returns>
@@ -73,8 +78,10 @@ internal class MapGenerator(int dimension, int seed)
 
                 if (attempts++ >= maxAttempts)
                 {
-                    Console.WriteLine("ERROR: Max attempts of generating zones reached.");
-                    Console.WriteLine($"Generated zones: {zones.Count} from {count}");
+                    this.GenerationWarning?.Invoke(
+                        this,
+                        "Max attempts of generating zones reached. Generated: {zones.Count} from {count}");
+
                     return zones;
                 }
             } while (IsOverlapping(x, y));

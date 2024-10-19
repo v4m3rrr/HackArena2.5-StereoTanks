@@ -1,5 +1,6 @@
 ﻿using GameLogic.Networking;
 using Newtonsoft.Json.Linq;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -8,7 +9,8 @@ namespace GameServer;
 /// </summary>
 /// <param name="game">The game instance.</param>
 /// <param name="replayPath">The path to save the replay.</param>
-internal class ReplayManager(GameInstance game, string replayPath)
+/// <param name="log">The logger.</param>
+internal class ReplayManager(GameInstance game, string replayPath, Logger log)
 {
     private readonly List<JObject> gameStates = [];
     private JObject? lobbyData;
@@ -19,9 +21,13 @@ internal class ReplayManager(GameInstance game, string replayPath)
     /// </summary>
     public void SaveLobbyData()
     {
+        log.Verbose("Replay - saving lobby data...");
+
         var payload = game.PayloadHelper.GetLobbyDataPayload(null, out var converters);
         var serializer = PacketSerializer.GetSerializer(converters);
         this.lobbyData = JObject.FromObject(payload, serializer);
+
+        log.Verbose("Replay - lobby data saved.");
     }
 
     /// <summary>
@@ -31,9 +37,13 @@ internal class ReplayManager(GameInstance game, string replayPath)
     /// <param name="gameStateId">The game state id.</param>
     public void AddGameState(int tick, string gameStateId)
     {
+        log.Verbose("Replay - adding game state ({tick})...", tick);
+
         var payload = game.PayloadHelper.GetGameStatePayload(null, tick, gameStateId, out var converters);
         var serializer = PacketSerializer.GetSerializer(converters);
         this.gameStates.Add(JObject.FromObject(payload, serializer));
+
+        log.Verbose("Replay - game state added ({tick}).", tick);
     }
 
     /// <summary>
@@ -41,9 +51,13 @@ internal class ReplayManager(GameInstance game, string replayPath)
     /// </summary>
     public void SaveGameEnd()
     {
+        log.Verbose("Replay - saving game end...");
+
         var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
         var serializer = PacketSerializer.GetSerializer(converters);
         this.gameEnd = JObject.FromObject(payload, serializer);
+
+        log.Verbose("Replay - game end saved.");
     }
 
     /// <summary>
@@ -55,47 +69,41 @@ internal class ReplayManager(GameInstance game, string replayPath)
 
         if (this.lobbyData is null)
         {
-            Console.WriteLine("[ERROR] Saving replay failed!");
-            Console.WriteLine("[^^^^^] Lobby data is missing.");
-            return;
+            log.Warning("Saving replay with missing lobby data.");
         }
 
         if (this.gameStates.Count < game.Settings.Ticks)
         {
-            Console.WriteLine("[WARN] Saving replay with missing game states.");
-            Console.WriteLine(
-                "[^^^^] Expected: {0}; Actual: {1}",
+            log.Warning(
+                "Saving replay with missing game states. Expected: {expected}; Actual: {actual}",
                 game.Settings.Ticks,
                 this.gameStates.Count);
         }
 
         if (this.gameEnd is null)
         {
-            Console.WriteLine("[ERROR] Saving replay failed!");
-            Console.WriteLine("[^^^^^] Game end is missing.");
-            return;
+            log.Warning("Saving replay with missing game end.");
         }
 
         var jObject = new JObject()
         {
-            ["lobbyData"] = this.lobbyData,
+            ["lobbyData"] = this.lobbyData ?? [],
             ["gameStates"] = JArray.FromObject(this.gameStates),
-            ["gameEnd"] = this.gameEnd,
+            ["gameEnd"] = this.gameEnd ?? [],
         };
 
         try
         {
+            log.Verbose("Saving replay to: {replayPath}", replayPath);
             File.WriteAllText(replayPath, jObject.ToString(options.Formatting));
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[ERROR] Saving replay failed!");
-            Console.WriteLine("[^^^^^] {0}", ex.Message);
+            log.Error(ex, "Saving replay failed.");
             return;
         }
 
-        Console.WriteLine("[INFO] Replay saved to:");
-        Console.WriteLine("[^^^^] {0}", replayPath);
+        log.Information("Replay saved to: {replayPath}", replayPath);
     }
 
 #if HACKATHON
@@ -109,28 +117,31 @@ internal class ReplayManager(GameInstance game, string replayPath)
     /// </remarks>
     public void SaveResults()
     {
+        log.Verbose("Saving results...");
+
         // Temporary solution for getting the results.
         var gameEndPayload = game.PayloadHelper.GetGameEndResultsPayload(out var converters);
         var options = new SerializationOptions() { Formatting = Newtonsoft.Json.Formatting.None };
         _ = PacketSerializer.Serialize(gameEndPayload, out var results, converters, options);
 
-        string? savePath = null;
+        string? savePath;
         try
         {
             var path = Path.GetDirectoryName(replayPath)!;
             var fileName = Path.GetFileNameWithoutExtension(replayPath);
             var extension = Path.GetExtension(replayPath);
             savePath = Path.Combine(path, $"{fileName}_results{extension}");
+
+            log.Verbose("Saving results to: {savePath}", savePath);
             File.WriteAllText(savePath, results.ToString());
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[ERROR] Saving results failed!");
-            Console.WriteLine("[^^^^^] {0}", ex.Message);
+            log.Error(ex, "Saving results failed.");
+            return;
         }
 
-        Console.WriteLine("[INFO] Results saved to:");
-        Console.WriteLine("[^^^^] {0}", savePath);
+        log.Information("Results saved to: {savePath}", savePath);
     }
 
 #endif

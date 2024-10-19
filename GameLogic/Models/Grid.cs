@@ -46,6 +46,11 @@ public class Grid(int dimension, int seed)
     public event EventHandler? DimensionsChanged;
 
     /// <summary>
+    /// Occurs when a generation warning is raised.
+    /// </summary>
+    public event EventHandler<string> GenerationWarning;
+
+    /// <summary>
     /// Gets an empty grid.
     /// </summary>
     public static Grid Empty => new(0, 0);
@@ -252,6 +257,8 @@ public class Grid(int dimension, int seed)
     /// </summary>
     public void GenerateMap()
     {
+        this.generator.GenerationWarning += (s, e) => this.GenerationWarning?.Invoke(s, e);
+
         var walls = this.generator.GenerateWalls();
         this.zones = this.generator.GenerateZones();
 
@@ -266,6 +273,8 @@ public class Grid(int dimension, int seed)
                 this.WallGrid[x, y] = walls[x, y] ? new Wall() { X = x, Y = y } : null;
             }
         }
+
+        this.generator.GenerationWarning -= (s, e) => this.GenerationWarning?.Invoke(s, e);
     }
 
     /// <summary>
@@ -360,7 +369,11 @@ public class Grid(int dimension, int seed)
     /// <summary>
     /// Generates a new item on the map.
     /// </summary>
-    internal void GenerateNewItemOnMap()
+    /// <returns>
+    /// The generated item if successful;
+    /// otherwise, <c>null</c>.
+    /// </returns>
+    public SecondaryItem? GenerateNewItemOnMap()
     {
         var nullWeight = 99.5f;
         var itemWeights = new Dictionary<SecondaryItemType, double>
@@ -377,7 +390,7 @@ public class Grid(int dimension, int seed)
         var selectedItemType = GetRandomItemByWeight(itemWeights, randomValue);
         if (selectedItemType == null)
         {
-            return;
+            return null;
         }
 
         int x, y;
@@ -387,10 +400,14 @@ public class Grid(int dimension, int seed)
             (x, y) = this.GetRandomEmptyCell();
         } while ((this.GetCellObjects(x, y).Any() || this.IsVisibleByTank(x, y)) && triesLeft-- > 0);
 
+        SecondaryItem? item = null;
         if (triesLeft > 0)
         {
-            this.items.Add(new SecondaryItem(x, y, selectedItemType.Value));
+            item = new SecondaryItem(x, y, selectedItemType.Value);
+            this.items.Add(item);
         }
+
+        return item;
     }
 
     /// <summary>

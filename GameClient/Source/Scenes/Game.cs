@@ -163,7 +163,7 @@ internal class Game : Scene
                     GameServerMessageHandler.HandleGameStatePacket(packet, this.updater);
                     break;
 
-                case PacketType.GameEnd:
+                case PacketType.GameEnded:
                     GameServerMessageHandler.HandleGameEndPacket(packet);
                     break;
 
@@ -199,11 +199,6 @@ internal class Game : Scene
             this.isContentLoading = true;
             ShowOverlay<Loading>();
             await Task.Run(this.LoadContent);
-
-#if HACKATHON
-            this.updater.UpdateMatchName(Settings?.MatchName);
-#endif
-
             HideOverlay<Loading>();
             this.isContentLoading = false;
         }
@@ -211,6 +206,13 @@ internal class Game : Scene
         var gameSceneLoadedPayload = new EmptyPayload() { Type = PacketType.ReadyToReceiveGameState };
         var packet = PacketSerializer.Serialize(gameSceneLoadedPayload);
         await ServerConnection.SendAsync(packet);
+
+        if (Settings is null)
+        {
+            var lobbyDataRequest = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
+            packet = PacketSerializer.Serialize(lobbyDataRequest);
+            await ServerConnection.SendAsync(packet);
+        }
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
