@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -213,6 +213,25 @@ internal class Game : Scene
             packet = PacketSerializer.Serialize(lobbyDataRequest);
             await ServerConnection.SendAsync(packet);
         }
+#if HACKATHON
+        else
+        {
+            string? matchName = Settings.MatchName;
+            if (Settings.SandboxMode)
+            {
+                if (matchName is null)
+                {
+                    matchName = "sandbox";
+                }
+                else
+                {
+                    matchName += " [sandbox]";
+                }
+            }
+
+            this.updater.UpdateMatchName(matchName);
+        }
+#endif
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
