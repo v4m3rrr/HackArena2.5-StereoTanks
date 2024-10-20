@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace GameLogic;
 
@@ -408,14 +408,18 @@ public class Grid(int dimension, int seed)
         }
 
         int x, y;
-        int triesLeft = 100;
+        int attemptsLeft = 200;
         do
         {
-            (x, y) = this.GetRandomEmptyCell();
-        } while ((this.GetCellObjects(x, y).Any() || this.IsVisibleByTank(x, y)) && triesLeft-- > 0);
+            x = this.random.Next(this.Dim);
+            y = this.random.Next(this.Dim);
+        } while (attemptsLeft-- > 0
+                && (this.GetCellObjects(x, y).Any()
+                    || this.IsVisibleByTank(x, y)
+                    || this.zones.Any(z => z.ContainsPoint(x, y))));
 
         SecondaryItem? item = null;
-        if (triesLeft > 0)
+        if (attemptsLeft > 0)
         {
             item = new SecondaryItem(x, y, selectedItemType.Value);
             this.items.Add(item);
@@ -737,6 +741,18 @@ public class Grid(int dimension, int seed)
             yield return bullet;
         }
 
+        Laser? laser = this.lasers.FirstOrDefault(l => l.X == x && l.Y == y);
+        if (laser is not null)
+        {
+            yield return laser;
+        }
+
+        Mine? mine = this.mines.FirstOrDefault(m => m.X == x && m.Y == y);
+        if (mine is not null)
+        {
+            yield return mine;
+        }
+
         IEnumerable<SecondaryItem> items = this.items.Where(i => i.X == x && i.Y == y);
         foreach (SecondaryItem item in items)
         {
@@ -790,21 +806,6 @@ public class Grid(int dimension, int seed)
         }
 
         return destroyedBullets;
-    }
-
-    private (int X, int Y) GetRandomEmptyCell(int? maxTries = 100)
-    {
-        int x, y;
-        do
-        {
-            x = this.random.Next(this.Dim);
-            y = this.random.Next(this.Dim);
-        }
-        while (maxTries-- > 0 && (!this.IsCellWithinBounds(x, y) || this.GetCellObjects(x, y).Any()));
-
-        return maxTries > 0
-            ? ((int X, int Y))(x, y)
-            : throw new InvalidOperationException("Failed to find an empty cell.");
     }
 
     /// <summary>
