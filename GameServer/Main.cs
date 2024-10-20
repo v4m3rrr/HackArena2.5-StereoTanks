@@ -74,8 +74,10 @@ var game = saveReplayPath is not null
     ? new GameInstance(opts, log, saveReplayPath)
     : new GameInstance(opts, log);
 
+log.Information("Generating map...");
 game.Grid.GenerationWarning += (s, e) => log.Warning("Map generation: {e}", e);
 game.Grid.GenerateMap();
+log.Information("Map generated.");
 
 if (opts.SandboxMode)
 {
