@@ -21,16 +21,17 @@ internal class MapGenerator(int dimension, int seed)
     /// <summary>
     /// Generates a new wall grid.
     /// </summary>
+    /// <param name="zones">The zones to avoid generating walls in.</param>
     /// <returns>
     /// The 2D array representing the wall grid,
     /// where <c>true</c> means a wall
     /// and <c>false</c> means an empty space.
     /// </returns>
-    public bool[,] GenerateWalls()
+    public bool[,] GenerateWalls(IEnumerable<Zone> zones)
     {
         var grid = new bool[this.dim, this.dim];
 
-        int maxInnerWalls = this.dim * this.dim * 8 / 10;
+        int maxInnerWalls = this.dim * this.dim * 75 / 100;
         int innerWalls = 0;
 
         while (innerWalls < maxInnerWalls)
@@ -42,7 +43,9 @@ internal class MapGenerator(int dimension, int seed)
             innerWalls++;
         }
 
-        this.ConnectClosedSpaces(grid);
+        this.RemoveSomeWallsFromZones(grid, zones);
+        this.ConnectEnclosedAreas(grid);
+        this.RemoveSomeWallsFromZones(grid, zones);
 
         return grid;
     }
@@ -101,17 +104,7 @@ internal class MapGenerator(int dimension, int seed)
         return zones;
     }
 
-    /// <summary>
-    /// Removes some walls from the specified zones.
-    /// </summary>
-    /// <param name="grid">The 2D array representing the wall grid.</param>
-    /// <param name="zones">The zones from which to remove walls.</param>
-    /// <remarks>
-    /// The number of walls to remove is randomly chosen
-    /// between 10% and 20% of the total walls in the zone,
-    /// or less if there are fewer walls.
-    /// </remarks>
-    public void RemoveSomeWallsFromZones(bool[,] grid, IEnumerable<Zone> zones)
+    private void RemoveSomeWallsFromZones(bool[,] grid, IEnumerable<Zone> zones)
     {
         foreach (var zone in zones)
         {
@@ -138,9 +131,10 @@ internal class MapGenerator(int dimension, int seed)
         }
     }
 
-    private void ConnectClosedSpaces(bool[,] grid)
+    private List<List<Point>> IdentifyEnclosedAreas(bool[,] grid)
     {
         var visited = new bool[this.dim, this.dim];
+        var enclosedAreas = new List<List<Point>>();
 
         for (int i = 0; i < this.dim; i++)
         {
@@ -148,16 +142,195 @@ internal class MapGenerator(int dimension, int seed)
             {
                 if (!visited[i, j] && !grid[i, j])
                 {
-                    var closedSpace = this.FloodFill(grid, visited, i, j);
-                    this.RemoveWallToOpenSpace(grid, closedSpace);
+                    var enclosedArea = this.FloodFill(grid, visited, i, j);
+                    enclosedAreas.Add(enclosedArea);
+                }
+            }
+        }
+
+        return enclosedAreas;
+    }
+
+    private void SealSmallEnclosedAreas(bool[,] grid, List<List<Point>> enclosedAreas)
+    {
+        foreach (var area in enclosedAreas.ToList())
+        {
+            if (!enclosedAreas.Contains(area))
+            {
+                continue;
+            }
+
+            var paths = this.FindPathsToNearbyAreas(grid, area);
+            paths.Sort((a, b) => a.Count.CompareTo(b.Count));
+
+            var path = paths.First();
+            if (path.Count - 1 > area.Count)
+            {
+                _ = enclosedAreas.Remove(area);
+                foreach (var point in area)
+                {
+                    grid[point.X, point.Y] = true;
                 }
             }
         }
     }
 
+    private void BreakThroughClosedAreas(bool[,] grid, List<List<Point>> enclosedAreas)
+    {
+        if (enclosedAreas.Count > 1)
+        {
+            foreach (var area in enclosedAreas)
+            {
+                var paths = this.FindPathsToNearbyAreas(grid, area);
+                paths.Sort((a, b) => a.Count.CompareTo(b.Count));
+
+                foreach (var path in paths.Take(area.Count >> 4 | 3))
+                {
+                    foreach (var point in path)
+                    {
+                        grid[point.X, point.Y] = false;
+                    }
+                }
+            }
+        }
+    }
+
+    private void RemoveWallsWithConstraints(bool[,] grid, int attempts)
+    {
+        for (int i = 0; i < attempts; i++)
+        {
+            var x = this.random.Next(this.dim);
+            var y = this.random.Next(this.dim);
+
+            if (
+                (x - 1 >= 0 && !grid[x - 1, y]) ||
+                (x + 1 < this.dim && !grid[x + 1, y]) ||
+                (y - 1 >= 0 && !grid[x, y - 1]) ||
+                (y + 1 < this.dim && !grid[x, y + 1]))
+            {
+                grid[x, y] = false;
+            }
+        }
+    }
+
+    private void AddWallsWithConstraints(bool[,] grid, int attempts)
+    {
+        for (int i = 0; i < attempts; i++)
+        {
+            var x = this.random.Next(1, this.dim - 1);
+            var y = this.random.Next(1, this.dim - 1);
+
+            var c = new List<bool>()
+            {
+                grid[x - 1, y],
+                grid[x + 1, y],
+                grid[x, y - 1],
+                grid[x, y + 1],
+                grid[x - 1, y - 1],
+                grid[x + 1, y - 1],
+                grid[x - 1, y + 1],
+                grid[x + 1, y + 1],
+            }.Count(c => c);
+
+            if (c <= 0)
+            {
+                grid[x, y] = true;
+            }
+        }
+    }
+
+    private void ConnectEnclosedAreas(bool[,] grid)
+    {
+        var visited = new bool[this.dim, this.dim];
+        var enclosedAreas = new List<List<Point>>();
+
+        enclosedAreas = this.IdentifyEnclosedAreas(grid);
+
+        do
+        {
+            enclosedAreas.Sort((a, b) => b.Count.CompareTo(a.Count));
+            this.SealSmallEnclosedAreas(grid, enclosedAreas);
+            this.BreakThroughClosedAreas(grid, enclosedAreas);
+            enclosedAreas = this.IdentifyEnclosedAreas(grid);
+        } while (enclosedAreas.Count > 1);
+
+        this.RemoveWallsWithConstraints(grid, this.dim * this.dim / 2);
+        this.AddWallsWithConstraints(grid, this.dim * this.dim / 2);
+    }
+
+    private List<List<Point>> FindPathsToNearbyAreas(bool[,] grid, List<Point> area)
+    {
+        var paths = new List<List<Point>>();
+        var visited = new bool[this.dim, this.dim];
+
+        foreach (var point in area)
+        {
+            var visitedCopy = (bool[,])visited.Clone();
+            var path = this.FindShortestPathToOpenArea(grid, visitedCopy, area, point);
+
+            if (path.Count > 0)
+            {
+                foreach (var p in path[..^1])
+                {
+                    visited[p.X, p.Y] = this.random.Next(4) != 0;
+                }
+
+                paths.Add(path);
+            }
+        }
+
+        return paths.GroupBy(p => p.Last()).Select(g => g.First()).ToList();
+    }
+
+    private List<Point> FindShortestPathToOpenArea(bool[,] grid, bool[,] visited, List<Point> area, Point start)
+    {
+        var parent = new Dictionary<Point, Point>();
+        var directions = new Point[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) };
+
+        var queue = new Queue<(Point Point, int Distance)>();
+        queue.Enqueue((start, 0));
+        visited[start.X, start.Y] = true;
+
+        while (queue.Count > 0)
+        {
+            var (point, distance) = queue.Dequeue();
+
+            if (!grid[point.X, point.Y] && !area.Contains(point))
+            {
+                var path = new List<Point>();
+                var current = point;
+
+                while (current != start)
+                {
+                    path.Add(current);
+                    current = parent[current];
+                }
+
+                path.Add(start);
+                path.Reverse();
+
+                return path;
+            }
+
+            foreach (var dir in directions)
+            {
+                var next = new Point(point.X + dir.X, point.Y + dir.Y);
+                if (next.X >= 0 && next.Y >= 0 && next.X < this.dim && next.Y < this.dim
+                    && !visited[next.X, next.Y])
+                {
+                    visited[next.X, next.Y] = true;
+                    parent[next] = point;
+                    queue.Enqueue((next, distance + 1));
+                }
+            }
+        }
+
+        return [];
+    }
+
     private List<Point> FloodFill(bool[,] grid, bool[,] visited, int startX, int startY)
     {
-        var space = new List<Point>();
+        var enclosedArea = new List<Point>();
         var queue = new Queue<Point>();
         queue.Enqueue(new Point(startX, startY));
 
@@ -173,7 +346,7 @@ internal class MapGenerator(int dimension, int seed)
             }
 
             visited[point.X, point.Y] = true;
-            space.Add(point);
+            enclosedArea.Add(point);
 
             foreach (var dir in directions)
             {
@@ -181,35 +354,6 @@ internal class MapGenerator(int dimension, int seed)
             }
         }
 
-        return space;
-    }
-
-    private void RemoveWallToOpenSpace(bool[,] grid, List<Point> space)
-    {
-        var directions = new Point[] { new(1, 0), new(-1, 0), new(0, 1), new(0, -1) };
-
-        var wallsRemoved = 0;
-        var maxWallsToRemove = Math.Min(2, space.Count);
-        var attemptedRemovals = 0;
-        var maxAttempts = space.Count * directions.Length * 10;
-
-        while (wallsRemoved < maxWallsToRemove && attemptedRemovals < maxAttempts)
-        {
-            var cell = space[this.random.Next(space.Count)];
-            foreach (var dir in directions)
-            {
-                int newX = cell.X + dir.X;
-                int newY = cell.Y + dir.Y;
-
-                if (newX >= 0 && newY >= 0 && newX < this.dim && newY < this.dim && grid[newX, newY])
-                {
-                    grid[newX, newY] = false;
-                    wallsRemoved++;
-                    break;
-                }
-            }
-
-            attemptedRemovals++;
-        }
+        return enclosedArea;
     }
 }

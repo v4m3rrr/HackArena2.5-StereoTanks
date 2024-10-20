@@ -259,10 +259,8 @@ public class Grid(int dimension, int seed)
     {
         this.generator.GenerationWarning += (s, e) => this.GenerationWarning?.Invoke(s, e);
 
-        var walls = this.generator.GenerateWalls();
         this.zones = this.generator.GenerateZones();
-
-        this.generator.RemoveSomeWallsFromZones(walls, this.zones);
+        var walls = this.generator.GenerateWalls(this.zones);
 
         this.fogOfWarManager = new FogOfWarManager(walls);
 
