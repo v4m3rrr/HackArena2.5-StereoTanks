@@ -59,15 +59,22 @@ internal class MapGenerator(int dimension, int seed)
         const int height = 4;
         const int width = 4;
         const int count = 2;
+        const int minDistance = 3;
         const int maxAttempts = 10000;
 
         var zones = new List<Zone>();
 
-        bool IsOverlapping(int x, int y) => zones.Any(
-            z => x < z.X + z.Width + width + 1
-                && x + width + 1 > z.X
-                && y < z.Y + z.Height + height + 1
-                && y + height + 1 > z.Y);
+        bool IsOverlapping(int x, int y) => zones.Any(z =>
+            x < z.X + z.Width &&
+            x + width > z.X &&
+            y < z.Y + z.Height &&
+            y + height > z.Y);
+
+        bool IsTooClose(int x, int y) => zones.Any(z =>
+            (x + width + minDistance > z.X && x < z.X) ||
+            (x < z.X + z.Width + minDistance && x > z.X) ||
+            (y + height + minDistance > z.Y && y < z.Y) ||
+            (y < z.Y + z.Height + minDistance && y > z.Y));
 
         for (int i = 0; i < count; i++)
         {
@@ -76,18 +83,18 @@ internal class MapGenerator(int dimension, int seed)
 
             do
             {
-                x = this.random.Next(1, this.dim - width - 2);
-                y = this.random.Next(1, this.dim - height - 2);
+                x = this.random.Next(1, this.dim - width);
+                y = this.random.Next(1, this.dim - height);
 
                 if (attempts++ >= maxAttempts)
                 {
                     this.GenerationWarning?.Invoke(
                         this,
-                        "Max attempts of generating zones reached. Generated: {zones.Count} from {count}");
+                        $"Max attempts of generating zones reached. Generated: {zones.Count} from {count}");
 
                     return zones;
                 }
-            } while (IsOverlapping(x, y));
+            } while (IsOverlapping(x, y) || IsTooClose(x, y));
 
             var index = (char)(i + 65);
 
