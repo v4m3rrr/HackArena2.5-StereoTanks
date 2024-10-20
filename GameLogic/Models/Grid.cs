@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace GameLogic;
 
@@ -282,7 +282,7 @@ public class Grid(int dimension, int seed)
     /// <returns>The generated tank.</returns>
     public Tank GenerateTank(Player owner)
     {
-        var (x, y) = this.GetRandomEmptyCell();
+        var (x, y) = this.GetTankSpawnPostion();
 
         var tankDirection = EnumUtils.Random<Direction>(this.random);
         var turretDirection = EnumUtils.Random<Direction>(this.random);
@@ -312,7 +312,7 @@ public class Grid(int dimension, int seed)
 
         owner.TankRegenerated += (s, e) =>
         {
-            var (x, y) = this.GetRandomEmptyCell();
+            var (x, y) = this.GetTankSpawnPostion();
             tank.SetPosition(x, y);
         };
 
@@ -696,6 +696,20 @@ public class Grid(int dimension, int seed)
         }
 
         return null;
+    }
+
+    private (int X, int Y) GetTankSpawnPostion()
+    {
+        int x, y, attempts = 0;
+        do
+        {
+            x = this.random.Next(this.Dim);
+            y = this.random.Next(this.Dim);
+        }
+        while ((this.GetCellObjects(x, y).Any() || (this.zones.Any(z => z.ContainsPoint(x, y)) && attempts++ < 2000))
+            || (this.IsVisibleByTank(x, y) && attempts < 1000));
+
+        return (x, y);
     }
 
     private bool IsVisibleByTank(int x, int y)
