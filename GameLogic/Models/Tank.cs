@@ -98,6 +98,11 @@ public class Tank : IEquatable<Tank>
     }
 
     /// <summary>
+    /// Occurs when the tank is about to die.
+    /// </summary>
+    internal event EventHandler? Dying;
+
+    /// <summary>
     /// Occurs when the tank dies.
     /// </summary>
     internal event EventHandler? Died;
@@ -311,8 +316,12 @@ public class Tank : IEquatable<Tank>
 
         if (this.Health <= 0)
         {
+            this.Dying?.Invoke(this, EventArgs.Empty);
+
             this.SetPosition(-1, -1);
             this.Health = 0;
+            this.SecondaryItemType = null;
+
             killed = true;
             this.Died?.Invoke(this, EventArgs.Empty);
 

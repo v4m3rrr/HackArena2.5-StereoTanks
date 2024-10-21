@@ -316,6 +316,20 @@ public class Grid(int dimension, int seed)
             tank.SetPosition(x, y);
         };
 
+        tank.Dying += (s, e) =>
+        {
+            if (tank.SecondaryItemType is { } itemType)
+            {
+                var point = this.GetTileToDropItem(tank.X, tank.Y);
+
+                if (point is { } p)
+                {
+                    var item = new SecondaryItem(p.X, p.Y, itemType);
+                    this.items.Add(item);
+                }
+            }
+        };
+
         return tank;
     }
 
@@ -697,6 +711,48 @@ public class Grid(int dimension, int seed)
             {
                 return itemWeight.Key;
             }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the tile coordinates to drop an item.
+    /// </summary>
+    /// <param name="x">The x-coordinate of the tank.</param>
+    /// <param name="y">The y-coordinate of the tank.</param>
+    /// <returns>
+    /// The X and Y coordinates of the tile to drop the item
+    /// or <see langword="null"/> if no tile is found.
+    /// </returns>
+    private (int X, int Y)? GetTileToDropItem(int x, int y)
+    {
+        var visited = new bool[this.Dim, this.Dim];
+        var queue = new Queue<(int X, int Y)>();
+        queue.Enqueue((x, y));
+
+        while (queue.Count > 0)
+        {
+            var (currentX, currentY) = queue.Dequeue();
+
+            if (!this.IsCellWithinBounds(currentX, currentY)
+                || visited[currentX, currentY]
+                || this.WallGrid[currentX, currentY] is not null)
+            {
+                continue;
+            }
+
+            if (!this.GetCellObjects(currentX, currentY).Any(x => x is SecondaryItem))
+            {
+                return (currentX, currentY);
+            }
+
+            visited[currentX, currentY] = true;
+
+            queue.Enqueue((currentX + 1, currentY));
+            queue.Enqueue((currentX - 1, currentY));
+            queue.Enqueue((currentX, currentY + 1));
+            queue.Enqueue((currentX, currentY - 1));
         }
 
         return null;
