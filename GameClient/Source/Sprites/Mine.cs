@@ -168,6 +168,7 @@ internal class Mine : ISprite, IDetectableByRadar
              gridTop + (this.Logic.Y * tileSize) + drawOffset);
 
         InnerStaticTexture.Transform.Size = OuterStaticTexture.Transform.Size = new Point(tileSize);
+        this.innerTexture.Transform.Size = this.outerTexture.Transform.Size = new Point(tileSize);
         this.innerTexture.Transform.Location = this.outerTexture.Transform.Location = location;
     }
 }
