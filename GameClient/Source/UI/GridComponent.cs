@@ -84,32 +84,38 @@ internal class GridComponent : Component
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        if (!this.IsEnabled)
+        lock (this.syncLock)
         {
-            return;
-        }
+            if (!this.IsEnabled)
+            {
+                return;
+            }
 
-        base.Update(gameTime);
+            base.Update(gameTime);
 
-        foreach (ISprite sprite in this.Sprites.ToList())
-        {
-            sprite.Update(gameTime);
+            foreach (ISprite sprite in this.Sprites.ToList())
+            {
+                sprite.Update(gameTime);
+            }
         }
     }
 
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        if (!this.IsEnabled)
+        lock (this.syncLock)
         {
-            return;
-        }
+            if (!this.IsEnabled)
+            {
+                return;
+            }
 
-        base.Draw(gameTime);
+            base.Draw(gameTime);
 
-        foreach (ISprite sprite in this.Sprites.ToList())
-        {
-            sprite.Draw(gameTime);
+            foreach (ISprite sprite in this.Sprites.ToList())
+            {
+                sprite.Draw(gameTime);
+            }
         }
     }
 
