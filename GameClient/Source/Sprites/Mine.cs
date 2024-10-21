@@ -133,6 +133,7 @@ internal class Mine : ISprite, IDetectableByRadar
         {
             var eff = Animations.EaseInOut((float)gameTime.TotalGameTime.Milliseconds / 1000f);
             this.innerTexture.Opacity = this.baseOpacity * (1f - eff);
+            this.outerTexture.Opacity = this.baseOpacity;
         }
     }
 
