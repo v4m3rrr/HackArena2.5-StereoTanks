@@ -18,7 +18,7 @@ internal class GameEndInitializer(GameEnd gameEnd)
     /// <returns>The created match name component.</returns>
     public Text CreateMatchName()
     {
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 21);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 21);
         return new Text(font, Color.White)
         {
             Parent = gameEnd.BaseComponent,

@@ -11,7 +11,12 @@ internal static class Settings
     /// <summary>
     /// The font used in the setting elements.
     /// </summary>
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 12);
+    private static readonly ScalableFont Font = new(Fonts.Paths.Main, 13)
+    {
+        AutoResize = true,
+        Spacing = 5,
+        MinSize = 6,
+    };
 
     /// <summary>
     /// Gets the style of the selector scroll bar.
@@ -20,9 +25,12 @@ internal static class Settings
     {
         Action = (scrollBar) =>
         {
-            var thumb = new RoundedSolidColor(Color.White * 0.8f, 5);
-            scrollBar.Thumb = thumb;
+            var thumb = new RoundedSolidColor(Color.White * 0.8f, 5)
+            {
+                AutoAdjustRadius = true,
+            };
 
+            scrollBar.Thumb = thumb;
             scrollBar.RelativeSize = 0.036f;
             scrollBar.IsPriority = true;
             scrollBar.Transform.RelativeOffset = new Vector2(0.07f, 0.0f);
@@ -38,14 +46,16 @@ internal static class Settings
         Action = (selector) =>
         {
             var activeColor = (MonoTanks.ThemeColor * 0.3f).WithAlpha(0xFF);
-            var activeBackground = new RoundedSolidColor(activeColor, 20)
+            var activeBackground = new RoundedSolidColor(activeColor, 40)
             {
                 Parent = selector.ActiveContainer,
+                AutoAdjustRadius = true,
             };
 
-            var inactiveBackground = new RoundedSolidColor(MonoTanks.ThemeColor, 20)
+            var inactiveBackground = new RoundedSolidColor(Color.White, 40)
             {
                 Parent = selector.InactiveContainer,
+                AutoAdjustRadius = true,
                 Opacity = 0.35f,
             };
 
@@ -95,15 +105,17 @@ internal static class Settings
         {
             button.Component.Transform.RelativePadding = new(0.05f, 0.1f, 0.05f, 0.1f);
 
-            var background = new RoundedSolidColor(Color.Transparent, 20)
+            var background = new RoundedSolidColor(Color.Transparent, 40)
             {
                 Parent = button.Component,
+                AutoAdjustRadius = true,
                 Transform = { IgnoreParentPadding = true },
             };
 
-            var hoverEffect = new RoundedSolidColor(Color.Transparent, 20)
+            var hoverEffect = new RoundedSolidColor(Color.Transparent, 40)
             {
                 Parent = background,
+                AutoAdjustRadius = true,
                 Transform = { IgnoreParentPadding = true },
             };
 
@@ -112,13 +124,12 @@ internal static class Settings
                 Parent = button.Component,
                 TextAlignment = Alignment.Center,
                 TextShrink = TextShrinkMode.Width,
-                Case = TextCase.Upper,
             };
         },
         HoverEntered = (s, e) =>
         {
             var background = e.GetChild<RoundedSolidColor>()!;
-            background.GetChild<RoundedSolidColor>()!.Color = MonoTanks.ThemeColor * 0.7f;
+            background.GetChild<RoundedSolidColor>()!.Color = Color.White * 0.5f;
         },
         HoverExited = (s, e) =>
         {

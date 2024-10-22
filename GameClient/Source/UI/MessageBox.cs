@@ -38,9 +38,6 @@ internal class MessageBox<T> : Component, IOverlayComponent, IStyleable<MessageB
     /// </summary>
     public T Box { get; }
 
-    /// <inheritdoc/>
-    public IComponent BaseComponent => this.Box;
-
     /// <summary>
     /// Gets the background of the message box.
     /// </summary>
@@ -101,7 +98,11 @@ internal class MessageBox<T> : Component, IOverlayComponent, IStyleable<MessageB
             return;
         }
 
-        this.Background?.Update(gameTime);
+        if (this.Background is not null)
+        {
+            this.Background.Transform.Size = ScreenController.CurrentSize;
+            this.Background?.Update(gameTime);
+        }
 
         if (this.CanBeClosedByClickOutside
             && !this.showedInThisTick

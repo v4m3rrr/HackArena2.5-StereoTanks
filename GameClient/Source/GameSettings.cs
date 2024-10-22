@@ -102,7 +102,7 @@ internal static class GameSettings
     /// Sets the screen type of the game.
     /// </summary>
     /// <param name="screenType">The screen type to set.</param>
-    public static void SetScreenType(ScreenType screenType)
+    public static async void SetScreenType(ScreenType screenType)
     {
         if (ScreenController.ScreenType == screenType)
         {
@@ -112,7 +112,9 @@ internal static class GameSettings
         ScreenTypeChanging?.Invoke(null, EventArgs.Empty);
         data.ScreenType = screenType;
         ScreenController.Change(screenType: screenType);
-        ScreenController.ApplyChanges();
+
+        await MonoTanks.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
+
         ScreenTypeChanged?.Invoke(null, EventArgs.Empty);
     }
 

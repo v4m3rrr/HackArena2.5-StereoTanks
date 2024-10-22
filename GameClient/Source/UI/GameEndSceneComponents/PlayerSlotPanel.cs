@@ -64,7 +64,7 @@ internal class PlayerSlotPanel : Component
 
         tankSpriteIcon.SetColor(color);
 
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 19);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 19);
 
         var nickContainer = new Container()
         {

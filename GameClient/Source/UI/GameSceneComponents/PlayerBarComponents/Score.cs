@@ -9,7 +9,11 @@ namespace GameClient.GameSceneComponents.PlayerBarComponents;
 /// </summary>
 internal class Score : PlayerBarComponent
 {
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 12);
+    private static readonly ScalableFont Font = new(Styles.Fonts.Paths.Main, 12)
+    {
+        AutoResize = true,
+        Spacing = 5,
+    };
 
     private readonly Text text;
 

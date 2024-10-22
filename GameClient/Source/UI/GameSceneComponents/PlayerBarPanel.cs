@@ -27,17 +27,18 @@ internal class PlayerBarPanel<T> : AlignedListBox
         lock (this.syncLock)
         {
             var newPlayerBars = players.Values
-            .Where(player => this.Bars.All(pb => pb.Player != player) && player is not null)
-            .Select(player =>
-            {
-                var bar = (T)Activator.CreateInstance(typeof(T), player)!;
-                bar.Parent = this.ContentContainer;
-                bar.Transform.RelativeSize = new Vector2(1f, 0.2f);
-                bar.Transform.Alignment = Alignment.Top;
-                bar.Transform.MaxSize = new Point(310, 110);
-                return bar;
-            })
-            .ToList();
+                .Where(player => this.Bars.All(pb => pb.Player != player) && player is not null)
+                .Select(player =>
+                {
+                    var bar = (T)Activator.CreateInstance(typeof(T), player)!;
+                    bar.Parent = this.ContentContainer;
+                    bar.Transform.RelativeSize = new Vector2(1f, 0.2f);
+                    bar.Transform.Alignment = Alignment.Top;
+                    bar.Transform.Ratio = new Ratio(340, 120);
+                    bar.Transform.IgnoreParentPadding = true;
+                    return bar;
+                })
+                .ToList();
 
             foreach (T playerBar in this.Bars.ToList())
             {

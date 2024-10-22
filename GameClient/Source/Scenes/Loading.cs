@@ -54,9 +54,10 @@ internal class Loading : Scene, IOverlayScene
 
         (baseComponent as TextureComponent)!.Opacity = 0.5f;
 
-        this.background = new RoundedSolidColor(MonoTanks.ThemeColor, 25)
+        this.background = new RoundedSolidColor(MonoTanks.ThemeColor, 36)
         {
             Parent = baseComponent,
+            AutoAdjustRadius = true,
             Opacity = 0.45f,
             Transform =
             {
@@ -90,12 +91,16 @@ internal class Loading : Scene, IOverlayScene
             },
         };
 
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 24);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 24)
+        {
+            AutoResize = true,
+            Spacing = 5,
+            MinSize = 7,
+        };
 
         var text = new LocalizedText(font, Color.White)
         {
             Parent = container,
-            Spacing = 5,
             Case = TextCase.Upper,
             TextAlignment = Alignment.Center,
             TextShrink = TextShrinkMode.HeightAndWidth,

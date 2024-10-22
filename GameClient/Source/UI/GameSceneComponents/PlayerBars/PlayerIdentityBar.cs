@@ -17,10 +17,13 @@ internal class PlayerIdentityBar : PlayerBar
     public PlayerIdentityBar(Player player)
         : base(player)
     {
+        this.Background.Transform.RelativePadding
+            = new Vector4(0.075f, 0.28f, 0.073f, 0.28f);
+
         // Nickname
         _ = new Nickname(player)
         {
-            Parent = this.Background,
+            Parent = this.Container,
             Transform =
             {
                 RelativeSize = new Vector2(0.8f, 0.5f),
@@ -31,7 +34,7 @@ internal class PlayerIdentityBar : PlayerBar
         // Ping
         _ = new Ping(player)
         {
-            Parent = this.Background,
+            Parent = this.Container,
             Transform =
             {
                 RelativeSize = new Vector2(0.3f, 0.5f),
@@ -42,10 +45,10 @@ internal class PlayerIdentityBar : PlayerBar
         // Tank sprite
         _ = new TankSprite(player)
         {
-            Parent = this.Background,
+            Parent = this.Container,
             Transform =
             {
-                RelativeSize = new Vector2(0.3f, 1f),
+                RelativeSize = new Vector2(0.27f, 1f),
                 Ratio = new Ratio(1, 1),
                 Alignment = Alignment.Right,
             },

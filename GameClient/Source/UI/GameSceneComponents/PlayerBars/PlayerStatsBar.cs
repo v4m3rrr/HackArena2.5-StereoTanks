@@ -17,16 +17,18 @@ internal class PlayerStatsBar : PlayerBar
     public PlayerStatsBar(Player player)
         : base(player)
     {
+        this.Background.Transform.RelativePadding
+            = new Vector4(0.06f, 0.25f, 0.06f, 0.14f);
+
         var topRow = new FlexListBox
         {
-            Parent = this.Background,
+            Parent = this.Container,
             Orientation = MonoRivUI.Orientation.Horizontal,
             Spacing = 5,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),
                 Alignment = Alignment.Top,
-                RelativeOffset = new Vector2(0.0f, 0.05f),
             },
         };
 
@@ -35,7 +37,7 @@ internal class PlayerStatsBar : PlayerBar
             Parent = topRow.ContentContainer,
             Transform =
             {
-                RelativePadding = new Vector4(0.18f),
+                RelativePadding = new Vector4(0.19f),
             },
         };
 
@@ -57,14 +59,14 @@ internal class PlayerStatsBar : PlayerBar
             },
         };
 
-        topRow.SetResizeFactor(bulletCount, 2.8f);
+        topRow.SetResizeFactor(bulletCount, 2.6f);
         topRow.SetResizeFactor(secondaryItems, 7);
         topRow.SetResizeFactor(score, 4);
 
         // Health bar
         _ = new HealthBar(player)
         {
-            Parent = this.Background,
+            Parent = this.Container,
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.5f),

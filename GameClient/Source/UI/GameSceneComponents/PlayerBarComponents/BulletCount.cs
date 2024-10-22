@@ -30,7 +30,7 @@ internal class BulletCount : PlayerBarComponent, ILoadStaticContent
         {
             Parent = this,
             Orientation = MonoRivUI.Orientation.Horizontal,
-            Spacing = 5,
+            Spacing = 8,
             Transform =
             {
                 Alignment = Alignment.TopLeft,

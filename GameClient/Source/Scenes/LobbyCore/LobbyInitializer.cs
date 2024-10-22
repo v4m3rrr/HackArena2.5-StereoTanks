@@ -20,14 +20,18 @@ internal class LobbyInitializer(Lobby lobby)
     /// <returns>The created match name component.</returns>
     public Text CreateMatchName()
     {
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 21);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 35)
+        {
+            AutoResize = true,
+            Spacing = 10,
+        };
+
         return new Text(font, Color.White)
         {
             Parent = lobby.BaseComponent,
             Value = "Lobby",
             Case = TextCase.Upper,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
-            Spacing = 10,
             Transform =
             {
                 Alignment = Alignment.Top,
@@ -44,14 +48,17 @@ internal class LobbyInitializer(Lobby lobby)
     /// <returns>The created join code component.</returns>
     public Text CreateJoinCode()
     {
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 14);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 14)
+        {
+            AutoResize = true,
+            Spacing = 5,
+        };
 
         return new Text(font, Color.White)
         {
             Parent = lobby.BaseComponent,
             TextShrink = TextShrinkMode.Width,
             TextAlignment = Alignment.Center,
-            Spacing = 5,
             Transform =
             {
                 RelativeSize = new Vector2(0.2f, 0.05f),

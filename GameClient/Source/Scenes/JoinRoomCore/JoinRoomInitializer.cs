@@ -17,14 +17,18 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
     /// <returns>The created room text component.</returns>
     public LocalizedText CreateRoomText()
     {
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 24);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 53)
+        {
+            AutoResize = true,
+            Spacing = 10,
+        };
+
         return new LocalizedText(font, Color.White)
         {
             Parent = joinRoom.BaseComponent,
             Value = new LocalizedString("Labels.JoinRoom"),
             Case = TextCase.Upper,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
-            Spacing = 10,
             Transform =
             {
                 Alignment = Alignment.Top,
@@ -143,7 +147,7 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
     /// <summary>
     /// Creates the spectate button component.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The created spectate button component.</returns>
     public Button<Container> CreateSpectateButton()
     {
         var button = new Button<Container>(new Container())
@@ -165,6 +169,7 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
         };
 
         button.ApplyStyle(Styles.UI.ButtonStyle);
+        button.GetDescendant<Text>()!.Scale = 0f; // Hide text
 
         button.Clicked += (s, e) => joinRoom.JoinGameAsSpectator();
 

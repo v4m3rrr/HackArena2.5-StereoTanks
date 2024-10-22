@@ -18,7 +18,7 @@ internal class GameQuitConfirmInitializer(GameQuitConfirm gameQuitConfirm)
     /// <returns>The created title.</returns>
     public LocalizedWrappedText CreateQuestion()
     {
-        var titleFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", (int)(33 * ScreenController.Scale.Y));
+        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, (int)(33 * ScreenController.Scale.Y));
 
         var text = new LocalizedWrappedText(titleFont, Color.White)
         {
@@ -38,7 +38,7 @@ internal class GameQuitConfirmInitializer(GameQuitConfirm gameQuitConfirm)
         ScreenController.ScreenChanged += (s, e) =>
         {
             text.Font = new ScalableFont(
-                "Content\\Fonts\\Orbitron-SemiBold.ttf",
+                Styles.Fonts.Paths.Main,
                 (int)(33 * ScreenController.Scale.Y));
             text.ForceUpdate(withTransform: true);
         };

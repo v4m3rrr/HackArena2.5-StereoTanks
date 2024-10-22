@@ -60,7 +60,12 @@ internal class Settings : Scene, IOverlayScene
     {
         this.overlayBackground = new SolidColor(Color.Black * 0.95f);
 
-        var titleFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 21);
+        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 22)
+        {
+            AutoResize = true,
+            Spacing = 5,
+        };
+
         var title = new LocalizedText(titleFont, Color.White)
         {
             Parent = baseComponent,
@@ -131,12 +136,17 @@ internal class Settings : Scene, IOverlayScene
             Transform =
             {
                 Alignment = Alignment.Center,
-                RelativeSize = new Vector2(0.6f, 0.6f),
+                RelativeSize = new Vector2(0.6f, 0.5f),
                 MinSize = new Point(620, 1),
             },
         };
 
-        var itemFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 12);
+        var itemFont = new ScalableFont(Styles.Fonts.Paths.Main, 13)
+        {
+            AutoResize = true,
+            Spacing = 5,
+            MinSize = 6,
+        };
 
         List<ListBox> sections = [];
 
@@ -161,7 +171,9 @@ internal class Settings : Scene, IOverlayScene
 
                 var button = new Button<Container>(new Container());
                 button.ApplyStyle(Styles.Settings.SelectorButtonItem);
-                button.Component.GetChild<Text>()!.Value = nativeName;
+                var text = button.Component.GetChild<Text>()!;
+                text.Value = nativeName;
+                text.Case = TextCase.Upper;
 
                 var item = new Selector<Language>.Item(button, language, nativeName);
                 selector.AddItem(item);
@@ -180,8 +192,8 @@ internal class Settings : Scene, IOverlayScene
         {
             var (_, selector) = CreateItem<Point>(graphicsSection, new LocalizedString("Labels.Resolution"), itemFont, true, 2.8f);
             selector.RelativeHeight = 5f;
-            selector.ElementFixedHeight = (int)(itemFont.BaseCharDimensions.Y * 2.5f);
             selector.ScrollToSelected = true;
+            selector.ElementFixedHeight = (int)(60 * ScreenController.Scale.Y);
             selector.CurrentItemPredicate = (x) => x == ScreenController.CurrentSize;
             selector.ItemSelected += (s, item) =>
             {
@@ -189,7 +201,11 @@ internal class Settings : Scene, IOverlayScene
                     ?? GetResolutionWithAspectRatio(ScreenController.CurrentSize);
             };
 
-            GameSettings.ResolutionChanged += (s, e) => selector.SelectCurrentItem();
+            GameSettings.ResolutionChanged += (s, e) =>
+            {
+                selector.SelectCurrentItem();
+                selector.ElementFixedHeight = (int)(60 * ScreenController.Scale.Y);
+            };
 
             static string GetResolutionWithAspectRatio(Point resolution)
             {
@@ -210,7 +226,9 @@ internal class Settings : Scene, IOverlayScene
 
                 var button = new Button<Container>(new Container());
                 button.ApplyStyle(Styles.Settings.SelectorButtonItem);
-                button.Component.GetChild<Text>()!.Value = description;
+                var text = button.Component.GetChild<Text>()!;
+                text.Value = description;
+                text.Case = TextCase.Lower;
 
                 if (selector.ListBox is ScrollableListBox scrollableListBox)
                 {
@@ -226,7 +244,7 @@ internal class Settings : Scene, IOverlayScene
                 var item = new Selector<Point>.Item(button, resolution, description);
                 selector.AddItem(item);
 
-                button.Clicked += (s, e) => GameSettings.SetResolution(resolution.X, resolution.Y);
+                button.Clicked += async (s, e) => await GameSettings.SetResolution(resolution.X, resolution.Y);
                 button.Clicked += (s, e) => selector.SelectItem(item);
             }
 
@@ -249,7 +267,9 @@ internal class Settings : Scene, IOverlayScene
                 var screenType = (ScreenType)Enum.Parse(typeof(ScreenType), typeName);
                 var button = new Button<Container>(new Container());
                 button.ApplyStyle(Styles.Settings.SelectorButtonItem);
-                button.Component.GetChild<Text>()!.Value = typeName;
+                var text = button.Component.GetChild<Text>()!;
+                text.Value = typeName;
+                text.Case = TextCase.Upper;
 
                 var item = new Selector<ScreenType>.Item(button, screenType, typeName);
                 selector.AddItem(item);

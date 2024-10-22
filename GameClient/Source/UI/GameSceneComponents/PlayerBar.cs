@@ -17,17 +17,21 @@ internal abstract class PlayerBar : Component
     {
         this.Player = player;
 
-        this.Background = new RoundedSolidColor(MonoTanks.ThemeColor, 15)
+        this.Background = new RoundedSolidColor(MonoTanks.ThemeColor, 24)
         {
             Parent = this,
             Opacity = 0.35f,
+            AutoAdjustRadius = true,
             Transform =
             {
-                RelativePadding = new Vector4(0.05f),
+                IgnoreParentPadding = true,
             },
         };
 
-        this.Background.Load();
+        this.Container = new Container()
+        {
+            Parent = this.Background,
+        };
     }
 
     /// <summary>
@@ -36,9 +40,14 @@ internal abstract class PlayerBar : Component
     public Player Player { get; }
 
     /// <summary>
-    /// Gets the background of the player bar.
+    /// Gets the container for the bar's components.
     /// </summary>
     protected RoundedSolidColor Background { get; }
+
+    /// <summary>
+    /// Gets the container for the bar's components.
+    /// </summary>
+    protected Container Container { get; }
 
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)

@@ -99,7 +99,7 @@ internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
                 Transform =
                 {
                     Alignment = Alignment.Center,
-                    RelativeSize = new Vector2(0.72f),
+                    RelativeSize = new Vector2(0.71f),
                 },
             };
 

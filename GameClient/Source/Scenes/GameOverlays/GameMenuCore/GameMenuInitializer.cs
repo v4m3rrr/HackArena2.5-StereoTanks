@@ -18,7 +18,7 @@ internal class GameMenuInitializer(GameMenu gameMenu)
     /// <returns>The created title.</returns>
     public Text CreateTitle()
     {
-        var titleFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 45);
+        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 45);
         return new Text(titleFont, Color.White)
         {
             Parent = gameMenu.BaseComponent,

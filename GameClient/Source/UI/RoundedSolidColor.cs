@@ -12,6 +12,7 @@ namespace GameClient;
 internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
 {
     private static readonly Dictionary<TextureCacheKey, TextureCacheValue> Cache = [];
+    private bool autoAdjustRadius;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RoundedSolidColor"/> class.
@@ -29,6 +30,29 @@ internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
     /// Gets the radius of the rounded corners.
     /// </summary>
     public int Radius { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the radius should
+    /// be automatically adjusted to the current screen size.
+    /// </summary>
+    /// <remarks>
+    /// If set to <see langword="true"/>, the <see cref="Radius"/>
+    /// represents the radius for a screen size of 1920x1080.
+    /// </remarks>
+    public bool AutoAdjustRadius
+    {
+        get => this.autoAdjustRadius;
+        set
+        {
+            if (this.autoAdjustRadius == value)
+            {
+                return;
+            }
+
+            this.autoAdjustRadius = value;
+            this.Reload(this.Transform.Size);
+        }
+    }
 
     /// <inheritdoc/>
     bool IButtonContent<RoundedSolidColor>.IsButtonContentHovered(Point mousePosition)
@@ -54,7 +78,15 @@ internal class RoundedSolidColor : SolidColor, IButtonContent<RoundedSolidColor>
     public override void Load()
     {
         var size = this.Transform.Size;
-        var radius = Math.Min(this.Radius, Math.Min(size.X, size.Y) / 2);
+        var radius = this.Radius;
+
+        if (this.autoAdjustRadius)
+        {
+            radius = (int)(radius * Math.Min(ScreenController.Scale.X, ScreenController.Scale.Y));
+        }
+
+        radius = Math.Min(radius, Math.Min(size.X, size.Y) / 2);
+
         var cacheKey = new TextureCacheKey(size, radius);
 
         if (Cache.TryGetValue(cacheKey, out var cacheValue))

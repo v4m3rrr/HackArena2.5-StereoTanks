@@ -2,6 +2,7 @@
 using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
+using SharpDX.DXGI;
 
 namespace GameClient.LobbySceneComponents;
 
@@ -67,7 +68,11 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 19);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 18)
+        {
+            AutoResize = true,
+            Spacing = 5,
+        };
 
         var nickContainer = new Container()
         {
@@ -86,7 +91,6 @@ internal class PlayerSlotPanel : Component
             {
                 Suffix = "...",
             },
-            Spacing = 8,
             Case = TextCase.Upper,
             TextAlignment = Alignment.Left,
             TextShrink = TextShrinkMode.HeightAndWidth,

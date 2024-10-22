@@ -15,7 +15,7 @@ internal class Zone : ISprite
 
     private static readonly ScalableTexture2D.Static StaticCornerTexture = new($"Images/Game/zone_corner.svg");
     private static readonly ScalableTexture2D.Static StaticEdgeTexture = new($"Images/Game/zone_edge.svg");
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 25);
+    private static readonly ScalableFont Font = new(Styles.Fonts.Paths.Main, 25);
 
     private readonly ScalableTexture2D[] textures = new ScalableTexture2D[8];
     private readonly GridComponent grid;

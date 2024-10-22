@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -15,20 +16,20 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectingMessageBox"/> class.
     /// </summary>
-    public ConnectingMessageBox()
-        : base(new((MonoTanks.ThemeColor * 0.66f).WithAlpha(255), 15))
+    /// <param name="cancellationTokenSource">The cancellation token source to cancel the connection.</param>
+    public ConnectingMessageBox(CancellationTokenSource? cancellationTokenSource = null)
+        : base(new((MonoTanks.ThemeColor * 0.35f).WithAlpha(255), 36) { AutoAdjustRadius = true })
     {
         this.CanBeClosedByClickOutside = false;
 
-        this.Box.Transform.RelativeSize = new Vector2(0.30f, 0.15f);
-        this.Box.Transform.MinSize = new Point(400, 200);
-        this.Box.Transform.MaxSize = new Point(1000, 500);
+        this.Box.Transform.RelativeSize = new Vector2(0.32f, 0.19f);
         this.Box.Transform.Alignment = Alignment.Center;
-        this.Box.Transform.RelativePadding = new Vector4(0.04f);
+        this.Box.Transform.RelativePadding = new Vector4(0.05f);
         this.Box.Load();
 
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 14)
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 18)
         {
+            AutoResize = true,
             Spacing = 8,
         };
 
@@ -51,6 +52,16 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
         };
 
         this.Background.Load();
+
+        if (cancellationTokenSource is not null)
+        {
+            _ = cancellationTokenSource.Token.Register(() =>
+            {
+                ScreenController.HideOverlay(this);
+            });
+
+            this.CreateCloseButton(cancellationTokenSource);
+        }
     }
 
     /// <summary>
@@ -85,5 +96,35 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
         _ = sb.AppendJoin(null, Enumerable.Repeat('.', dotCount));
 
         this.text.Value = sb.ToString();
+    }
+
+    private void CreateCloseButton(CancellationTokenSource cancellationTokenSource)
+    {
+        var button = new Button<Container>(new Container())
+        {
+            Parent = this.Box,
+            Transform =
+            {
+                Alignment = Alignment.TopRight,
+                RelativeOffset = new Vector2(-0.02f, 0.07f),
+                RelativeSize = new Vector2(0.15f),
+                Ratio = new Ratio(1, 1),
+                IgnoreParentPadding = true,
+            },
+        };
+
+        var icon = new ScalableTexture2D("Images/Icons/exit.svg")
+        {
+            Parent = button.Component,
+        };
+
+        button.ApplyStyle(Styles.UI.ButtonStyle);
+        button.GetDescendant<Text>()!.Scale = 0f; // Hide text
+        button.Clicked += (s, e) =>
+        {
+            cancellationTokenSource.Cancel();
+        };
+
+        icon.Load();
     }
 }

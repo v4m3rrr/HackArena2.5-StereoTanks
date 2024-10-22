@@ -33,8 +33,8 @@
 	
 	<MessageBoxLabels>
 		<ErrorOccured>Oh non, une erreur est survenue!</ErrorOccured>
-		<ConnectionFailed>Échec de la connexion!</ConnectionFailed>
-		<ConnectionRejected>Connexion rejetée!</ConnectionRejected>
+		<ConnectionFailed>Échec de la connexion</ConnectionFailed>
+		<ConnectionRejected>Connexion rejetée</ConnectionRejected>
 	</MessageBoxLabels>
 	
 	<ConnectionRejectedReason>

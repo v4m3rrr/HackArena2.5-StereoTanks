@@ -80,8 +80,9 @@ internal static class ServerConnection
     /// Connects to the specified server.
     /// </summary>
     /// <param name="data">The connection data.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public static async Task<ConnectionStatus> ConnectAsync(ConnectionData data)
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task<ConnectionStatus> ConnectAsync(ConnectionData data, CancellationToken cancellationToken)
     {
         string serverUrl = data.GetServerUrl();
 
@@ -93,9 +94,8 @@ internal static class ServerConnection
         {
             client = new ClientWebSocket();
 
-            await client.ConnectAsync(new Uri(serverUrl), CancellationToken.None);
-
-            status = await WaitForAccept();
+            await client.ConnectAsync(new Uri(serverUrl), cancellationToken);
+            status = await WaitForAccept(cancellationToken);
 
             if (status is not ConnectionStatus.Success)
             {
@@ -106,7 +106,11 @@ internal static class ServerConnection
             IsAccepted = true;
             Established?.Invoke();
 
-            _ = Task.Run(ReceiveMessages);
+            _ = Task.Run(ReceiveMessages, CancellationToken.None);
+        }
+        catch (OperationCanceledException)
+        {
+            return new ConnectionStatus.Cancelled();
         }
         catch (WebSocketException ex)
         {
@@ -167,7 +171,7 @@ internal static class ServerConnection
         }
     }
 
-    private static async Task<ConnectionStatus> WaitForAccept()
+    private static async Task<ConnectionStatus> WaitForAccept(CancellationToken cancellationToken)
     {
         while (client.State == WebSocketState.Open)
         {
@@ -176,7 +180,11 @@ internal static class ServerConnection
 
             try
             {
-                result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return new ConnectionStatus.Cancelled();
             }
             catch (WebSocketException ex)
             {

@@ -9,10 +9,19 @@ namespace GameClient.UI;
 /// </summary>
 internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
 {
-    private readonly ScalableFont textFont = new("Content/Fonts/Orbitron-SemiBold.ttf", 9)
+    private readonly ScalableFont textFont = new(Styles.Fonts.Paths.Main, 11)
     {
+        AutoResize = true,
         Spacing = 8,
     };
+
+    private readonly ScalableFont titleFont = new(Styles.Fonts.Paths.Main, 18)
+    {
+        AutoResize = true,
+        Spacing = 8,
+    };
+
+    private readonly Container container;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionFailedMessageBox"/> class.
@@ -42,13 +51,13 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
     {
         this.CreateTitle(titleLocKey);
 
-        var text = new LocalizedWrappedText(this.textFont, Color.DarkGray)
+        var text = new LocalizedWrappedText(this.textFont, Color.White * 0.9f)
         {
             Value = reason,
         };
 
         this.SetTextProperties(text);
-        this.CreateOkButton();
+        this.CreateCloseButton();
     }
 
     /// <summary>
@@ -61,26 +70,29 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
     {
         this.CreateTitle(titleLocKey);
 
-        var text = new WrappedText(this.textFont, Color.DarkGray)
+        var text = new WrappedText(this.textFont, Color.White * 0.9f)
         {
             Value = reason,
         };
 
         this.SetTextProperties(text);
-        this.CreateOkButton();
+        this.CreateCloseButton();
     }
 
     private ConnectionFailedMessageBox()
-        : base(new(new Color(120, 18, 12), 15))
+        : base(new((MonoTanks.ThemeColor * 0.35f).WithAlpha(255), 36) { AutoAdjustRadius = true })
     {
         this.CanBeClosedByClickOutside = false;
 
-        this.Box.Transform.RelativeSize = new Vector2(0.31f, 0.19f);
-        this.Box.Transform.MinSize = new Point(400, 245);
-        this.Box.Transform.MaxSize = new Point(1000, 612);
+        this.Box.Transform.RelativeSize = new Vector2(0.43f, 0.205f);
         this.Box.Transform.Alignment = Alignment.Center;
-        this.Box.Transform.RelativePadding = new Vector4(0.04f);
+        this.Box.Transform.RelativePadding = new Vector4(0.1f, 0.2f, 0.1f, 0.2f);
         this.Box.Load();
+
+        this.container = new Container()
+        {
+            Parent = this.Box,
+        };
 
         this.Background = new SolidColor(MonoTanks.ThemeColor)
         {
@@ -92,68 +104,54 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
 
     private void SetTextProperties(WrappedText text)
     {
-        text.Parent = this.Box;
-        text.TextAlignment = Alignment.Center;
+        text.Parent = this.container;
+        text.TextAlignment = Alignment.Bottom;
         text.Case = TextCase.Upper;
-        text.Transform.RelativeSize = new Vector2(1.0f, 0.4f);
-        text.Transform.RelativeOffset = new Vector2(0.0f, -0.05f);
-        text.Transform.Alignment = Alignment.Center;
+        text.Transform.RelativeSize = new Vector2(1.0f, 0.5f);
+        text.Transform.Alignment = Alignment.Bottom;
+        text.AdjustTransformSizeToText = AdjustSizeOption.OnlyHeight;
     }
 
     private void CreateTitle(string titleLocalizationKey)
     {
-        var titleFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 18)
+        _ = new LocalizedText(this.titleFont, Color.White)
         {
-            Spacing = 8,
-        };
-
-        // Title
-        _ = new LocalizedText(titleFont, Color.White)
-        {
-            Parent = this.Box,
+            Parent = this.container,
             Value = new LocalizedString(titleLocalizationKey),
             Case = TextCase.Upper,
             TextAlignment = Alignment.Center,
             TextShrink = TextShrinkMode.Width,
             Transform =
             {
-                RelativeSize = new Vector2(1.0f, 0.25f),
+                RelativeSize = new Vector2(1.0f, 0.5f),
                 Alignment = Alignment.Top,
             },
         };
     }
 
-    private void CreateOkButton()
+    private void CreateCloseButton()
     {
         var button = new Button<Container>(new Container())
         {
             Parent = this.Box,
             Transform =
             {
-                RelativeSize = new Vector2(0.5f, 0.3f),
-                Alignment = Alignment.Bottom,
+                Alignment = Alignment.TopRight,
+                RelativeOffset = new Vector2(-0.02f, 0.07f),
+                RelativeSize = new Vector2(0.15f),
+                Ratio = new Ratio(1, 1),
+                IgnoreParentPadding = true,
             },
         };
 
-        var buttonTextColor = Color.LightGray;
-        var buttonTextHoveredColor = new Color(0xFF, 0xD2, 0x0);
-        var buttonTextFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 14);
-        var buttonText = new LocalizedText(buttonTextFont, buttonTextColor)
+        var icon = new ScalableTexture2D("Images/Icons/exit.svg")
         {
             Parent = button.Component,
-            Spacing = 5,
-            Value = new FormattedLocalizedString("Buttons.Ok")
-            {
-                Prefix = "> ",
-                Suffix = " <",
-            },
-            Case = TextCase.Upper,
-            TextAlignment = Alignment.Center,
         };
 
-        button.HoverEntered += (s, e) =>
-        buttonText.Color = buttonTextHoveredColor;
-        button.HoverExited += (s, e) => buttonText.Color = buttonTextColor;
+        button.ApplyStyle(Styles.UI.ButtonStyle);
+        button.GetDescendant<Text>()!.Scale = 0f; // Hide text
         button.Clicked += (s, e) => ScreenController.HideOverlay(this);
+        icon.Load();
     }
 }

@@ -154,31 +154,33 @@ internal partial class DebugConsole : Scene, IOverlayScene
             Parent = baseComponent,
             Transform =
             {
-                Type = TransformType.Absolute,
-                Location = new Point(50, 50),
+                RelativeSize = new Vector2(0.46f),
+                Alignment = Alignment.TopLeft,
+                RelativeOffset = new Vector2(0.02f, 0.035f),
+                MinSize = new Point(540, 300),
             },
         };
 
-        this.baseFrame.Transform.Recalculated += (s, e) =>
+        this.font = new ScalableFont("Content\\Fonts\\Consolas.ttf", 8)
         {
-            var transform = (Transform)s!;
-            transform.Size = new Point(800, 450).Clamp(new Point(540, 300), ScreenController.CurrentSize - new Point(100, 100));
+            MinSize = 6,
+            AutoResize = true,
         };
-
-        this.font = new ScalableFont("Content\\Fonts\\Consolas.ttf", 7);
 
         // Background
         _ = new SolidColor(Color.Black * 0.9f) { Parent = this.baseFrame.InnerContainer };
 
         // Info text
         {
-            var text = new Text(this.font, Color.CornflowerBlue)
+            var font = new ScalableFont(Styles.Fonts.Paths.Main, 8);
+
+            var text = new Text(font, Color.CornflowerBlue)
             {
                 Parent = this.baseFrame.InnerContainer,
                 Value = "DEBUG CONSOLE",
+                Spacing = 5,
                 TextAlignment = Alignment.Left,
                 TextShrink = TextShrinkMode.HeightAndWidth,
-                Spacing = 5,
                 Transform =
                 {
                     Alignment = Alignment.TopLeft,
@@ -202,7 +204,9 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 },
             };
 
-            var text = new Text(this.font, Color.White)
+            var font = new ScalableFont(Styles.Fonts.Paths.Main, 8);
+
+            var text = new Text(font, Color.White)
             {
                 Parent = button,
                 Value = "X",
@@ -243,7 +247,11 @@ internal partial class DebugConsole : Scene, IOverlayScene
             this.textInput = new TextInput(this.font, Color.White, caretColor: Color.DarkGray)
             {
                 Parent = frame.InnerContainer,
-                Transform = { Alignment = Alignment.Left },
+                Transform =
+                {
+                    Alignment = Alignment.Left,
+                    RelativePadding = new Vector4(0.001f, 0.01f, 0.001f, 0.01f),
+                },
                 TextAlignment = Alignment.Left,
                 TextShrink = TextShrinkMode.SafeCharHeight,
                 Placeholder = "Enter command...",
@@ -279,6 +287,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
             {
                 Parent = messagesFrame.InnerContainer,
                 Orientation = Orientation.Vertical,
+                MaxElements = 300,
                 Spacing = 8,
                 Transform =
                 {

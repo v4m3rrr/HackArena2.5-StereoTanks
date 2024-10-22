@@ -11,8 +11,9 @@ internal static class JoinRoom
     /// <summary>
     /// The font used in the setting elements.
     /// </summary>
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 14)
+    private static readonly ScalableFont Font = new(Styles.Fonts.Paths.Main, 14)
     {
+        AutoResize = true,
         Spacing = 5,
     };
 
@@ -29,7 +30,7 @@ internal static class JoinRoom
             var inputBackground = new RoundedSolidColor(Color.White, 100)
             {
                 Parent = container,
-                Opacity = 0.5f,
+                Opacity = 0.45f,
                 Transform =
                 {
                     Alignment = Alignment.Right,

@@ -54,7 +54,12 @@ internal class MainMenu : Scene
             },
         };
 
-        var titleFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 42);
+        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 53)
+        {
+            AutoResize = true,
+            Spacing = 20,
+        };
+
         this.title = new Text(titleFont, Color.White)
         {
             Parent = baseComponent,
@@ -63,7 +68,6 @@ internal class MainMenu : Scene
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
 #endif
             TextShrink = TextShrinkMode.HeightAndWidth,
-            Spacing = 20,
             Transform =
             {
                 Alignment = Alignment.TopLeft,
@@ -72,13 +76,17 @@ internal class MainMenu : Scene
         };
 
 #if DEBUG
-        var debugInfoFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 14);
+        var debugInfoFont = new ScalableFont(Styles.Fonts.Paths.Main, 24)
+        {
+            AutoResize = true,
+            Spacing = 52,
+        };
+
         _ = new Text(debugInfoFont, Color.White * 0.9f)
         {
             Parent = this.title,
             Value = "[Debug]",
             TextAlignment = Alignment.Right,
-            Spacing = 52,
             Transform =
             {
                 RelativeSize = new Vector2(0.1f),
@@ -121,7 +129,7 @@ internal class MainMenu : Scene
         exitBtn.Clicked += (s, e) => MonoTanks.Instance.Exit();
 
 #if DEBUG
-        var quickJoinFont = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 9);
+        var quickJoinFont = new ScalableFont(Styles.Fonts.Paths.Main, 9);
 
         async void Connect<T>(bool isSpectator)
             where T : Scene

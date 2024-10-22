@@ -26,7 +26,7 @@ internal class Timer : Component
             },
         };
 
-        var timeFont = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 16);
+        var timeFont = new ScalableFont(Styles.Fonts.Paths.Main, 16);
         this.text = new Text(timeFont, Color.White)
         {
             Parent = this,

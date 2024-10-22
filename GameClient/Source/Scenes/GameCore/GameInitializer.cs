@@ -40,8 +40,9 @@ internal class GameInitializer(Game game)
     /// </returns>
     public Tuple<PlayerBarPanel<PlayerIdentityBar>, PlayerBarPanel<PlayerStatsBar>> CreatePlayerBarPanels()
     {
-        var boxRelativeSize = new Vector2(0.23f, 1.0f);
+        var boxRelativeSize = new Vector2(0.22f, 1.0f);
         var boxRelativePadding = new Vector4(0.1f);
+        var boxRelativeOffset = new Vector2(0.015f, 0.05f);
         var boxSpacing = 8;
         var boxElementsAlignment = Alignment.Center;
 
@@ -54,7 +55,7 @@ internal class GameInitializer(Game game)
             {
                 Alignment = Alignment.Left,
                 RelativeSize = boxRelativeSize,
-                RelativePadding = boxRelativePadding,
+                RelativeOffset = boxRelativeOffset,
             },
         };
 
@@ -67,9 +68,12 @@ internal class GameInitializer(Game game)
             {
                 Alignment = Alignment.Right,
                 RelativeSize = boxRelativeSize,
-                RelativePadding = boxRelativePadding,
+                RelativeOffset = boxRelativeOffset * new Vector2(-1f, 1f),
             },
         };
+
+        identityBox.ContentContainer.Transform.RelativePadding = boxRelativePadding;
+        statsBox.ContentContainer.Transform.RelativePadding = boxRelativePadding;
 
         return new(identityBox, statsBox);
     }
@@ -100,18 +104,22 @@ internal class GameInitializer(Game game)
     /// <returns>The created match name.</returns>
     public Text CreateMatchName()
     {
-        var font = new ScalableFont("Content/Fonts/Orbitron-SemiBold.ttf", 15);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 22)
+        {
+            AutoResize = true,
+            Spacing = 10,
+        };
+
         return new Text(font, Color.White)
         {
             Parent = game.BaseComponent,
             Value = "Match Name",
             Case = TextCase.Upper,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
-            Spacing = 10,
             Transform =
             {
                 Alignment = Alignment.Top,
-                RelativeOffset = new Vector2(0.0f, 0.03f),
+                RelativeOffset = new Vector2(0.0f, 0.045f),
             },
         };
     }

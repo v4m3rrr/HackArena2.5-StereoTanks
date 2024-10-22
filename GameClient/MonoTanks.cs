@@ -210,6 +210,8 @@ public class MonoTanks : Game
     /// </summary>
     protected override void Initialize()
     {
+        this.Window.Title = nameof(MonoTanks);
+
         ContentController.Initialize(this.Content);
 
         ScreenController.Change(1366, 768, ScreenType.Windowed);

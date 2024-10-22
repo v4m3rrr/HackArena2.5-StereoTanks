@@ -15,8 +15,12 @@ internal static class UI
     /// </summary>
     public static IButton<Container>.Style ButtonStyle { get; } = new()
     {
-        ["Font"] = new ScalableFont("Content\\Fonts\\Orbitron-SemiBold.ttf", 12) { Spacing = 15 },
-        ["HoveredColor"] = new Color(0xFF, 0xD2, 0x0),
+        ["Font"] = new ScalableFont(Fonts.Paths.Main, 18)
+        {
+            AutoResize = true,
+            Spacing = 15,
+        },
+        ["HoveredColor"] = new Color(0xDA, 0xFF, 0x01),
         ["UnhoveredColor"] = Color.White,
         Action = (button) =>
         {

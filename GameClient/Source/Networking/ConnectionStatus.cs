@@ -23,4 +23,9 @@ internal abstract record class ConnectionStatus
     /// </summary>
     /// <param name="Exception">The exception that caused the failure.</param>
     public record Failed(Exception? Exception = null) : ConnectionStatus;
+
+    /// <summary>
+    /// Represents a cancelled connection.
+    /// </summary>
+    public record Cancelled : ConnectionStatus;
 }

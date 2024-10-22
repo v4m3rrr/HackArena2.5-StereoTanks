@@ -9,7 +9,11 @@ namespace GameClient.GameSceneComponents.PlayerBarComponents;
 /// </summary>
 internal class Ping : PlayerBarComponent
 {
-    private static readonly ScalableFont Font = new("Content\\Fonts\\Orbitron-SemiBold.ttf", 9);
+    private static readonly ScalableFont Font = new(Styles.Fonts.Paths.Main, 8)
+    {
+        AutoResize = true,
+        Spacing = 4,
+    };
 
     private readonly Text text;
 
@@ -24,7 +28,7 @@ internal class Ping : PlayerBarComponent
         {
             Parent = this,
             Value = $"-",
-            TextAlignment = Alignment.Left,
+            TextAlignment = Alignment.BottomLeft,
             Spacing = 3,
         };
     }

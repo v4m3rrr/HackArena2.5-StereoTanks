@@ -99,10 +99,14 @@ internal class JoinRoom : Scene
     private static async Task Join(ConnectionData data)
     {
         ServerConnection.ErrorThrew += DebugConsole.ThrowError;
-        var connectingMessageBox = new ConnectingMessageBox();
+
+        var cancelationTokenSource = new System.Threading.CancellationTokenSource();
+        var cancelationToken = cancelationTokenSource.Token;
+
+        var connectingMessageBox = new ConnectingMessageBox(cancelationTokenSource);
         ScreenController.ShowOverlay(connectingMessageBox);
 
-        ConnectionStatus status = await ServerConnection.ConnectAsync(data);
+        ConnectionStatus status = await ServerConnection.ConnectAsync(data, cancelationToken);
         ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
 
         switch (status)
