@@ -2,7 +2,6 @@
 using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
-using SharpDX.DXGI;
 
 namespace GameClient.LobbySceneComponents;
 

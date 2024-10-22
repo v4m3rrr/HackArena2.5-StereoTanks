@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading;
 using GameClient.Networking;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -141,7 +145,7 @@ internal class MainMenu : Scene
                 ? ConnectionData.ForSpectator("localhost:5000", joinCode, true)
                 : ConnectionData.ForPlayer("localhost:5000", joinCode, "player", true);
 
-            ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData);
+            ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData, CancellationToken.None);
 
             if (status is ConnectionStatus.Success)
             {
@@ -243,6 +247,68 @@ internal class MainMenu : Scene
             };
         }
 #endif
+
+        var versionFont = new ScalableFont(Styles.Fonts.Paths.Main, 6)
+        {
+            AutoResize = true,
+            Spacing = 3,
+            MinSize = 5,
+        };
+
+        var assembly = typeof(MonoTanks).Assembly;
+        var version = assembly.GetName().Version!;
+        var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
+
+#if WINDOWS
+        var platform = "Windows";
+#elif LINUX
+        var platform = "Linux";
+#elif OSX
+        var platform = "OSX";
+#else
+        var platform = "Unknown";
+#endif
+
+        var sb = new StringBuilder()
+            .Append('v')
+            .Append(version.Major)
+            .Append('.')
+            .Append(version.Minor)
+            .Append('.')
+            .Append(version.Build)
+#if DEBUG
+            .Append('.')
+            .Append(version.Revision)
+            .Append(" (")
+            .Append(platform)
+            .Append(')')
+#endif
+            ;
+
+        _ = new Text(versionFont, Color.White)
+        {
+            Parent = baseComponent,
+            Value = sb.ToString(),
+            AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
+            TextAlignment = Alignment.BottomLeft,
+            Transform =
+            {
+                Alignment = Alignment.BottomLeft,
+                RelativeOffset = new Vector2(0.012f, -0.02f),
+            },
+        };
+
+#if !DEBUG
+        sb.Append(" (")
+            .Append(platform)
+            .Append(')');
+#endif
+
+        sb.Append(" [")
+            .Append(configuration)
+            .Append(']');
+
+        DebugConsole.SendMessage("Version: " + sb.ToString(), new Color(0xC5, 0x48, 0xFF));
     }
 
     /// <inheritdoc/>

@@ -5,8 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>GameLogic</RootNamespace>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<Configurations>Debug;Release</Configurations>
+	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <Configurations>Debug;Release</Configurations>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>GameServer</AssemblyName>
+	<AssemblyVersion>0.1.0.48</AssemblyVersion>
     <RootNamespace>GameServer</RootNamespace>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>

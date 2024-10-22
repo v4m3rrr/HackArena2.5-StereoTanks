@@ -167,11 +167,9 @@ internal class Game : Scene
                     GameServerMessageHandler.HandleGameEndPacket(packet);
                     break;
 
-#if DEBUG
-                case PacketType.LobbyData when ServerConnection.Data.QuickJoin:
+                case PacketType.LobbyData:
                     GameServerMessageHandler.HandleLobbyDataPacket(packet, this.updater);
                     break;
-#endif
 
                 case PacketType.GameStarted:
                     break;

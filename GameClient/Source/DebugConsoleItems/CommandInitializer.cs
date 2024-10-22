@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using GameClient.Networking;
 using GameClient.Scenes;
 using GameClient.UI;
@@ -292,7 +293,7 @@ internal static class CommandInitializer
         var address = $"{ip}:{port}";
         var connectionData = ConnectionData.ForPlayer(address, joinCode, "Steve", false);
 
-        ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData);
+        ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData, CancellationToken.None);
 
         ServerConnection.ErrorThrew += DebugConsole.ThrowError;
         var connectingMessageBox = new ConnectingMessageBox();

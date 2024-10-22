@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>GameClient</AssemblyName>
+    <AssemblyVersion>0.1.0.48</AssemblyVersion>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <RollForward>Major</RollForward>

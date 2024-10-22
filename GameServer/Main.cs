@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using GameLogic.Networking;
 using GameServer;
@@ -16,6 +17,35 @@ var log = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss:ffff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
     .WriteTo.File($"logs/{timestamp}.log")
     .CreateLogger();
+
+var assembly = Assembly.GetExecutingAssembly();
+var version = assembly.GetName().Version!;
+var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
+
+#if WINDOWS
+var platform = "Windows";
+#elif LINUX
+var platform = "Linux";
+#elif OSX
+var platform = "macOS";
+#else
+var platform = "Unknown";
+#endif
+
+var sb = new StringBuilder()
+    .Append('v')
+    .Append(version.Major)
+    .Append('.')
+    .Append(version.Minor)
+    .Append('.')
+    .Append(version.Build)
+    .Append('.')
+    .Append(version.Revision)
+    .Append(" (")
+    .Append(platform)
+    .Append(')');
+
+log.Information("GameServer {version}", sb);
 
 CommandLineOptions? opts = CommandLineParser.Parse(args, log);
 
