@@ -328,6 +328,7 @@ public class Tank : IEquatable<Tank>
             if (damager is not null)
             {
                 damager.Kills++;
+                damager.Tank.Heal(40);
             }
         }
 
@@ -341,11 +342,7 @@ public class Tank : IEquatable<Tank>
     internal void Heal(int points)
     {
         Debug.Assert(points >= 0, "Healing points cannot be negative.");
-
-        if (this.Health < 100)
-        {
-            this.Health += points;
-        }
+        this.Health = Math.Min(100, this.Health!.Value + points);
     }
 
     /// <summary>

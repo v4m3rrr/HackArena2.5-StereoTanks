@@ -59,10 +59,11 @@ internal class MapGenerator(int dimension, int seed)
         const int height = 4;
         const int width = 4;
         const int count = 2;
-        const int minDistance = 3;
         const int maxAttempts = 10000;
 
         var zones = new List<Zone>();
+        var length = Math.Max(height, width);
+        var minDistance = ((this.dim - length) / 2) - length;
 
         bool IsOverlapping(int x, int y) => zones.Any(z =>
             x < z.X + z.Width &&

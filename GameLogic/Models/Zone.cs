@@ -11,9 +11,10 @@ public class Zone : IEquatable<Zone>
     /// <summary>
     /// The number of ticks required to capture the zone.
     /// </summary>
-    public const int TicksToCapture = 100;
+    public const int TicksToCapture = 50;
 
-    private readonly Dictionary<Player, int> remainingTicksToCapture = new();
+    private readonly Dictionary<Player, int> remainingTicksToCapture = [];
+    private int updateCount;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Zone"/> class.
@@ -148,6 +149,8 @@ public class Zone : IEquatable<Zone>
     /// <param name="tanks">The tanks in the game.</param>
     internal void UpdateCapturingStatus(IEnumerable<Tank> tanks)
     {
+        this.updateCount++;
+
         var tanksInZone = tanks.Where(this.ContainsTank).ToList();
         var tanksOutsideZone = tanks.Except(tanksInZone).ToList();
         var tanksInZoneCount = tanksInZone.Count;
@@ -275,18 +278,23 @@ public class Zone : IEquatable<Zone>
 
         if (tanksInZoneCount == 0)
         {
-            captured.Player.Score++;
+            if (this.updateCount % 2 == 0)
+            {
+                captured.Player.Score++;
+            }
         }
         else if (tanksInZoneCount == 1)
         {
             var tank = tanksInZone.First();
             if (ownerInZone)
             {
-                captured.Player.Score++;
-
-                if (tank.Health < 80)
+                if (this.updateCount % 2 == 0)
                 {
-                    captured.Player.Tank.Heal(1);
+                    captured.Player.Score++;
+                    if (tank.Health < 60)
+                    {
+                        captured.Player.Tank.Heal(1);
+                    }
                 }
             }
             else
