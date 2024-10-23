@@ -1,16 +1,15 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-
-#if WINDOWS
-using System.Management;
-#endif
-
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using GameClient.Networking;
+
+#if WINDOWS
+using System.Management;
+#endif
 
 namespace GameClient;
 
@@ -72,11 +71,12 @@ internal static class CrashService
 
         var sb = new StringBuilder()
             .AppendLine("Please report this issue to the developers.")
-            .AppendLine("Include the following information in your report:")
+            .AppendLine("Include the following information in your report.")
             .AppendLine("-------------------------------------------------")
             .AppendLine($"Version: {v}")
             .AppendLine($"Operating System: {osDescription} ({osArchitecture})")
             .AppendLine($"Processor Cores: {cpuCores}")
+            .AppendLine($"RAM: {GetRamUsage()}")
             .AppendLine($"Memory Usage: {memoryUsage} MB")
             .AppendLine($"Uptime: {uptime}");
 
@@ -102,13 +102,21 @@ internal static class CrashService
             .AppendLine($"IsTerminating: {e.IsTerminating}")
             .AppendLine($"Exception: {exceptionType}");
 
-        sb.AppendLine("-------------------------------------------------")
-            .AppendLine("Last 20 Debug Messages:");
-
-        var debugMessages = DebugConsole.Instance.GetRecentMessages(20);
-        foreach (var message in debugMessages)
+        if (DebugConsole.Instance is { } dc && dc.IsContentLoaded)
         {
-            sb.AppendLine(message);
+            sb.AppendLine("-------------------------------------------------")
+                .AppendLine("Recent 20 Debug Messages:");
+
+            var debugMessages = DebugConsole.Instance.GetRecentMessages(20);
+            debugMessages.Reverse();
+            foreach (var message in debugMessages)
+            {
+                sb.AppendLine(message);
+            }
+        }
+        else
+        {
+            sb.AppendLine("Debug Console is not available.");
         }
 
         sb.AppendLine("-------------------------------------------------")
@@ -120,27 +128,27 @@ internal static class CrashService
             .AppendLine(e.ExceptionObject is Exception ex ? ex.StackTrace : "No stack trace available.");
 
         sb.AppendLine("-------------------------------------------------")
-            .AppendLine("Apologies for the inconvenience and thank for your cooperation!");
+            .AppendLine("Apologies for the inconvenience and thank you for your cooperation!");
 
         var sb2 = new StringBuilder()
             .AppendLine("Foock...")
-            .AppendLine("Probably a crash. Don't worry, we'll get through this together.\n")
+            .AppendLine("Probably a crash.")
+            .AppendLine("Don't worry, we'll get through this together.\n")
             .AppendLine($"Exception: {exceptionType}\n")
             .AppendLine("Please report this issue to the developers.")
-            .AppendLine("-------------------------------------------------")
-            .AppendLine($"The crash log has been saved to the \"{Path.GetFullPath(filepath)}\" file.")
-            .AppendLine("-------------------------------------------------")
-            .AppendLine("Apologies for the inconvenience!");
+            .AppendLine("-----------------------------------------------------");
 
         try
         {
             File.WriteAllText(filepath, sb.ToString());
+            sb2.AppendLine($"The crash log has been saved to the \"{Path.GetFullPath(filepath)}\" file.");
         }
         catch (Exception fileException)
         {
-            _ = sb2.AppendLine("-------------------------------------------------")
-              .AppendLine("Failed to write to log file.")
-              .AppendLine($"Log File Exception: {fileException}");
+            sb2.AppendLine("Failed to write to log file!")
+                .AppendLine($"Log File Exception: {fileException}")
+                .AppendLine("-----------------------------------------------------")
+                .AppendLine("Apologies for the inconvenience!");
         }
 
 #if WINDOWS
@@ -155,4 +163,95 @@ internal static class CrashService
             await closeTask;
         }
     }
+
+    private static string GetRamUsage()
+    {
+        try
+        {
+#if WINDOWS
+
+            var availableBytesCounter = new PerformanceCounter("Memory", "Available Bytes");
+            long? totalMemory = null;
+
+            var query = new ObjectQuery("SELECT * FROM Win32_ComputerSystem");
+            using var searcher = new ManagementObjectSearcher(query);
+            foreach (var result in searcher.Get())
+            {
+                totalMemory = Convert.ToInt64(result["TotalPhysicalMemory"]);
+                break;
+            }
+
+            var availableMemory = availableBytesCounter.RawValue;
+            var usedMemory = totalMemory!.Value - availableMemory;
+
+            return $"{usedMemory / (1024 * 1024)} / {totalMemory / (1024 * 1024)} MB";
+
+#elif LINUX
+
+            var memInfo = ExecuteBashCommand("grep MemTotal /proc/meminfo && grep MemAvailable /proc/meminfo");
+            var totalMemory = ParseMemory(memInfo.Split('\n')[0]);
+            var availableMemory = ParseMemory(memInfo.Split('\n')[1]);
+            var usedMemory = totalMemory - availableMemory;
+            return $"{usedMemory} / {totalMemory} MB";
+
+#elif OSX
+
+            var totalMemory = ExecuteBashCommand("sysctl hw.memsize");
+            var usedMemory = ExecuteBashCommand("vm_stat | grep 'Pages active' | awk '{print $3}' | sed 's/\\.$//'");
+            var totalMemoryMB = ParseMemory(totalMemory);
+            var usedMemoryMB = ulong.Parse(usedMemory) * 4096 / (1024 * 1024); // 1 page = 4 KB
+            return $"Used: {usedMemoryMB} / {totalMemoryMB} MB";
+#endif
+
+        }
+        catch (Exception ex)
+        {
+            return $"Error retrieving RAM info: {ex.Message}";
+        }
+    }
+
+#if LINUX || OSX
+
+    private static string ExecuteBashCommand(string command)
+    {
+        var escapedArgs = command.Replace("\"", "\\\"");
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                Arguments = $"-c \"{escapedArgs}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            },
+        };
+
+        _ = process.Start();
+        string result = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return result;
+    }
+
+#endif
+
+#if LINUX || OSX
+
+    private static ulong ParseMemory(string output)
+    {
+        char[] separators = [' ', '\t'];
+        var parts = output.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2 && ulong.TryParse(parts[1], out var mem))
+        {
+#if LINUX
+            return mem / 1024;
+#elif OSX
+            return mem / (1024 * 1024);
+#endif
+        }
+
+        return 0;
+    }
+
+#endif
 }

@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using GameClient.Networking;
+using Microsoft.Xna.Framework;
+using MonoRivUI;
+
+#if DEBUG
+
+using System.Threading;
 using GameClient.Scenes;
 using GameClient.UI;
 using GameLogic.Networking;
-using Microsoft.Xna.Framework;
-using MonoRivUI;
+
+#endif
 
 namespace GameClient.DebugConsoleItems;
 
@@ -119,7 +124,7 @@ internal static class CommandInitializer
     private static class Resolution
     {
         [Command("Set a new window resolution.")]
-        private static void Set(
+        private static async void Set(
             [Argument("A new width of the screen.")] int width,
             [Argument("A new height of the screen.")] int height)
         {
@@ -129,7 +134,7 @@ internal static class CommandInitializer
                 return;
             }
 
-            GameSettings.SetResolution(width, height);
+            await GameSettings.SetResolution(width, height);
             GameSettings.SaveSettings();
 
             var resolution = $"{ScreenController.Width}x{ScreenController.Height}";
@@ -147,9 +152,9 @@ internal static class CommandInitializer
     private static class ScreenTypeCommand
     {
         [Command("Set a new screen type.")]
-        private static void Set([Argument("A new screen type.")] ScreenType screenType)
+        private static async void Set([Argument("A new screen type.")] ScreenType screenType)
         {
-            GameSettings.SetScreenType(screenType);
+            await GameSettings.SetScreenType(screenType);
             GameSettings.SaveSettings();
             DebugConsole.SendMessage($"Screen type has been changed to {screenType}.", Color.Green);
         }
@@ -191,6 +196,12 @@ internal static class CommandInitializer
         {
             DebugConsole.SendMessage(GameSettings.Language.ToString());
         }
+    }
+
+    [Command("Crash the game.")]
+    private static void Crash()
+    {
+        throw new CrashIntentionallyException();
     }
 
 #if DEBUG
@@ -272,67 +283,6 @@ internal static class CommandInitializer
         {
             DebugConsole.SendMessage(ex.Message, Color.IndianRed);
         }
-    }
-
-    [Command("Connect to the server as a spectator.")]
-    private static void Connect(
-        [Argument("An address IP to the server.")] string ip,
-        [Argument("A port to the server.")] int port,
-        [Argument("A join code.")] string? joinCode = null)
-    {
-        GameSettings.ServerAddress = $"{ip}:{port}";
-        Scene.Change<Scenes.Game>();
-    }
-
-    [Command("Join to the server as a player.")]
-    private static async void Join(
-        [Argument("An address IP to the server.")] string ip,
-        [Argument("A port to the server.")] int port,
-        [Argument("A join code.")] string? joinCode = null)
-    {
-        var address = $"{ip}:{port}";
-        var connectionData = ConnectionData.ForPlayer(address, joinCode, "Steve", false);
-
-        ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData, CancellationToken.None);
-
-        ServerConnection.ErrorThrew += DebugConsole.ThrowError;
-        var connectingMessageBox = new ConnectingMessageBox();
-        ScreenController.ShowOverlay(connectingMessageBox);
-
-        switch (status)
-        {
-            case ConnectionStatus.Success:
-                ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
-                Scene.Change<Lobby>();
-                break;
-            case ConnectionStatus.Failed s:
-                ConnectionFailedMessageBox failedMsgBox = s.Exception is null
-                    ? new(new LocalizedString("Other.NoDetails"))
-                    : s.Exception is System.Net.WebSockets.WebSocketException
-                        && s.Exception.Message == "Unable to connect to the remote server"
-                        ? new(new LocalizedString("Other.ServerNotResponding"))
-                        : new(s.Exception.Message);
-                ScreenController.ShowOverlay(failedMsgBox);
-                break;
-            case ConnectionStatus.Rejected s:
-                ScreenController.ShowOverlay(new ConnectionRejectedMessageBox(s.Reason));
-                break;
-        }
-
-
-        if (status is ConnectionStatus.Success)
-        {
-            ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
-            Scene.Change<Lobby>();
-        }
-        else if (status is ConnectionStatus.Success)
-        {
-            var localizedString = new LocalizedString("Other.ServerNotResponding");
-            var connectionFailedMessageBox = new ConnectionFailedMessageBox(localizedString);
-            ScreenController.ShowOverlay(connectionFailedMessageBox);
-        }
-
-        ScreenController.HideOverlay(connectingMessageBox);
     }
 
     [CommandGroup(Name = "Game", Description = "Interact with the game.")]

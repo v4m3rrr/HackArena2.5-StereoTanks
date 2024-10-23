@@ -324,13 +324,25 @@ internal partial class DebugConsole : Scene, IOverlayScene
                     ScrollToBottom();
                 }
             };
-            ((ScrollableListBox)Instance.messages).ScrollBar.Enabled += (s, e) => ScrollToBottom();
+            ((ScrollableListBox)messages).ScrollBar.Enabled += (s, e) => ScrollToBottom();
         }
 #if DEBUG
         SendMessage("You are running in the DEBUG mode.", Color.Yellow);
 #endif
 
         SendMessage("Type 'help' to get list of available commands.", Color.White);
+
+        ScreenController.ScreenChanged += (s, e) =>
+        {
+            this.messages.ForceUpdate();
+        };
+    }
+
+    /// <inheritdoc/>
+    protected override void LoadSceneContent()
+    {
+        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
+        textures.ToList().ForEach(x => x.Load());
     }
 
     private static void ScrollToBottom()
@@ -360,13 +372,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
         }
 
         Instance.textInput.SetText(bestMatch.FullName);
-    }
-
-    /// <inheritdoc/>
-    protected override void LoadSceneContent()
-    {
-        var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
-        textures.ToList().ForEach(x => x.Load());
     }
 
     private void Close()

@@ -98,6 +98,15 @@ internal static class CommandParser
             {
                 _ = c.Action.DynamicInvoke([.. invokeParameters]);
             }
+            catch (TargetInvocationException tie)
+                when (tie.InnerException is CrashIntentionallyException)
+            {
+                throw tie.InnerException;
+            }
+            catch (TargetInvocationException tie)
+            {
+                DebugConsole.ThrowError(tie.InnerException ?? tie);
+            }
             catch (Exception ex)
             {
                 DebugConsole.ThrowError(ex.Message);

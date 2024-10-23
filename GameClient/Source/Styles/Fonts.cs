@@ -13,7 +13,7 @@ internal class Fonts
         /// <summary>
         /// Gets the path to the main font.
         /// </summary>
-        public const string Main = "Content\\Fonts\\Orbitron-Semibold.ttf";
+        public const string Main = "Content\\Fonts\\Orbitron-SemiBold.ttf";
 
         /// <summary>
         /// Gets the path to the console font.
