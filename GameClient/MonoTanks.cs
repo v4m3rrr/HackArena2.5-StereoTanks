@@ -16,6 +16,19 @@ namespace GameClient;
 /// </summary>
 public class MonoTanks : Game
 {
+    /// <summary>
+    /// Gets the platform the game is running on.
+    /// </summary>
+#if WINDOWS
+    public const string Platform = "Windows";
+#elif LINUX
+    public const string Platform = "Linux";
+#elif OSX
+    public const string Platform = "macOS";
+#else
+#error Platform not supported.
+#endif
+
     private static readonly ConcurrentQueue<Action> MainThreadActions = new();
     private static readonly ManualResetEventSlim ActionEvent = new(false);
     private static Thread mainThread = default!;
@@ -48,6 +61,11 @@ public class MonoTanks : Game
 #else
     public static Color ThemeColor { get; } = new(0, 166, 255);
 #endif
+
+    /// <summary>
+    /// Gets the start time of the application.
+    /// </summary>
+    public static DateTime AppStartTime { get; } = DateTime.Now;
 
     /// <summary>
     /// Gets the minimum window size for the game.

@@ -259,36 +259,32 @@ internal class MainMenu : Scene
         var version = assembly.GetName().Version!;
         var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
 
-#if WINDOWS
-        var platform = "Windows";
-#elif LINUX
-        var platform = "Linux";
-#elif OSX
-        var platform = "OSX";
-#else
-        var platform = "Unknown";
-#endif
-
         var sb = new StringBuilder()
             .Append('v')
             .Append(version.Major)
             .Append('.')
             .Append(version.Minor)
             .Append('.')
-            .Append(version.Build)
-#if DEBUG
-            .Append('.')
+            .Append(version.Build);
+
+#if RELEASE
+        string versionText = sb.ToString();
+#endif
+
+        sb.Append('.')
             .Append(version.Revision)
             .Append(" (")
-            .Append(platform)
-            .Append(')')
-#endif
-            ;
+            .Append(MonoTanks.Platform)
+            .Append(')');
 
-        _ = new Text(versionFont, Color.White)
+#if DEBUG
+        string versionText = sb.ToString();
+#endif
+
+        _ = new Text(versionFont, Color.White * 0.8f)
         {
-            Parent = baseComponent,
-            Value = sb.ToString(),
+            Parent = this.BaseComponent,
+            Value = versionText,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
             TextAlignment = Alignment.BottomLeft,
             Transform =
@@ -297,12 +293,6 @@ internal class MainMenu : Scene
                 RelativeOffset = new Vector2(0.012f, -0.02f),
             },
         };
-
-#if !DEBUG
-        sb.Append(" (")
-            .Append(platform)
-            .Append(')');
-#endif
 
         sb.Append(" [")
             .Append(configuration)

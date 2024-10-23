@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
 	<AssemblyName>GameClient</AssemblyName>
-	<AssemblyVersion>0.1.0.48</AssemblyVersion>
+	<AssemblyVersion>0.1.1.*</AssemblyVersion>
+	<Deterministic>false</Deterministic>
     <RootNamespace>GameClient</RootNamespace>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>

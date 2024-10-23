@@ -2,13 +2,14 @@
 
   <PropertyGroup>
     <AssemblyName>GameServer</AssemblyName>
-	<AssemblyVersion>0.1.0.48</AssemblyVersion>
+	<AssemblyVersion>0.1.1.*</AssemblyVersion>
+	<Deterministic>false</Deterministic>
     <RootNamespace>GameServer</RootNamespace>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Authors>KN inIT</Authors>
+    <Authors>KN init</Authors>
     <Title>MonoTanks Server</Title>
     <Description>A server for MonoTanks game.</Description>
     <Platforms>x64;arm64</Platforms>

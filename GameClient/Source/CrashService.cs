@@ -1,6 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+
+#if WINDOWS
+using System.Management;
+#endif
+
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using GameClient.Networking;
@@ -38,6 +45,8 @@ internal static class CrashService
         var assembly = typeof(MonoTanks).Assembly;
         var version = assembly.GetName().Version!;
         var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
+        var exceptionType = (e.ExceptionObject as Exception)?.GetType().Name ?? "Unknown";
+        var exceptionMessage = (e.ExceptionObject as Exception)?.Message ?? "Unknown";
 
         var v = new StringBuilder()
             .Append('v')
@@ -49,29 +58,78 @@ internal static class CrashService
             .Append('.')
             .Append(version.Revision)
             .Append(" (")
+            .Append(MonoTanks.Platform)
+            .Append(") [")
             .Append(configuration)
-            .Append(')')
+            .Append(']')
             .ToString();
 
+        var uptime = DateTime.Now - MonoTanks.AppStartTime;
+        var memoryUsage = Process.GetCurrentProcess().PrivateMemorySize64 / 1024 / 1024; // MB
+        var cpuCores = Environment.ProcessorCount;
+        var osDescription = RuntimeInformation.OSDescription;
+        var osArchitecture = RuntimeInformation.OSArchitecture.ToString();
+
         var sb = new StringBuilder()
-            .AppendLine("Foock...")
-            .AppendLine("Probably a crash. Don't worry, we'll get through this together.\n")
             .AppendLine("Please report this issue to the developers.")
             .AppendLine("Include the following information in your report:")
-            .AppendLine("--------------------------------------------------")
+            .AppendLine("-------------------------------------------------")
             .AppendLine($"Version: {v}")
-            .AppendLine($"Exception: {e.ExceptionObject}")
+            .AppendLine($"Operating System: {osDescription} ({osArchitecture})")
+            .AppendLine($"Processor Cores: {cpuCores}")
+            .AppendLine($"Memory Usage: {memoryUsage} MB")
+            .AppendLine($"Uptime: {uptime}");
+
+        string gpuInfo = "Unknown";
+
+#if WINDOWS
+        try
+        {
+            ManagementObjectSearcher mos = new ManagementObjectSearcher("select * from Win32_VideoController");
+            foreach (var mo in mos.Get().Cast<ManagementObject>())
+            {
+                gpuInfo = mo["Name"]?.ToString() ?? "Unknown";
+                break;
+            }
+        }
+        catch (Exception gpuException)
+        {
+            gpuInfo = $"Failed to get GPU info: {gpuException}";
+        }
+#endif
+
+        sb.AppendLine($"GPU: {gpuInfo}")
             .AppendLine($"IsTerminating: {e.IsTerminating}")
-            .AppendLine("--------------------------------------------------")
-            .AppendLine("Thank you for your cooperation.");
+            .AppendLine($"Exception: {exceptionType}");
+
+        sb.AppendLine("-------------------------------------------------")
+            .AppendLine("Last 20 Debug Messages:");
+
+        var debugMessages = DebugConsole.Instance.GetRecentMessages(20);
+        foreach (var message in debugMessages)
+        {
+            sb.AppendLine(message);
+        }
+
+        sb.AppendLine("-------------------------------------------------")
+            .AppendLine("Message:")
+            .AppendLine(exceptionMessage);
+
+        sb.AppendLine("-------------------------------------------------")
+            .AppendLine("Stack Trace:")
+            .AppendLine(e.ExceptionObject is Exception ex ? ex.StackTrace : "No stack trace available.");
+
+        sb.AppendLine("-------------------------------------------------")
+            .AppendLine("Apologies for the inconvenience and thank for your cooperation!");
 
         var sb2 = new StringBuilder()
             .AppendLine("Foock...")
             .AppendLine("Probably a crash. Don't worry, we'll get through this together.\n")
+            .AppendLine($"Exception: {exceptionType}\n")
             .AppendLine("Please report this issue to the developers.")
-            .AppendLine("--------------------------------------------------")
+            .AppendLine("-------------------------------------------------")
             .AppendLine($"The crash log has been saved to the \"{Path.GetFullPath(filepath)}\" file.")
-            .AppendLine("--------------------------------------------------")
+            .AppendLine("-------------------------------------------------")
             .AppendLine("Apologies for the inconvenience!");
 
         try
@@ -80,7 +138,7 @@ internal static class CrashService
         }
         catch (Exception fileException)
         {
-            _ = sb2.AppendLine("--------------------------------------------------")
+            _ = sb2.AppendLine("-------------------------------------------------")
               .AppendLine("Failed to write to log file.")
               .AppendLine($"Log File Exception: {fileException}");
         }

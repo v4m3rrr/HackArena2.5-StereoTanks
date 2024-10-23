@@ -243,6 +243,11 @@ internal class Game : Scene
         this.components.PlayerIdentityBarPanel.Clear();
         this.components.PlayerStatsBarPanel.Clear();
 
+#if HACKATHON
+        this.updater.UpdateMatchName(null);
+#endif
+        this.updater.UpdateTimer(0);
+
         if (ServerConnection.IsConnected)
         {
             await ServerConnection.CloseAsync();

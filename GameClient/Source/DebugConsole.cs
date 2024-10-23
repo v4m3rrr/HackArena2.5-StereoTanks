@@ -137,6 +137,23 @@ internal partial class DebugConsole : Scene, IOverlayScene
         base.Update(gameTime);
     }
 
+    /// <summary>
+    /// Retrieves the most recent messages from the debug console.
+    /// </summary>
+    /// <param name="count">The number of messages to retrieve.</param>
+    /// <returns>A list of the most recent messages from the debug console.</returns>
+    public List<string> GetRecentMessages(int count)
+    {
+        return count < 0
+            ? throw new ArgumentOutOfRangeException(nameof(count), "Count cannot be negative.")
+            : this.messages.ContentContainer
+            .GetAllDescendants<TextComponent>()
+            .Select(x => x.Value)
+            .Reverse()
+            .Take(count)
+            .ToList();
+    }
+
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
