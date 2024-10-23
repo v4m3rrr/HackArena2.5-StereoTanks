@@ -18,9 +18,15 @@ internal class JoinRoomComponents
     {
         this.RoomText = initializer.CreateRoomText();
         this.BaseListBox = initializer.CreateBaseListBox();
-        this.NickNameSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.Nickname"), 12);
+
+        this.NicknameSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.Nickname"), 12);
+        this.NicknameInput = this.NicknameSection.GetDescendant<TextInput>()!;
+
         this.RoomCodeSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.RoomCode"), 8);
+
         this.AddressSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.ServerAddress"), 21);
+        this.AddressInput = this.AddressSection.GetDescendant<TextInput>()!;
+
         this.JoinButton = initializer.CreateJoinButton();
         this.BackButton = initializer.CreateBackButton();
         this.SpectateButton = initializer.CreateSpectateButton();
@@ -39,7 +45,7 @@ internal class JoinRoomComponents
     /// <summary>
     /// Gets the nickname section component.
     /// </summary>
-    public Container NickNameSection { get; }
+    public Container NicknameSection { get; }
 
     /// <summary>
     /// Gets the room code section component.
@@ -65,4 +71,14 @@ internal class JoinRoomComponents
     /// Gets the spectate button component.
     /// </summary>
     public Button<Container> SpectateButton { get; }
+
+    /// <summary>
+    /// Gets the nickname text input component.
+    /// </summary>
+    public TextInput NicknameInput { get; }
+
+    /// <summary>
+    /// Gets the address text input component.
+    /// </summary>
+    public TextInput AddressInput { get; }
 }

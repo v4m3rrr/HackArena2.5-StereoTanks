@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.JoinRoomCore;
@@ -81,6 +82,7 @@ internal class JoinRoom : Scene
     protected override void Initialize(Component baseComponent)
     {
         this.Showing += this.JoinRoom_Showing;
+        this.Hiding += this.JoinRoom_Hiding;
     }
 
     /// <inheritdoc/>
@@ -133,12 +135,25 @@ internal class JoinRoom : Scene
 
     private void JoinRoom_Showing(object? sender, SceneDisplayEventArgs? e)
     {
-        this.components.AddressSection.GetDescendant<TextInput>()!.SetText(GameSettings.ServerAddress);
+        this.components.NicknameInput.SetText(JoinData.Nickname ?? string.Empty);
+        this.components.AddressInput.SetText(JoinData.Address ?? JoinData.DefaultAddress);
+    }
+
+    private void JoinRoom_Hiding(object? sender, EventArgs? e)
+    {
+        var nickname = this.components.NicknameInput.Value;
+        JoinData.Nickname = string.IsNullOrWhiteSpace(nickname) ? null : nickname;
+
+        var address = this.components.AddressInput.Value;
+        JoinData.Address = string.IsNullOrWhiteSpace(address)
+            || address == JoinData.DefaultAddress ? null : address;
+
+        _ = JoinData.Save();
     }
 
     private string GetNickname()
     {
-        return this.components.NickNameSection.GetDescendant<TextInput>()!.Value;
+        return this.components.NicknameSection.GetDescendant<TextInput>()!.Value;
     }
 
     private string? GetJoinCode()

@@ -60,6 +60,8 @@ internal class Settings : Scene, IOverlayScene
     {
         this.overlayBackground = new SolidColor(Color.Black * 0.95f);
 
+        this.Hiding += (s, e) => GameSettings.SaveSettings();
+
         var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 22)
         {
             AutoResize = true,

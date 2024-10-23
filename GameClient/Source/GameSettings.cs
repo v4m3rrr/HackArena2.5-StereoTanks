@@ -67,11 +67,6 @@ internal static class GameSettings
     }
 
     /// <summary>
-    /// Gets or sets the server address.
-    /// </summary>
-    public static string ServerAddress { get; set; } = "localhost:5000";
-
-    /// <summary>
     /// Sets the resolution of the game.
     /// </summary>
     /// <param name="width">The width of the resolution.</param>
@@ -102,7 +97,8 @@ internal static class GameSettings
     /// Sets the screen type of the game.
     /// </summary>
     /// <param name="screenType">The screen type to set.</param>
-    public static async void SetScreenType(ScreenType screenType)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public static async Task SetScreenType(ScreenType screenType)
     {
         if (ScreenController.ScreenType == screenType)
         {
@@ -116,14 +112,6 @@ internal static class GameSettings
         await MonoTanks.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
 
         ScreenTypeChanged?.Invoke(null, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// Discards the changes made to the settings.
-    /// </summary>
-    public static void DiscardChanges()
-    {
-        LoadSettings();
     }
 
     /// <summary>
@@ -155,7 +143,7 @@ internal static class GameSettings
 
             Language = settings.Language;
             await SetResolution(settings.ResolutionWidth, settings.ResolutionHeight);
-            SetScreenType(settings.ScreenType);
+            await SetScreenType(settings.ScreenType);
         }
         catch (Exception ex)
         {
@@ -165,11 +153,11 @@ internal static class GameSettings
         }
     }
 
-    private static void SetDefaultSettings()
+    private static async void SetDefaultSettings()
     {
         Language = Language.English;
-        SetResolution(1366, 768);
-        SetScreenType(ScreenType.Windowed);
+        await SetResolution(1366, 768);
+        await SetScreenType(ScreenType.Windowed);
     }
 
     private record struct SettingsData(
