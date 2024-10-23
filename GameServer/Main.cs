@@ -340,7 +340,7 @@ async Task<Task> HandleSpectatorConnection(
 
 bool IsJoinCodeValid(string? joinCode)
 {
-    return joinCode == opts.JoinCode;
+    return joinCode?.ToLower() == opts.JoinCode?.ToLower();
 }
 
 bool NicknameAlreadyExists(string nickname)
@@ -368,9 +368,13 @@ bool IsIpBlocked(string clientIP)
 
 void RegisterFailedAttempt(string clientIP)
 {
+    int attemptNumber = failedAttempts.TryGetValue(clientIP, out var attemptInfo)
+        ? attemptInfo.Attempts + 1
+        : 1;
+
     log.Verbose(
-        "Failed attempt ({attempts}) from {ip}",
-        failedAttempts[clientIP].Attempts + 1,
+        "Failed attempt ({attemptNumber}) from {ip}",
+        attemptNumber,
         clientIP);
 
     _ = failedAttempts.AddOrUpdate(
