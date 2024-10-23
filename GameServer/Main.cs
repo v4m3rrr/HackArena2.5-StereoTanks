@@ -228,7 +228,7 @@ async Task<Task> HandlePlayerConnection(
         }
     }
 
-    lock (game.PlayerManager)
+    lock (game.GameManager)
     {
         if (!quickJoin && game.Players.Count() >= opts.NumberOfPlayers)
         {
@@ -262,7 +262,7 @@ async Task<Task> HandlePlayerConnection(
 #endif
         ;
 
-        lock (game)
+        lock (game.GameManager)
         {
             player = game.PlayerManager.CreatePlayer(connectionData);
             connection = new PlayerConnection(context, socket, connectionData, log, player);

@@ -60,8 +60,8 @@ internal class PlayerStatsBar : PlayerBar
         };
 
         topRow.SetResizeFactor(bulletCount, 2.6f);
-        topRow.SetResizeFactor(secondaryItems, 7);
-        topRow.SetResizeFactor(score, 4);
+        topRow.SetResizeFactor(secondaryItems, 6.8f);
+        topRow.SetResizeFactor(score, 5.1f);
 
         // Health bar
         _ = new HealthBar(player)

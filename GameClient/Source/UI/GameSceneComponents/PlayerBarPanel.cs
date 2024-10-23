@@ -14,23 +14,24 @@ namespace GameClient.GameSceneComponents;
 internal class PlayerBarPanel<T> : AlignedListBox
     where T : PlayerBar
 {
-    private readonly object syncLock = new();
-
     private IEnumerable<T> Bars => this.Components.Cast<T>();
 
     /// <summary>
     /// Refreshes the player bars.
     /// </summary>
     /// <param name="players">The players to display.</param>
-    public void Refresh(Dictionary<string, Player> players)
+    /// <param name="playerId">The player's id for whom the bar should be displayed.</param>
+    public void Refresh(Dictionary<string, Player> players, string? playerId = null)
     {
-        lock (this.syncLock)
+        MonoTanks.InvokeOnMainThread(() =>
         {
             var newPlayerBars = players.Values
-                .Where(player => this.Bars.All(pb => pb.Player != player) && player is not null)
-                .Select(player =>
+                .Where(p => this.Bars.All(pb => pb.Player != p)
+                    && p is not null
+                    && (playerId is null || p.Id == playerId))
+                .Select(p =>
                 {
-                    var bar = (T)Activator.CreateInstance(typeof(T), player)!;
+                    var bar = (T)Activator.CreateInstance(typeof(T), p)!;
                     bar.Parent = this.ContentContainer;
                     bar.Transform.RelativeSize = new Vector2(1f, 0.2f);
                     bar.Transform.Alignment = Alignment.Top;
@@ -48,19 +49,16 @@ internal class PlayerBarPanel<T> : AlignedListBox
                 }
             }
 
-            MonoTanks.InvokeOnMainThread(() =>
-            {
-                newPlayerBars
-                    .SelectMany(pb => pb.GetAllDescendants<TextureComponent>())
-                    .Where(x => !x.IsLoaded)
-                    .ToList()
-                    .ForEach(x => x.Load());
+            newPlayerBars
+                .SelectMany(pb => pb.GetAllDescendants<TextureComponent>())
+                .Where(x => !x.IsLoaded)
+                .ToList()
+                .ForEach(x => x.Load());
 
-                foreach (T playerBar in this.Bars.ToList())
-                {
-                    playerBar.Transform.RecalculateIfNeeded();
-                }
-            });
-        }
+            foreach (T playerBar in this.Bars.ToList())
+            {
+                playerBar.Transform.RecalculateIfNeeded();
+            }
+        });
     }
 }

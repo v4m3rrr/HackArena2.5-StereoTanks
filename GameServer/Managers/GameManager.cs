@@ -155,7 +155,7 @@ internal class GameManager(GameInstance game, Logger log)
 
             stopwatch.Restart();
 
-            lock (game)
+            lock (this)
             {
 #if HACKATHON
                 log.Verbose("Processing hackathon bot actions...");

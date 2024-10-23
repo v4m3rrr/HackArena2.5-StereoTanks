@@ -35,7 +35,7 @@ internal class Mine : ISprite, IDetectableByRadar
 
         this.innerTexture = new ScalableTexture2D(InnerStaticTexture)
         {
-            Color = Color.Red,
+            Color = Color.White,
             Transform =
             {
                 Type = TransformType.Absolute,
@@ -131,8 +131,7 @@ internal class Mine : ISprite, IDetectableByRadar
         }
         else
         {
-            var eff = Animations.EaseInOut((float)gameTime.TotalGameTime.Milliseconds / 1000f);
-            this.innerTexture.Opacity = this.baseOpacity * (1f - eff);
+            this.innerTexture.Opacity = this.baseOpacity;
             this.outerTexture.Opacity = this.baseOpacity;
         }
     }

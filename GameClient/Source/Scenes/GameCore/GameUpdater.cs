@@ -105,7 +105,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     public void RefreshPlayerBarPanels()
     {
         components.PlayerIdentityBarPanel.Refresh(players);
-        components.PlayerStatsBarPanel.Refresh(players);
+        components.PlayerStatsBarPanel.Refresh(players, Game.PlayerId);
     }
 
     /// <summary>

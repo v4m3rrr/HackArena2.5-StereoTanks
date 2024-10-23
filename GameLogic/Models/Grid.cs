@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace GameLogic;
 
@@ -401,8 +401,17 @@ public class Grid(int dimension, int seed)
     /// The generated item if successful;
     /// otherwise, <c>null</c>.
     /// </returns>
+    /// <remarks>
+    /// If the number of items on the map is greater than
+    /// twice the dimension of the grid, no item is generated.
+    /// </remarks>
     public SecondaryItem? GenerateNewItemOnMap()
     {
+        if (this.items.Count > 2 * this.Dim)
+        {
+            return null;
+        }
+
         var nullWeight = 99.5f;
         var itemWeights = new Dictionary<SecondaryItemType, double>
         {

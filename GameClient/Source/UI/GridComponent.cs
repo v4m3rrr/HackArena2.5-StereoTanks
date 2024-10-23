@@ -66,7 +66,8 @@ internal class GridComponent : Component
         {
             lock (this.syncLock)
             {
-                return this.zones.Cast<ISprite>()
+                return this.fogsOfWar.Values.Cast<ISprite>()
+                    .Concat(this.zones)
                     .Concat(this.mapItems)
                     .Concat(this.mines)
                     .Concat(this.tanks)
@@ -75,7 +76,6 @@ internal class GridComponent : Component
                     .Concat(this.radarEffects)
                     .Concat(this.solidWalls.Cast<ISprite>().Where(x => x is not null))
                     .Concat(this.borderWalls.Cast<ISprite>())
-                    .Concat(this.fogsOfWar.Values)
                     .Where(x => x is not null)!;
             }
         }

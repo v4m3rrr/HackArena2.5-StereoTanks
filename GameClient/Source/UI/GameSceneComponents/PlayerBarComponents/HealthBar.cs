@@ -26,7 +26,7 @@ internal class HealthBar : PlayerBarComponent
             Transform =
             {
                 RelativeSize = new Vector2(1f, RelativeHeight),
-                Alignment = Alignment.Bottom,
+                Alignment = Alignment.BottomLeft,
             },
         };
     }

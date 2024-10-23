@@ -291,10 +291,11 @@ public class Zone : IEquatable<Zone>
                 if (this.updateCount % 2 == 0)
                 {
                     captured.Player.Score++;
-                    if (tank.Health < 60)
-                    {
-                        captured.Player.Tank.Heal(1);
-                    }
+                }
+
+                if (this.updateCount % 4 == 0 && tank.Health < 80)
+                {
+                    captured.Player.Tank.Heal(1);
                 }
             }
             else
