@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
+using System.Reflection;
 using GameLogic;
 using GameLogic.Networking;
 using Serilog.Core;
@@ -35,6 +36,9 @@ internal class GameInstance
         string? matchName = null;
 #endif
 
+        var version = Assembly.GetExecutingAssembly().GetName().Version!;
+        var versionText = $"v{version.Major}.{version.Minor}.{version.Build}";
+
         this.Settings = new ServerSettings(
             dimension,
             options.NumberOfPlayers,
@@ -43,7 +47,8 @@ internal class GameInstance
             options.BroadcastInterval,
             options.SandboxMode,
             eagerBroadcast,
-            matchName);
+            matchName,
+            versionText);
 
         this.Grid = new Grid(dimension, seed);
 

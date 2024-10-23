@@ -11,6 +11,7 @@
 /// <param name="SandboxMode">Whether to enable sandbox mode.</param>
 /// <param name="EagerBroadcast">Whether to broadcast the game state eagerly.</param>
 /// <param name="MatchName">The name of the match.</param>
+/// <param name="Version">The version of the server.</param>
 /// <remarks>
 /// <para>
 /// <paramref name="Ticks"/> are <see langword="null"/>
@@ -29,4 +30,5 @@ public record class ServerSettings(
     int BroadcastInterval,
     bool SandboxMode,
     bool EagerBroadcast,
-    string? MatchName);
+    string? MatchName,
+    string Version);
