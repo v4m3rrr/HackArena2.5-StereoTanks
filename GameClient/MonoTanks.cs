@@ -46,7 +46,11 @@ public class MonoTanks : Game
         Instance = this;
         mainThread = Thread.CurrentThread;
 
-        var graphics = new GraphicsDeviceManager(this);
+        var graphics = new GraphicsDeviceManager(this)
+        {
+            HardwareModeSwitch = false,
+        };
+
         ScreenController.Initialize(graphics, this.Window);
 
         this.Content.RootDirectory = "Content";
@@ -233,6 +237,23 @@ public class MonoTanks : Game
         ContentController.Initialize(this.Content);
 
         ScreenController.Change(1366, 768, ScreenType.Windowed);
+
+        ScreenController.ScreenChanged += (s, e) =>
+        {
+            if (ScreenController.ScreenType is ScreenType.FullScreen)
+            {
+                var matrix = Matrix.CreateScale(
+                1f / ScreenController.ViewportScale.X,
+                1f / ScreenController.ViewportScale.Y,
+                1.0f);
+
+                ScreenController.TransformMatrix = matrix;
+            }
+            else
+            {
+                ScreenController.TransformMatrix = null;
+            }
+        };
         ScreenController.ApplyChanges();
 
         var spriteBatch = new SpriteBatch(this.GraphicsDevice);
@@ -316,6 +337,7 @@ public class MonoTanks : Game
                 Localization.Initialize();
 
                 await GameSettings.LoadSettings();
+                await Scenes.JoinRoomCore.JoinData.Load();
 
                 Scene.InitializeScenes(typeof(Scene).Assembly);
                 Scene.LoadAllContent();
@@ -337,7 +359,6 @@ public class MonoTanks : Game
     {
         KeyboardController.Update();
         MouseController.Update();
-        ScreenController.Update();
 
 #if DEBUG
         this.runningSlowlyInfo.IsEnabled = gameTime.IsRunningSlowly;
@@ -350,20 +371,6 @@ public class MonoTanks : Game
             && KeyboardController.IsKeyDown(Keys.LeftControl))
         {
             Scene.ShowOverlay<DebugConsole>();
-        }
-
-        if (KeyboardController.IsKeyHit(Keys.F11))
-        {
-            if (ScreenController.Width != 1366)
-            {
-                GameSettings.SetResolution(1366, 768);
-                GameSettings.SetScreenType(ScreenType.Windowed);
-            }
-            else
-            {
-                GameSettings.SetResolution(1920, 1080);
-                GameSettings.SetScreenType(ScreenType.Windowed);
-            }
         }
 
         Scene.Current.Update(gameTime);
@@ -386,7 +393,9 @@ public class MonoTanks : Game
     {
         this.GraphicsDevice.Clear(Color.Black);
 
-        SpriteBatchController.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+        SpriteBatchController.SpriteBatch.Begin(
+            blendState: BlendState.NonPremultiplied,
+            transformMatrix: ScreenController.TransformMatrix);
 
         Scene.Current.Draw(gameTime);
         ScreenController.DrawOverlays(gameTime);
