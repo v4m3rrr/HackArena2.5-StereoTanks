@@ -164,6 +164,16 @@ public class Tank : IEquatable<Tank>
 #endif
 
     /// <summary>
+    /// Gets the previous x coordinate of the tank.
+    /// </summary>
+    internal int? PreviousX { get; private set; }
+
+    /// <summary>
+    /// Gets the previous y coordinate of the tank.
+    /// </summary>
+    internal int? PreviousY { get; private set; }
+
+    /// <summary>
     /// Gets the owner ID of the tank.
     /// </summary>
     internal string OwnerId { get; private set; }
@@ -352,6 +362,8 @@ public class Tank : IEquatable<Tank>
     /// <param name="y">The y coordinate of the tank.</param>
     internal void SetPosition(int x, int y)
     {
+        this.PreviousX = this.X;
+        this.PreviousY = this.Y;
         this.X = x;
         this.Y = y;
     }

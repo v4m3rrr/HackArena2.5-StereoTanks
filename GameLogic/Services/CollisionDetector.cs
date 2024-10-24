@@ -66,7 +66,7 @@ public static class CollisionDetector
                      * To improve this, it would be beneficial to refactor the entire collision
                      * detection logic and consider implementing a more general approach to collision
                      * detection that could better handle various types of interactions in the game.
-                     * 
+                     *
                      */
 
                     bool areDirectlyOpposite = Math.Abs(bullet.Direction - otherBullet.Direction) == 2;
@@ -88,9 +88,38 @@ public static class CollisionDetector
 
             foreach (var tank in grid.Tanks)
             {
-                if (!tank.Equals(bullet.Shooter) && tank.X == x && tank.Y == y)
+                if (tank.IsDead)
+                {
+                    continue;
+                }
+
+                if (tank.X == x && tank.Y == y)
                 {
                     return new TankCollision(tank);
+                }
+
+                /* Check if the bullet is on the previous position of the tank
+                 * and the tank moved in front of the bullet.
+                 */
+
+                if (trajectory.Count < 2 || tank.PreviousX is null || tank.PreviousY is null)
+                {
+                    continue;
+                }
+
+                int tnx = tank.X - tank.PreviousX.Value;
+                int tny = tank.Y - tank.PreviousY.Value;
+
+                var (bnx, bny) = DirectionUtils.Normal(bullet.Direction);
+
+                bool areDirectlyOpposite = bnx == -tnx && bny == -tny;
+                if (areDirectlyOpposite)
+                {
+                    var startBulletPos = (trajectory[0].X - bnx, trajectory[0].Y - bny);
+                    if (startBulletPos == (tank.X, tank.Y) && trajectory[0] == (tank.PreviousX.Value, tank.PreviousY.Value))
+                    {
+                        return new TankCollision(tank);
+                    }
                 }
             }
         }
