@@ -81,6 +81,10 @@ internal class GameEnd : Scene
 
         this.updater.UpdateScoreboard(args.Players);
 
+#if HACKATHON
+        this.updater.UpdateMatchName(Game.Settings?.MatchName);
+#endif
+
         this.components.Scoreboard
             .GetAllDescendants<TextureComponent>()
             .Where(x => !x.IsLoaded)

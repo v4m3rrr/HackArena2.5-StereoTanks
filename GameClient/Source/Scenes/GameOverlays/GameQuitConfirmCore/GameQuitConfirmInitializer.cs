@@ -18,13 +18,16 @@ internal class GameQuitConfirmInitializer(GameQuitConfirm gameQuitConfirm)
     /// <returns>The created title.</returns>
     public LocalizedWrappedText CreateQuestion()
     {
-        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, (int)(33 * ScreenController.Scale.Y));
+        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 26)
+        {
+            AutoResize = true,
+            Spacing = 10,
+        };
 
         var text = new LocalizedWrappedText(titleFont, Color.White)
         {
             Parent = gameQuitConfirm.BaseComponent,
             Value = new LocalizedString("ConfirmQuestion.LeaveMatch"),
-            Spacing = 20,
             Case = TextCase.Upper,
             TextAlignment = Alignment.BottomLeft,
             Transform =
@@ -35,13 +38,7 @@ internal class GameQuitConfirmInitializer(GameQuitConfirm gameQuitConfirm)
             },
         };
 
-        ScreenController.ScreenChanged += (s, e) =>
-        {
-            text.Font = new ScalableFont(
-                Styles.Fonts.Paths.Main,
-                (int)(33 * ScreenController.Scale.Y));
-            text.ForceUpdate(withTransform: true);
-        };
+        ScreenController.ScreenChanged += (s, e) => text.ForceUpdate();
 
         return text;
     }

@@ -18,13 +18,17 @@ internal class GameMenuInitializer(GameMenu gameMenu)
     /// <returns>The created title.</returns>
     public Text CreateTitle()
     {
-        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 45);
+        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 53)
+        {
+            AutoResize = true,
+            Spacing = 20,
+        };
+
         return new Text(titleFont, Color.White)
         {
             Parent = gameMenu.BaseComponent,
             Value = "MONO TANKS",
             TextShrink = TextShrinkMode.HeightAndWidth,
-            Spacing = 20,
             Transform =
             {
                 Alignment = Alignment.TopLeft,

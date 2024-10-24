@@ -20,4 +20,18 @@ internal class GameEndUpdater(GameEndComponents components)
     {
         components.Scoreboard.SetPlayers(players.ToArray());
     }
+
+#if HACKATHON
+
+    /// <summary>
+    /// Updates the match name.
+    /// </summary>
+    /// <param name="matchName">The match name to set.</param>
+    public void UpdateMatchName(string? matchName)
+    {
+        components.MatchName.IsEnabled = matchName is not null;
+        components.MatchName.Value = matchName ?? "-";
+    }
+
+#endif
 }
