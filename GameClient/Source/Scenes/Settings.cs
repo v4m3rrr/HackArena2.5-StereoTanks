@@ -192,7 +192,7 @@ internal class Settings : Scene, IOverlayScene
 
         // Resolution
         {
-            var (_, selector) = CreateItem<Point>(graphicsSection, new LocalizedString("Labels.Resolution"), itemFont, true, 2.8f);
+            var (_, selector) = CreateItem<Point>(graphicsSection, new LocalizedString("Labels.Resolution"), itemFont, true, 3.1f);
             selector.RelativeHeight = 5f;
             selector.ScrollToSelected = true;
             selector.ElementFixedHeight = (int)(60 * ScreenController.Scale.Y);
@@ -246,8 +246,11 @@ internal class Settings : Scene, IOverlayScene
                 var item = new Selector<Point>.Item(button, resolution, description);
                 selector.AddItem(item);
 
-                button.Clicked += async (s, e) => await GameSettings.SetResolution(resolution.X, resolution.Y);
-                button.Clicked += (s, e) => selector.SelectItem(item);
+                button.Clicked += async (s, e) =>
+                {
+                    await GameSettings.SetResolution(resolution.X, resolution.Y);
+                    selector.SelectItem(item);
+                };
             }
 
             selector.SelectCurrentItem();
@@ -255,7 +258,7 @@ internal class Settings : Scene, IOverlayScene
 
         // Display mode
         {
-            var (_, selector) = CreateItem<ScreenType>(graphicsSection, new LocalizedString("Labels.DisplayMode"), itemFont, false, 2.8f);
+            var (_, selector) = CreateItem<ScreenType>(graphicsSection, new LocalizedString("Labels.DisplayMode"), itemFont, false, 2.1f);
             selector.CurrentItemPredicate = (x) => x == ScreenController.ScreenType;
             selector.ItemSelected += (s, item) =>
             {
@@ -267,6 +270,13 @@ internal class Settings : Scene, IOverlayScene
             foreach (string typeName in Enum.GetNames(typeof(ScreenType)))
             {
                 var screenType = (ScreenType)Enum.Parse(typeof(ScreenType), typeName);
+
+                if (screenType == ScreenType.Borderless)
+                {
+                    // Borderless mode is not working properly for now
+                    continue;
+                }
+
                 var button = new Button<Container>(new Container());
                 button.ApplyStyle(Styles.Settings.SelectorButtonItem);
                 var text = button.Component.GetChild<Text>()!;
@@ -276,8 +286,11 @@ internal class Settings : Scene, IOverlayScene
                 var item = new Selector<ScreenType>.Item(button, screenType, typeName);
                 selector.AddItem(item);
 
-                button.Clicked += (s, e) => GameSettings.SetScreenType(screenType);
-                button.Clicked += (s, e) => selector.SelectItem(item);
+                button.Clicked += async (s, e) =>
+                {
+                    await GameSettings.SetScreenType(screenType);
+                    selector.SelectItem(item);
+                };
             }
 
             selector.SelectCurrentItem();
