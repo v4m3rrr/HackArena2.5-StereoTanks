@@ -120,15 +120,10 @@ internal static class CrashService
         }
 
         sb.AppendLine("-------------------------------------------------")
-            .AppendLine("Message:")
-            .AppendLine(exceptionMessage);
-
-        sb.AppendLine("-------------------------------------------------")
             .AppendLine("Stack Trace:")
-            .AppendLine(e.ExceptionObject is Exception ex ? ex.StackTrace : "No stack trace available.");
+            .AppendLine(GetFullExceptionDetails(e.ExceptionObject));
 
-        sb.AppendLine("-------------------------------------------------")
-            .AppendLine("Apologies for the inconvenience and thank you for your cooperation!");
+        sb.AppendLine("Apologies for the inconvenience and thank you for your cooperation!");
 
         var sb2 = new StringBuilder()
             .AppendLine("Foock...")
@@ -162,6 +157,32 @@ internal static class CrashService
         {
             await closeTask;
         }
+    }
+
+    private static string GetFullExceptionDetails(object exceptionObject)
+    {
+        if (exceptionObject is not Exception ex)
+        {
+            return "No stack trace available.";
+        }
+
+        var sb = new StringBuilder();
+        var currentException = ex;
+        var exceptionNumber = 1;
+
+        while (currentException != null)
+        {
+            _ = sb.AppendLine("-------------------------------------------------")
+                .AppendLine($"Exception {exceptionNumber}: {currentException.GetType().Name}")
+                .AppendLine($"Message: {currentException.Message}")
+                .AppendLine("Stack Trace:")
+                .AppendLine(currentException.StackTrace);
+
+            currentException = currentException.InnerException;
+            exceptionNumber++;
+        }
+
+        return sb.ToString();
     }
 
     private static string GetRamUsage()

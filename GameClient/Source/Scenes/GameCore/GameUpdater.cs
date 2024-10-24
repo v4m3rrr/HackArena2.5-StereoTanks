@@ -42,7 +42,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
         catch (Exception ex)
         {
             DebugConsole.ThrowError("An error occurred while updating the grid logic.");
-            DebugConsole.ThrowError(ex);
+            DebugConsole.ThrowError(ex, withTraceback: true);
         }
     }
 

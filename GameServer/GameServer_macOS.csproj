@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>GameServer</AssemblyName>
-	<AssemblyVersion>0.2.0.*</AssemblyVersion>
+	<AssemblyVersion>0.2.1.*</AssemblyVersion>
 	<Deterministic>false</Deterministic>
     <RootNamespace>GameServer</RootNamespace>
     <OutputType>Exe</OutputType>
