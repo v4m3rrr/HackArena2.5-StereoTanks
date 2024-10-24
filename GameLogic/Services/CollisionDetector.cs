@@ -17,7 +17,12 @@ public static class CollisionDetector
         Grid grid,
         Dictionary<Bullet, List<(int X, int Y)>> trajectories)
     {
-        var trajectory = trajectories[bullet];
+        if (!trajectories.TryGetValue(bullet, out var trajectory))
+        {
+            // Temporary solution for bullets created by downgraded double bullets,
+            // which are not in the trajectories dictionary.
+            return null;
+        }
 
         for (int i = 0; i < trajectories.First().Value.Count; i++)
         {
