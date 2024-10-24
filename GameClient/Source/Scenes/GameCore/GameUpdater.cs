@@ -13,6 +13,8 @@ namespace GameClient.Scenes.GameCore;
 /// <param name="players">The list of players.</param>
 internal class GameUpdater(GameComponents components, Dictionary<string, Player> players)
 {
+    private readonly object playerUpdateLock = new();
+
     /// <summary>
     /// Enables the grid component.
     /// </summary>
@@ -54,26 +56,29 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// </param>
     public void UpdatePlayers(List<Player> updatedPlayers)
     {
-        foreach (Player updatedPlayer in updatedPlayers)
+        lock (this.playerUpdateLock)
         {
-            if (players.TryGetValue(updatedPlayer.Id, out var existingPlayer))
+            foreach (Player updatedPlayer in updatedPlayers)
             {
-                existingPlayer.UpdateFrom(updatedPlayer);
+                if (players.TryGetValue(updatedPlayer.Id, out var existingPlayer))
+                {
+                    existingPlayer.UpdateFrom(updatedPlayer);
+                }
+                else
+                {
+                    players[updatedPlayer.Id] = updatedPlayer;
+                }
             }
-            else
-            {
-                players[updatedPlayer.Id] = updatedPlayer;
-            }
-        }
 
-        players
-            .Where(x => !updatedPlayers.Contains(x.Value))
-            .ToList()
-            .ForEach(x =>
-            {
-                _ = players.Remove(x.Key);
-                components.Grid.ResetFogOfWar(x.Value);
-            });
+            players
+                .Where(x => !updatedPlayers.Contains(x.Value))
+                .ToList()
+                .ForEach(x =>
+                {
+                    _ = players.Remove(x.Key);
+                    components.Grid.ResetFogOfWar(x.Value);
+                });
+        }
     }
 
 #if HACKATHON
@@ -104,8 +109,14 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// </remarks>
     public void RefreshPlayerBarPanels()
     {
-        components.PlayerIdentityBarPanel.Refresh(players);
-        components.PlayerStatsBarPanel.Refresh(players, Game.PlayerId);
+        MonoTanks.InvokeOnMainThread(() =>
+        {
+            lock (this.playerUpdateLock)
+            {
+                components.PlayerIdentityBarPanel.Refresh(players);
+                components.PlayerStatsBarPanel.Refresh(players, Game.PlayerId);
+            }
+        });
     }
 
     /// <summary>

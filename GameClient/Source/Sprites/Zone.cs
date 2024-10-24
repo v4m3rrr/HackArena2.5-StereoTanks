@@ -111,6 +111,8 @@ internal class Zone : ISprite
             float progressIndex = progress * this.textures.Length;
             float lastImageProgress = Math.Abs(((this.textures.Length - progressIndex) % 1) - 1) % 1;
 
+            this.index.Color = Color.White * IndexOpacity;
+
             for (int i = 0; i <= progressIndex - 1; i++)
             {
                 this.textures[i].Color = color;

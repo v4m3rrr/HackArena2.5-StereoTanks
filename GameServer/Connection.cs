@@ -11,7 +11,7 @@ namespace GameServer;
 /// <param name="Socket">The WebSocket.</param>
 /// <param name="Data">The connection data.</param>
 /// <param name="Log">The logger.</param>
-internal abstract record class Connection(HttpListenerContext Context, WebSocket Socket, ConnectionData Data, Logger log)
+internal abstract record class Connection(HttpListenerContext Context, WebSocket Socket, ConnectionData Data, Logger Log)
 {
     private readonly object pingSentLock = new();
     private readonly object hasSentPongLock = new();
@@ -140,7 +140,7 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
 
         try
         {
-            this.log.Debug(
+            this.Log.Debug(
                 "Closing connection: {status}, {description}, {connection}",
                 status,
                 description,
@@ -150,7 +150,7 @@ internal abstract record class Connection(HttpListenerContext Context, WebSocket
         }
         catch (Exception ex)
         {
-            this.log.Error(
+            this.Log.Error(
                 ex,
                 "Error while closing the connection: {status}, {description}, {connection}",
                 status,

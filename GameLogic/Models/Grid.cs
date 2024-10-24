@@ -349,18 +349,19 @@ public class Grid(int dimension, int seed)
 
         foreach (Zone zone in this.zones)
         {
-            switch (zone.Status)
-            {
-                case ZoneStatus.BeingCaptured beingCaptured when beingCaptured.Player == owner:
-                case ZoneStatus.Captured captured when captured.Player == owner:
-                case ZoneStatus.BeingContested beingContested when beingContested.CapturedBy == owner:
-                case ZoneStatus.BeingRetaken beingRetaken when beingRetaken.CapturedBy == owner:
-                    zone.Status = new ZoneStatus.Neutral();
-                    break;
-                case ZoneStatus.BeingRetaken beingRetaken when beingRetaken.RetakenBy == owner:
-                    zone.Status = new ZoneStatus.Captured(beingRetaken.CapturedBy);
-                    break;
-            }
+            zone.HandlePlayerRemoved(owner, this.tanks.Select(x => x.Owner));
+        }
+
+        _ = this.bullets.RemoveAll(b => b.Shooter == owner);
+
+        lock (this.lasersLock)
+        {
+            _ = this.lasers.RemoveAll(l => l.Shooter == owner);
+        }
+
+        lock (this.minesLock)
+        {
+            _ = this.mines.RemoveAll(m => m.Layer == owner);
         }
 
         return tank;

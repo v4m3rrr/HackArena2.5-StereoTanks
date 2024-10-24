@@ -153,7 +153,6 @@ public class Zone : IEquatable<Zone>
 
         var tanksInZone = tanks.Where(this.ContainsTank).ToList();
         var tanksOutsideZone = tanks.Except(tanksInZone).ToList();
-        var tanksInZoneCount = tanksInZone.Count;
 
         switch (this.Status)
         {
@@ -161,16 +160,16 @@ public class Zone : IEquatable<Zone>
                 this.HandleNeutralState(tanksInZone);
                 break;
             case BeingCaptured:
-                this.HandleBeingCapturedState(tanksInZone, tanksInZoneCount);
+                this.HandleBeingCapturedState(tanksInZone);
                 break;
             case Captured captured:
-                this.HandleCapturedState(captured, tanksInZone, tanksInZoneCount);
+                this.HandleCapturedState(captured, tanksInZone);
                 break;
             case BeingContested beingContested:
-                this.HandleBeingContestedState(beingContested, tanksInZone, tanksInZoneCount);
+                this.HandleBeingContestedState(beingContested, tanksInZone);
                 break;
             case BeingRetaken beingRetaken:
-                this.HandleBeingRetakenState(beingRetaken, tanksInZone, tanksInZoneCount);
+                this.HandleBeingRetakenState(beingRetaken, tanksInZone);
                 break;
             default:
                 throw new InvalidOperationException($"Unknown status type: {this.Status.GetType().Name}");
@@ -227,6 +226,42 @@ public class Zone : IEquatable<Zone>
     }
 
     /// <summary>
+    /// Handles the zone logic when a player is removed from the game.
+    /// </summary>
+    /// <param name="player">The player that was removed from the game.</param>
+    /// <param name="players">The players in the game.</param>
+    internal void HandlePlayerRemoved(Player player, IEnumerable<Player> players)
+    {
+        this.RemovePlayerFromRemainingTicksToCapture(player);
+
+        switch (this.Status)
+        {
+            case BeingCaptured beingCaptured when beingCaptured.Player == player:
+            case Captured captured when captured.Player == player:
+                this.Status = new Neutral();
+                break;
+
+            case BeingContested beingContested when beingContested.CapturedBy == player:
+                this.Status = new BeingContested(null);
+                break;
+
+            case BeingRetaken beingRetaken when beingRetaken.CapturedBy == player:
+                this.Status = players.Contains(beingRetaken.RetakenBy)
+                    ? new BeingCaptured(
+                        beingRetaken.RetakenBy,
+                        this.GetRemainingTicksToCapture(beingRetaken.RetakenBy))
+                    : new Neutral();
+                break;
+
+            case BeingRetaken beingRetaken when beingRetaken.RetakenBy == player:
+                this.Status = players.Contains(beingRetaken.CapturedBy)
+                    ? new Captured(beingRetaken.CapturedBy)
+                    : new Neutral();
+                break;
+        }
+    }
+
+    /// <summary>
     /// Handles the logic when the zone is in a neutral state.
     /// If only one tank is in the zone, it starts capturing the zone.
     /// </summary>
@@ -247,9 +282,9 @@ public class Zone : IEquatable<Zone>
     /// <summary>
     /// Handles the logic when the zone is being captured by a player.
     /// </summary>
-    private void HandleBeingCapturedState(List<Tank> tanksInZone, int tanksInZoneCount)
+    private void HandleBeingCapturedState(List<Tank> tanksInZone)
     {
-        if (tanksInZoneCount == 1)
+        if (tanksInZone.Count == 1)
         {
             var tank = tanksInZone.First();
             var remainingTicks = this.DecrementRemainingTicksToCapture(tank.Owner);
@@ -263,7 +298,7 @@ public class Zone : IEquatable<Zone>
 
             this.Status = new BeingCaptured(tank.Owner, remainingTicks);
         }
-        else if (tanksInZoneCount >= 2)
+        else if (tanksInZone.Count >= 2)
         {
             this.Status = new BeingContested(null);
         }
@@ -272,18 +307,18 @@ public class Zone : IEquatable<Zone>
     /// <summary>
     /// Handles the logic when the zone is already captured by a player.
     /// </summary>
-    private void HandleCapturedState(Captured captured, List<Tank> tanksInZone, int tanksInZoneCount)
+    private void HandleCapturedState(Captured captured, List<Tank> tanksInZone)
     {
         bool ownerInZone = tanksInZone.Any(t => t.Owner == captured.Player);
 
-        if (tanksInZoneCount == 0)
+        if (tanksInZone.Count == 0)
         {
             if (this.updateCount % 2 == 0)
             {
                 captured.Player.Score++;
             }
         }
-        else if (tanksInZoneCount == 1)
+        else if (tanksInZone.Count == 1)
         {
             var tank = tanksInZone.First();
             if (ownerInZone)
@@ -313,15 +348,15 @@ public class Zone : IEquatable<Zone>
     /// <summary>
     /// Handles the logic when the zone is contested by multiple tanks.
     /// </summary>
-    private void HandleBeingContestedState(BeingContested beingContested, List<Tank> tanksInZone, int tanksInZoneCount)
+    private void HandleBeingContestedState(BeingContested beingContested, List<Tank> tanksInZone)
     {
-        if (tanksInZoneCount == 0)
+        if (tanksInZone.Count == 0)
         {
             this.Status = beingContested.CapturedBy is null
                 ? new Neutral()
                 : new Captured(beingContested.CapturedBy);
         }
-        else if (tanksInZoneCount == 1)
+        else if (tanksInZone.Count == 1)
         {
             var tank = tanksInZone.First();
             var remainingTicks = this.GetRemainingTicksToCapture(tank.Owner);
@@ -336,9 +371,9 @@ public class Zone : IEquatable<Zone>
     /// <summary>
     /// Handles the logic when the zone is being retaken by another player.
     /// </summary>
-    private void HandleBeingRetakenState(BeingRetaken beingRetaken, List<Tank> tanksInZone, int tanksInZoneCount)
+    private void HandleBeingRetakenState(BeingRetaken beingRetaken, List<Tank> tanksInZone)
     {
-        if (tanksInZoneCount == 1)
+        if (tanksInZone.Count == 1)
         {
             var tank = tanksInZone.First();
             if (tank == beingRetaken.RetakenBy.Tank)
@@ -355,7 +390,7 @@ public class Zone : IEquatable<Zone>
                 }
             }
         }
-        else if (tanksInZoneCount >= 2)
+        else if (tanksInZone.Count >= 2)
         {
             this.Status = new BeingContested(beingRetaken.CapturedBy);
         }

@@ -98,11 +98,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
     /// </summary>
     /// <param name="exception">The exception to be thrown.</param>
     /// <param name="withTraceback">Whether to print the traceback, if present.</param>
-#if DEBUG
     public static void ThrowError(Exception exception, bool withTraceback = true)
-#else
-    public static void ThrowError(Exception exception, bool withTraceback = false)
-#endif
     {
         ThrowError(exception.Message);
 

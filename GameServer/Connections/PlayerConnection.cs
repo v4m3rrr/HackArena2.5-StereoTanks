@@ -67,6 +67,6 @@ internal record class PlayerConnection(
     /// <inheritdoc/>
     public override string ToString()
     {
-        return $"{base.ToString()}, Type=Player, Nickname={this.Instance.Nickname}";
+        return $"{base.ToString()}, Type={this.Data.Type}, Nickname={this.Instance.Nickname}";
     }
 }

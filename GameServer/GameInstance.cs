@@ -170,7 +170,7 @@ internal class GameInstance
         bool removed;
         Connection? connection;
 
-        lock (this)
+        lock (this.GameManager)
         {
             removed = this.connections.TryRemove(socket, out connection);
             if (removed)
@@ -226,7 +226,7 @@ internal class GameInstance
 
             foreach (Connection connection in abortedConnections)
             {
-                lock (this)
+                lock (this.GameManager)
                 {
                     this.log.Information($"Removing aborted connection: {connection}");
                     this.RemoveConnection(connection.Socket);
