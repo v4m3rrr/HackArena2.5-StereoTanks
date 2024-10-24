@@ -29,7 +29,6 @@ internal class Score : PlayerBarComponent
             Parent = this,
             Value = player.Score.ToString(),
             TextAlignment = Alignment.Right,
-            TextShrink = TextShrinkMode.HeightAndWidth,
         };
     }
 
