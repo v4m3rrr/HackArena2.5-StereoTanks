@@ -112,7 +112,7 @@ internal class GameManager(GameInstance game, Logger log)
         {
             var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
             var packet = new ResponsePacket(payload, log, converters);
-            var task = packet.SendAsync(connection, cancellationTokenSource.Token);
+            var task = packet.SendAsync(connection, cancellationTokenSource.Token, this);
             tasks.Add(task);
         }
 
@@ -302,7 +302,7 @@ internal class GameManager(GameInstance game, Logger log)
                 out var converters);
 
             var packet = new ResponsePacket(payload, log, converters);
-            var task = packet.SendAsync(connection, cancellationTokenSource.Token);
+            var task = packet.SendAsync(connection, cancellationTokenSource.Token, this);
             tasks.Add(task);
         }
 

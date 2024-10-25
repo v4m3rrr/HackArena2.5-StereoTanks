@@ -17,10 +17,11 @@ internal record class ResponsePacket(IPacketPayload Payload, Logger Log, List<Js
     /// Sends the packet to a client.
     /// </summary>
     /// <param name="connection">The connection to send the packet to.</param>
+    /// <param name="serializationLock">The lock to use when serializing the payload.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task SendAsync(Connection connection)
+    public async Task SendAsync(Connection connection, object? serializationLock = null)
     {
-        await this.SendAsync(connection, CancellationToken.None);
+        await this.SendAsync(connection, CancellationToken.None, serializationLock);
     }
 
     /// <summary>
@@ -28,11 +29,25 @@ internal record class ResponsePacket(IPacketPayload Payload, Logger Log, List<Js
     /// </summary>
     /// <param name="connection">The connection to send the packet to.</param>
     /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <param name="serializationLock">The lock to use when serializing the payload.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task SendAsync(Connection connection, CancellationToken cancellationToken)
+    public async Task SendAsync(Connection connection, CancellationToken cancellationToken, object? serializationLock = null)
     {
         var options = GetSerializationOptions(connection);
-        var buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
+
+        byte[] buffer;
+
+        if (serializationLock is not null)
+        {
+            lock (serializationLock)
+            {
+                buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
+            }
+        }
+        else
+        {
+            buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
+        }
 
         await connection.SendPacketSemaphore.WaitAsync(CancellationToken.None);
 

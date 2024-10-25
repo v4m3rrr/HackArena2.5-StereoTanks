@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>GameClient</AssemblyName>
-    <AssemblyVersion>0.2.2.*</AssemblyVersion>
+    <AssemblyVersion>0.2.3.*</AssemblyVersion>
 	<Deterministic>false</Deterministic>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
