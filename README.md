@@ -2,7 +2,7 @@
 
 This is a game written for HackArena 2.0, organized by KN init. This repo contains the game server and the GUI client. It is written in C# using [MonoGame](https://monogame.net/) framework. It can be played either by humans or by bots, for which API wrappers are provided.
 
-Full guide to game mechanics can be found in [instruction](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/blob/main/README.md).
+Full guide to game mechanics can be found in [instruction](https://hackarena.pl/Assets/Game/HackArena%202.0%20-%20instrukcja.pdf).
 
 ## Server
 
@@ -29,7 +29,7 @@ Full guide to game mechanics can be found in [instruction](https://github.com/IN
 - Make sure you have [dotnet-runtime-8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) installed.
 - Download appropriate binaries of server in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
 - Unzip the downloaded files.
-- Run the server using terminal in the folder with the server executable by typing: 
+- Run the server using terminal in the folder with the server files by typing: 
     ```
     dotnet GameServer.dll
     ```
@@ -82,7 +82,7 @@ GUI Client has 2 primary purposes:
 
 1. To run the GUI Client, you need to have .NET Runtime 8.0 installed. You can download it from [official site](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
-2. Download apropriate binaries of client in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+2. Download appropriate binaries of client in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
 
 3. Unzip the downloaded files.
 
@@ -92,7 +92,7 @@ GUI Client has 2 primary purposes:
 
 1. To run the GUI Client, you need to have .NET Runtime 8.0 installed. You can download it from [official site](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
-2. Download apropriate binaries of client in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+2. Download appropriate binaries of client in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
 
 3. Unzip the downloaded files.
 
