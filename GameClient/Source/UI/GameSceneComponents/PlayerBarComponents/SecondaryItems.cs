@@ -29,7 +29,6 @@ internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
         {
             Parent = this,
             Orientation = MonoRivUI.Orientation.Horizontal,
-            Spacing = 5,
             Transform =
             {
                 Alignment = Alignment.Center,
@@ -77,6 +76,13 @@ internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
         DoubleBulletStaticTexture.Load();
         RadarStaticTexture.Load();
         MineStaticTexture.Load();
+    }
+
+    /// <inheritdoc/>
+    public override void Update(GameTime gameTime)
+    {
+        this.listBox.Spacing = (int)(7 * ScreenController.Scale.X);
+        base.Update(gameTime);
     }
 
     private class Item : Component

@@ -26,12 +26,16 @@ internal class Timer : Component
             },
         };
 
-        var timeFont = new ScalableFont(Styles.Fonts.Paths.Main, 16);
+        var timeFont = new ScalableFont(Styles.Fonts.Paths.Main, 20)
+        {
+            AutoResize = true,
+            Spacing = 8,
+        };
+
         this.text = new Text(timeFont, Color.White)
         {
             Parent = this,
             Value = "00:00",
-            Spacing = 5,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
             Transform =
             {

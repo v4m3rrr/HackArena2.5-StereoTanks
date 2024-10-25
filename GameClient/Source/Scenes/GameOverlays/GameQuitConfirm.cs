@@ -42,7 +42,10 @@ internal class GameQuitConfirm : Scene, IOverlayScene
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
-        this.background = new SolidColor(Color.Black * 0.9f);
+        this.background = new SolidColor(Color.Black * 0.88f)
+        {
+            Transform = { Type = TransformType.Relative },
+        };
     }
 
     /// <inheritdoc/>

@@ -101,6 +101,8 @@ internal class BulletCount : PlayerBarComponent, ILoadStaticContent
             }
         }
 
+        this.listBox.Spacing = (int)(10 * ScreenController.Scale.X);
+
         base.Update(gameTime);
     }
 

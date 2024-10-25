@@ -17,7 +17,14 @@ internal class GameInitializer(Game game)
     /// <returns>The created grid component.</returns>
     public GridComponent CreateGridComponent()
     {
-        return new GridComponent()
+        var ratio16x9 = new Ratio(16, 9).ToFloat();
+        Vector2 GetRelativeSize()
+        {
+            var screenRatio = new Ratio(ScreenController.Width, ScreenController.Height).ToFloat();
+            return new Vector2(Math.Min(screenRatio / ratio16x9, 1) * 0.8f);
+        }
+
+        var grid = new GridComponent()
         {
             IsEnabled = false,
             Parent = game.BaseComponent,
@@ -25,10 +32,17 @@ internal class GameInitializer(Game game)
             {
                 Alignment = Alignment.Center,
                 Ratio = new Ratio(1, 1),
-                RelativeSize = new Vector2(0.8f),
+                RelativeSize = GetRelativeSize(),
                 RelativeOffset = new Vector2(0.0f, 0.03f),
             },
         };
+
+        ScreenController.ScreenChanged += (s, e) =>
+        {
+            grid.Transform.RelativeSize = GetRelativeSize();
+        };
+
+        return grid;
     }
 
     /// <summary>

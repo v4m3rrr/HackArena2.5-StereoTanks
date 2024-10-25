@@ -62,9 +62,10 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
         };
 
         // Background
-        _ = new RoundedSolidColor(MonoTanks.ThemeColor, 25)
+        _ = new RoundedSolidColor(MonoTanks.ThemeColor, 36)
         {
             Parent = container,
+            AutoAdjustRadius = true,
             Opacity = 0.35f,
         };
 

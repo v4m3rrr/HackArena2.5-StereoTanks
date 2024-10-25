@@ -15,7 +15,10 @@ internal class Zone : ISprite
 
     private static readonly ScalableTexture2D.Static StaticCornerTexture = new($"Images/Game/zone_corner.svg");
     private static readonly ScalableTexture2D.Static StaticEdgeTexture = new($"Images/Game/zone_edge.svg");
-    private static readonly ScalableFont Font = new(Styles.Fonts.Paths.Main, 25);
+    private static readonly ScalableFont Font = new(Styles.Fonts.Paths.Main, 35)
+    {
+        AutoResize = true,
+    };
 
     private readonly ScalableTexture2D[] textures = new ScalableTexture2D[8];
     private readonly GridComponent grid;
@@ -171,6 +174,8 @@ internal class Zone : ISprite
                 this.textures[i].Color = capturedColor;
             }
         }
+
+        this.index.Update(gameTime);
     }
 
     /// <inheritdoc/>
@@ -207,7 +212,10 @@ internal class Zone : ISprite
             texture.Transform.Size = new Point(width, height);
         }
 
+        Font.Size = 35 * 22 / this.grid.Logic.Dim;
+
         this.index.Transform.Location = location;
         this.index.Transform.Size = new Point(width, height);
+        this.index.ForceUpdate(withTransform: true);
     }
 }

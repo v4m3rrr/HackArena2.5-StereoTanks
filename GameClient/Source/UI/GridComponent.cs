@@ -412,7 +412,7 @@ internal class GridComponent : Component
         var gridDim = this.Logic.Dim;
         var size = this.Transform.Size.X;
         var tileSize = this.TileSize = size / gridDim;
-        this.DrawOffset = (int)((size - (gridDim * tileSize) + tileSize) / 4f);
+        this.DrawOffset = (int)((size - (gridDim * tileSize)) / 2f);
         this.DrawDataChanged?.Invoke(this, EventArgs.Empty);
     }
 }
