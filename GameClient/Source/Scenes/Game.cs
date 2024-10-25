@@ -5,9 +5,11 @@ using System.Net.WebSockets;
 using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
+using GameClient.Scenes.GameOverlays;
 using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
 
 namespace GameClient.Scenes;
@@ -62,6 +64,24 @@ internal class Game : Scene
     public override void Update(GameTime gameTime)
     {
         UpdateMainMenuBackgroundEffectRotation(gameTime);
+
+        if (this.isContentUpdatedAfterLoad && KeyboardController.IsKeyHit(Keys.Escape))
+        {
+            if (ScreenController.DisplayedOverlays.Any(x => x.Value is GameMenu or Scenes.Settings))
+            {
+                HideOverlay<GameMenu>();
+                HideOverlay<Settings>();
+            }
+            else if (ScreenController.DisplayedOverlays.Any(x => x.Value is GameQuitConfirm))
+            {
+                HideOverlay<GameQuitConfirm>();
+                HideOverlay<GameMenu>();
+            }
+            else
+            {
+                ShowOverlay<GameMenu>();
+            }
+        }
 
         if (!ScreenController.DisplayedOverlays.Any())
         {
