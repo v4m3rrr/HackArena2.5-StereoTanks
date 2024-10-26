@@ -19,12 +19,12 @@ internal class JoinRoomComponents
         this.RoomText = initializer.CreateRoomText();
         this.BaseListBox = initializer.CreateBaseListBox();
 
-        this.NicknameSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.Nickname"), 12);
+        this.NicknameSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.Nickname"), 24);
         this.NicknameInput = this.NicknameSection.GetDescendant<TextInput>()!;
 
         this.RoomCodeSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.RoomCode"), 8);
 
-        this.AddressSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.ServerAddress"), 21);
+        this.AddressSection = initializer.CreateSection(this.BaseListBox, new LocalizedString("Labels.ServerAddress"), 24);
         this.AddressInput = this.AddressSection.GetDescendant<TextInput>()!;
 
         this.JoinButton = initializer.CreateJoinButton();
