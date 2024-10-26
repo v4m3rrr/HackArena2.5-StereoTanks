@@ -10,41 +10,38 @@ Full guide to game mechanics can be found in [instruction](https://hackarena.pl/
 
 #### Precompiled binaries (Windows)
 
-- Download appropriate binaries of server in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
-
-- Unzip the downloaded files.
-
-- Run the server using terminal in the folder with the server executable by typing: 
-    ```
-    ./GameServer.exe
-    ```
-
-- It will start server with default settings. To check what settings are available, you can use `--help` flag.
+- Download appropriate zip file for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+- Unzip the downloaded file.
+- Run the server by double clicking on the `GameServer.exe` file.
+- It will start server with default settings. To check what settings are available, type in the terminal:
     ```
     ./GameServer.exe --help
     ```
 
 #### Precompiled binaries (Linux / macOS)
 
-- Make sure you have [dotnet-runtime-8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) installed.
-- Download appropriate binaries of server in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
-- Unzip the downloaded files.
-- Run the server using terminal in the folder with the server files by typing: 
+- Download appropriate zip file for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+- Unzip the downloaded file.
+- Add execute permissions to the server executable by running:
     ```
-    dotnet GameServer.dll
+    chmod +x GameServer
+    ```
+- Run the server by typing:
+    ```
+    ./GameServer
     ```
 - It will start server with default settings. To check what settings are available, you can use `--help` flag.
     ```
-    dotnet GameServer.dll --help
+    ./GameServer --help
     ```
 
 #### Docker container
 
-- Download appropriate binaries of server in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
-- Unzip the downloaded files.
+- Download appropriate zip file for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+- Unzip the downloaded file.
 - Run the docker container
     ```bash
-    docker run --rm -v ".:/app" -p 5000:5000 -it mcr.microsoft.com/dotnet/runtime:8.0 /app/GameServer.dll -- --host \*
+    docker run --rm -v ".:/app" -p "5000:5000" -it mcr.microsoft.com/dotnet/runtime:8.0 dotnet /app/GameServer.dll -- --host *
     ```
 
     > Running the server inside a docker container requires setting the host flag to `*` so clients can connect from outside docker.
@@ -80,25 +77,21 @@ GUI Client has 2 primary purposes:
 
 #### Windows
 
-1. To run the GUI Client, you need to have .NET Runtime 8.0 installed. You can download it from [official site](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
-
-2. Download appropriate binaries of client in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
-
-3. Unzip the downloaded files.
-
-4. Navigate to the folder with the client executable and run `GameClient.exe`.
+- Download appropriate zip file for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+- Unzip the downloaded file.
+- Run the client by double clicking on the `GameClient.exe` file.
 
 #### Linux / macOS
 
-1. To run the GUI Client, you need to have .NET Runtime 8.0 installed. You can download it from [official site](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
-
-2. Download appropriate binaries of client in version HackathonRelease for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
-
-3. Unzip the downloaded files.
-
-4. Navigate to the folder with the client binaries, open the terminal and run
-    ```bash
-    dotnet GameClient.dll
+- Download appropriate zip file for your platform from [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+- Unzip the downloaded file.
+- Add execute permissions to the client executable by running:
+    ```
+    chmod +x GameClient
+    ```
+- Run the client by typing:
+    ```
+    ./GameClient
     ```
 
 #### Playing the game as a player
