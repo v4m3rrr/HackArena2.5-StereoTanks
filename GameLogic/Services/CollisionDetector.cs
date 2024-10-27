@@ -33,6 +33,24 @@ public static class CollisionDetector
 
             var (x, y) = trajectory[i];
 
+            // Temporary fix for Hackathon event (hotfix)
+            foreach (var otherBullet in trajectories.Keys.Where(x => x != bullet))
+            {
+                if (trajectories.TryGetValue(otherBullet, out var bullet2Trajectory))
+                {
+                    bool areDirectlyOpposite = Math.Abs(bullet.Direction - otherBullet.Direction) == 2;
+                    if (areDirectlyOpposite)
+                    {
+                        if (bullet2Trajectory.Count == 1 && trajectory.Count == 1
+                            && grid.Tanks.Any(t => t.X == trajectory[0].X && t.Y == trajectory[0].Y)
+                            && grid.Tanks.Any(t => t.X == bullet2Trajectory[0].X && t.Y == bullet2Trajectory[0].Y))
+                        {
+                            return new BulletCollision(otherBullet);
+                        }
+                    }
+                }
+            }
+
             if (x < 0 || x >= grid.Dim || y < 0 || y >= grid.Dim)
             {
                 return new Collision(CollisionType.Border);
