@@ -141,7 +141,7 @@ internal class Game : Scene
         {
             int sign = MainEffect.Rotation is > MathHelper.Pi or < 0 and > -MathHelper.Pi ? 1 : -1;
             var value = 0.25f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            MainEffect.Rotation += Math.Min(MainEffect.Rotation, value) * sign;
+            MainEffect.Rotation += Math.Min(Math.Abs(MainEffect.Rotation), value) * sign;
             MainEffect.Rotation %= MathHelper.TwoPi;
         }
     }
