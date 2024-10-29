@@ -338,7 +338,11 @@ public class Tank : IEquatable<Tank>
             if (damager is not null)
             {
                 damager.Kills++;
-                damager.Tank.Heal(40);
+
+                if (!damager.IsDead)
+                {
+                    damager.Tank.Heal(40);
+                }
             }
         }
 
@@ -349,10 +353,24 @@ public class Tank : IEquatable<Tank>
     /// Heals the tank by the specified amount of points.
     /// </summary>
     /// <param name="points">The amount of points to heal.</param>
+    /// <remarks>
+    /// The tank cannot be healed if it is dead.
+    /// Use <see cref="SetHealth"/> instead.
+    /// </remarks>
     internal void Heal(int points)
     {
         Debug.Assert(points >= 0, "Healing points cannot be negative.");
+        Debug.Assert(!this.IsDead, "Cannot heal a dead tank, use SetHealth instead.");
         this.Health = Math.Min(100, this.Health!.Value + points);
+    }
+
+    /// <summary>
+    /// Sets the health of the tank.
+    /// </summary>
+    /// <param name="health">The health of the tank.</param>
+    internal void SetHealth(int health)
+    {
+        this.Health = health;
     }
 
     /// <summary>
