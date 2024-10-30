@@ -16,6 +16,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Platforms>x64;arm64</Platforms>
 	<Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
+	<EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup>
