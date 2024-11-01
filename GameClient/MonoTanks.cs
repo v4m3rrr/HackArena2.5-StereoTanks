@@ -346,6 +346,7 @@ public class MonoTanks : Game
             catch (Exception ex)
             {
                 DebugConsole.ThrowError(ex);
+                DebugConsole.Open();
             }
         });
     }
@@ -370,7 +371,7 @@ public class MonoTanks : Game
         if (KeyboardController.IsKeyHit(Keys.OemTilde)
             && KeyboardController.IsKeyDown(Keys.LeftControl))
         {
-            Scene.ShowOverlay<DebugConsole>();
+            DebugConsole.Open();
         }
 
         Scene.Current.Update(gameTime);

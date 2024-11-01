@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using GameClient.DebugConsoleItems;
-using GameClient.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
@@ -108,6 +107,26 @@ internal partial class DebugConsole : Scene, IOverlayScene
         }
     }
 
+    /// <summary>
+    /// Opens the debug console.
+    /// </summary>
+    public static void Open()
+    {
+        if (!Instance.IsDisplayed)
+        {
+            ShowOverlay<DebugConsole>();
+            Instance.openedInThisFrame = true;
+        }
+    }
+
+    /// <summary>
+    /// Closes the debug console.
+    /// </summary>
+    public static void Close()
+    {
+        HideOverlay<DebugConsole>();
+    }
+
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
@@ -120,7 +139,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
             }
             else
             {
-                this.Close();
+                Close();
                 return;
             }
         }
@@ -153,7 +172,6 @@ internal partial class DebugConsole : Scene, IOverlayScene
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
-        this.Showed += (s, e) => this.openedInThisFrame = true;
         this.Showed += (s, e) =>
         {
             if (this.IsDisplayedOverlay)
@@ -232,7 +250,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
                 },
             };
 
-            button.Clicked += (s, e) => this.Close();
+            button.Clicked += (s, e) => Close();
             button.HoverEntered += (s, e) => e.Color = Color.Red;
             button.HoverExited += (s, e) => e.Color = Color.DarkRed;
         }
@@ -368,17 +386,5 @@ internal partial class DebugConsole : Scene, IOverlayScene
         }
 
         Instance.textInput.SetText(bestMatch.FullName);
-    }
-
-    private void Close()
-    {
-        if (this.IsDisplayedOverlay)
-        {
-            HideOverlay<DebugConsole>();
-        }
-        else
-        {
-            ChangeToPreviousOrDefaultWithoutStack<MainMenu>();
-        }
     }
 }
