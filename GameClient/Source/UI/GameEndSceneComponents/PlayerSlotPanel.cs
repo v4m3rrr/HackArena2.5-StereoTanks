@@ -65,7 +65,11 @@ internal class PlayerSlotPanel : Component
 
         tankSpriteIcon.SetColor(color);
 
-        var font = new ScalableFont(Styles.Fonts.Paths.Main, 19);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 19)
+        {
+            AutoResize = true,
+            Spacing = 8,
+        };
 
         var nickContainer = new Container()
         {
@@ -82,7 +86,6 @@ internal class PlayerSlotPanel : Component
         {
             Parent = nickContainer,
             Value = player.Nickname,
-            Spacing = 8,
             Case = TextCase.Upper,
             TextAlignment = Alignment.Left,
             TextShrink = TextShrinkMode.HeightAndWidth,
@@ -97,7 +100,6 @@ internal class PlayerSlotPanel : Component
         {
             Parent = this.background,
             Value = player.Score.ToString(),
-            Spacing = 8,
             TextAlignment = Alignment.Right,
             Transform =
             {

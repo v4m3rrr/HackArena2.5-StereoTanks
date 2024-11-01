@@ -18,14 +18,18 @@ internal class GameEndInitializer(GameEnd gameEnd)
     /// <returns>The created match name component.</returns>
     public Text CreateMatchName()
     {
-        var font = new ScalableFont(Styles.Fonts.Paths.Main, 21);
+        var font = new ScalableFont(Styles.Fonts.Paths.Main, 21)
+        {
+            AutoResize = true,
+            Spacing = 10,
+        };
+
         return new Text(font, Color.White)
         {
             Parent = gameEnd.BaseComponent,
             Value = "Match name",
             Case = TextCase.Upper,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
-            Spacing = 10,
             Transform =
             {
                 Alignment = Alignment.Top,
