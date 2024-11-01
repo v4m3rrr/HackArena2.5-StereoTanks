@@ -1,4 +1,7 @@
-﻿using System.IO;
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using GameLogic.Networking;
 using MonoRivUI;
@@ -11,8 +14,18 @@ namespace GameClient.Scenes.GameCore;
 /// </summary>
 /// <param name="absPath">The absolute path of the replay file to display.</param>
 internal class ReplaySceneDisplayEventArgs(string absPath)
-    : SceneDisplayEventArgs(false)
+    : SceneDisplayEventArgs(false), IDisposable
 {
+    private bool disposed;
+
+    /// <summary>
+    /// Finalizes an instance of the <see cref="ReplaySceneDisplayEventArgs"/> class.
+    /// </summary>
+    ~ReplaySceneDisplayEventArgs()
+    {
+        this.Dispose(disposing: false);
+    }
+
     /// <summary>
     /// Gets the absolute path of the replay file to display.
     /// </summary>
@@ -99,5 +112,35 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
 
 #endif
 
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the managed and unmanaged resources.
+    /// </summary>
+    /// <param name="disposing">
+    /// A value indicating whether to dispose the managed resources.
+    /// </param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            this.Data = default!;
+            this.LobbyData = default!;
+            this.GameStates = default!;
+            this.GameEnd = default!;
+
+#if HACKATHON
+            this.MatchResults = default!;
+#endif
+
+            this.disposed = true;
+        }
     }
 }

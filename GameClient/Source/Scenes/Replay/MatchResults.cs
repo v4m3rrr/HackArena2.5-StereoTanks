@@ -1,5 +1,6 @@
 ﻿#if HACKATHON
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -57,6 +58,7 @@ internal class MatchResults : Scene
     protected override void Initialize(Component baseComponent)
     {
         this.Showing += this.MatchResults_Showing;
+        this.Hiding += this.MatchResults_Hiding;
     }
 
     /// <inheritdoc/>
@@ -70,28 +72,6 @@ internal class MatchResults : Scene
     {
         MainEffect.Rotation += -0.05f * (float)gameTime.ElapsedGameTime.TotalSeconds;
         MainEffect.Rotation %= MathHelper.TwoPi;
-    }
-
-    private void MatchResults_Showing(object? sender, SceneDisplayEventArgs? e)
-    {
-        if (e is not ReplaySceneDisplayEventArgs args)
-        {
-            DebugConsole.ThrowError(
-                $"Game scene requires {nameof(ReplaySceneDisplayEventArgs)}.");
-            ChangeToPreviousOrDefault<MainMenu>();
-            return;
-        }
-
-        this.replayArgs = (ReplaySceneDisplayEventArgs)e;
-
-        this.UpdateMatchName(args.LobbyData.ServerSettings.MatchName);
-        this.UpdateScoreboard(args);
-
-        this.components.Scoreboard
-            .GetAllDescendants<TextureComponent>()
-            .Where(x => !x.IsLoaded)
-            .ToList()
-            .ForEach(x => x.Load());
     }
 
     private void UpdateScoreboard(ReplaySceneDisplayEventArgs args)
@@ -149,6 +129,33 @@ internal class MatchResults : Scene
         }
 
         Change<MainMenu>();
+    }
+
+    private void MatchResults_Showing(object? sender, SceneDisplayEventArgs? e)
+    {
+        if (e is not ReplaySceneDisplayEventArgs args)
+        {
+            DebugConsole.ThrowError(
+                $"Game scene requires {nameof(ReplaySceneDisplayEventArgs)}.");
+            ChangeToPreviousOrDefault<MainMenu>();
+            return;
+        }
+
+        this.replayArgs = (ReplaySceneDisplayEventArgs)e;
+
+        this.UpdateMatchName(args.LobbyData.ServerSettings.MatchName);
+        this.UpdateScoreboard(args);
+
+        this.components.Scoreboard
+            .GetAllDescendants<TextureComponent>()
+            .Where(x => !x.IsLoaded)
+            .ToList()
+            .ForEach(x => x.Load());
+    }
+
+    private void MatchResults_Hiding(object? sender, EventArgs? e)
+    {
+        this.replayArgs.Dispose();
     }
 }
 

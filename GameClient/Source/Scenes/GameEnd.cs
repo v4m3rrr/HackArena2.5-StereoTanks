@@ -122,6 +122,13 @@ internal class GameEnd : Scene
 
     private void GameEnd_Hiding(object? sender, EventArgs e)
     {
+#if HACKATHON
+        if ((!this.replayArgs?.ShowMode) ?? false)
+        {
+            this.replayArgs?.Dispose();
+        }
+#endif
+
         ServerConnection.ErrorThrew -= Connection_ErrorThrew;
     }
 }

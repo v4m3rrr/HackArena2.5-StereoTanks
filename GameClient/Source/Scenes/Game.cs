@@ -396,5 +396,12 @@ internal class Game : Scene
         this.isReplayLoaded = false;
         this.isReplayRunning = false;
         this.replayTime = TimeSpan.Zero;
+        this.replayInputHandler.Reset();
+
+        // Left the replay to the main menu
+        if (Current is MainMenu)
+        {
+            this.replayArgs?.Dispose();
+        }
     }
 }
