@@ -22,7 +22,7 @@ internal class GameQuitConfirm : Scene, IOverlayScene
         : base()
     {
         var initializer = new GameQuitConfirmInitializer(this);
-        _ = new GameQuickConfirmComponents(initializer);
+        _ = new GameQuitConfirmComponents(initializer);
     }
 
     /// <inheritdoc/>

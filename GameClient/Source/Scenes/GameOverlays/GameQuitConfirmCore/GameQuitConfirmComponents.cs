@@ -4,15 +4,15 @@ using MonoRivUI;
 namespace GameClient.Scenes.GameOverlays.GameQuitConfirmCore;
 
 /// <summary>
-/// Represents the components of the game quick confirm scene.
+/// Represents the components of the game quit confirm scene.
 /// </summary>
-internal class GameQuickConfirmComponents
+internal class GameQuitConfirmComponents
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="GameQuickConfirmComponents"/> class.
+    /// Initializes a new instance of the <see cref="GameQuitConfirmComponents"/> class.
     /// </summary>
-    /// <param name="initializer">The game quick confirm scene initializer.</param>
-    public GameQuickConfirmComponents(GameQuitConfirmInitializer initializer)
+    /// <param name="initializer">The game quit confirm scene initializer.</param>
+    public GameQuitConfirmComponents(GameQuitConfirmInitializer initializer)
     {
         this.Question = initializer.CreateQuestion();
         this.ButtonListBox = initializer.CreateButtonListBox();
