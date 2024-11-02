@@ -16,8 +16,6 @@ namespace GameClient.UI.MatchResultsSceneComponents;
 internal class PlayerSlotPanel : Component
 {
     private readonly RoundedSolidColor background;
-    private readonly Text kills;
-    private readonly Text points;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
@@ -76,7 +74,8 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        this.points = new Text(font, color)
+        // Points
+        _ = new Text(font, color)
         {
             Parent = this.background,
             Value = player.Points.ToString(),
@@ -89,7 +88,8 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        this.kills = new Text(font, color)
+        // Kills
+        _ = new Text(font, color)
         {
             Parent = this.background,
             Value = player.Kills.ToString(),

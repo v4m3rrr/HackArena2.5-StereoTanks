@@ -37,12 +37,7 @@ internal class Scoreboard : Component
 
         for (int i = 0; i < players.Length; i++)
         {
-#if HACKATHON
-            var isQualified = i < 2;
-            var slot = new PlayerSlotPanel(players[i], isQualified)
-#else
-            var slot = new PlayerSlotPanel(players[i])
-#endif
+            _ = new PlayerSlotPanel(players[i])
             {
                 Parent = this.listBox.ContentContainer,
                 Transform =

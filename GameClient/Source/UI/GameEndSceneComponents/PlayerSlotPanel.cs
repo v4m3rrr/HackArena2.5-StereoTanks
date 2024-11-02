@@ -16,16 +16,6 @@ internal class PlayerSlotPanel : Component
 {
     private readonly RoundedSolidColor background;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "CodeQuality",
-        "IDE0052:Remove unread private members",
-        Justification = "Used in other configuration.")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "CodeQuality",
-        "IDE0079:Remove unnecessary suppression",
-        Justification = "Used in other configuration.")]
-    private readonly Text score;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
     /// </summary>
@@ -96,7 +86,8 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        this.score = new Text(font, color)
+        // Score
+        _ = new Text(font, color)
         {
             Parent = this.background,
             Value = player.Score.ToString(),
@@ -109,21 +100,4 @@ internal class PlayerSlotPanel : Component
             },
         };
     }
-
-#if HACKATHON
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
-    /// </summary>
-    /// <param name="player">The player to display.</param>
-    /// <param name="isQualified">A value indicating whether the player is qualified.</param>
-    public PlayerSlotPanel(Player player, bool isQualified)
-        : this(player)
-    {
-        if (!isQualified)
-        {
-            this.score.Color = Color.White;
-            this.background.Opacity = 0.15f;
-        }
-    }
-#endif
 }
