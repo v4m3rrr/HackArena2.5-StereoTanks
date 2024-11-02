@@ -25,7 +25,11 @@ internal abstract class Wall : ISprite
         };
 
         this.grid = grid;
-        this.grid.DrawDataChanged += (s, e) => this.UpdateDestination();
+        this.grid.DrawDataChanged += (s, e) =>
+        {
+            this.UpdateSize();
+            this.UpdateLocation();
+        };
     }
 
     /// <summary>
@@ -50,7 +54,14 @@ internal abstract class Wall : ISprite
         this.texture.Draw(gameTime);
     }
 
-    private void UpdateDestination()
+    private void UpdateSize()
+    {
+        int tileSize = this.grid.TileSize;
+        StaticTexture.Transform.Size = new Point(tileSize);
+        this.texture.Transform.Size = new Point(tileSize);
+    }
+
+    private void UpdateLocation()
     {
         int tileSize = this.grid.TileSize;
         int drawOffset = this.grid.DrawOffset;
@@ -61,10 +72,7 @@ internal abstract class Wall : ISprite
              gridLeft + (this.Position.X * tileSize) + drawOffset,
              gridTop + (this.Position.Y * tileSize) + drawOffset);
 
-        StaticTexture.Transform.Size = new Point(tileSize);
-
         this.texture.Transform.Location = location;
-        this.texture.Transform.Size = new Point(tileSize);
     }
 
     /// <summary>
@@ -92,7 +100,8 @@ internal abstract class Wall : ISprite
             this.y = y;
             this.texture.Opacity = 0.35f;
 
-            this.UpdateDestination();
+            this.UpdateSize();
+            this.UpdateLocation();
         }
 
         /// <inheritdoc/>
@@ -117,8 +126,8 @@ internal abstract class Wall : ISprite
         {
             this.Logic = logic;
             this.texture.Opacity = 1f;
-
-            this.UpdateDestination();
+            this.UpdateSize();
+            this.UpdateLocation();
         }
 
         /// <summary>
@@ -136,6 +145,7 @@ internal abstract class Wall : ISprite
         public void UpdateLogic(GameLogic.Wall logic)
         {
             this.Logic = logic;
+            this.UpdateLocation();
         }
     }
 }

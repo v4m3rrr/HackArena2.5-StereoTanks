@@ -178,6 +178,7 @@ internal class GridComponent : Component
             this.radarEffects.Clear();
             this.mapItems.Clear();
             this.fogsOfWar.Clear();
+            this.solidWalls = new Sprites.Wall.Solid?[this.Logic.Dim, this.Logic.Dim];
         }
     }
 
