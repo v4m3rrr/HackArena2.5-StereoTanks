@@ -90,7 +90,7 @@ internal class LobbyInitializer(Lobby lobby)
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Left);
         button.ApplyStyle(style);
 
-        button.Clicked += async (s, e) =>
+        button.Clicked += (s, e) =>
         {
             _ = ServerConnection.CloseAsync("Leave lobby");
             Scene.Change<MainMenu>();
@@ -167,5 +167,32 @@ internal class LobbyInitializer(Lobby lobby)
         }
 
         return panels;
+    }
+
+    /// <summary>
+    /// Creates a continue button to start the replay.
+    /// </summary>
+    /// <returns>The created continue button.</returns>
+    public Button<Container> CreateContinueButton()
+    {
+        var button = new Button<Container>(new Container())
+        {
+            Parent = lobby.BaseComponent,
+            Transform =
+            {
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(-0.08f, -0.08f),
+                RelativeSize = new Vector2(0.2f, 0.07f),
+            },
+        };
+
+        var text = new LocalizedString("Buttons.Continue");
+        var iconPath = "Images/Icons/continue.svg";
+        var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Right);
+        button.ApplyStyle(style);
+
+        button.Clicked += (s, e) => Scene.ChangeWithoutStack<Game>(lobby.ReplayArgs);
+
+        return button;
     }
 }

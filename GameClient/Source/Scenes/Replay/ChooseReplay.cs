@@ -128,7 +128,7 @@ internal class ChooseReplay : Scene
         };
 
         backButton.ApplyStyle(Styles.UI.BackButtonStyle);
-        backButton.Clicked += (s, e) => ChangeToPreviousOrDefault<MainMenu>();
+        backButton.Clicked += (s, e) => Change<MainMenu>();
     }
 
     /// <inheritdoc/>
@@ -151,7 +151,11 @@ internal class ChooseReplay : Scene
             return;
         }
 
-        foreach (var file in Directory.GetFiles(directory, "*.json"))
+        var files = Directory.GetFiles(directory, "*.json")
+            .Concat(Directory.GetFiles(directory, "*.gz"))
+            .Concat(Directory.GetFiles(directory, "*.zip"));
+
+        foreach (var file in files)
         {
 #if HACKATHON
             if (file.EndsWith("_match_results.json"))

@@ -24,7 +24,6 @@ internal class Lobby : Scene
     private readonly LobbyComponents components;
     private readonly LobbyUpdater updater;
 
-    private ReplaySceneDisplayEventArgs? replayArgs;
     private bool isReplay;
     private bool isReplayLoading;
 
@@ -39,6 +38,11 @@ internal class Lobby : Scene
         this.updater = new LobbyUpdater(this.components);
     }
 
+    /// <summary>
+    /// Gets the replay scene display event arguments.
+    /// </summary>
+    public ReplaySceneDisplayEventArgs? ReplayArgs { get; private set; }
+
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
@@ -52,7 +56,7 @@ internal class Lobby : Scene
             }
             else if (KeyboardController.IsKeyHit(Keys.Space))
             {
-                ChangeWithoutStack<Game>(this.replayArgs!);
+                ChangeWithoutStack<Game>(this.ReplayArgs!);
             }
         }
 
@@ -126,7 +130,7 @@ internal class Lobby : Scene
 
         if (this.isReplay)
         {
-            var replay = this.replayArgs = e as ReplaySceneDisplayEventArgs;
+            var replay = this.ReplayArgs = e as ReplaySceneDisplayEventArgs;
 
             this.isReplayLoading = true;
             ShowOverlay<Loading>();
@@ -150,6 +154,7 @@ internal class Lobby : Scene
             {
                 DebugConsole.ThrowError("Failed to load replay data.");
                 DebugConsole.ThrowError(ex);
+                DebugConsole.Open();
                 ChangeWithoutStack<Replay.ChooseReplay>();
                 return;
             }
@@ -186,6 +191,11 @@ internal class Lobby : Scene
     private void Lobby_Hid(object? sender, EventArgs e)
     {
         this.updater.ResetPlayerSlotPanels();
+
+        if (Current is not Game)
+        {
+            this.ReplayArgs?.Dispose();
+        }
     }
 
     private void Connection_MessageReceived(WebSocketReceiveResult result, string message)

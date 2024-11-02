@@ -35,4 +35,12 @@ internal class LobbyComponents(LobbyInitializer initializer)
     /// Gets the leave button component.
     /// </summary>
     public Button<Container> LeaveButton { get; } = initializer.CreateLeaveButton();
+
+    /// <summary>
+    /// Gets the continue button component.
+    /// </summary>
+    /// <remarks>
+    /// Currently used to start the replay.
+    /// </remarks>
+    public Button<Container> ContinueButton { get; } = initializer.CreateContinueButton();
 }

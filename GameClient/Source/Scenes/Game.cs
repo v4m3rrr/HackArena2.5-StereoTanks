@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
 using GameClient.Scenes.GameOverlays;
+using GameClient.Scenes.Replay;
 using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
@@ -288,7 +289,7 @@ internal class Game : Scene
 
         this.components.MenuButton.IsEnabled = !this.isReplay
 #if HACKATHON
-            || (!this.replayArgs?.ShowMode ?? true);
+            || (!this.replayArgs?.ShowMode ?? true)
 #endif
         ;
 
@@ -398,8 +399,7 @@ internal class Game : Scene
         this.replayTime = TimeSpan.Zero;
         this.replayInputHandler.Reset();
 
-        // Left the replay to the main menu
-        if (Current is MainMenu)
+        if (Current is not GameEnd)
         {
             this.replayArgs?.Dispose();
         }

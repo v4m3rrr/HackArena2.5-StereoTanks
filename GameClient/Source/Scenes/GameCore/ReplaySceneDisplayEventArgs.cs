@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -71,7 +71,39 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task LoadData()
     {
-        this.Data = JObject.Parse(await File.ReadAllTextAsync(this.AbsPath));
+        if (this.AbsPath.EndsWith(".gz") || this.AbsPath.EndsWith(".zip"))
+        {
+            var tempPath = Path.GetTempFileName();
+            try
+            {
+                await using var compressedStream = File.OpenRead(this.AbsPath);
+                await using var decompressionStream = this.AbsPath.EndsWith(".gz")
+                    ? new GZipStream(compressedStream, CompressionMode.Decompress)
+                    : new ZipArchive(compressedStream).Entries.First().Open();
+
+                await using var fileStream = File.Create(tempPath);
+                await decompressionStream.CopyToAsync(fileStream);
+                fileStream.Close();
+
+                this.Data = JObject.Parse(await File.ReadAllTextAsync(tempPath));
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failed to unzip replay file.");
+                throw;
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                {
+                    File.Delete(tempPath);
+                }
+            }
+        }
+        else
+        {
+            this.Data = JObject.Parse(await File.ReadAllTextAsync(this.AbsPath));
+        }
 
         var converters = LobbyDataPayload.GetConverters();
         var serializer = PacketSerializer.GetSerializer(converters);
@@ -103,10 +135,10 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
 
                 this.MatchResults = JObject.Parse(await File.ReadAllTextAsync(matchResultsPath));
             }
-            catch (IOException ex)
+            catch (IOException)
             {
                 DebugConsole.ThrowError("Failed to load match results.");
-                DebugConsole.ThrowError(ex);
+                throw;
             }
         }
 
