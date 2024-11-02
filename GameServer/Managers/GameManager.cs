@@ -100,7 +100,10 @@ internal class GameManager(GameInstance game, Logger log)
         game.ReplayManager?.SaveReplay();
 
 #if HACKATHON
-        game.ReplayManager?.SaveResults();
+        if (game.Options.SaveResults)
+        {
+            game.ReplayManager?.SaveResults();
+        }
 #endif
 
         var tasks = new List<Task>();

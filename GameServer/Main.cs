@@ -85,9 +85,21 @@ log.Information("Sandbox mode: {mode}", opts.SandboxMode ? "on" : "off");
 string? saveReplayPath = null;
 if (opts.SaveReplay)
 {
+    if (opts.ReplayFilepath is null)
+    {
+        var replayDir = "Replays/";
+        if (!Directory.Exists(replayDir))
+        {
+            log.Information("Creating replay directory...");
+            Directory.CreateDirectory(replayDir);
+        }
+
+        saveReplayPath = $"Replays/{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json";
+    }
+
     saveReplayPath = opts.ReplayFilepath is not null
         ? Path.GetFullPath(opts.ReplayFilepath)
-        : Path.GetFullPath($"Replay_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json");
+        : Path.GetFullPath($"Replays/{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json");
 
     log.Information("Replay will be saved to: {path}", saveReplayPath);
 }

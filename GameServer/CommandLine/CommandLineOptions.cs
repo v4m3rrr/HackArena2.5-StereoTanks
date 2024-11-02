@@ -163,6 +163,20 @@ internal class CommandLineOptions
         Default = null)]
     public string? ReplayFilepath { get; private set; }
 
+#if HACKATHON
+
+    /// <summary>
+    /// Gets a value indicating whether to save the results.
+    /// </summary>
+    [Option(
+        "save-results",
+        Required = false,
+        HelpText = "Whether to save the results.",
+        Default = false)]
+    public bool SaveResults { get; private set; }
+
+#endif
+
     /// <summary>
     /// Gets a value indicating whether to overwrite
     /// the replay file if it already exists.

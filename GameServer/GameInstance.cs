@@ -24,6 +24,8 @@ internal class GameInstance
     /// <param name="log">The logger.</param>
     public GameInstance(CommandLineOptions options, Logger log)
     {
+        this.Options = options;
+
         this.log = log;
         int seed = options.Seed!.Value;
         int dimension = options.GridDimension;
@@ -104,6 +106,11 @@ internal class GameInstance
     /// Gets the disconnected in game players.
     /// </summary>
     public IEnumerable<PlayerConnection> DisconnectedInGamePlayers => this.disconnectedConnectionsWhileInGame;
+
+    /// <summary>
+    /// Gets the command line options.
+    /// </summary>
+    public CommandLineOptions Options { get; }
 
     /// <summary>
     /// Gets the lobby manager.
