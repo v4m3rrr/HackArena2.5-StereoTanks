@@ -24,6 +24,7 @@ internal class Game : Scene
     private readonly Dictionary<string, Player> players = [];
     private readonly GameComponents components;
     private readonly GameUpdater updater;
+    private readonly ReplayInputHandler replayInputHandler = new();
 
     private bool isContentLoading;
     private bool isContentUpdatedAfterLoad;
@@ -230,39 +231,24 @@ internal class Game : Scene
 
     private void UpdateReplay(GameTime gameTime)
     {
-        if (KeyboardController.IsKeyHit(Keys.Left))
-        {
-            this.replayTime -= 100 * gameTime.ElapsedGameTime;
-            if (this.replayTime < TimeSpan.Zero)
-            {
-                this.replayTime = TimeSpan.Zero;
-            }
-        }
-        else if (KeyboardController.IsKeyHit(Keys.Right))
-        {
-            this.replayTime += 100 * gameTime.ElapsedGameTime;
-        }
+        this.replayInputHandler.Update(gameTime, ref this.isReplayRunning, ref this.replayTime);
 
-        if (this.isReplayRunning ^= KeyboardController.IsKeyHit(Keys.Space))
-        {
-            this.replayTime += gameTime.ElapsedGameTime;
-            var lastReplayIndex = this.replayTick;
-            this.replayTick = Math.Max((int)(this.replayTime.TotalMilliseconds / Settings!.BroadcastInterval), 0);
+        var lastReplayIndex = this.replayTick;
+        this.replayTick = Math.Max((int)(this.replayTime.TotalMilliseconds / Settings!.BroadcastInterval), 0);
 
-            if (this.replayTick >= this.replayGameStates.Length)
+        if (this.replayTick >= this.replayGameStates.Length)
+        {
+            var args = new GameEndDisplayEventArgs(this.replayArgs!.GameEnd.Players)
             {
-                var args = new GameEndDisplayEventArgs(this.replayArgs!.GameEnd.Players)
-                {
 #if HACKATHON
-                    ReplayArgs = this.replayArgs,
+                ReplayArgs = this.replayArgs,
 #endif
-                };
-                ChangeWithoutStack<GameEnd>(args);
-            }
-            else if (this.replayTick != lastReplayIndex)
-            {
-                this.UpdateReplayTick(this.replayTick);
-            }
+            };
+            ChangeWithoutStack<GameEnd>(args);
+        }
+        else if (this.replayTick != lastReplayIndex)
+        {
+            this.UpdateReplayTick(this.replayTick);
         }
     }
 
