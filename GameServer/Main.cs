@@ -54,7 +54,7 @@ if (opts is null)
     return;
 }
 
-log.Information("Listening on http://{host}:{port}/\n", opts.Host, opts.Port);
+log.Information("Listening on http://{host}:{port}/", opts.Host, opts.Port);
 
 var listener = new HttpListener();
 listener.Prefixes.Add($"http://{opts.Host}:{opts.Port}/");
@@ -68,10 +68,6 @@ log.Information("Debug mode is enabled.");
 
 #if HACKATHON
 log.Information("Hackathon mode is enabled.");
-#endif
-
-#if DEBUG || HACKATHON
-Console.WriteLine();
 #endif
 
 log.Information("Server started.");
@@ -94,23 +90,32 @@ if (opts.SaveReplay)
             Directory.CreateDirectory(replayDir);
         }
 
-        saveReplayPath = $"Replays/{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json";
-    }
+#if WINDOWS
+        var extension = ".zip";
+#else
+        var extension = ".tar.gz";
+#endif
 
-    saveReplayPath = opts.ReplayFilepath is not null
-        ? Path.GetFullPath(opts.ReplayFilepath)
-        : Path.GetFullPath($"Replays/{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.json");
+        saveReplayPath = $"Replays/{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}{extension}";
+    }
+    else
+    {
+        saveReplayPath = Path.GetFullPath(opts.ReplayFilepath);
+    }
 
     log.Information("Replay will be saved to: {path}", saveReplayPath);
 }
 
 #if HACKATHON
+if (opts.SaveResults)
+{
+    log.Information("Saving results is enabled.");
+}
+
 log.Information("Eager broadcast: {status}", opts.EagerBroadcast ? "on" : "off");
 #endif
 
-Console.WriteLine();
-
-log.Information("Press Ctrl+C to stop the server.\n");
+log.Information("Press Ctrl+C to stop the server.");
 
 var game = saveReplayPath is not null
     ? new GameInstance(opts, log, saveReplayPath)

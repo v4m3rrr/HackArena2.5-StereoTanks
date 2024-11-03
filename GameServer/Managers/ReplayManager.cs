@@ -1,4 +1,5 @@
-﻿using GameLogic.Networking;
+﻿using System.IO.Compression;
+using GameLogic.Networking;
 using Newtonsoft.Json.Linq;
 using Serilog.Core;
 
@@ -92,10 +93,35 @@ internal class ReplayManager(GameInstance game, string replayPath, Logger log)
             ["gameEnd"] = this.gameEnd ?? [],
         };
 
+        var replayFileNameWithoutExtension = Path.GetFileNameWithoutExtension(replayPath);
+        var replayFileExtension = replayPath.EndsWith(".tar.gz") ? ".tar.gz" : Path.GetExtension(replayPath);
+
         try
         {
-            log.Verbose("Saving replay to: {replayPath}", replayPath);
-            File.WriteAllText(replayPath, jObject.ToString(options.Formatting));
+            log.Debug("Saving replay to: {replayPath}", replayPath);
+
+            if (replayFileExtension == ".zip")
+            {
+                log.Debug("Zipping replay...");
+                using var zip = ZipFile.Open(replayPath, ZipArchiveMode.Create);
+                var entryFileName = $"{replayFileNameWithoutExtension}.json";
+                var replayEntry = zip.CreateEntry(entryFileName);
+                using var entryStream = replayEntry.Open();
+                using var writer = new StreamWriter(entryStream);
+                writer.Write(jObject.ToString(options.Formatting));
+            }
+            else if (replayFileExtension == ".tar.gz")
+            {
+                log.Debug("Creating tar.gz archive...");
+                using var replayFileStream = File.Create(replayPath);
+                using var compressionStream = new GZipStream(replayFileStream, CompressionMode.Compress);
+                using var writer = new StreamWriter(compressionStream);
+                writer.Write(jObject.ToString(options.Formatting));
+            }
+            else
+            {
+                File.WriteAllText(replayPath, jObject.ToString(options.Formatting));
+            }
         }
         catch (Exception ex)
         {
@@ -117,7 +143,7 @@ internal class ReplayManager(GameInstance game, string replayPath, Logger log)
     /// </remarks>
     public void SaveResults()
     {
-        log.Verbose("Saving results...");
+        log.Debug("Saving results...");
 
         // Temporary solution for getting the results.
         var gameEndPayload = game.PayloadHelper.GetGameEndResultsPayload(out var converters);
@@ -129,10 +155,9 @@ internal class ReplayManager(GameInstance game, string replayPath, Logger log)
         {
             var path = Path.GetDirectoryName(replayPath)!;
             var fileName = Path.GetFileNameWithoutExtension(replayPath);
-            var extension = Path.GetExtension(replayPath);
-            savePath = Path.Combine(path, $"{fileName}_results{extension}");
+            savePath = Path.Combine(path, $"{fileName}_results.json");
 
-            log.Verbose("Saving results to: {savePath}", savePath);
+            log.Debug("Saving results to: {savePath}", savePath);
             File.WriteAllText(savePath, results.ToString());
         }
         catch (Exception ex)

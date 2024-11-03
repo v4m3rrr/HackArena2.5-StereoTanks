@@ -126,12 +126,24 @@ internal static partial class CommandLineParser
 
 #if HACKATHON
             var pathWithoutExtension = Path.GetFileNameWithoutExtension(replayPath);
-            if (pathWithoutExtension.ToLower().EndsWith("_results"))
+            if (opts.SaveResults && pathWithoutExtension.ToLower().EndsWith("_results"))
             {
                 log.Error("The record file cannot end with '_results'.");
                 return false;
             }
 #endif
+
+            var pathExtension = Path.GetExtension(replayPath);
+            var supportedExtensions = new[] { ".json", ".zip", ".tar.gz", ".txt", string.Empty };
+            if (supportedExtensions.All(e => e != pathExtension))
+            {
+                log.Warning(
+                    "Unsupported record file extension '{pathExtension}'. " +
+                    "Supported extensions are: {supportedExtensions}. " +
+                    "You can still save the record file with the unsupported extension, but it may not work properly.",
+                    pathExtension,
+                    string.Join(", ", supportedExtensions.Select(e => $"'{e}'")));
+            }
 
             try
             {
