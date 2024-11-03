@@ -228,11 +228,11 @@ internal class GameManager(GameInstance game, Logger log)
                 log.Verbose("Broadcasting game state...");
                 var broadcast = this.BroadcastGameStateAsync();
 
+                game.ReplayManager?.AddGameState(this.tick, this.CurrentGameStateId);
+
                 log.Verbose("Resetting player radar usage...");
                 this.logicUpdater.ResetPlayerRadarUsage();
             }
-
-            game.ReplayManager?.AddGameState(this.tick, this.CurrentGameStateId);
 
             log.Verbose("Game state broadcast completed.");
             stopwatch.Stop();

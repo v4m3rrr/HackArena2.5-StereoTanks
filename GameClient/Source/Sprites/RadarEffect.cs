@@ -111,7 +111,10 @@ internal class RadarEffect : ISprite
             }
         }
 
-        this.circle.Draw(gameTime);
+        if (!this.Tank.IsDead)
+        {
+            this.circle.Draw(gameTime);
+        }
     }
 
     private static List<IDetectableByRadar> GetDetectedSprites(GameLogic.Tank tank, IEnumerable<ISprite> sprites)
