@@ -122,6 +122,7 @@ internal class Lobby : Scene
     {
         this.isReplay = e is ReplaySceneDisplayEventArgs;
 
+        this.components.ContinueButton.IsEnabled = this.isReplay;
         this.components.LeaveButton.IsEnabled = !this.isReplay
 #if HACKATHON
             || (!(e as ReplaySceneDisplayEventArgs)?.ShowMode ?? true)

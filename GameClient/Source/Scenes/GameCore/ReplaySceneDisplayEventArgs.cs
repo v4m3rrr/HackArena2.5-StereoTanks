@@ -61,7 +61,7 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
     /// <summary>
     /// Gets the match results.
     /// </summary>
-    public JObject? MatchResults { get; private set; }
+    public JArray? MatchResults { get; private set; }
 
 #endif
 
@@ -130,14 +130,15 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
                 var replayFilenameWithoutExtension = Path.GetFileNameWithoutExtension(replayFilename);
                 var replayFilenameExtension = Path.GetExtension(replayFilename);
 
-                var matchResultsFilename = $"{replayFilenameWithoutExtension}_match_results{replayFilenameExtension}";
+                var matchResultsFilename = $"{replayFilenameWithoutExtension}_match_results.json";
                 var matchResultsPath = PathUtils.GetAbsolutePath($"{replaysDirectory}/{matchResultsFilename}");
 
-                this.MatchResults = JObject.Parse(await File.ReadAllTextAsync(matchResultsPath));
+                var matchResults = JObject.Parse(await File.ReadAllTextAsync(matchResultsPath));
+                this.MatchResults = JArray.Parse(matchResults["match_results"]!.ToString())!;
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException or NullReferenceException)
             {
-                DebugConsole.ThrowError("Failed to load match results.");
+                DebugConsole.ThrowError("Failed to load match results (show mode).");
                 throw;
             }
         }

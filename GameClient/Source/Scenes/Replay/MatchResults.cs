@@ -76,9 +76,8 @@ internal class MatchResults : Scene
 
     private void UpdateScoreboard(ReplaySceneDisplayEventArgs args)
     {
-        var results = JArray.Parse(args.MatchResults!["match_results"]!.ToString())!;
         List<MatchResultsPlayer> players = [];
-        foreach (var r in results)
+        foreach (var r in args.MatchResults!)
         {
             players.Add(new MatchResultsPlayer(
                 r["nickname"]!.ToString(),

@@ -146,19 +146,22 @@ internal class ChooseReplay : Scene
         var directory = PathUtils.GetAbsolutePath(ReplayDirectory);
         if (!Directory.Exists(directory))
         {
-            DebugConsole.ThrowError("Replay directory does not exist.");
+            DebugConsole.ThrowError("'Replays/' directory does not exist.");
             Change<MainMenu>();
             return;
         }
 
-        var files = Directory.GetFiles(directory, "*.json")
-            .Concat(Directory.GetFiles(directory, "*.gz"))
-            .Concat(Directory.GetFiles(directory, "*.zip"));
+        var files = Directory.GetFiles(directory)
+            .Where(x => Path.GetExtension(x) == string.Empty)
+            .Concat(Directory.GetFiles(directory, "*.json"))
+            .Concat(Directory.GetFiles(directory, "*.txt"))
+            .Concat(Directory.GetFiles(directory, "*.zip"))
+            .Concat(Directory.GetFiles(directory, "*.tar.gz"));
 
         foreach (var file in files)
         {
 #if HACKATHON
-            if (file.EndsWith("_match_results.json"))
+            if (file!.EndsWith("_results.json"))
             {
                 continue;
             }
@@ -190,10 +193,14 @@ internal class ChooseReplay : Scene
             button.HoverEntered += (s, e) => button.Component.Color = MonoTanks.ThemeColor * 0.66f;
             button.HoverExited += (s, e) => button.Component.Color = MonoTanks.ThemeColor * 0.44f;
 
+            string textValue = file.EndsWith(".tar.gz")
+                ? Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file))
+                : Path.GetFileNameWithoutExtension(file);
+
             var text = new Text(this.font, Color.White)
             {
                 Parent = button.Component,
-                Value = Path.GetFileNameWithoutExtension(file),
+                Value = textValue,
                 TextShrink = TextShrinkMode.HeightAndWidth,
                 TextAlignment = Alignment.Center,
                 Transform =
