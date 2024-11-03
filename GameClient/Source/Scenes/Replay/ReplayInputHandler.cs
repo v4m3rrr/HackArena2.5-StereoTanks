@@ -53,10 +53,6 @@ internal class ReplayInputHandler
             {
                 current -= 2.5f * TimeSpan.FromMilliseconds(Game.ServerBroadcastInterval);
             }
-            else if (!isLeftKeyHit)
-            {
-                current -= gameTime.ElapsedGameTime;
-            }
 
             if (isRunning)
             {
@@ -71,10 +67,6 @@ internal class ReplayInputHandler
             if ((DateTime.Now - rkdt) > TimeSpan.FromSeconds(0.5))
             {
                 current += 2.5f * TimeSpan.FromMilliseconds(Game.ServerBroadcastInterval);
-            }
-            else if (!isRunning && !isRightKeyHit)
-            {
-                current += gameTime.ElapsedGameTime;
             }
         }
 
