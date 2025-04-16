@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>4b75679d-3a50-4b19-a44a-2059ff461e75</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>GameLogic</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Collisions\BulletCollision.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collisions\Collision.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collisions\TankCollision.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\AbilityType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\BulletType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\CollisionType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\Direction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\MovementDirection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\Orientation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\Rotation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\SecondaryItemType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\StunBlockEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GlobalUsings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IStunEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Bullet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Grid.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Player.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\SecondaryItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\SecondaryItems\DoubleBullet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\SecondaryItems\Laser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\SecondaryItems\Mine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Tank.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Turret.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Wall.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Zone.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\ZoneStatus.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Enums\EnumSerializationFormat.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Enums\PacketType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameEnd\PlayerJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\BulletJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\GridTilesJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\GridVisibilityJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\ItemJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\LaserJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\MapJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\MineJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\PlayerJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\TankJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\TurretJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\WallJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\ZoneJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\JsonConverterUtils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\LobbyData\PlayerJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\PacketJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Packet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\PacketSerializer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\PacketTypeExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\AbilityUsePayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\ConnectionRejectedPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\CustomWarningPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\GiveSecondaryItemPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\GlobalAbilityUsePayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\GlobalGiveSecondaryItemPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\SetPlayerScorePayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\EmptyPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\ErrorPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\Exceptions\ConvertEnumFailed.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\GameEndPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\GameStatePayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\Interfaces\IActionPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\Interfaces\IPacketPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\LobbyDataPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\MovementPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\PassPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\RotationPayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\SerializationContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\SerializationContexts\GameSerializationContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\SerializationOptions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\ServerSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\CollisionDetector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\FogOfWarManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\LogicUpdater.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\MapGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\DirectionUtils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\EnumUtils.cs" />
+  </ItemGroup>
+</Project>

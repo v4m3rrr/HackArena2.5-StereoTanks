@@ -13,11 +13,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
     <Platforms>x64;arm64</Platforms>
-	<Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
+	<Configurations>Debug;Release;HackathonDebug;HackathonRelease;StereoDebug;StereoRelease</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);CLIENT;OSX</DefineConstants>
+    <DefineConstants>CLIENT;OSX</DefineConstants>
     <OutputPath>bin\$(Configuration)\macOS\$(Platform)\</OutputPath>
   </PropertyGroup>
 
@@ -32,6 +32,10 @@
 
   <PropertyGroup Condition="$(Configuration.Contains('Hackathon'))">
     <DefineConstants>$(DefineConstants);HACKATHON</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="$(Configuration.Contains('Stereo'))">
+    <DefineConstants>$(DefineConstants);STEREO</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)'=='x64'">
@@ -69,6 +73,7 @@
     <PackageReference Include="FreeTypeSharp" Version="3.0.0" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Nopipeline.Task" Version="2.2.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
@@ -76,10 +81,6 @@
     </PackageReference>
     <PackageReference Include="Svg.Skia" Version="2.0.0.1" />
 	<PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="2.88.8" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\GameLogic\GameLogic.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -101,4 +102,6 @@
     <Message Text="Restoring dotnet tools" Importance="High" />
     <Exec Command="dotnet tool restore" />
   </Target>
+
+  <Import Project="..\GameLogic\GameLogic.projitems" Label="Shared" />
 </Project>

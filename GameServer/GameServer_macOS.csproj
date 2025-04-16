@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>GameServer</AssemblyName>
@@ -13,11 +13,11 @@
     <Title>MonoTanks Server</Title>
     <Description>A server for MonoTanks game.</Description>
     <Platforms>x64;arm64</Platforms>
-    <Configurations>Debug;Release;HackathonDebug;HackathonRelease</Configurations>
+    <Configurations>Debug;Release;HackathonDebug;HackathonRelease;StereoDebug;StereoRelease</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);SERVER;OSX</DefineConstants>
+    <DefineConstants>SERVER;OSX</DefineConstants>
     <OutputPath>bin\$(Configuration)\macOS\$(Platform)\</OutputPath>
   </PropertyGroup>
 
@@ -32,6 +32,10 @@
 
   <PropertyGroup Condition="$(Configuration.Contains('Hackathon'))">
     <DefineConstants>$(DefineConstants);HACKATHON</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="$(Configuration.Contains('Stereo'))">
+    <DefineConstants>$(DefineConstants);STEREO</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)'=='x64'">
@@ -53,11 +57,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GameLogic\GameLogic.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	<PackageReference Include="Serilog" Version="4.0.2" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
@@ -66,5 +67,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <Import Project="..\GameLogic\GameLogic.projitems" Label="Shared" />
 
 </Project>
