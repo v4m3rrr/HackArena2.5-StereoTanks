@@ -225,7 +225,7 @@ internal class GridComponent : Component
                 this.SyncRadarEffect();
             }
 #else
-            MonoTanks.InvokeOnMainThread(() =>
+            GameClientCore.InvokeOnMainThread(() =>
             {
                 // Do we need lock here?
                 this.SyncWalls();

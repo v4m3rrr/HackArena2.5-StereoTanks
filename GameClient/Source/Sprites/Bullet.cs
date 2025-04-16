@@ -86,7 +86,7 @@ internal class Bullet : ISprite, IDetectableByRadar
         StaticTexture.Load();
 
         var data = new Color[StaticTexture.Texture.Width * StaticTexture.Texture.Height];
-        await MonoTanks.InvokeOnMainThreadAsync(() => StaticTexture.Texture.GetData(data));
+        await GameClientCore.InvokeOnMainThreadAsync(() => StaticTexture.Texture.GetData(data));
 
         int firstHeight = -1;
         int lastHeight = -1;

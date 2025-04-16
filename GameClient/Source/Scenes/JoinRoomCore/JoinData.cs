@@ -37,7 +37,7 @@ internal static class JoinData
             return;
         }
 
-        string json = await MonoTanks.InvokeOnMainThreadAsync(() => File.ReadAllText(FilePath));
+        string json = await GameClientCore.InvokeOnMainThreadAsync(() => File.ReadAllText(FilePath));
         var data = JsonSerializer.Deserialize<Data>(json);
 
         Nickname = data.Nickname;
@@ -53,7 +53,7 @@ internal static class JoinData
         var data = new Data(Nickname, Address);
         string json = JsonSerializer.Serialize(data);
 
-        await MonoTanks.InvokeOnMainThreadAsync(() => File.WriteAllText(FilePath, json));
+        await GameClientCore.InvokeOnMainThreadAsync(() => File.WriteAllText(FilePath, json));
     }
 
     private record struct Data(string? Nickname, string? Address);

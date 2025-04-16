@@ -32,7 +32,7 @@ internal static class MainEffect
             texture: Texture,
             position: ScreenController.CurrentSize.ToVector2() / 2f,
             sourceRectangle: null,
-            color: MonoTanks.ThemeColor,
+            color: GameClientCore.ThemeColor,
             rotation: Rotation,
             origin: Texture.Bounds.Size.ToVector2() / 2f,
             scale: 2.0f * ScreenController.Scale,

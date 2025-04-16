@@ -14,7 +14,7 @@ namespace GameClient;
 /// <summary>
 /// Represents the game client.
 /// </summary>
-public class MonoTanks : Game
+public class GameClientCore : Game
 {
     /// <summary>
     /// Gets the platform the game is running on.
@@ -39,9 +39,9 @@ public class MonoTanks : Game
 #endif
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MonoTanks"/> class.
+    /// Initializes a new instance of the <see cref="GameClientCore"/> class.
     /// </summary>
-    public MonoTanks()
+    public GameClientCore()
     {
         Instance = this;
         mainThread = Thread.CurrentThread;
@@ -79,7 +79,7 @@ public class MonoTanks : Game
     /// <summary>
     /// Gets the instance of the game client.
     /// </summary>
-    public static MonoTanks Instance { get; private set; } = default!;
+    public static GameClientCore Instance { get; private set; } = default!;
 
     /// <summary>
     /// Gets a value indicating whether the game is in debug mode.
@@ -232,7 +232,7 @@ public class MonoTanks : Game
     /// </summary>
     protected override void Initialize()
     {
-        this.Window.Title = nameof(MonoTanks);
+        this.Window.Title = nameof(GameClientCore);
 
         ContentController.Initialize(this.Content);
 

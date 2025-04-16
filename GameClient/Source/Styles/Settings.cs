@@ -45,7 +45,7 @@ internal static class Settings
     {
         Action = (selector) =>
         {
-            var activeColor = (MonoTanks.ThemeColor * 0.3f).WithAlpha(0xFF);
+            var activeColor = (GameClientCore.ThemeColor * 0.3f).WithAlpha(0xFF);
             var activeBackground = new RoundedSolidColor(activeColor, 40)
             {
                 Parent = selector.ActiveContainer,
@@ -83,7 +83,7 @@ internal static class Settings
 
                 if (e is not null)
                 {
-                    e.Button.Component.GetChild<Text>()!.Color = MonoTanks.ThemeColor;
+                    e.Button.Component.GetChild<Text>()!.Color = GameClientCore.ThemeColor;
                 }
             };
 

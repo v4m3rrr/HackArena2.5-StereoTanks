@@ -4,7 +4,7 @@ self_contained=false
 configurations=()
 platforms=()
 
-project_name="MonoTanks"
+project_name="HackArenaGame"
 
 declare -A solution_files
 solution_files["win-x64"]="${project_name}_Windows.sln"
@@ -20,7 +20,7 @@ while [[ $# -gt 0 ]]; do
             self_contained=true
             shift
             ;;
-        Debug|Release|HackathonDebug|HackathonRelease)
+        Debug|Release|HackathonDebug|HackathonRelease|StereoDebug|StereoRelease)
             configurations+=("$1")
             shift
             ;;
@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ ${#configurations[@]} -eq 0 ]; then
-    configurations=("Debug" "Release" "HackathonDebug" "HackathonRelease")
+    configurations=("Debug" "Release" "HackathonDebug" "HackathonRelease", "StereoDebug", "StereoRelease")
 fi
 
 if [ ${#platforms[@]} -eq 0 ]; then

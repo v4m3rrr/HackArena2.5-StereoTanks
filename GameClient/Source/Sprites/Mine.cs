@@ -81,7 +81,7 @@ internal class Mine : ISprite, IDetectableByRadar
 
     private Color Color => this.Logic.Layer is not null
         ? new Color(this.Logic.Layer.Color)
-        : MonoTanks.ThemeColor;
+        : GameClientCore.ThemeColor;
 
     /// <inheritdoc/>
     public static void LoadContent()

@@ -18,7 +18,7 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
     /// </summary>
     /// <param name="cancellationTokenSource">The cancellation token source to cancel the connection.</param>
     public ConnectingMessageBox(CancellationTokenSource? cancellationTokenSource = null)
-        : base(new((MonoTanks.ThemeColor * 0.35f).WithAlpha(255), 36) { AutoAdjustRadius = true })
+        : base(new((GameClientCore.ThemeColor * 0.35f).WithAlpha(255), 36) { AutoAdjustRadius = true })
     {
         this.CanBeClosedByClickOutside = false;
 
@@ -46,7 +46,7 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
             },
         };
 
-        this.Background = new SolidColor(MonoTanks.ThemeColor)
+        this.Background = new SolidColor(GameClientCore.ThemeColor)
         {
             Opacity = 0.3f,
         };

@@ -17,7 +17,7 @@ internal abstract class PlayerBar : Component
     {
         this.Player = player;
 
-        this.Background = new RoundedSolidColor(MonoTanks.ThemeColor, 24)
+        this.Background = new RoundedSolidColor(GameClientCore.ThemeColor, 24)
         {
             Parent = this,
             Opacity = 0.35f,

@@ -62,7 +62,7 @@ internal class JoinRoomInitializer(JoinRoom joinRoom)
         };
 
         // Background
-        _ = new RoundedSolidColor(MonoTanks.ThemeColor, 36)
+        _ = new RoundedSolidColor(GameClientCore.ThemeColor, 36)
         {
             Parent = container,
             AutoAdjustRadius = true,

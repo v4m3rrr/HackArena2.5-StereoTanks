@@ -109,7 +109,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// </remarks>
     public void RefreshPlayerBarPanels()
     {
-        MonoTanks.InvokeOnMainThread(() =>
+        GameClientCore.InvokeOnMainThread(() =>
         {
             lock (this.playerUpdateLock)
             {

@@ -80,7 +80,7 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
     }
 
     private ConnectionFailedMessageBox()
-        : base(new((MonoTanks.ThemeColor * 0.35f).WithAlpha(255), 36) { AutoAdjustRadius = true })
+        : base(new((GameClientCore.ThemeColor * 0.35f).WithAlpha(255), 36) { AutoAdjustRadius = true })
     {
         this.CanBeClosedByClickOutside = false;
 
@@ -94,7 +94,7 @@ internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
             Parent = this.Box,
         };
 
-        this.Background = new SolidColor(MonoTanks.ThemeColor)
+        this.Background = new SolidColor(GameClientCore.ThemeColor)
         {
             Opacity = 0.3f,
         };

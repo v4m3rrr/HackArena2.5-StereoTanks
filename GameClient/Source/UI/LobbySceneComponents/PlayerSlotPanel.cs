@@ -23,7 +23,7 @@ internal class PlayerSlotPanel : Component
     /// </summary>
     public PlayerSlotPanel()
     {
-        this.background = new RoundedSolidColor(MonoTanks.ThemeColor, 21)
+        this.background = new RoundedSolidColor(GameClientCore.ThemeColor, 21)
         {
             Parent = this,
             AutoAdjustRadius = true,

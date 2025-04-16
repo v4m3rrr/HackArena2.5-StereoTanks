@@ -41,7 +41,7 @@ internal static class CrashService
         var filepath = PathUtils.GetAbsolutePath(
             $"{Directory}/crash-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.log");
 
-        var assembly = typeof(MonoTanks).Assembly;
+        var assembly = typeof(GameClientCore).Assembly;
         var version = assembly.GetName().Version!;
         var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
         var exceptionType = (e.ExceptionObject as Exception)?.GetType().Name ?? "Unknown";
@@ -57,13 +57,13 @@ internal static class CrashService
             .Append('.')
             .Append(version.Revision)
             .Append(" (")
-            .Append(MonoTanks.Platform)
+            .Append(GameClientCore.Platform)
             .Append(") [")
             .Append(configuration)
             .Append(']')
             .ToString();
 
-        var uptime = DateTime.Now - MonoTanks.AppStartTime;
+        var uptime = DateTime.Now - GameClientCore.AppStartTime;
         var memoryUsage = Process.GetCurrentProcess().PrivateMemorySize64 / 1024 / 1024; // MB
         var cpuCores = Environment.ProcessorCount;
         var osDescription = RuntimeInformation.OSDescription;

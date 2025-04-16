@@ -88,7 +88,7 @@ internal static class GameSettings
         data.ResolutionHeight = height;
         ScreenController.Change(width, height);
 
-        await MonoTanks.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
+        await GameClientCore.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
 
         ResolutionChanged?.Invoke(null, EventArgs.Empty);
     }
@@ -109,7 +109,7 @@ internal static class GameSettings
         data.ScreenType = screenType;
         ScreenController.Change(screenType: screenType);
 
-        await MonoTanks.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
+        await GameClientCore.InvokeOnMainThreadAsync(ScreenController.ApplyChanges);
 
         ScreenTypeChanged?.Invoke(null, EventArgs.Empty);
     }
@@ -138,7 +138,7 @@ internal static class GameSettings
 
         try
         {
-            string json = await MonoTanks.InvokeOnMainThreadAsync(() => File.ReadAllText(SettingsFilePath));
+            string json = await GameClientCore.InvokeOnMainThreadAsync(() => File.ReadAllText(SettingsFilePath));
             var settings = JsonSerializer.Deserialize<SettingsData>(json);
 
             Language = settings.Language;

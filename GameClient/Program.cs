@@ -1,23 +1,23 @@
 ﻿global using System.Diagnostics;
 using GameClient.Networking;
 
-namespace MonoTanks;
+namespace GameClient;
 
 /// <summary>
-/// Represents the MonoTanks game client.
+/// Represents the entry point for the game client application.
 /// </summary>
 public static class Program
 {
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
-    [System.STAThread]
+    [STAThread]
     public static void Main()
     {
-        var currentDomain = System.AppDomain.CurrentDomain;
+        var currentDomain = AppDomain.CurrentDomain;
 
 #if !DEBUG
-        currentDomain.UnhandledException += new System.UnhandledExceptionEventHandler(GameClient.CrashService.HandleCrash);
+        currentDomain.UnhandledException += new UnhandledExceptionEventHandler(CrashService.HandleCrash);
 #endif
 
         currentDomain.ProcessExit += async (s, e) =>
@@ -28,7 +28,7 @@ public static class Program
             }
         };
 
-        using var game = new GameClient.MonoTanks();
+        using var game = new GameClientCore();
         game.Run();
     }
 }

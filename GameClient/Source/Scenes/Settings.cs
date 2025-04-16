@@ -218,8 +218,8 @@ internal class Settings : Scene, IOverlayScene
 
             List<Point> resolutions = ScreenController.GraphicsDevice.Adapter.SupportedDisplayModes
                 .Select(x => new Point(x.Width, x.Height))
-                .Where(x => x.X >= MonoTanks.MinWindowSize.X)
-                .Where(x => x.Y >= MonoTanks.MinWindowSize.Y)
+                .Where(x => x.X >= GameClientCore.MinWindowSize.X)
+                .Where(x => x.Y >= GameClientCore.MinWindowSize.Y)
                 .ToList();
 
             foreach (Point resolution in resolutions)
@@ -336,7 +336,7 @@ internal class Settings : Scene, IOverlayScene
         };
 
         // Background
-        _ = new RoundedSolidColor(MonoTanks.ThemeColor, 30)
+        _ = new RoundedSolidColor(GameClientCore.ThemeColor, 30)
         {
             Parent = container,
             Opacity = 0.35f,

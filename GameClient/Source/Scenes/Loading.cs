@@ -16,7 +16,7 @@ internal class Loading : Scene, IOverlayScene
     /// Initializes a new instance of the <see cref="Loading"/> class.
     /// </summary>
     public Loading()
-        : base(MonoTanks.ThemeColor)
+        : base(GameClientCore.ThemeColor)
     {
     }
 
@@ -54,7 +54,7 @@ internal class Loading : Scene, IOverlayScene
 
         (baseComponent as TextureComponent)!.Opacity = 0.5f;
 
-        this.background = new RoundedSolidColor(MonoTanks.ThemeColor, 36)
+        this.background = new RoundedSolidColor(GameClientCore.ThemeColor, 36)
         {
             Parent = baseComponent,
             AutoAdjustRadius = true,

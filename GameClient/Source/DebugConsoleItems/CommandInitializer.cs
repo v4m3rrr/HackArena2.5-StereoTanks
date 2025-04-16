@@ -88,7 +88,7 @@ internal static class CommandInitializer
             await ServerConnection.CloseAsync("Exit the game.");
         }
 
-        MonoTanks.Instance.Exit();
+        GameClientCore.Instance.Exit();
     }
 
     [Command("Clear the debug console.")]
@@ -128,9 +128,9 @@ internal static class CommandInitializer
             [Argument("A new width of the screen.")] int width,
             [Argument("A new height of the screen.")] int height)
         {
-            if (width < MonoTanks.MinWindowSize.X || height < MonoTanks.MinWindowSize.Y)
+            if (width < GameClientCore.MinWindowSize.X || height < GameClientCore.MinWindowSize.Y)
             {
-                DebugConsole.SendMessage($"The minimum resolution must be {MonoTanks.MinWindowSize.X}x{MonoTanks.MinWindowSize.Y}.", Color.IndianRed);
+                DebugConsole.SendMessage($"The minimum resolution must be {GameClientCore.MinWindowSize.X}x{GameClientCore.MinWindowSize.Y}.", Color.IndianRed);
                 return;
             }
 

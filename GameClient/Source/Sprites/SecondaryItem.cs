@@ -33,7 +33,7 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
 
         this.texture = new ScalableTexture2D(GetStaticTexture(logic.Type))
         {
-            Color = MonoTanks.ThemeColor,
+            Color = GameClientCore.ThemeColor,
             Transform =
             {
                 Type = TransformType.Absolute,

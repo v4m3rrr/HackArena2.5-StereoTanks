@@ -83,7 +83,7 @@ internal class ChooseReplay : Scene
             Spacing = 5,
         };
 
-        var background = new RoundedSolidColor(MonoTanks.ThemeColor * 0.33f, 30)
+        var background = new RoundedSolidColor(GameClientCore.ThemeColor * 0.33f, 30)
         {
             Parent = baseComponent,
             AutoAdjustRadius = true,
@@ -166,7 +166,7 @@ internal class ChooseReplay : Scene
                 continue;
             }
 #endif
-            var button = new Button<RoundedSolidColor>(new RoundedSolidColor(MonoTanks.ThemeColor * 0.44f, 35) { AutoAdjustRadius = true })
+            var button = new Button<RoundedSolidColor>(new RoundedSolidColor(GameClientCore.ThemeColor * 0.44f, 35) { AutoAdjustRadius = true })
             {
                 Parent = this.listBox.ContentContainer,
                 Transform =
@@ -190,8 +190,8 @@ internal class ChooseReplay : Scene
                 Change<Lobby>(args);
             };
 
-            button.HoverEntered += (s, e) => button.Component.Color = MonoTanks.ThemeColor * 0.66f;
-            button.HoverExited += (s, e) => button.Component.Color = MonoTanks.ThemeColor * 0.44f;
+            button.HoverEntered += (s, e) => button.Component.Color = GameClientCore.ThemeColor * 0.66f;
+            button.HoverExited += (s, e) => button.Component.Color = GameClientCore.ThemeColor * 0.44f;
 
             string textValue = file.EndsWith(".tar.gz")
                 ? Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file))

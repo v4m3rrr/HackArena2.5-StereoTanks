@@ -133,7 +133,7 @@ internal class MainMenu : Scene
         settingsBtn.Clicked += (s, e) => Change<Settings>();
 
         var exitBtn = CreateButton(new LocalizedString("Buttons.Exit"), listBox, "exit");
-        exitBtn.Clicked += (s, e) => MonoTanks.Instance.Exit();
+        exitBtn.Clicked += (s, e) => GameClientCore.Instance.Exit();
 
 #if DEBUG
         var quickJoinFont = new ScalableFont(Styles.Fonts.Paths.Main, 9);
@@ -258,7 +258,7 @@ internal class MainMenu : Scene
             MinSize = 5,
         };
 
-        var assembly = typeof(MonoTanks).Assembly;
+        var assembly = typeof(GameClientCore).Assembly;
         var version = assembly.GetName().Version!;
         var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
 
@@ -277,7 +277,7 @@ internal class MainMenu : Scene
         sb.Append('.')
             .Append(version.Revision)
             .Append(" (")
-            .Append(MonoTanks.Platform)
+            .Append(GameClientCore.Platform)
             .Append(')');
 
 #if DEBUG

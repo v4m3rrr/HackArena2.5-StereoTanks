@@ -1,5 +1,5 @@
 $platforms = @("x64", "arm64")
-$configurations = @("Debug", "Release", "HackathonDebug", "HackathonRelease", "StereoDebug", "StereoRelease")
+$configurations = @("StereoDebug", "StereoRelease")
 $systems = @("Windows", "Linux", "macOS")
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
