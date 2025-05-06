@@ -15,9 +15,11 @@ internal class PlayerManager(GameInstance game, Logger log)
     private static readonly uint[] Colors =
     [
         /* ABGR */
-        0xFFFF48C5,
 #if !STEREO
+        0xFFFF48C5,
+#endif
         0xFF1F2AFF,
+#if !STEREO
         0xFF2ACBEB,
 #endif
         0xFF36DE27,
