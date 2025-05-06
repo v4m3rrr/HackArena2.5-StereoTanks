@@ -5,57 +5,61 @@
 
 	<Buttons>
 		<Ok>Ok</Ok>
-		<JoinGame>Dolacz</JoinGame>
+		<JoinGame>Dołącz</JoinGame>
 		<Settings>Ustawienia</Settings>
-		<WatchReplay>Powtorki</WatchReplay>
-		<Exit>Wyjscie</Exit>
-		<Back>Wroc</Back>
+		<WatchReplay>Powtórki</WatchReplay>
+		<Exit>Wyjście</Exit>
+		<Back>Wróć</Back>
 		<Close>Zamknij</Close>
-		<Leave>Opusc</Leave>
-		<LeaveMatch>Opusc mecz</LeaveMatch>
-		<Stay>Zostan</Stay>
+		<Leave>Opuść</Leave>
+		<LeaveMatch>Opuść mecz</LeaveMatch>
+		<Stay>Zostań</Stay>
 		<Continue>Kontynuuj</Continue>
 		<Menu>Menu</Menu>
 	</Buttons>
 
 	<Labels>
-		<Language>Jezyk</Language>
-		<Resolution>Rozdzielczosc</Resolution>
-		<DisplayMode>Tryb wyswietlania</DisplayMode>
-		<DisplayModeWindowed>Okno</DisplayModeWindowed>
-		<DisplayModeFullScreen>Pelny ekran</DisplayModeFullScreen>
+		<Language>Język</Language>
+		<Resolution>Rozdzielczość</Resolution>
+		<DisplayMode>Tryb wyświetlania</DisplayMode>
+		<DisplayModeWindowed>Okienkowy</DisplayModeWindowed>
+		<DisplayModeFullScreen>Pełny ekran</DisplayModeFullScreen>
 		<DisplayModeBorderless>Bezramkowy</DisplayModeBorderless>
-		<JoinRoom>Dolacz do pokoju</JoinRoom>
+		<JoinRoom>Dołącz do pokoju</JoinRoom>
 		<Nickname>Nazwa gracza</Nickname>
+		<TeamName>Nazwa drużyny</TeamName>
+		<TankType>Typ czołgu</TankType>
 		<RoomCode>Kod pokoju</RoomCode>
 		<ServerAddress>Adres serwera</ServerAddress>
 	</Labels>
 	
 	<MessageBoxLabels>
-		<ErrorOccured>Ups, cos poszlo nie tak!</ErrorOccured>
-		<ConnectionFailed>Polaczenie nieudane</ConnectionFailed>
-		<ConnectionRejected>Polaczenie odrzucone</ConnectionRejected>
+		<ErrorOccurred>Ups, coś poszło nie tak!</ErrorOccurred>
+		<ConnectionFailed>Połączenie nieudane</ConnectionFailed>
+		<ConnectionRejected>Połączenie odrzucone</ConnectionRejected>
 	</MessageBoxLabels>
 	
 	<ConnectionRejectedReason>
-		<InvalidJoinCode>Nieprawidlowy kod dolaczenia!</InvalidJoinCode>
+		<InvalidJoinCode>Nieprawidłowy kod dołączenia!</InvalidJoinCode>
 		<MissingNickname>Nazwa gracza jest wymagana!</MissingNickname>
-		<NicknameExists>Gracz o takiej nazwie juz istnieje!</NicknameExists>
-		<InvalidUrlPath>Nieprawidlowa sciezka URL!</InvalidUrlPath>
-		<GameFull>Lobby jest pelne!</GameFull>
-		<GameInProgress>Gra juz trwa!</GameInProgress>
-		<TooManyFailedAttempts>Za duzo nieudanych prob! Spróbuj ponownie pozniej.</TooManyFailedAttempts>
+		<NicknameExists>Gracz o takiej nazwie już istnieje!</NicknameExists>
+		<InvalidUrlPath>Nieprawidłowa ścieżka URL!</InvalidUrlPath>
+		<GameFull>Pokój jest pełny!</GameFull>
+		<GameInProgress>Gra już trwa!</GameInProgress>
+		<TooManyFailedAttempts>Za dużo nieudanych prób! Spróbuj ponownie później.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 
 	<ConfirmQuestion>
-		<LeaveMatch>Czy na pewno chcesz opuscic mecz?</LeaveMatch>
+		<LeaveMatch>Czy na pewno chcesz opuścić mecz?</LeaveMatch>
 	</ConfirmQuestion>
 
 	<Other>
+		<Light>Lekki</Light>
+		<Heavy>Ciężki</Heavy>
 		<Loading>Wczytywanie</Loading>
 		<Waiting>Oczekiwanie</Waiting>
-		<Connecting>Laczenie</Connecting>
-		<NoDetails>Brak szczegolow.</NoDetails>
+		<Connecting>Łączenie</Connecting>
+		<NoDetails>Brak szczegółów.</NoDetails>
 		<ServerNotResponding>Serwer nie odpowiada.</ServerNotResponding>
 	</Other>
 </Content>

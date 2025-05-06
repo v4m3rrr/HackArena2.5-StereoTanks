@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://tempuri.org/Language.xsd"
+         xsi:schemaLocation="http://tempuri.org/Language.xsd Language.xsd">
+
+	<Buttons>
+		<Ok>ОК</Ok>
+		<JoinGame>Присоединиться</JoinGame>
+		<Settings>Настройки</Settings>
+		<WatchReplay>Смотреть повторы</WatchReplay>
+		<Exit>Выход</Exit>
+		<Back>Назад</Back>
+		<Close>Закрыть</Close>
+		<Leave>Покинуть</Leave>
+		<LeaveMatch>Покинуть матч</LeaveMatch>
+		<Stay>Остаться</Stay>
+		<Continue>Продолжить</Continue>
+		<Menu>Меню</Menu>
+	</Buttons>
+
+	<Labels>
+		<Language>Язык</Language>
+		<Resolution>Разрешение</Resolution>
+		<DisplayMode>Режим отображения</DisplayMode>
+		<DisplayModeWindowed>Оконный</DisplayModeWindowed>
+		<DisplayModeFullScreen>Полноэкранный</DisplayModeFullScreen>
+		<DisplayModeBorderless>Безрамочный режим</DisplayModeBorderless>
+		<JoinRoom>Присоединиться к комнате</JoinRoom>
+		<Nickname>Имя игрока</Nickname>
+		<TeamName>Имя команды</TeamName>
+		<TankType>Тип танка</TankType>
+		<RoomCode>Код комнаты</RoomCode>
+		<ServerAddress>Адрес сервера</ServerAddress>
+	</Labels>
+
+	<MessageBoxLabels>
+		<ErrorOccurred>Упс, что-то пошло не так!</ErrorOccurred>
+		<ConnectionFailed>Не удалось подключиться</ConnectionFailed>
+		<ConnectionRejected>Подключение отклонено</ConnectionRejected>
+	</MessageBoxLabels>
+
+	<ConnectionRejectedReason>
+		<InvalidJoinCode>Неверный код подключения!</InvalidJoinCode>
+		<MissingNickname>Требуется имя игрока!</MissingNickname>
+		<NicknameExists>Игрок с таким именем уже существует!</NicknameExists>
+		<InvalidUrlPath>Неверный путь URL!</InvalidUrlPath>
+		<GameFull>Лобби заполнено!</GameFull>
+		<GameInProgress>Игра уже идет!</GameInProgress>
+		<TooManyFailedAttempts>Слишком много неудачных попыток! Попробуйте снова позже.</TooManyFailedAttempts>
+	</ConnectionRejectedReason>
+
+	<ConfirmQuestion>
+		<LeaveMatch>Вы уверены, что хотите покинуть матч?</LeaveMatch>
+	</ConfirmQuestion>
+
+	<Other>
+		<Light>Легкий</Light>
+		<Heavy>Тяжёлый</Heavy>
+		<Loading>Загрузка</Loading>
+		<Waiting>Ожидание</Waiting>
+		<Connecting>Подключение</Connecting>
+		<NoDetails>Нет деталей.</NoDetails>
+		<ServerNotResponding>Сервер не отвечает.</ServerNotResponding>
+	</Other>
+
+</Content>

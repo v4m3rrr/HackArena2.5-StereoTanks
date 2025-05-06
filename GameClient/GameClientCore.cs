@@ -230,7 +230,7 @@ public class GameClientCore : Game
     /// <summary>
     /// Initializes the game.
     /// </summary>
-    protected override void Initialize()
+    protected override async void Initialize()
     {
         this.Window.Title = nameof(GameClientCore);
 
@@ -263,6 +263,9 @@ public class GameClientCore : Game
         dc.Initialize();
         dc.LoadContent();
         Scene.AddScene(dc);
+
+        Localization.Initialize();
+        await GameSettings.LoadSettings();
 
         var loading = new Scenes.Loading();
         loading.Initialize();
@@ -334,9 +337,6 @@ public class GameClientCore : Game
         {
             try
             {
-                Localization.Initialize();
-
-                await GameSettings.LoadSettings();
                 await Scenes.JoinRoomCore.JoinData.Load();
 
                 Scene.InitializeScenes(typeof(Scene).Assembly);

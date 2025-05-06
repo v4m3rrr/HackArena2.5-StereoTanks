@@ -103,34 +103,49 @@ internal static class GameServerMessageHandler
     /// <param name="updater">The game updater.</param>
     public static void HandleGameStatePacket(Packet packet, GameUpdater updater)
     {
-        var isSpectator = ServerConnection.Data.IsSpectator;
-
-        GameSerializationContext context = isSpectator
-            ? new GameSerializationContext.Spectator()
-            : new GameSerializationContext.Player(Game.PlayerId!);
-
-        var converters = GameStatePayload.GetConverters(context);
-        var serializer = PacketSerializer.GetSerializer(converters);
-
-        GameStatePayload gameState = isSpectator
-            ? packet.GetPayload<GameStatePayload>(serializer)
-            : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
-
-        updater.UpdateTimer(gameState.Tick);
-        updater.UpdateGridLogic(gameState);
-        updater.UpdatePlayers(gameState.Players);
-        updater.RefreshPlayerBarPanels();
-
-        if (gameState is GameStatePayload.ForPlayer playerGameState)
+        try
         {
-            updater.UpdatePlayerFogOfWar(playerGameState);
-        }
-        else if (isSpectator)
-        {
-            updater.UpdatePlayersFogOfWar();
-        }
+            var isSpectator = ServerConnection.Data.IsSpectator;
 
-        updater.EnableGridComponent();
+            GameSerializationContext context = isSpectator
+                ? new GameSerializationContext.Spectator()
+                : new GameSerializationContext.Player(Game.PlayerId!);
+
+            var converters = GameStatePayload.GetConverters(context);
+            var serializer = PacketSerializer.GetSerializer(converters);
+
+            GameStatePayload gameState = isSpectator
+                ? packet.GetPayload<GameStatePayload>(serializer)
+                : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
+
+            updater.UpdateTimer(gameState.Tick);
+            updater.UpdateGridLogic(gameState);
+
+#if STEREO
+            updater.UpdateTeams(gameState.Teams);
+            updater.RefreshTeamBarPanels();
+#else
+            updater.UpdatePlayers(gameState.Players);
+            updater.RefreshPlayerBarPanels();
+#endif
+
+            if (gameState is GameStatePayload.ForPlayer playerGameState)
+            {
+                updater.UpdatePlayerFogOfWar(playerGameState);
+            }
+            else if (isSpectator)
+            {
+                updater.UpdatePlayersFogOfWar();
+            }
+
+            updater.EnableGridComponent();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("An error occurred while handling the game state packet.");
+            Debug.WriteLine(ex);
+            Debug.WriteLine(ex.StackTrace);
+        }
     }
 
     /// <summary>
@@ -142,7 +157,11 @@ internal static class GameServerMessageHandler
         var converters = GameEndPayload.GetConverters();
         var serializers = PacketSerializer.GetSerializer(converters);
         var payload = packet.GetPayload<GameEndPayload>(serializers);
+#if STEREO
+        var args = new GameEndDisplayEventArgs(payload.Teams);
+#else
         var args = new GameEndDisplayEventArgs(payload.Players);
+#endif
         Scene.Change<GameEnd>(args);
     }
 }

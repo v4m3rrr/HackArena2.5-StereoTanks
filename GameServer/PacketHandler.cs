@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using GameLogic;
 using GameLogic.Networking;
+using GameServer.Enums;
+using GameServer.Services;
 using Serilog.Core;
 
 namespace GameServer;
@@ -189,12 +191,36 @@ internal class PacketHandler(GameInstance game, Logger log)
             foreach (var player in game.Players)
             {
                 var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
+                if (action is null)
+                {
+                    log.Warning("Ability type '{type}' is not valid.", payload.AbilityType);
+                    return false;
+                }
+
                 action();
             }
 
             return true;
         }
 
+#if STEREO
+
+        if (packet.Type is PacketType.ChargeAbility)
+        {
+            var player = game.Players.First(p => p.Socket == connection.Socket);
+            var payload = packet.GetPayload<ChargeAbilityPayload>();
+
+            log.Debug(
+                "Ability '{ability}' charged for {player} by {connection}.",
+                payload.AbilityType,
+                player,
+                connection);
+
+            player.Instance.Tank.ChargeAbility(payload.AbilityType);
+            return true;
+        }
+
+#else
         if (packet.Type is PacketType.GiveSecondaryItem)
         {
             var player = game.Players.First(p => p.Socket == connection.Socket);
@@ -227,6 +253,8 @@ internal class PacketHandler(GameInstance game, Logger log)
             return true;
         }
 
+#endif
+
         if (packet.Type is PacketType.ForceEndGame)
         {
             if (game.GameManager.Status is not GameStatus.Running)
@@ -245,6 +273,8 @@ internal class PacketHandler(GameInstance game, Logger log)
             return true;
         }
 
+#if !STEREO
+
         if (packet.Type is PacketType.SetPlayerScore)
         {
             var payload = packet.GetPayload<SetPlayerScorePayload>();
@@ -262,13 +292,15 @@ internal class PacketHandler(GameInstance game, Logger log)
                 return true;
             }
 
-            var scoreProperty = player.Instance.GetType().GetProperty(nameof(GameLogic.Player.Score));
+            var scoreProperty = player.Instance.GetType().GetProperty(nameof(Player.Score));
             scoreProperty!.SetValue(player.Instance, payload.Score);
 
             log.Debug("Score '{player}' set to {score}.", player.Instance.Nickname, payload.Score);
 
             return true;
         }
+
+#endif
 
         return false;
     }
@@ -335,7 +367,7 @@ internal class PacketHandler(GameInstance game, Logger log)
 
         if (player.IsHackathonBot)
         {
-            var gameStateIdPropertyName = JsonNamingPolicy.CamelCase.ConvertName(nameof(IActionPayload.GameStateId));
+            var gameStateIdPropertyName = JsonNamingPolicy.CamelCase.ConvertName(nameof(ActionPayload.GameStateId));
             var responseGameStateId = (string?)packet.Payload[gameStateIdPropertyName];
 
             lock (game.GameManager.CurrentGameStateId!)
@@ -366,10 +398,18 @@ internal class PacketHandler(GameInstance game, Logger log)
         {
             if (player.HasMadeActionThisTick)
             {
-                log.Verbose("Player already made an action in this tick. Sending warning packet. ({player})", player);
-                var payload = new EmptyPayload() { Type = PacketType.PlayerAlreadyMadeActionWarning };
-                var responsePacket = new ResponsePacket(payload, log);
-                _ = responsePacket.SendAsync(player);
+#if HACKATHON && STEREO
+                if (player.IsHackathonBot || packet.Type != PacketType.GoTo)
+#elif STEREO
+                if (packet.Type != PacketType.GoTo)
+#endif
+                {
+                    log.Verbose("Hackathon bot already made an action in this tick. Sending warning packet. ({player})", player);
+                    var payload = new EmptyPayload() { Type = PacketType.PlayerAlreadyMadeActionWarning };
+                    var responsePacket = new ResponsePacket(payload, log);
+                    _ = responsePacket.SendAsync(player);
+                }
+
                 return;
             }
         }
@@ -396,6 +436,12 @@ internal class PacketHandler(GameInstance game, Logger log)
                 case PacketType.AbilityUse:
                     this.HandleAbilityUse(player, packet);
                     break;
+
+#if STEREO
+                case PacketType.GoTo:
+                    _ = this.HandleGoTo(player, packet);
+                    break;
+#endif
 
                 case PacketType.Pass:
                     break;
@@ -424,7 +470,7 @@ internal class PacketHandler(GameInstance game, Logger log)
 
     private void HandleMovement(PlayerConnection player, Packet packet)
     {
-        var movement = packet.GetPayload<MovementPayload>(out var exception);
+        var payload = packet.GetPayload<MovementPayload>(out var exception);
 
         if (exception is not null)
         {
@@ -432,10 +478,15 @@ internal class PacketHandler(GameInstance game, Logger log)
             return;
         }
 
+        this.HandleMovement(player, payload.Direction);
+    }
+
+    private void HandleMovement(PlayerConnection player, MovementDirection direction)
+    {
         void Action()
         {
-            log.Verbose("Trying to move the tank of {player} {direction}.", player, movement.Direction);
-            game.Grid.TryMoveTank(player.Instance.Tank, movement.Direction);
+            log.Verbose("Trying to move the tank of {player} {direction}.", player, direction);
+            game.Grid.TryMoveTank(player.Instance.Tank, direction);
         }
 
 #if HACKATHON
@@ -457,7 +508,7 @@ internal class PacketHandler(GameInstance game, Logger log)
 
     private void HandleRotation(PlayerConnection player, Packet packet)
     {
-        var rotation = packet.GetPayload<RotationPayload>(out var exception);
+        var payload = packet.GetPayload<RotationPayload>(out var exception);
 
         if (exception is not null)
         {
@@ -465,23 +516,28 @@ internal class PacketHandler(GameInstance game, Logger log)
             return;
         }
 
+        this.HandleRotation(player, payload.TankRotation, payload.TurretRotation);
+    }
+
+    private void HandleRotation(PlayerConnection player, Rotation? tankRotation, Rotation? turretRotation)
+    {
         var actions = new List<Action>();
 
-        if (rotation.TankRotation is { } tankRotation)
+        if (tankRotation is not null)
         {
             actions.Add(() =>
             {
                 log.Verbose("Rotating the tank of {player} {rotation}.", player, tankRotation);
-                player.Instance.Tank.Rotate(tankRotation);
+                player.Instance.Tank.Rotate(tankRotation.Value);
             });
         }
 
-        if (rotation.TurretRotation is { } turretRotation)
+        if (turretRotation is not null)
         {
             actions.Add(() =>
             {
                 log.Verbose("Rotating the turret of {player} {rotation}.", player, turretRotation);
-                player.Instance.Tank.Turret.Rotate(turretRotation);
+                player.Instance.Tank.Turret.Rotate(turretRotation.Value);
             });
         }
 #if HACKATHON
@@ -520,6 +576,17 @@ internal class PacketHandler(GameInstance game, Logger log)
         // TODO: Add verbose logs for ability use
         var action = this.GetAbilityAction(payload.AbilityType, player.Instance);
 
+        if (action is null)
+        {
+            var responsePayload = new ErrorPayload(
+                PacketType.InvalidPacketUsageErrorWithPayload,
+                $"Ability type '{payload.AbilityType}' is not valid");
+
+            var responsePacket = new ResponsePacket(responsePayload, log);
+            _ = responsePacket.SendAsync(player);
+            return;
+        }
+
 #if HACKATHON
         if (player.IsHackathonBot)
         {
@@ -543,16 +610,88 @@ internal class PacketHandler(GameInstance game, Logger log)
 #endif
     }
 
+#if STEREO
+
+    private async Task HandleGoTo(PlayerConnection player, Packet packet)
+    {
+        var payload = packet.GetPayload<GoToPayload>(out var exception);
+        if (exception is not null)
+        {
+            this.ResponseWithInvalidPayload(player, exception);
+            return;
+        }
+
+        if (player.LastSentGameStateBuffer is null)
+        {
+            log.Error("Player has no last sent game state buffer but sent a go to packet. ({player})", player);
+            var responsePayload = new ErrorPayload(PacketType.InternalError, "No last sent game state");
+            var responsePacket = new ResponsePacket(responsePayload, log);
+            await responsePacket.SendAsync(player);
+            return;
+        }
+
+        var context = new GameSerializationContext.Player(player.Instance, player.Data.EnumSerialization);
+        var converters = GameStatePayload.GetConverters(context);
+        var serializer = PacketSerializer.GetSerializer(converters);
+        var gameStatePacket = PacketSerializer.Deserialize(player.LastSentGameStateBuffer);
+        var gameState = gameStatePacket.GetPayload<GameStatePayload.ForPlayer>(serializer, out var gameStateException);
+
+        if (gameStateException is not null)
+        {
+            log.Error(gameStateException, "Game state deserialization failed. ({player})", player);
+        }
+
+        var pathFinder = new PathFinder(game.Settings, gameState, player.Instance);
+        var pathResult = pathFinder.GetNextAction(payload.X, payload.Y, payload.Costs, payload.Penalties);
+        if (pathResult is null)
+        {
+            return;
+        }
+
+        switch (pathResult)
+        {
+            case PathAction.MoveForward:
+                this.HandleMovement(player, MovementDirection.Forward);
+                break;
+
+            case PathAction.MoveBackward:
+                this.HandleMovement(player, MovementDirection.Backward);
+                break;
+
+            case PathAction.RotateLeft:
+                this.HandleRotation(player, tankRotation: Rotation.Left, payload.TurretRotation);
+                break;
+
+            case PathAction.RotateRight:
+                this.HandleRotation(player, tankRotation: Rotation.Right, payload.TurretRotation);
+                break;
+        }
+    }
+
+#endif
+
+#if STEREO
+    private Func<dynamic?>? GetAbilityAction(AbilityType type, Player player)
+#else
     private Func<dynamic?> GetAbilityAction(AbilityType type, Player player)
+#endif
     {
         return type switch
         {
             AbilityType.FireBullet => player.Tank.Turret.TryFireBullet,
+#if !STEREO
             AbilityType.FireDoubleBullet => player.Tank.Turret.TryFireDoubleBullet,
             AbilityType.UseLaser => () => player.Tank.Turret.TryUseLaser(game.Grid.WallGrid),
             AbilityType.UseRadar => () => player.Tank.TryUseRadar(),
             AbilityType.DropMine => player.Tank.TryDropMine,
-            _ => throw new NotImplementedException($"Ability type '{type}' is not implemented"),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Invalid ability type"),
+#else
+            AbilityType.FireDoubleBullet when player.Tank is LightTank light => light.Turret.TryFireDoubleBullet,
+            AbilityType.UseRadar when player.Tank is LightTank light => () => light.TryUseRadar(),
+            AbilityType.UseLaser when player.Tank is HeavyTank heavy => () => heavy.Turret.TryUseLaser(game.Grid.WallGrid),
+            AbilityType.DropMine when player.Tank is HeavyTank heavy => heavy.TryDropMine,
+            _ => null,
+#endif
         };
     }
 }

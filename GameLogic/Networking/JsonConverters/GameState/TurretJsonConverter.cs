@@ -3,6 +3,8 @@ using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking.GameState;
 
+#if !STEREO
+
 /// <summary>
 /// Represents a turret json converter.
 /// </summary>
@@ -15,7 +17,7 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
         var jsonObject = JObject.Load(reader);
         var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
         var bulletCount = jsonObject["bulletCount"]?.Value<int>();
-        var remainingTicksToRegenBullet = jsonObject["ticksToRegenBullet"]?.Value<int?>();
+        var remainingTicksToBullet = jsonObject["ticksToBullet"]?.Value<int?>();
 
         if (bulletCount is null)
         {
@@ -23,7 +25,7 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
             return new Turret(direction);
         }
 
-        return new Turret(direction, bulletCount.Value, remainingTicksToRegenBullet);
+        return new Turret(direction, bulletCount.Value, remainingTicksToBullet);
     }
 
     /// <inheritdoc/>
@@ -37,9 +39,11 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Tank.Owner.Id))
         {
             jObject["bulletCount"] = value.BulletCount;
-            jObject["ticksToRegenBullet"] = value.RemainingTicksToRegenBullet;
+            jObject["ticksToBullet"] = value.RemainingTicksToBullet;
         }
 
         jObject.WriteTo(writer);
     }
 }
+
+#endif

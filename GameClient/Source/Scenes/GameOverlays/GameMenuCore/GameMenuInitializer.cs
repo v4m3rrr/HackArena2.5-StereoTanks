@@ -27,7 +27,11 @@ internal class GameMenuInitializer(GameMenu gameMenu)
         return new Text(titleFont, Color.White)
         {
             Parent = gameMenu.BaseComponent,
+#if STEREO
+            Value = "STEREO TANKS",
+#else
             Value = "MONO TANKS",
+#endif
             TextShrink = TextShrinkMode.HeightAndWidth,
             Transform =
             {

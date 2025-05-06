@@ -20,7 +20,9 @@ internal class GridComponent : Component
     private readonly List<Sprites.Laser> lasers = [];
     private readonly List<Sprites.Mine> mines = [];
     private readonly List<Sprites.RadarEffect> radarEffects = [];
+#if !STEREO
     private readonly List<Sprites.SecondaryItem> mapItems = [];
+#endif
     private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
 
     private Sprites.Wall.Solid?[,] solidWalls;
@@ -68,7 +70,9 @@ internal class GridComponent : Component
             {
                 return this.fogsOfWar.Values.Cast<ISprite>()
                     .Concat(this.zones)
+#if !STEREO
                     .Concat(this.mapItems)
+#endif
                     .Concat(this.mines)
                     .Concat(this.tanks)
                     .Concat(this.bullets)
@@ -176,7 +180,9 @@ internal class GridComponent : Component
             this.lasers.Clear();
             this.mines.Clear();
             this.radarEffects.Clear();
+#if !STEREO
             this.mapItems.Clear();
+#endif
             this.fogsOfWar.Clear();
             this.solidWalls = new Sprites.Wall.Solid?[this.Logic.Dim, this.Logic.Dim];
         }
@@ -220,12 +226,14 @@ internal class GridComponent : Component
                 this.SyncBullets();
                 this.SyncLasers();
                 this.SyncZones();
+#if !STEREO
                 this.SyncMapItems();
+#endif
                 this.SyncMines();
                 this.SyncRadarEffect();
             }
 #else
-            GameClientCore.InvokeOnMainThread(() =>
+                GameClientCore.InvokeOnMainThread(() =>
             {
                 // Do we need lock here?
                 this.SyncWalls();
@@ -233,7 +241,9 @@ internal class GridComponent : Component
                 this.SyncBullets();
                 this.SyncLasers();
                 this.SyncZones();
+#if !STEREO
                 this.SyncMapItems();
+#endif
                 this.SyncMines();
                 this.SyncRadarEffect();
             });
@@ -328,6 +338,8 @@ internal class GridComponent : Component
         _ = this.zones.RemoveAll(z => !this.Logic.Zones.Any(z2 => z2.Equals(z.Logic)));
     }
 
+#if !STEREO
+
     private void SyncMapItems()
     {
         this.mapItems.Clear();
@@ -337,6 +349,8 @@ internal class GridComponent : Component
             this.mapItems.Add(sprite);
         }
     }
+
+#endif
 
     private void SyncLasers()
     {
@@ -375,7 +389,11 @@ internal class GridComponent : Component
 
         foreach (var tank in this.Logic.Tanks)
         {
+#if STEREO
+            if (tank is LightTank light && light.IsUsingRadar)
+#else
             if (tank.Owner.IsUsingRadar)
+#endif
             {
                 var effect = new Sprites.RadarEffect(tank, this, this.Sprites);
                 this.radarEffects.Add(effect);

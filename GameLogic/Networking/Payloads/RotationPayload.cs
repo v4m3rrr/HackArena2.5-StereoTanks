@@ -1,15 +1,14 @@
-﻿namespace GameLogic.Networking;
+﻿using GameLogic.Networking.Exceptions;
+
+namespace GameLogic.Networking;
 
 /// <summary>
 /// Represents a rotation payload.
 /// </summary>
-public class RotationPayload : IPacketPayload, IActionPayload
+public class RotationPayload : ActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.Rotation;
-
-    /// <inheritdoc/>
-    public string? GameStateId { get; init; }
+    public override PacketType Type => PacketType.Rotation;
 
     /// <summary>
     /// Gets the tank rotation.
@@ -30,16 +29,16 @@ public class RotationPayload : IPacketPayload, IActionPayload
     public Rotation? TurretRotation { get; init; }
 
     /// <inheritdoc/>
-    void IActionPayload.ValidateEnums()
+    internal override void ValidateEnums()
     {
         if (this.TankRotation is not null && !Enum.IsDefined(this.TankRotation.Value))
         {
-            throw new Exceptions.ConvertEnumFailed<Rotation>(this.TankRotation.Value.ToString());
+            throw new PayloadEnumValidationError<Rotation>(this.TankRotation.Value);
         }
 
         if (this.TurretRotation is not null && !Enum.IsDefined(this.TurretRotation.Value))
         {
-            throw new Exceptions.ConvertEnumFailed<Rotation>(this.TurretRotation.Value.ToString());
+            throw new PayloadEnumValidationError<Rotation>(this.TurretRotation.Value);
         }
     }
 }

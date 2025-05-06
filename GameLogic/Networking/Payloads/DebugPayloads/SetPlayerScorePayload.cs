@@ -1,6 +1,6 @@
 ﻿namespace GameLogic.Networking;
 
-#if DEBUG
+#if DEBUG && !STEREO
 
 /// <summary>
 /// Represents a packet payload to set the score of a player.

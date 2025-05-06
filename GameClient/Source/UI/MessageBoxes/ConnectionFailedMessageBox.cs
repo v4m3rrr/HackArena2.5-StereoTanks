@@ -9,13 +9,13 @@ namespace GameClient.UI;
 /// </summary>
 internal class ConnectionFailedMessageBox : MessageBox<RoundedSolidColor>
 {
-    private readonly ScalableFont textFont = new(Styles.Fonts.Paths.Main, 11)
+    private readonly LocalizedScalableFont textFont = new(11)
     {
         AutoResize = true,
         Spacing = 8,
     };
 
-    private readonly ScalableFont titleFont = new(Styles.Fonts.Paths.Main, 18)
+    private readonly LocalizedScalableFont titleFont = new(18)
     {
         AutoResize = true,
         Spacing = 8,

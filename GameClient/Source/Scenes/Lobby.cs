@@ -148,8 +148,13 @@ internal class Lobby : Scene
                 this.updater.UpdateMatchName(serverSettings.MatchName);
 #endif
 
+#if STEREO
+                var teams = replay.LobbyData.Teams;
+                this.updater.UpdateTeamSlotPanels(teams);
+#else
                 var players = replay.LobbyData.Players;
                 this.updater.UpdatePlayerSlotPanels(players, serverSettings.NumberOfPlayers);
+#endif
             }
             catch (Exception ex)
             {
@@ -191,7 +196,11 @@ internal class Lobby : Scene
 
     private void Lobby_Hid(object? sender, EventArgs e)
     {
+#if STEREO
+        this.updater.ResetTeamSlotPanels();
+#else
         this.updater.ResetPlayerSlotPanels();
+#endif
 
         if (Current is not Game)
         {

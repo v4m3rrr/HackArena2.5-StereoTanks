@@ -1,6 +1,7 @@
 ﻿#if HACKATHON
 
 using GameClient.Scenes.Replay.MatchResultsCore;
+using GameClient.Styles;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ internal class Scoreboard : Component
             ElementsAlignment = Alignment.Center,
         };
 
-        var font = new ScalableFont(Styles.Fonts.Paths.Main, 17)
+        var font = new LocalizedScalableFont(17)
         {
             AutoResize = true,
             Spacing = 5,

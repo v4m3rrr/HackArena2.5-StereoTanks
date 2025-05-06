@@ -19,4 +19,9 @@ internal enum Language
     /// The Polish language.
     /// </summary>
     Polish,
+
+    /// <summary>
+    /// The Russian language.
+    /// </summary>
+    Russian,
 }

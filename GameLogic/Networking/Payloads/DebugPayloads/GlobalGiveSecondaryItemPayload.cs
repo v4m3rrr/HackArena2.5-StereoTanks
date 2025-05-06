@@ -1,6 +1,6 @@
 ﻿namespace GameLogic.Networking;
 
-#if DEBUG
+#if DEBUG && !STEREO
 
 /// <summary>
 /// Represents a payload to give a secondary item to a player.

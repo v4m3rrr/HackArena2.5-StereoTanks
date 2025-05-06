@@ -1,9 +1,12 @@
 ﻿using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using GameClient.Networking;
+using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -67,7 +70,11 @@ internal class MainMenu : Scene
         this.title = new Text(titleFont, Color.White)
         {
             Parent = baseComponent,
+#if STEREO
+            Value = "STEREO TANKS",
+#else
             Value = "MONO TANKS",
+#endif
 #if DEBUG
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
 #endif
@@ -117,7 +124,7 @@ internal class MainMenu : Scene
             Spacing = 15,
             Transform =
             {
-                RelativeSize = new Vector2(0.32f, 0.32f),
+                RelativeSize = new Vector2(0.4f, 0.32f),
                 Alignment = Alignment.Left,
                 RelativeOffset = new Vector2(0.06f, 0.08f),
             },
@@ -136,94 +143,43 @@ internal class MainMenu : Scene
         exitBtn.Clicked += (s, e) => GameClientCore.Instance.Exit();
 
 #if DEBUG
+
+        var quickJoinListBox = new FlexListBox
+        {
+            Parent = baseComponent,
+            Spacing = 10,
+            Transform =
+            {
+#if STEREO
+                RelativeSize = new Vector2(0.18f, 0.36f),
+#else
+                RelativeSize = new Vector2(0.18f, 0.16f),
+#endif
+                Alignment = Alignment.BottomRight,
+                RelativeOffset = new Vector2(-0.08f, -0.06f),
+            },
+        };
+
         var quickJoinFont = new ScalableFont(Styles.Fonts.Paths.Main, 9);
 
-        async void Connect<T>(bool isSpectator)
-            where T : Scene
+#if STEREO
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Light, "Team 1");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Heavy, "Team 1");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Light, "Team 2");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Heavy, "Team 2");
+#else
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont);
+#endif
+
+        // Quick join to game as a spectator
         {
-            ServerConnection.ErrorThrew += DebugConsole.ThrowError;
-
-            string? joinCode = null;
-            ConnectionData connectionData = isSpectator
-                ? ConnectionData.ForSpectator("localhost:5000", joinCode, true)
-                : ConnectionData.ForPlayer("localhost:5000", joinCode, "player", true);
-
-            ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData, CancellationToken.None);
-
-            if (status is ConnectionStatus.Success)
-            {
-                Change<T>();
-            }
-            else if (status is ConnectionStatus.Failed failed && failed.Exception is not null)
-            {
-                DebugConsole.ThrowError("Connection failed!");
-                DebugConsole.ThrowError(failed.Exception);
-            }
-            else if (status is ConnectionStatus.Rejected rejected)
-            {
-                DebugConsole.ThrowError($"Connection rejected: {rejected.Reason}");
-            }
-            else
-            {
-                DebugConsole.ThrowError("Failed to connect to the server.");
-            }
-
-            ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
-        }
-
-        // Quick join to game
-        {
-            var quickJoinPlayerBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
-            {
-                Parent = this.BaseComponent,
-                Transform =
-            {
-                Alignment = Alignment.BottomRight,
-                RelativeOffset = new Vector2(-0.12f, -0.04f),
-                RelativeSize = new Vector2(0.15f, 0.06f),
-            },
-            };
-            quickJoinPlayerBtn.HoverEntered += (s, e) => e.Color = Color.Red;
-            quickJoinPlayerBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
-            quickJoinPlayerBtn.Clicked += (s, e) => Connect<Game>(false);
-            _ = new Text(quickJoinFont, Color.White)
-            {
-                Parent = quickJoinPlayerBtn.Component,
-                Value = "Quick Join",
-                TextAlignment = Alignment.Center,
-                TextShrink = TextShrinkMode.Width,
-                Transform =
-            {
-                RelativeSize = new Vector2(1f, 0.5f),
-                Alignment = Alignment.Top,
-            },
-            };
-            _ = new Text(quickJoinFont, Color.White)
-            {
-                Parent = quickJoinPlayerBtn.Component,
-                Value = "(player)",
-                TextAlignment = Alignment.Center,
-                TextShrink = TextShrinkMode.Width,
-                Transform =
-                {
-                    RelativeSize = new Vector2(1f, 0.5f),
-                    Alignment = Alignment.Bottom,
-                },
-            };
-
             var quickJoinSpectatorBtn = new Button<SolidColor>(new SolidColor(Color.DarkRed))
             {
-                Parent = this.BaseComponent,
-                Transform =
-                {
-                    Alignment = Alignment.BottomRight,
-                    RelativeOffset = new Vector2(-0.12f, -0.12f),
-                    RelativeSize = new Vector2(0.15f, 0.06f),
-                },
+                Parent = quickJoinListBox.ContentContainer,
             };
             quickJoinSpectatorBtn.HoverEntered += (s, e) => e.Color = Color.Red;
             quickJoinSpectatorBtn.HoverExited += (s, e) => e.Color = Color.DarkRed;
-            quickJoinSpectatorBtn.Clicked += (s, e) => Connect<Game>(true);
+            quickJoinSpectatorBtn.Clicked += (s, e) => QuickConnectSpectator();
             _ = new Text(quickJoinFont, Color.White)
             {
                 Parent = quickJoinSpectatorBtn.Component,
@@ -260,23 +216,40 @@ internal class MainMenu : Scene
 
         var assembly = typeof(GameClientCore).Assembly;
         var version = assembly.GetName().Version!;
-        var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
 
-        var sb = new StringBuilder()
-            .Append('v')
-            .Append(version.Major)
-            .Append('.')
-            .Append(version.Minor)
-            .Append('.')
-            .Append(version.Build);
+        var configuration = assembly
+            .GetCustomAttribute<AssemblyConfigurationAttribute>()!
+            .Configuration;
+
+        var informationalVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+
+        var sb = new StringBuilder();
+        sb.Append('v');
+
+        if (informationalVersion is not null)
+        {
+#if RELEASE
+            sb.Append(informationalVersion.Split('+')[0]);
+#else
+            sb.Append(informationalVersion);
+#endif
+        }
+        else
+        {
+            sb.Append(version.Major)
+                .Append('.')
+                .Append(version.Minor)
+                .Append('.')
+                .Append(version.Build);
+        }
 
 #if RELEASE
         string versionText = sb.ToString();
 #endif
 
-        sb.Append('.')
-            .Append(version.Revision)
-            .Append(" (")
+        sb.Append(" (")
             .Append(GameClientCore.Platform)
             .Append(')');
 
@@ -311,7 +284,117 @@ internal class MainMenu : Scene
         textures.ToList().ForEach(x => x.Load());
     }
 
-    private static IButton<Container> CreateButton(
+#if DEBUG
+
+#if STEREO
+    private static async void QuickConnectPlayer(TankType tankType, string teamName)
+#else
+    private static async void QuickConnectPlayer()
+#endif
+    {
+        var data = new ConnectionPlayerData("localhost:5000", joinCode: null)
+        {
+#if STEREO
+            TeamName = teamName,
+            TankType = tankType,
+#else
+            Nickname = "player",
+#endif
+            QuickJoin = true,
+        };
+
+        await QuickConnect<Game>(data);
+    }
+
+    private static async void QuickConnectSpectator()
+    {
+        var data = new ConnectionSpectatorData("localhost:5000", joinCode: null)
+        {
+            QuickJoin = true,
+        };
+
+        await QuickConnect<Game>(data);
+    }
+
+    private static async Task QuickConnect<T>(ConnectionData connectionData)
+        where T : Scene
+    {
+        ServerConnection.ErrorThrew += DebugConsole.ThrowError;
+        ConnectionStatus status = await ServerConnection.ConnectAsync(connectionData, CancellationToken.None);
+
+        if (status is ConnectionStatus.Success)
+        {
+            Change<T>();
+        }
+        else if (status is ConnectionStatus.Failed failed && failed.Exception is not null)
+        {
+            DebugConsole.ThrowError("Connection failed!");
+            DebugConsole.ThrowError(failed.Exception);
+        }
+        else if (status is ConnectionStatus.Rejected rejected)
+        {
+            DebugConsole.ThrowError($"Connection rejected: {rejected.Reason}");
+        }
+        else
+        {
+            DebugConsole.ThrowError("Failed to connect to the server.");
+        }
+
+        ServerConnection.ErrorThrew -= DebugConsole.ThrowError;
+    }
+
+#if STEREO
+    private static Button<SolidColor> CreateQuickJoinPlayerButton(ListBox listBox, ScalableFont font, TankType tankType, string teamName)
+#else
+    private static Button<SolidColor> CreateQuickJoinPlayerButton(ListBox listBox, ScalableFont font)
+#endif
+    {
+        var button = new Button<SolidColor>(new SolidColor(Color.DarkRed))
+        {
+            Parent = listBox.ContentContainer,
+        };
+        button.HoverEntered += (s, e) => e.Color = Color.Red;
+        button.HoverExited += (s, e) => e.Color = Color.DarkRed;
+#if STEREO
+        button.Clicked += (s, e) => QuickConnectPlayer(tankType, teamName);
+#else
+        button.Clicked += (s, e) => QuickConnectPlayer();
+#endif
+        _ = new Text(font, Color.White)
+        {
+            Parent = button.Component,
+            Value = "Quick Join",
+            TextAlignment = Alignment.Center,
+            TextShrink = TextShrinkMode.Width,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Top,
+            },
+        };
+        _ = new Text(font, Color.White)
+        {
+            Parent = button.Component,
+#if STEREO
+            Value = $"({tankType}, {teamName})",
+#else
+            Value = "(player)",
+#endif
+            TextAlignment = Alignment.Center,
+            TextShrink = TextShrinkMode.Width,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.5f),
+                Alignment = Alignment.Bottom,
+            },
+        };
+
+        return button;
+    }
+
+#endif
+
+    private static Button<Container> CreateButton(
         LocalizedString text,
         ListBox listbox,
         string iconName)

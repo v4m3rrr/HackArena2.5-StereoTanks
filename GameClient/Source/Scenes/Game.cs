@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
@@ -21,7 +22,11 @@ namespace GameClient.Scenes;
 [AutoInitialize]
 internal class Game : Scene
 {
+#if STEREO
+    private readonly List<Team> teams = [];
+#else
     private readonly Dictionary<string, Player> players = [];
+#endif
     private readonly GameComponents components;
     private readonly GameUpdater updater;
     private readonly ReplayInputHandler replayInputHandler = new();
@@ -46,7 +51,11 @@ internal class Game : Scene
     {
         var initializer = new GameInitializer(this);
         this.components = new GameComponents(initializer);
+#if STEREO
+        this.updater = new GameUpdater(this.components, this.teams);
+#else
         this.updater = new GameUpdater(this.components, this.players);
+#endif
     }
 
     /// <summary>
@@ -70,6 +79,12 @@ internal class Game : Scene
     /// If client is a spectator, this property is <see langword="null"/>.
     /// </remarks>
     public static string? PlayerId { get; set; }
+
+#if STEREO
+    private IEnumerable<Player> Players => this.teams.SelectMany(t => t.Players);
+
+    private Player? Player => this.Players.FirstOrDefault(p => p.Id == PlayerId);
+#endif
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -96,7 +111,11 @@ internal class Game : Scene
 
         if (!ScreenController.DisplayedOverlays.Any())
         {
+#if STEREO
+            this.HandleInput();
+#else
             HandleInput();
+#endif
         }
 
         if (this.IsContentLoaded)
@@ -151,7 +170,9 @@ internal class Game : Scene
         Sprites.DoubleBullet.LoadContent();
         Sprites.FogOfWar.LoadContent();
         Sprites.Mine.LoadContent();
+#if !STEREO
         Sprites.SecondaryItem.LoadContent();
+#endif
         Sprites.Tank.LoadContent();
         Sprites.Wall.LoadContent();
         Sprites.Zone.LoadContent();
@@ -168,11 +189,21 @@ internal class Game : Scene
         }
     }
 
+#if STEREO
+    private async void HandleInput()
+#else
     private static async void HandleInput()
+#endif
     {
-        var payload = GameInputHandler.HandleInputPayload();
+#if STEREO
+        var inputHandler = new GameInputHandler(this.Player?.Tank.Type);
+#else
+        var inputHandler = new GameInputHandler();
+#endif
 
-        if (ServerConnection.Data.IsSpectator && payload is IActionPayload)
+        var payload = inputHandler.HandleInput();
+
+        if (ServerConnection.Data.IsSpectator && payload is ActionPayload)
         {
             return;
         }
@@ -238,7 +269,11 @@ internal class Game : Scene
 
         if (this.replayTick >= this.replayGameStates.Length)
         {
+#if STEREO
+            var args = new GameEndDisplayEventArgs(this.replayArgs!.GameEnd.Teams)
+#else
             var args = new GameEndDisplayEventArgs(this.replayArgs!.GameEnd.Players)
+#endif
             {
 #if HACKATHON
                 ReplayArgs = this.replayArgs,
@@ -257,8 +292,14 @@ internal class Game : Scene
         var gameState = this.replayGameStates[tick];
         this.updater.UpdateTimer(gameState.Tick);
         this.updater.UpdateGridLogic(gameState);
+
+#if STEREO
+        this.updater.UpdateTeams(gameState.Teams);
+        this.updater.RefreshTeamBarPanels();
+#else
         this.updater.UpdatePlayers(gameState.Players);
         this.updater.RefreshPlayerBarPanels();
+#endif
         this.updater.UpdatePlayersFogOfWar();
     }
 
@@ -358,8 +399,11 @@ internal class Game : Scene
         /* TODO: Unload content */
 
         this.components.Grid.ClearSprites();
+
+#if !STEREO
         this.components.PlayerIdentityBarPanel.Clear();
         this.components.PlayerStatsBarPanel.Clear();
+#endif
 
 #if HACKATHON
         this.updater.UpdateMatchName(null);
@@ -376,7 +420,11 @@ internal class Game : Scene
 
     private void Game_Hid(object? sender, EventArgs e)
     {
+#if STEREO
+        this.teams.Clear();
+#else
         this.players.Clear();
+#endif
         this.replayGameStates = [];
         this.replayTick = -1;
         this.isReplay = false;

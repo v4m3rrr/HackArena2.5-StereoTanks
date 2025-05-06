@@ -53,7 +53,9 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         List<Bullet> bullets = [];
         List<Laser> lasers = [];
         List<Mine> mines = [];
+#if !STEREO
         List<SecondaryItem> items = [];
+#endif
 
         for (int i = 0; i < jObject.Count; i++)
         {
@@ -98,6 +100,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
                             var mine = minePayload.ToObject<Mine>(serializer)!;
                             mines.Add(mine);
                             break;
+#if !STEREO
                         case "item":
                             var itemPayload = item["payload"]!;
                             itemPayload["x"] = i;
@@ -105,12 +108,19 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
                             var mapItem = itemPayload.ToObject<SecondaryItem>(serializer)!;
                             items.Add(mapItem);
                             break;
+#endif
                     }
                 }
             }
         }
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines, items);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines)
+#if !STEREO
+            {
+                Items = items,
+            }
+#endif
+            ;
     }
 
     private Grid.TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
@@ -128,9 +138,17 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         var bullets = jObject["bullets"]!.ToObject<List<Bullet>>(serializer)!;
         var lasers = jObject["lasers"]!.ToObject<List<Laser>>(serializer)!;
         var mines = jObject["mines"]!.ToObject<List<Mine>>(serializer)!;
+#if !STEREO
         var items = jObject["items"]!.ToObject<List<SecondaryItem>>(serializer)!;
+#endif
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines, items);
+        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines)
+#if !STEREO
+            {
+                Items = items,
+            }
+#endif
+            ;
     }
 
     private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
@@ -140,7 +158,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
         bool IsVisible(int x, int y)
         {
-            return playerContext.IsUsingRadar
+            return playerContext.IsUsingRadar is true
                 || FogOfWarManager.IsElementVisible(visibilityGrid, x, y);
         }
 
@@ -228,6 +246,8 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             });
         }
 
+#if !STEREO
+
         foreach (SecondaryItem item in value.Items)
         {
             if (!IsVisible(item.X, item.Y))
@@ -250,6 +270,8 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             });
         }
 
+#endif
+
         jObject.WriteTo(writer);
     }
 
@@ -263,7 +285,9 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             ["bullets"] = JArray.FromObject(value.Bullets, serializer),
             ["lasers"] = JArray.FromObject(value.Lasers, serializer),
             ["mines"] = JArray.FromObject(value.Mines, serializer),
+#if !STEREO
             ["items"] = JArray.FromObject(value.Items, serializer),
+#endif
         };
 
         jObject.WriteTo(writer);

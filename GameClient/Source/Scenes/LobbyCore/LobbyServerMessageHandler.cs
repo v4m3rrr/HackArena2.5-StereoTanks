@@ -40,6 +40,10 @@ internal static class LobbyServerMessageHandler
 
 #endif
 
+#if STEREO
+        updater.UpdateTeamSlotPanels(data.Teams);
+#else
         updater.UpdatePlayerSlotPanels(data.Players, data.ServerSettings.NumberOfPlayers);
+#endif
     }
 }

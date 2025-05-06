@@ -6,9 +6,9 @@
 	<Buttons>
 		<Ok>Ok</Ok>
 		<JoinGame>Rejoindre</JoinGame>
-		<Settings>Options</Settings>
+		<Settings>Paramètres</Settings>
 		<WatchReplay>Rediffusions</WatchReplay>
-		<Exit>Sortir</Exit>
+		<Exit>Quitter</Exit>
 		<Back>Retour</Back>
 		<Close>Fermer</Close>
 		<Leave>Quitter</Leave>
@@ -27,20 +27,22 @@
 		<DisplayModeBorderless>Sans bordure</DisplayModeBorderless>
 		<JoinRoom>Rejoindre une salle</JoinRoom>
 		<Nickname>Surnom</Nickname>
+		<TeamName>Nom de l'équipe</TeamName>
+		<TankType>Type de char</TankType>
 		<RoomCode>Code de la salle</RoomCode>
 		<ServerAddress>Adresse du serveur</ServerAddress>
 	</Labels>
 	
 	<MessageBoxLabels>
-		<ErrorOccured>Oh non, une erreur est survenue!</ErrorOccured>
+		<ErrorOccurred>Oh non, une erreur est survenue!</ErrorOccurred>
 		<ConnectionFailed>Échec de la connexion</ConnectionFailed>
 		<ConnectionRejected>Connexion rejetée</ConnectionRejected>
 	</MessageBoxLabels>
 	
 	<ConnectionRejectedReason>
-		<InvalidJoinCode>La code de connexion est invalide!</InvalidJoinCode>
+		<InvalidJoinCode>Le code de connexion est invalide!</InvalidJoinCode>
 		<MissingNickname>Le surnom est requis!</MissingNickname>
-		<NicknameExists>Ce surnom est déjà utilisé.</NicknameExists>
+		<NicknameExists>Ce surnom est déjà utilisé!</NicknameExists>
 		<InvalidUrlPath>Chemin d'URL invalide!</InvalidUrlPath>
 		<GameFull>La salle est pleine!</GameFull>
 		<GameInProgress>La partie est en cours!</GameInProgress>
@@ -52,10 +54,12 @@
 	</ConfirmQuestion>
 
 	<Other>
+		<Light>Léger</Light>
+		<Heavy>Lourd</Heavy>
 		<Loading>Chargement</Loading>
 		<Waiting>En attente</Waiting>
 		<Connecting>Connexion en cours</Connecting>
-		<NoDetails>Aucun détail</NoDetails>
+		<NoDetails>Aucun détail.</NoDetails>
 		<ServerNotResponding>Le serveur ne répond pas.</ServerNotResponding>
 	</Other>
 

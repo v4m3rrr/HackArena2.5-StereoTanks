@@ -1,23 +1,27 @@
-﻿namespace GameLogic.Networking;
+﻿using GameLogic.Networking.Exceptions;
+
+namespace GameLogic.Networking;
 
 /// <summary>
 /// Represents an ability use payload.
 /// </summary>
-/// <param name="AbilityType">The ability type.</param>
-public record class AbilityUsePayload(AbilityType AbilityType) : IPacketPayload, IActionPayload
+/// <param name="abilityType">The type of the ability.</param>
+public class AbilityUsePayload(AbilityType abilityType) : ActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.AbilityUse;
+    public override PacketType Type => PacketType.AbilityUse;
+
+    /// <summary>
+    /// Gets the ability type.
+    /// </summary>
+    public AbilityType AbilityType { get; } = abilityType;
 
     /// <inheritdoc/>
-    public string? GameStateId { get; init; }
-
-    /// <inheritdoc/>
-    void IActionPayload.ValidateEnums()
+    internal override void ValidateEnums()
     {
         if (!Enum.IsDefined(this.AbilityType))
         {
-            throw new Exceptions.ConvertEnumFailed<AbilityType>(this.AbilityType.ToString());
+            throw new PayloadEnumValidationError<AbilityType>(this.AbilityType);
         }
     }
 }

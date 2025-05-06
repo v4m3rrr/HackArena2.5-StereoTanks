@@ -45,6 +45,53 @@ internal class GameInitializer(Game game)
         return grid;
     }
 
+#if STEREO
+
+    /// <summary>
+    /// Creates team bar panels.
+    /// </summary>
+    /// <returns>A tuple containing the two team bar panels.</returns>
+    public List<TeamBarPanel> CreateTeamBarPanels()
+    {
+        var boxRelativeSize = new Vector2(0.22f, 1.0f);
+        var boxRelativePadding = new Vector4(0.1f);
+        var boxRelativeOffset = new Vector2(0.015f, 0.05f);
+        var boxSpacing = 15;
+        var boxElementsAlignment = Alignment.Center;
+
+        var leftBox = new TeamBarPanel()
+        {
+            Parent = game.BaseComponent,
+            ElementsAlignment = boxElementsAlignment,
+            Spacing = boxSpacing,
+            Transform =
+            {
+                Alignment = Alignment.Left,
+                RelativeSize = boxRelativeSize,
+                RelativeOffset = boxRelativeOffset,
+            },
+        };
+
+        var rightBox = new TeamBarPanel()
+        {
+            Parent = game.BaseComponent,
+            ElementsAlignment = boxElementsAlignment,
+            Spacing = boxSpacing,
+            Transform =
+            {
+                Alignment = Alignment.Right,
+                RelativeSize = boxRelativeSize,
+                RelativeOffset = boxRelativeOffset * new Vector2(-1f, 1f),
+            },
+        };
+
+        leftBox.ContentContainer.Transform.RelativePadding = boxRelativePadding;
+        rightBox.ContentContainer.Transform.RelativePadding = boxRelativePadding;
+        return [leftBox, rightBox];
+    }
+
+#else
+
     /// <summary>
     /// Creates player bar panels.
     /// </summary>
@@ -91,6 +138,8 @@ internal class GameInitializer(Game game)
 
         return new(identityBox, statsBox);
     }
+
+#endif
 
     /// <summary>
     /// Creates a timer.

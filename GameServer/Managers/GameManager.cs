@@ -56,6 +56,10 @@ internal class GameManager(GameInstance game, Logger log)
             }
 
             this.Status = GameStatus.Starting;
+
+#if STEREO
+            this.ConvertDeclaredTanks();
+#endif
         }
 
         log.Information("Game is starting...");
@@ -113,7 +117,7 @@ internal class GameManager(GameInstance game, Logger log)
 
         foreach (var connection in game.Connections)
         {
-            var payload = game.PayloadHelper.GetGameEndPayload(out var converters);
+            var payload = game.PayloadHelper.GetGameEndPayload(connection, out var converters);
             var packet = new ResponsePacket(payload, log, converters);
             var task = packet.SendAsync(connection, cancellationTokenSource.Token, this);
             tasks.Add(task);
@@ -164,7 +168,11 @@ internal class GameManager(GameInstance game, Logger log)
                 log.Verbose("Processing hackathon bot actions...");
 
                 var actionList = game.PacketHandler.HackathonBotActions.ToList();
+#if STEREO
+                actionList.Sort((x, y) => x.Key.Instance.Id.CompareTo(y.Key.Instance.Id));
+#else
                 actionList.Sort((x, y) => x.Key.Instance.Nickname.CompareTo(y.Key.Instance.Nickname));
+#endif
                 Action[] actions = actionList.Select(x => x.Value).ToArray();
                 this.random.Shuffle(actions);
 
@@ -189,6 +197,8 @@ internal class GameManager(GameInstance game, Logger log)
                     log.Error(ex, "An error occurred while updating the game logic.");
                 }
 
+#if !STEREO
+
                 // Spawn new items on the map
                 log.Verbose("Generating new item on the map...");
 
@@ -212,6 +222,8 @@ internal class GameManager(GameInstance game, Logger log)
                     log.Verbose("New item generated on the map: {Item}", item);
                 }
 
+#endif
+
                 // Broadcast the game state
                 lock (this.CurrentGameStateId ?? new object())
                 {
@@ -219,7 +231,7 @@ internal class GameManager(GameInstance game, Logger log)
                     log.Verbose("New game state id generated (tick: {tick}): {GameStateId}", this.tick, this.CurrentGameStateId);
                 }
 
-                log.Verbose("Resetting player game tick properties...");
+                log.Verbose("Resetting player game tick properties before broadcast...");
                 foreach (PlayerConnection player in game.Players)
                 {
                     player.ResetGameTickProperties();
@@ -307,8 +319,28 @@ internal class GameManager(GameInstance game, Logger log)
             var packet = new ResponsePacket(payload, log, converters);
             var task = packet.SendAsync(connection, cancellationTokenSource.Token, this);
             tasks.Add(task);
+
+#if STEREO
+            if (connection is PlayerConnection player)
+            {
+                player.LastSentGameStateBuffer = packet.Buffer;
+            }
+#endif
         }
 
         return tasks;
     }
+
+#if STEREO
+    private void ConvertDeclaredTanks()
+    {
+        foreach (var player in game.Players)
+        {
+            if (player.Instance.Tank is DeclaredTankStub stub)
+            {
+                _ = game.Grid.GenerateTank(stub);
+            }
+        }
+    }
+#endif
 }

@@ -99,6 +99,15 @@ public enum PacketType
     /// </summary>
     AbilityUse = PlayerResponseActionGroup | HasPayload | 0x3,
 
+#if STEREO
+
+    /// <summary>
+    /// The go to packet type.
+    /// </summary>
+    GoTo = PlayerResponseActionGroup | HasPayload | 0x6,
+
+#endif
+
     /// <summary>
     /// The pass packet type.
     /// </summary>
@@ -150,10 +159,14 @@ public enum PacketType
     /// </summary>
     GameStateDebugGroup = 0xC0,
 
+#if !STEREO
+
     /// <summary>
     /// The set player score packet type.
     /// </summary>
     SetPlayerScore = GameStateDebugGroup | HasPayload | 0x1,
+
+#endif
 
     // Debug group (range: 0xD0 - 0xDF)
 
@@ -172,6 +185,15 @@ public enum PacketType
     /// </summary>
     ForceEndGame = DebugGroup | 0x4,
 
+#if STEREO
+
+    /// <summary>
+    /// The charge ability packet type.
+    /// </summary>
+    ChargeAbility = DebugGroup | HasPayload | 0x5,
+
+#else
+
     /// <summary>
     /// The give ability packet type.
     /// </summary>
@@ -181,6 +203,8 @@ public enum PacketType
     /// The global give ability packet type.
     /// </summary>
     GlobalGiveSecondaryItem = DebugGroup | HasPayload | 0x6,
+
+#endif
 
 #endif
 
@@ -221,24 +245,40 @@ public enum PacketType
     /// <summary>
     /// The invalid packet type.
     /// </summary>
-    /// <remarks>
-    /// Can be merged with <see cref="HasPayload"/>.
-    /// </remarks>
     InvalidPacketTypeError = ErrorGroup | 0x1,
+
+    /// <summary>
+    /// The invalid packet type with payload.
+    /// </summary>
+    InvalidPacketTypeErrorWithPayload = InvalidPacketTypeError | HasPayload,
 
     /// <summary>
     /// The invalid packet usage.
     /// </summary>
-    /// <remarks>
-    /// Can be merged with <see cref="HasPayload"/>.
-    /// </remarks>
     InvalidPacketUsageError = ErrorGroup | 0x2,
+
+    /// <summary>
+    /// The invalid packet usage with payload.
+    /// </summary>
+    InvalidPacketUsageErrorWithPayload = InvalidPacketUsageError | HasPayload,
 
     /// <summary>
     /// The invalid payload.
     /// </summary>
-    /// <remarks>
-    /// Can be merged with <see cref="HasPayload"/>.
-    /// </remarks>
     InvalidPayloadError = ErrorGroup | 0x3,
+
+    /// <summary>
+    /// The invalid payload with payload.
+    /// </summary>
+    InvalidPayloadErrorWithPayload = InvalidPayloadError | HasPayload,
+
+    /// <summary>
+    /// The internal error.
+    /// </summary>
+    InternalError = ErrorGroup | 0x7,
+
+    /// <summary>
+    /// The internal error with payload.
+    /// </summary>
+    InternalErrorWithPayload = InternalError | HasPayload,
 }

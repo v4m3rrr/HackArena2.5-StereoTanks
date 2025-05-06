@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.JoinRoomCore;
 using GameClient.UI;
+using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -48,15 +49,18 @@ internal class JoinRoom : Scene
     /// </summary>
     public async void JoinGame()
     {
-        var nickname = this.GetNickname();
         var address = this.GetAddress();
         var joinCode = this.GetJoinCode();
 
-#if DEBUG
-        var data = ConnectionData.ForPlayer(address, joinCode, nickname, false);
+        var data = new ConnectionPlayerData(address, joinCode)
+        {
+#if STEREO
+            TeamName = this.GetTeamName(),
+            TankType = this.GetTankType(),
 #else
-        var data = ConnectionData.ForPlayer(address, joinCode, nickname);
+            Nickname = this.GetNickname(),
 #endif
+        };
 
         await Join(data);
     }
@@ -68,13 +72,7 @@ internal class JoinRoom : Scene
     {
         var address = this.GetAddress();
         var joinCode = this.GetJoinCode();
-
-#if DEBUG
-        var data = ConnectionData.ForSpectator(address, joinCode, false);
-#else
-        var data = ConnectionData.ForSpectator(address, joinCode);
-#endif
-
+        var data = new ConnectionSpectatorData(address, joinCode);
         await Join(data);
     }
 
@@ -135,14 +133,28 @@ internal class JoinRoom : Scene
 
     private void JoinRoom_Showing(object? sender, SceneDisplayEventArgs? e)
     {
+#if STEREO
+        this.components.TeamNameInput.SetText(JoinData.TeamName ?? string.Empty);
+        this.components.TankTypeSelector.SelectItem((item) => item.TValue == JoinData.TankType);
+#else
         this.components.NicknameInput.SetText(JoinData.Nickname ?? string.Empty);
+#endif
+
         this.components.AddressInput.SetText(JoinData.Address ?? JoinData.DefaultAddress);
     }
 
     private void JoinRoom_Hiding(object? sender, EventArgs? e)
     {
+#if STEREO
+        var teamName = this.components.TeamNameInput.Value;
+        JoinData.TeamName = string.IsNullOrWhiteSpace(teamName) ? null : teamName;
+
+        var tankType = this.components.TankTypeSelector.SelectedItem?.TValue;
+        JoinData.TankType = tankType ?? TankType.Light;
+#else
         var nickname = this.components.NicknameInput.Value;
         JoinData.Nickname = string.IsNullOrWhiteSpace(nickname) ? null : nickname;
+#endif
 
         var address = this.components.AddressInput.Value;
         JoinData.Address = string.IsNullOrWhiteSpace(address)
@@ -151,10 +163,26 @@ internal class JoinRoom : Scene
         _ = JoinData.Save();
     }
 
+#if STEREO
+
+    private string GetTeamName()
+    {
+        return this.components.TeamNameSection.GetDescendant<TextInput>()!.Value;
+    }
+
+    private TankType GetTankType()
+    {
+        return this.components.TankTypeSelector.SelectedItem!.TValue;
+    }
+
+#else
+
     private string GetNickname()
     {
         return this.components.NicknameSection.GetDescendant<TextInput>()!.Value;
     }
+
+#endif
 
     private string? GetJoinCode()
     {

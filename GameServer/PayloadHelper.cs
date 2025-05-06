@@ -9,7 +9,9 @@ namespace GameServer;
 /// <param name="game">The game instance to get the payload for.</param>
 internal class PayloadHelper(GameInstance game)
 {
-    private List<GameLogic.Player> Players => game.Players.Select(x => x.Instance).ToList();
+#if STEREO
+    private List<GameLogic.Team> Teams => [..game.Teams];
+#endif
 
     /// <summary>
     /// Gets the lobby data payload.
@@ -23,7 +25,11 @@ internal class PayloadHelper(GameInstance game)
     public LobbyDataPayload GetLobbyDataPayload(Connection? connection)
     {
         string? playerId = (connection as PlayerConnection)?.Instance.Id;
+#if STEREO
+        return new LobbyDataPayload(playerId, this.Teams, game.Settings);
+#else
         return new LobbyDataPayload(playerId, this.Players, game.Settings);
+#endif
     }
 
     /// <summary>
@@ -38,7 +44,11 @@ internal class PayloadHelper(GameInstance game)
     /// </remarks>
     public LobbyDataPayload GetLobbyDataPayload(Connection? connection, out List<JsonConverter> converters)
     {
-        converters = LobbyDataPayload.GetConverters();
+        var context = connection is null
+            ? SerializationContext.Default
+            : new SerializationContext(connection.Data.EnumSerialization);
+
+        converters = LobbyDataPayload.GetConverters(context);
         return this.GetLobbyDataPayload(connection);
     }
 
@@ -77,8 +87,13 @@ internal class PayloadHelper(GameInstance game)
     public GameStatePayload GetGameStatePayload(Connection? connection, int tick, string gameStateId)
     {
         return connection is PlayerConnection player
+#if STEREO
+            ? new GameStatePayload.ForPlayer(gameStateId, tick, player.Instance, this.Teams, game.Grid)
+            : new GameStatePayload(tick, this.Teams, game.Grid);
+#else
             ? new GameStatePayload.ForPlayer(gameStateId, tick, player.Instance, this.Players, game.Grid)
             : new GameStatePayload(tick, this.Players, game.Grid);
+#endif
     }
 
     /// <summary>
@@ -107,29 +122,36 @@ internal class PayloadHelper(GameInstance game)
     /// Gets the game end payload.
     /// </summary>
     /// <returns>The game end payload.</returns>
-    /// <remarks>
-    /// If the connection is null, the payload will be
-    /// for internal use (e.g. replay manager).
-    /// </remarks>
     public GameEndPayload GetGameEndPayload()
     {
+#if STEREO
+        var teams = this.Teams;
+        teams.Sort((x, y) => y.Score.CompareTo(x.Score));
+        return new GameEndPayload(teams);
+#else
         var players = this.Players;
         players.Sort((x, y) => y.Score.CompareTo(x.Score));
         return new GameEndPayload(players);
+#endif
     }
 
     /// <summary>
     /// Gets the game end payload.
     /// </summary>
+    /// <param name="connection">The connection to get the game end for.</param>
     /// <param name="converters">The list of converters to serialize with.</param>
     /// <returns>The game end payload.</returns>
     /// <remarks>
     /// If the connection is null, the payload will be
     /// for internal use (e.g. replay manager).
     /// </remarks>
-    public GameEndPayload GetGameEndPayload(out List<JsonConverter> converters)
+    public GameEndPayload GetGameEndPayload(Connection? connection, out List<JsonConverter> converters)
     {
-        converters = GameEndPayload.GetConverters();
+        var context = connection is null
+            ? SerializationContext.Default
+            : new SerializationContext(connection.Data.EnumSerialization);
+
+        converters = GameEndPayload.GetConverters(context);
         return this.GetGameEndPayload();
     }
 
@@ -144,24 +166,28 @@ internal class PayloadHelper(GameInstance game)
     {
         converters = GameEndPayload.GetConverters();
 
+        bool isValid = !game.DisconnectedInGamePlayers.Any();
+#if STEREO
+        var teams = this.Teams;
+        teams.Sort((x, y) => y.Score.CompareTo(x.Score));
+        return new GameEndResultsPayload(teams, isValid);
+#else
         var players = this.Players;
-        bool isValid = true;
-
-        if (game.DisconnectedInGamePlayers.Any())
-        {
-            isValid = false;
-            players.AddRange(game.DisconnectedInGamePlayers.Select(x => x.Instance));
-        }
-
+        players.AddRange(game.DisconnectedInGamePlayers.Select(x => x.Instance));
         players.Sort((x, y) => y.Score.CompareTo(x.Score));
-
         return new GameEndResultsPayload(players, isValid);
+#endif
     }
 
+#if STEREO
+    private record class GameEndResultsPayload(List<GameLogic.Team> Teams, bool IsValid)
+        : GameEndPayload(Teams)
+#else
     private record class GameEndResultsPayload(List<GameLogic.Player> Players, bool IsValid)
         : GameEndPayload(Players)
+#endif
     {
     }
 
 #endif
-}
+    }

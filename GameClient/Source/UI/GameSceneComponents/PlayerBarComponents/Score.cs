@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
+#if !STEREO
+
 namespace GameClient.GameSceneComponents.PlayerBarComponents;
 
 /// <summary>
@@ -45,3 +47,5 @@ internal class Score : PlayerBarComponent
         base.Update(gameTime);
     }
 }
+
+#endif

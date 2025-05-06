@@ -117,7 +117,7 @@ public class Laser : IStunEffect, IEquatable<Laser>
     /// <summary>
     /// Gets the remaining ticks of the laser.
     /// </summary>
-    public int RemainingTicks { get; private set; } = BlastTicks;
+    internal int RemainingTicks { get; private set; } = BlastTicks;
 
     /// <summary>
     /// Gets the id of the player that used the laser.

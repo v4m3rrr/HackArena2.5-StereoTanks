@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using GameClient.LobbySceneComponents;
 using GameClient.Networking;
+using GameClient.UI.LobbySceneComponents;
 using GameLogic;
 
 namespace GameClient.Scenes.LobbyCore;
@@ -11,19 +11,37 @@ namespace GameClient.Scenes.LobbyCore;
 /// <param name="components">The lobby components.</param>
 internal class LobbyUpdater(LobbyComponents components)
 {
+#if STEREO
+
+    /// <summary>
+    /// Updates the team slot panels.
+    /// </summary>
+    /// <param name="teams">The list of teams.</param>
+    public void UpdateTeamSlotPanels(List<Team> teams)
+    {
+        for (int i = 0; i < components.TeamSlotPanels.Count; i++)
+        {
+            components.TeamSlotPanels[i].Team = i < teams.Count ? teams[i] : null;
+        }
+    }
+
+#else
+
     /// <summary>
     /// Updates the player slot panels.
     /// </summary>
-    /// <param name="player">The list of players.</param>
+    /// <param name="players">The list of players.</param>
     /// <param name="numberOfPlayers">The maximum number of players in the game.</param>
-    public void UpdatePlayerSlotPanels(List<Player> player, int numberOfPlayers)
+    public void UpdatePlayerSlotPanels(List<Player> players, int numberOfPlayers)
     {
         for (int i = 0; i < components.PlayerSlotPanels.Count; i++)
         {
             components.PlayerSlotPanels[i].IsEnabled = i < numberOfPlayers;
-            components.PlayerSlotPanels[i].Player = i < player.Count ? player[i] : null;
+            components.PlayerSlotPanels[i].Player = i < players.Count ? players[i] : null;
         }
     }
+
+#endif
 
     /// <summary>
     /// Updates the join code.
@@ -43,21 +61,38 @@ internal class LobbyUpdater(LobbyComponents components)
     /// <param name="matchName">The match name to set.</param>
     public void UpdateMatchName(string? matchName)
     {
-        components.MatchName.IsEnabled = !string.IsNullOrEmpty(matchName);
-        components.MatchName.Value = matchName ?? "-";
+        components.MatchName.Value = matchName ?? "Lobby";
     }
 
 #endif
+
+#if STEREO
+
+    /// <summary>
+    /// Resets the team slot panels.
+    /// </summary>
+    public void ResetTeamSlotPanels()
+    {
+        foreach (var panel in components.TeamSlotPanels)
+        {
+            panel.IsEnabled = false;
+            panel.Team = null;
+        }
+    }
+
+#else
 
     /// <summary>
     /// Resets the player slot panels.
     /// </summary>
     public void ResetPlayerSlotPanels()
     {
-        foreach (var playerSlotPanel in components.PlayerSlotPanels)
+        foreach (var panel in components.PlayerSlotPanels)
         {
-            playerSlotPanel.IsEnabled = false;
-            playerSlotPanel.Player = null;
+            panel.IsEnabled = false;
+            panel.Player = null;
         }
     }
+
+#endif
 }

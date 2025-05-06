@@ -24,6 +24,8 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
     /// </summary>
     public class Player : GameSerializationContext
     {
+#if CLIENT
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Player"/> class.
         /// </summary>
@@ -37,21 +39,27 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
             this.Id = id;
         }
 
+#endif
+
+#if SERVER
         /// <summary>
         /// Initializes a new instance of the <see cref="Player"/> class.
         /// </summary>
         /// <param name="player">The player to create the context for.</param>
         /// <param name="enumSerialization">The enum serialization format.</param>
-        /// <remarks>
-        /// This constructor should be used on the server side.
-        /// </remarks>
         public Player(GameLogic.Player player, EnumSerializationFormat enumSerialization)
             : base(enumSerialization)
         {
             this.Id = player.Id;
             this.VisibilityGrid = player.VisibilityGrid;
+#if STEREO
+            this.IsUsingRadar = (player.Tank as LightTank)?.IsUsingRadar;
+#else
             this.IsUsingRadar = player.IsUsingRadar;
+#endif
         }
+
+#endif
 
         /// <summary>
         /// Gets the id of the player.
@@ -69,7 +77,11 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
         /// <summary>
         /// Gets a value indicating whether the player is using radar.
         /// </summary>
+#if STEREO
+        public bool? IsUsingRadar { get; }
+#else
         public bool IsUsingRadar { get; }
+#endif
     }
 
     /// <summary>

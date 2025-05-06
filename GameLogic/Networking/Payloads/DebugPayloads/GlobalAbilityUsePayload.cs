@@ -5,11 +5,11 @@
 /// <summary>
 /// Represents a global ability use payload.
 /// </summary>
-/// <param name="AbilityType">The ability type.</param>
-public record class GlobalAbilityUsePayload(AbilityType AbilityType) : AbilityUsePayload(AbilityType), IPacketPayload
+/// <param name="abilityType">The ability type.</param>
+public class GlobalAbilityUsePayload(AbilityType abilityType) : AbilityUsePayload(abilityType)
 {
     /// <inheritdoc/>
-    public new PacketType Type { get; private set; } = PacketType.GlobalAbilityUse;
+    public override PacketType Type => PacketType.GlobalAbilityUse;
 }
 
 #endif

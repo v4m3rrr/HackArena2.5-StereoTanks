@@ -3,10 +3,14 @@ using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking.GameEnd;
 
+#if !STEREO
+#pragma warning disable CS9113
+#endif
+
 /// <summary>
 /// Represents a player json converter.
 /// </summary>
-internal class PlayerJsonConverter : JsonConverter<Player>
+internal class PlayerJsonConverter(SerializationContext context) : JsonConverter<Player>
 {
     /// <inheritdoc/>
     public override Player? ReadJson(JsonReader reader, Type objectType, Player? existingValue, bool hasExistingValue, JsonSerializer serializer)
@@ -14,16 +18,30 @@ internal class PlayerJsonConverter : JsonConverter<Player>
         var jObject = JObject.Load(reader);
 
         var id = jObject["id"]!.Value<string>()!;
-        var nickname = jObject["nickname"]!.Value<string>()!;
-        var color = jObject["color"]!.Value<uint>()!;
-        var score = jObject["score"]!.Value<int>()!;
         var kills = jObject["kills"]!.Value<int>()!;
+#if STEREO
+        var tankType = JsonConverterUtils.ReadEnum<TankType>(jObject["tankType"]!);
+#else
+        var color = jObject["color"]!.Value<uint>()!;
+        var nickname = jObject["nickname"]!.Value<string>()!;
+        var score = jObject["score"]!.Value<int>()!;
+#endif
 
-        return new Player(id, nickname, color)
+        var player = new Player(id)
         {
+#if !STEREO
+            Color = color,
+            Nickname = nickname,
             Score = score,
+#endif
             Kills = kills,
         };
+
+#if STEREO
+        player.Tank = new DeclaredTankStub(player, tankType);
+#endif
+
+        return player;
     }
 
     /// <inheritdoc/>
@@ -32,10 +50,14 @@ internal class PlayerJsonConverter : JsonConverter<Player>
         var jObject = new JObject
         {
             ["id"] = value!.Id,
-            ["nickname"] = value.Nickname,
-            ["color"] = value.Color,
-            ["score"] = value.Score,
             ["kills"] = value.Kills,
+#if STEREO
+            ["tankType"] = JsonConverterUtils.WriteEnum(value.Tank.Type, context.EnumSerialization),
+#else
+            ["color"] = value.Color,
+            ["nickname"] = value.Nickname,
+            ["score"] = value.Score,
+#endif
         };
 
         jObject.WriteTo(writer);

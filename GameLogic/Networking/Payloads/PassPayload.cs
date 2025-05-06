@@ -3,16 +3,8 @@
 /// <summary>
 /// Represents a pass payload.
 /// </summary>
-public class PassPayload : IPacketPayload, IActionPayload
+public class PassPayload : ActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.Pass;
-
-    /// <inheritdoc/>
-    public string? GameStateId { get; init; }
-
-    /// <inheritdoc/>
-    public void ValidateEnums()
-    {
-    }
+    public override PacketType Type => PacketType.Pass;
 }

@@ -1,15 +1,27 @@
 ﻿using System.Diagnostics;
+using GameLogic.Networking;
 
 namespace GameLogic;
 
+#if STEREO
+/// <summary>
+/// Represents a base class for a tank.
+/// </summary>
+public abstract class Tank : IEquatable<Tank>
+#else
 /// <summary>
 /// Represents a tank.
 /// </summary>
 public class Tank : IEquatable<Tank>
+#endif
 {
+#if !STEREO
     private const int MineDamage = 50;
+#endif
+    private const int HealthMax = 100;
     private readonly Dictionary<IStunEffect, int> remainingStuns = [];
 
+#if !STEREO
     /// <summary>
     /// Initializes a new instance of the <see cref="Tank"/> class.
     /// </summary>
@@ -22,7 +34,7 @@ public class Tank : IEquatable<Tank>
         : this(x, y, owner.Id, direction)
     {
         this.Owner = owner;
-        this.Health = 100;
+        this.Health = HealthMax;
         this.Turret = new Turret(this, turretDirection);
     }
 
@@ -97,6 +109,29 @@ public class Tank : IEquatable<Tank>
         this.Turret = null!;  // Set in the other constructors
     }
 
+#else
+
+#pragma warning disable IDE0290
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Tank"/> class.
+    /// </summary>
+    /// <param name="x">The x coordinate of the tank.</param>
+    /// <param name="y">The y coordinate of the tank.</param>
+    /// <param name="ownerId">The id of the owner.</param>
+    /// <param name="direction">The direction of the tank.</param>
+    protected Tank(int x, int y, string ownerId, Direction direction)
+    {
+        this.X = x;
+        this.Y = y;
+        this.Direction = direction;
+        this.OwnerId = ownerId;
+        this.Owner = null!;
+        this.Turret = null!;
+    }
+
+#endif
+
     /// <summary>
     /// Occurs when the tank is about to die.
     /// </summary>
@@ -107,25 +142,29 @@ public class Tank : IEquatable<Tank>
     /// </summary>
     internal event EventHandler? Died;
 
+#if !STEREO
+
     /// <summary>
     /// Occurs when the mine has been dropped;
     /// </summary>
     internal event EventHandler<Mine>? MineDropped;
 
+#endif
+
     /// <summary>
     /// Gets the x coordinate of the tank.
     /// </summary>
-    public int X { get; private set; }
+    public int X { get; private protected set; }
 
     /// <summary>
     /// Gets the y coordinate of the tank.
     /// </summary>
-    public int Y { get; private set; }
+    public int Y { get; private protected set; }
 
     /// <summary>
     /// Gets the health of the tank.
     /// </summary>
-    public int? Health { get; private set; }
+    public int? Health { get; private protected set; } = HealthMax;
 
     /// <summary>
     /// Gets a value indicating whether the tank is dead.
@@ -144,39 +183,52 @@ public class Tank : IEquatable<Tank>
     /// <summary>
     /// Gets the direction of the tank.
     /// </summary>
-    public Direction Direction { get; private set; }
+    public Direction Direction { get; private protected set; }
 
     /// <summary>
     /// Gets the turret of the tank.
     /// </summary>
-    public Turret Turret { get; private set; }
+    public Turret Turret { get; private protected set; }
 
-#if DEBUG
+#if DEBUG && !STEREO
+
     /// <summary>
     /// Gets or sets the secondary item of the tank.
     /// </summary>
     public SecondaryItemType? SecondaryItemType { get; set; }
-#else
+
+#elif !STEREO
+
     /// <summary>
     /// Gets the secondary item of the tank.
     /// </summary>
     public SecondaryItemType? SecondaryItemType { get; internal set; }
+
+#endif
+
+#if STEREO
+
+    /// <summary>
+    /// Gets the type of the tank.
+    /// </summary>
+    public abstract TankType Type { get; }
+
 #endif
 
     /// <summary>
     /// Gets the previous x coordinate of the tank.
     /// </summary>
-    internal int? PreviousX { get; private set; }
+    internal int? PreviousX { get; private protected set; }
 
     /// <summary>
     /// Gets the previous y coordinate of the tank.
     /// </summary>
-    internal int? PreviousY { get; private set; }
+    internal int? PreviousY { get; private protected set; }
 
     /// <summary>
     /// Gets the owner ID of the tank.
     /// </summary>
-    internal string OwnerId { get; private set; }
+    internal string OwnerId { get; private protected set; }
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.
@@ -206,6 +258,8 @@ public class Tank : IEquatable<Tank>
         return this.Owner.GetHashCode();
     }
 
+#if SERVER
+
     /// <summary>
     /// Rotates the tank.
     /// </summary>
@@ -214,7 +268,7 @@ public class Tank : IEquatable<Tank>
     /// The rotation is ignored if the tank is stunned by the
     /// <see cref="StunBlockEffect.TankRotation"/> effect.
     /// </remarks>
-    public void Rotate(Rotation rotation)
+    public virtual void Rotate(Rotation rotation)
     {
         if (this.IsBlockedByStun(StunBlockEffect.TankRotation))
         {
@@ -228,6 +282,10 @@ public class Tank : IEquatable<Tank>
             _ => throw new NotImplementedException(),
         };
     }
+
+#endif
+
+#if !STEREO && SERVER
 
     /// <summary>
     /// Tries to use the radar.
@@ -289,6 +347,21 @@ public class Tank : IEquatable<Tank>
         return mine;
     }
 
+#endif
+
+#if STEREO && SERVER && DEBUG
+
+    /// <summary>
+    /// Charges the ability of the tank and its turret.
+    /// </summary>
+    /// <param name="abilityType">The type of the ability to charge.</param>
+    /// <remarks>
+    /// If the ability type is not supported, it is silently ignored.
+    /// </remarks>
+    public abstract void ChargeAbility(AbilityType abilityType);
+
+#endif
+
     /// <summary>
     /// Reduces the health of the tank.
     /// </summary>
@@ -299,7 +372,7 @@ public class Tank : IEquatable<Tank>
     /// If the damager is provided, the kills of the damager
     /// are increased by one if the tank is killed.
     /// </remarks>
-    internal int TakeDamage(int damage, Player? damager = null)
+    internal virtual int TakeDamage(int damage, Player? damager = null)
     {
         return this.TakeDamage(damage, damager, out _);
     }
@@ -315,7 +388,7 @@ public class Tank : IEquatable<Tank>
     /// If the damager is provided, the kills of the damager
     /// are increased by one if the tank is killed.
     /// </remarks>
-    internal int TakeDamage(int damage, Player? damager, out bool killed)
+    internal virtual int TakeDamage(int damage, Player? damager, out bool killed)
     {
         Debug.Assert(damage >= 0, "Damage cannot be negative.");
 
@@ -326,14 +399,17 @@ public class Tank : IEquatable<Tank>
 
         if (this.Health <= 0)
         {
-            this.Dying?.Invoke(this, EventArgs.Empty);
+            this.OnDying(EventArgs.Empty);
 
             this.SetPosition(-1, -1);
             this.Health = 0;
+
+#if !STEREO
             this.SecondaryItemType = null;
+#endif
 
             killed = true;
-            this.Died?.Invoke(this, EventArgs.Empty);
+            this.OnDied(EventArgs.Empty);
 
             if (damager is not null)
             {
@@ -357,18 +433,18 @@ public class Tank : IEquatable<Tank>
     /// The tank cannot be healed if it is dead.
     /// Use <see cref="SetHealth"/> instead.
     /// </remarks>
-    internal void Heal(int points)
+    internal virtual void Heal(int points)
     {
         Debug.Assert(points >= 0, "Healing points cannot be negative.");
         Debug.Assert(!this.IsDead, "Cannot heal a dead tank, use SetHealth instead.");
-        this.Health = Math.Min(100, this.Health!.Value + points);
+        this.Health = Math.Min(HealthMax, this.Health!.Value + points);
     }
 
     /// <summary>
     /// Sets the health of the tank.
     /// </summary>
     /// <param name="health">The health of the tank.</param>
-    internal void SetHealth(int health)
+    internal virtual void SetHealth(int health)
     {
         this.Health = health;
     }
@@ -378,7 +454,7 @@ public class Tank : IEquatable<Tank>
     /// </summary>
     /// <param name="x">The x coordinate of the tank.</param>
     /// <param name="y">The y coordinate of the tank.</param>
-    internal void SetPosition(int x, int y)
+    internal virtual void SetPosition(int x, int y)
     {
         this.PreviousX = this.X;
         this.PreviousY = this.Y;
@@ -392,7 +468,7 @@ public class Tank : IEquatable<Tank>
     /// <param name="stun">
     /// The stun to apply to the tank.
     /// </param>
-    internal void Stun(IStunEffect stun)
+    internal virtual void Stun(IStunEffect stun)
     {
         this.remainingStuns[stun] = stun.StunTicks;
     }
@@ -403,7 +479,7 @@ public class Tank : IEquatable<Tank>
     /// <param name="stuns">
     /// The stuns to apply to the tank.
     /// </param>
-    internal void Stun(IEnumerable<IStunEffect> stuns)
+    internal virtual void Stun(IEnumerable<IStunEffect> stuns)
     {
         foreach (var stun in stuns)
         {
@@ -414,7 +490,7 @@ public class Tank : IEquatable<Tank>
     /// <summary>
     /// Updates the stun effects.
     /// </summary>
-    internal void UpdateStunables()
+    internal void UpdateStunEffects()
     {
         foreach (var stunable in this.remainingStuns.Keys.ToList())
         {
@@ -433,8 +509,45 @@ public class Tank : IEquatable<Tank>
     /// <see langword="true"/> if the tank is blocked by the specified stun effect;
     /// otherwise, <see langword="false"/>.
     /// </returns>
-    internal bool IsBlockedByStun(StunBlockEffect effect = StunBlockEffect.All)
+    internal virtual bool IsBlockedByStun(StunBlockEffect effect = StunBlockEffect.All)
     {
         return this.remainingStuns.Keys.Any(stun => stun.StunBlockEffect.HasFlag(effect));
+    }
+
+    /// <summary>
+    /// Updates the tank from another tank.
+    /// </summary>
+    /// <param name="tank">The tank to update from.</param>
+    internal virtual void UpdateFrom(Tank tank)
+    {
+        this.Health = tank.Health;
+        this.Turret.UpdateFrom(tank.Turret);
+    }
+
+#if STEREO
+
+    /// <summary>
+    /// Regenerates the abilities cooldown.
+    /// </summary>
+    internal abstract void UpdateAbilitiesCooldown();
+
+#endif
+
+    /// <summary>
+    /// Invokes the <see cref="Dying"/> event.
+    /// </summary>
+    /// <param name="e">The event arguments to pass to the event handler.</param>
+    protected void OnDying(EventArgs e)
+    {
+        this.Dying?.Invoke(this, e);
+    }
+
+    /// <summary>
+    /// Invokes the <see cref="Dying"/> event.
+    /// </summary>
+    /// <param name="e">The event arguments to pass to the event handler.</param>
+    protected void OnDied(EventArgs e)
+    {
+        this.Died?.Invoke(this, e);
     }
 }

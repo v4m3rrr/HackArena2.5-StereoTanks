@@ -10,6 +10,21 @@ namespace GameClient.Scenes.GameEndCore;
 /// <param name="components">The game end screen components.</param>
 internal class GameEndUpdater(GameEndComponents components)
 {
+#if STEREO
+
+    /// <summary>
+    /// Updates the scoreboard.
+    /// </summary>
+    /// <param name="teams">
+    /// The sorted teams to update the scoreboard with.
+    /// </param>
+    public void UpdateScoreboard(IEnumerable<Team> teams)
+    {
+        components.Scoreboard.SetTeams(teams.ToArray());
+    }
+
+#else
+
     /// <summary>
     /// Updates the scoreboard.
     /// </summary>
@@ -20,6 +35,8 @@ internal class GameEndUpdater(GameEndComponents components)
     {
         components.Scoreboard.SetPlayers(players.ToArray());
     }
+
+#endif
 
 #if HACKATHON
 

@@ -6,14 +6,32 @@ using GameLogic.Networking;
 
 namespace GameClient.Scenes.GameCore;
 
+#if STEREO
+#pragma warning disable IDE0079
+#pragma warning disable SA1101
+/// <summary>
+/// Represents a game updater.
+/// </summary>
+/// <param name="components">The game screen components.</param>
+/// <param name="teams">The list of teams.</param>
+internal class GameUpdater(GameComponents components, List<Team> teams)
+#else
 /// <summary>
 /// Represents a game updater.
 /// </summary>
 /// <param name="components">The game screen components.</param>
 /// <param name="players">The list of players.</param>
 internal class GameUpdater(GameComponents components, Dictionary<string, Player> players)
+#endif
 {
     private readonly object playerUpdateLock = new();
+
+#if STEREO
+#pragma warning disable IDE1006, SA1300
+    private Dictionary<string, Player> players
+        => teams.SelectMany(t => t.Players).ToDictionary(p => p.Id, p => p);
+#pragma warning restore IDE1006, SA1300
+#endif
 
     /// <summary>
     /// Enables the grid component.
@@ -48,6 +66,53 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
         }
     }
 
+#if STEREO
+
+    /// <summary>
+    /// Updates the list of teams.
+    /// </summary>
+    /// <param name="updatedTeams">The list of teams received from the server.</param>
+    public void UpdateTeams(List<Team> updatedTeams)
+    {
+        lock (this.playerUpdateLock)
+        {
+            foreach (Team updatedTeam in updatedTeams)
+            {
+                if (teams.All(t => !t.Equals(updatedTeam)))
+                {
+                    teams.Add(updatedTeam);
+                }
+                else
+                {
+                    var existingTeam = teams.First(t => t.Equals(updatedTeam));
+                    existingTeam.UpdateFrom(updatedTeam);
+                }
+            }
+
+            teams
+                .Where(t => !updatedTeams.Contains(t))
+                .ToList()
+                .ForEach(t =>
+                {
+                    _ = teams.Remove(t);
+                    foreach (var player in t.Players)
+                    {
+                        components.Grid.ResetFogOfWar(player);
+                    }
+                });
+
+            foreach (Team team in teams)
+            {
+                foreach (Player player in team.Players)
+                {
+                    player.Team = team;
+                }
+            }
+        }
+    }
+
+#else
+
     /// <summary>
     /// Updates the list of players.
     /// </summary>
@@ -81,6 +146,8 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
         }
     }
 
+#endif
+
 #if HACKATHON
 
     /// <summary>
@@ -94,6 +161,37 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     }
 
 #endif
+
+#if STEREO
+
+    /// <summary>
+    /// Refreshes the team bar panels.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method adjusts the team bar panels
+    /// to the current list of players.
+    /// </para>
+    /// <para>
+    /// Should be called after <see cref="UpdateTeams"/>.
+    /// </para>
+    /// </remarks>
+    public void RefreshTeamBarPanels()
+    {
+        GameClientCore.InvokeOnMainThread(() =>
+        {
+            lock (this.playerUpdateLock)
+            {
+                components.TeamBarPanels
+                    .Zip(teams, (panel, team) => (panel, team))
+                    .Take(2)
+                    .ToList()
+                    .ForEach(x => x.panel.Refresh(x.team, Game.PlayerId));
+            }
+        });
+    }
+
+#else
 
     /// <summary>
     /// Refreshes the player bar panels.
@@ -119,6 +217,8 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
         });
     }
 
+#endif
+
     /// <summary>
     /// Updates the player's fog of war.
     /// </summary>
@@ -134,7 +234,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This method should be called after <see cref="UpdatePlayers"/>.
+    /// This method should be called after updating the players.
     /// </para>
     /// <para>
     /// This method updates the fog of war for all players

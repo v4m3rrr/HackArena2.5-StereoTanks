@@ -24,7 +24,12 @@ public class LogicUpdater(Grid grid)
         grid.UpdateTanksRegenerationProgress();
         grid.UpdatePlayersVisibilityGrids();
         grid.UpdateZones();
+
+#if STEREO
+        grid.UpdateAbilitiesRegenerationProgress();
+#else
         grid.PickUpItems();
+#endif
     }
 
     /// <summary>
@@ -38,7 +43,14 @@ public class LogicUpdater(Grid grid)
     {
         foreach (Tank tank in grid.Tanks)
         {
+#if STEREO
+            if (tank is LightTank light)
+            {
+                light.IsUsingRadar = false;
+            }
+#else
             tank.Owner.IsUsingRadar = false;
+#endif
         }
     }
 }

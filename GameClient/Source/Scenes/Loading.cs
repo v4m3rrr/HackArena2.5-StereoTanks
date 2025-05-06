@@ -91,7 +91,7 @@ internal class Loading : Scene, IOverlayScene
             },
         };
 
-        var font = new ScalableFont(Styles.Fonts.Paths.Main, 24)
+        var font = new LocalizedScalableFont(24)
         {
             AutoResize = true,
             Spacing = 5,

@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <AssemblyName>GameServer</AssemblyName>
-	<AssemblyVersion>1.2.0.*</AssemblyVersion>
+	<AssemblyVersion>1.2.1.0</AssemblyVersion>
+	<Version>1.2.1-alpha.20</Version>
 	<Deterministic>false</Deterministic>
     <RootNamespace>GameServer</RootNamespace>
     <OutputType>Exe</OutputType>
@@ -15,12 +16,18 @@
     <Platforms>x64;arm64</Platforms>
     <Configurations>Debug;Release;HackathonDebug;HackathonRelease;StereoDebug;StereoRelease</Configurations>
   </PropertyGroup>
-
+  
   <PropertyGroup>
     <DefineConstants>SERVER;LINUX</DefineConstants>
     <OutputPath>bin\$(Configuration)\Linux\$(Platform)\</OutputPath>
   </PropertyGroup>
-
+  
+  <PropertyGroup Condition="$(Configuration.Contains('Stereo'))">
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+	<Version>1.0.0-alpha.20</Version>
+	<DefineConstants>$(DefineConstants);STEREO;HACKATHON</DefineConstants>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
@@ -34,10 +41,6 @@
     <DefineConstants>$(DefineConstants);HACKATHON</DefineConstants>
   </PropertyGroup>
   
-  <PropertyGroup Condition="$(Configuration.Contains('Stereo'))">
-    <DefineConstants>$(DefineConstants);STEREO</DefineConstants>
-  </PropertyGroup>
-
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <PlatformTarget>x64</PlatformTarget>
     <DefineConstants>$(DefineConstants);PLATFORM_X64</DefineConstants>

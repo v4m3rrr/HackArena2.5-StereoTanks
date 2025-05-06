@@ -27,12 +27,14 @@
 		<DisplayModeBorderless>Borderless</DisplayModeBorderless>
 		<JoinRoom>Join room</JoinRoom>
 		<Nickname>Nickname</Nickname>
+		<TeamName>Team name</TeamName>
+		<TankType>Tank type</TankType>
 		<RoomCode>Room code</RoomCode>
 		<ServerAddress>Server address</ServerAddress>
 	</Labels>
 
 	<MessageBoxLabels>
-		<ErrorOccured>Oh no! An error occured:</ErrorOccured>
+		<ErrorOccurred>Oh no! An error occurred!</ErrorOccurred>
 		<ConnectionFailed>Connection failed</ConnectionFailed>
 		<ConnectionRejected>Connection rejected</ConnectionRejected>
 	</MessageBoxLabels>
@@ -52,6 +54,8 @@
 	</ConfirmQuestion>
 
 	<Other>
+		<Light>Light</Light>
+		<Heavy>Heavy</Heavy>
 		<Loading>Loading</Loading>
 		<Waiting>Waiting</Waiting>
 		<Connecting>Connecting</Connecting>

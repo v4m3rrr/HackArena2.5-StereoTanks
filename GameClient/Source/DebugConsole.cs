@@ -112,7 +112,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
     /// </summary>
     public static void Open()
     {
-        if (!Instance.IsDisplayed)
+        if (!Instance.IsDisplayedOverlay)
         {
             ShowOverlay<DebugConsole>();
             Instance.openedInThisFrame = true;
@@ -176,7 +176,7 @@ internal partial class DebugConsole : Scene, IOverlayScene
         {
             if (this.IsDisplayedOverlay)
             {
-                Current.BaseComponent.GetAllDescendants<TextInput>().ToList().ForEach(x => x.Deselect());
+                Current?.BaseComponent.GetAllDescendants<TextInput>().ToList().ForEach(x => x.Deselect());
             }
         };
 

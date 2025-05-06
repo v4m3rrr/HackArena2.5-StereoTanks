@@ -78,7 +78,7 @@ public class Packet
         try
         {
             var payload = this.GetPayloadObject<T>(serializer);
-            (payload as IActionPayload)?.ValidateEnums();
+            (payload as ActionPayload)?.ValidateEnums();
             exception = null;
             return payload;
         }

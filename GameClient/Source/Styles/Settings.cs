@@ -8,10 +8,14 @@ namespace GameClient.Styles;
 /// </summary>
 internal static class Settings
 {
-    /// <summary>
-    /// The font used in the setting elements.
-    /// </summary>
     private static readonly ScalableFont Font = new(Fonts.Paths.Main, 13)
+    {
+        AutoResize = true,
+        Spacing = 5,
+        MinSize = 6,
+    };
+
+    private static readonly LocalizedScalableFont LocalizedFont = new(13)
     {
         AutoResize = true,
         Spacing = 5,
@@ -41,100 +45,115 @@ internal static class Settings
     /// <summary>
     /// Gets the style of the selector.
     /// </summary>
-    public static Style<ISelector> SelectorStyle { get; } = new()
+    /// <param name="localized">
+    /// A value indicating whether the text should be localized.
+    /// </param>
+    /// <returns>The style of the selector.</returns>
+    public static Style<ISelector> GetSelectorStyle(bool localized = false)
     {
-        Action = (selector) =>
+        return new()
         {
-            var activeColor = (GameClientCore.ThemeColor * 0.3f).WithAlpha(0xFF);
-            var activeBackground = new RoundedSolidColor(activeColor, 40)
+            Action = (selector) =>
             {
-                Parent = selector.ActiveContainer,
-                AutoAdjustRadius = true,
-            };
-
-            var inactiveBackground = new RoundedSolidColor(Color.White, 40)
-            {
-                Parent = selector.InactiveContainer,
-                AutoAdjustRadius = true,
-                Opacity = 0.35f,
-            };
-
-            // Info about the selected item (inactive)
-            _ = new Text(Font, Color.White)
-            {
-                Parent = selector.InactiveContainer,
-                TextAlignment = Alignment.Center,
-                TextShrink = TextShrinkMode.Width,
-                Case = TextCase.Upper,
-            };
-
-            var listBox = selector.ListBox;
-            listBox.Orientation = Orientation.Vertical;
-            listBox.Spacing = 10;
-            listBox.Transform.RelativePadding = new Vector4(0.05f, 0.015f, 0.05f, 0.015f);
-
-            selector.ItemSelected += (s, e) =>
-            {
-                var fontColor = SelectorButtonItem!.GetProperty<Color>("FontColor");
-                foreach (var item in selector.Items)
+                var activeColor = (GameClientCore.ThemeColor * 0.3f).WithAlpha(0xFF);
+                var activeBackground = new RoundedSolidColor(activeColor, 40)
                 {
-                    item.Button.Component.GetChild<Text>()!.Color = Color.White;
-                }
+                    Parent = selector.ActiveContainer,
+                    AutoAdjustRadius = true,
+                };
 
-                if (e is not null)
+                var inactiveBackground = new RoundedSolidColor(Color.White, 40)
                 {
-                    e.Button.Component.GetChild<Text>()!.Color = GameClientCore.ThemeColor;
-                }
-            };
+                    Parent = selector.InactiveContainer,
+                    AutoAdjustRadius = true,
+                    Opacity = 0.35f,
+                };
 
-            if (listBox is ScrollableListBox scrollableListBox)
-            {
-                scrollableListBox.ScrollBar.ApplyStyle(SelectorScrollBar);
-                scrollableListBox.DrawContentOnParentPadding = true;
-            }
-        },
-    };
+                // Info about the selected item (inactive)
+                Text text = localized
+                    ? new LocalizedText(LocalizedFont, Color.White)
+                    : new Text(Font, Color.White);
+
+                text.Parent = selector.InactiveContainer;
+                text.TextAlignment = Alignment.Center;
+                text.TextShrink = TextShrinkMode.Width;
+                text.Case = TextCase.Upper;
+
+                var listBox = selector.ListBox;
+                listBox.Orientation = Orientation.Vertical;
+                listBox.Spacing = 10;
+                listBox.Transform.RelativePadding = new Vector4(0.05f, 0.015f, 0.05f, 0.015f);
+
+                selector.ItemSelected += (s, e) =>
+                {
+                    foreach (var item in selector.Items)
+                    {
+                        item.Button.Component.GetChild<Text>()!.Color = Color.White;
+                    }
+
+                    if (e is not null)
+                    {
+                        e.Button.Component.GetChild<Text>()!.Color = GameClientCore.ThemeColor;
+                    }
+                };
+
+                if (listBox is ScrollableListBox scrollableListBox)
+                {
+                    scrollableListBox.ScrollBar.ApplyStyle(SelectorScrollBar);
+                    scrollableListBox.DrawContentOnParentPadding = true;
+                }
+            },
+        };
+    }
 
     /// <summary>
     /// Gets the style of the selector button item.
     /// </summary>
-    public static IButton<Container>.Style SelectorButtonItem { get; } = new()
+    /// <param name="localized">
+    /// A value indicating whether the text should be localized.
+    /// </param>
+    /// <returns>The style of the selector button item.</returns>
+    public static IButton<Container>.Style GetSelectorButtonItem(bool localized = false)
     {
-        ["FontColor"] = Color.White,
-        Action = (button) =>
+        return new()
         {
-            button.Component.Transform.RelativePadding = new(0.05f, 0.1f, 0.05f, 0.1f);
-
-            var background = new RoundedSolidColor(Color.Transparent, 40)
+            ["FontColor"] = Color.White,
+            Action = (button) =>
             {
-                Parent = button.Component,
-                AutoAdjustRadius = true,
-                Transform = { IgnoreParentPadding = true },
-            };
+                button.Component.Transform.RelativePadding = new(0.05f, 0.1f, 0.05f, 0.1f);
 
-            var hoverEffect = new RoundedSolidColor(Color.Transparent, 40)
-            {
-                Parent = background,
-                AutoAdjustRadius = true,
-                Transform = { IgnoreParentPadding = true },
-            };
+                var background = new RoundedSolidColor(Color.Transparent, 40)
+                {
+                    Parent = button.Component,
+                    AutoAdjustRadius = true,
+                    Transform = { IgnoreParentPadding = true },
+                };
 
-            _ = new Text(Font, Color.White)
+                var hoverEffect = new RoundedSolidColor(Color.Transparent, 40)
+                {
+                    Parent = background,
+                    AutoAdjustRadius = true,
+                    Transform = { IgnoreParentPadding = true },
+                };
+
+                Text text = localized
+                    ? new LocalizedText(LocalizedFont, Color.White)
+                    : new Text(Font, Color.White);
+
+                text.Parent = button.Component;
+                text.TextAlignment = Alignment.Center;
+                text.TextShrink = TextShrinkMode.Width;
+            },
+            HoverEntered = (s, e) =>
             {
-                Parent = button.Component,
-                TextAlignment = Alignment.Center,
-                TextShrink = TextShrinkMode.Width,
-            };
-        },
-        HoverEntered = (s, e) =>
-        {
-            var background = e.GetChild<RoundedSolidColor>()!;
-            background.GetChild<RoundedSolidColor>()!.Color = Color.White * 0.5f;
-        },
-        HoverExited = (s, e) =>
-        {
-            var background = e.GetChild<RoundedSolidColor>()!;
-            background.GetChild<RoundedSolidColor>()!.Color = Color.Transparent;
-        },
-    };
+                var background = e.GetChild<RoundedSolidColor>()!;
+                background.GetChild<RoundedSolidColor>()!.Color = Color.White * 0.5f;
+            },
+            HoverExited = (s, e) =>
+            {
+                var background = e.GetChild<RoundedSolidColor>()!;
+                background.GetChild<RoundedSolidColor>()!.Color = Color.Transparent;
+            },
+        };
+    }
 }

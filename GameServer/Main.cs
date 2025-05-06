@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
+using GameLogic;
 using GameLogic.Networking;
 using GameServer;
 using Serilog;
@@ -21,6 +22,9 @@ var log = new LoggerConfiguration()
 var assembly = Assembly.GetExecutingAssembly();
 var version = assembly.GetName().Version!;
 var configuration = assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
+var informationalVersion = assembly
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+    .InformationalVersion;
 
 #if WINDOWS
 var platform = "Windows";
@@ -32,18 +36,33 @@ var platform = "macOS";
 var platform = "Unknown";
 #endif
 
-var sb = new StringBuilder()
-    .Append('v')
-    .Append(version.Major)
-    .Append('.')
-    .Append(version.Minor)
-    .Append('.')
-    .Append(version.Build)
-    .Append('.')
-    .Append(version.Revision)
-    .Append(" (")
+var sb = new StringBuilder();
+sb.Append('v');
+
+if (informationalVersion is not null)
+{
+#if RELEASE
+    sb.Append(informationalVersion.Split('+')[0]);
+#else
+    sb.Append(informationalVersion);
+#endif
+}
+else
+{
+    sb.Append(version.Major)
+        .Append('.')
+        .Append(version.Minor)
+        .Append('.')
+        .Append(version.Build);
+}
+
+sb.Append(" (")
     .Append(platform)
     .Append(')');
+
+sb.Append(" [")
+    .Append(configuration)
+    .Append(']');
 
 log.Information("GameServer {version}", sb);
 
@@ -209,6 +228,8 @@ async Task<Task> HandlePlayerConnection(
 {
     unknownConnection.TargetType = "Player";
 
+#if !STEREO
+
     string? nickname = context.Request.QueryString["nickname"]?.ToUpper();
 
     if (string.IsNullOrEmpty(nickname))
@@ -216,17 +237,36 @@ async Task<Task> HandlePlayerConnection(
         return RejectConnection(unknownConnection, "MissingNickname");
     }
 
-    string? playerType = context.Request.QueryString["playerType"];
+#endif
 
-    if (string.IsNullOrEmpty(playerType))
+    string? rawPlayerType = context.Request.QueryString["playerType"];
+
+    if (string.IsNullOrEmpty(rawPlayerType))
     {
         return RejectConnection(unknownConnection, "MissingPlayerType");
     }
 
-    if (!Enum.TryParse(playerType, ignoreCase: true, out PlayerType type))
+    if (!Enum.TryParse(rawPlayerType, ignoreCase: true, out PlayerType playerType))
     {
         return RejectConnection(unknownConnection, "InvalidPlayerType");
     }
+
+#if STEREO
+
+    string? teamName = context.Request.QueryString["teamName"];
+    string? rawTankType = context.Request.QueryString["tankType"];
+
+    if (string.IsNullOrEmpty(teamName))
+    {
+        return RejectConnection(unknownConnection, "MissingTeamName");
+    }
+
+    if (!Enum.TryParse(rawTankType, ignoreCase: true, out TankType tankType))
+    {
+        return RejectConnection(unknownConnection, "InvalidTankType");
+    }
+
+#endif
 
 #if DEBUG
     _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
@@ -234,7 +274,7 @@ async Task<Task> HandlePlayerConnection(
     bool quickJoin = false;
 #endif
 
-    GameLogic.Player player;
+    Player player;
     PlayerConnection connection;
 
     if (!quickJoin && !opts.SandboxMode)
@@ -251,6 +291,8 @@ async Task<Task> HandlePlayerConnection(
         {
             return RejectConnection(unknownConnection, "GameFull");
         }
+
+#if !STEREO
 
         if (NicknameAlreadyExists(nickname))
         {
@@ -271,18 +313,46 @@ async Task<Task> HandlePlayerConnection(
             }
         }
 
-        var connectionData = new ConnectionData.Player(nickname, type, unknownConnection.EnumSerialization)
-#if DEBUG
+#endif
+
+#if STEREO
+        if (AreTeamsFull(teamName))
         {
-            QuickJoin = quickJoin,
+            return RejectConnection(unknownConnection, "TeamsFull");
+        }
+
+        if (IsTankTypeTakenInTeam(teamName, tankType))
+        {
+            return RejectConnection(unknownConnection, "TankTypeTaken");
         }
 #endif
-        ;
+
+        var connectionData = new ConnectionData.Player(playerType, unknownConnection.EnumSerialization)
+        {
+#if STEREO
+            TankType = tankType,
+            TeamName = teamName,
+#else
+            Nickname = nickname,
+#endif
+#if DEBUG
+            QuickJoin = quickJoin,
+#endif
+        };
 
         lock (game.GameManager)
         {
+#if STEREO
+            player = game.PlayerManager.CreatePlayer(connectionData, out Team team);
+#else
             player = game.PlayerManager.CreatePlayer(connectionData);
-            connection = new PlayerConnection(context, socket, connectionData, log, player);
+#endif
+            connection = new PlayerConnection(context, socket, connectionData, log, player)
+            {
+#if STEREO
+                Team = team,
+#endif
+            };
             game.AddConnection(connection);
         }
     }
@@ -360,10 +430,27 @@ bool IsJoinCodeValid(string? joinCode)
     return joinCode?.ToLower() == opts.JoinCode?.ToLower();
 }
 
+#if STEREO
+
+bool AreTeamsFull(string teamName)
+{
+    return game.Teams.Count() == 2 && game.Teams.All(t => t.Name != teamName);
+}
+
+bool IsTankTypeTakenInTeam(string teamName, TankType tankType)
+{
+    return game.Teams.FirstOrDefault(t => t.Name == teamName) is Team team
+        && team.Players.Any(p => p.Tank.Type == tankType);
+}
+
+#else
+
 bool NicknameAlreadyExists(string nickname)
 {
     return game.Players.Any(p => p.Instance.Nickname == nickname);
 }
+
+#endif
 
 bool IsIpBlocked(string clientIP)
 {
@@ -426,7 +513,6 @@ async Task RejectConnection(Connection connection, string reason)
 async Task PingClientLoop(Connection connection, CancellationToken cancellationToken)
 {
     const int pingInterval = 1000;
-    const int pongTimeout = 10000;
 
     await Task.Delay(500, cancellationToken);
 
@@ -437,7 +523,7 @@ async Task PingClientLoop(Connection connection, CancellationToken cancellationT
         var payload = new EmptyPayload() { Type = PacketType.Ping };
         var packet = new ResponsePacket(payload, log);
 
-        var cancellationToken = new CancellationTokenSource(pongTimeout).Token;
+        var cancellationToken = new CancellationTokenSource(opts.NoPongTimeout).Token;
         _ = packet.SendAsync(connection, cancellationToken);
     }
 
@@ -456,12 +542,12 @@ async Task PingClientLoop(Connection connection, CancellationToken cancellationT
             }
             else
             {
-                var timeout = pongTimeout * (connection.IsSecondPingAttempt ? 2 : 1);
+                var timeout = opts.NoPongTimeout * (connection.IsSecondPingAttempt ? 2 : 1);
                 if ((DateTime.UtcNow - connection.LastPingSentTime).TotalMilliseconds > timeout)
                 {
                     if (!connection.IsSecondPingAttempt)
                     {
-                        log.Warning("Client did not respond pong in {time}ms! Sending second ping... ({connection})", pongTimeout, connection);
+                        log.Warning("Client did not respond pong in {time}ms! Sending second ping... ({connection})", opts.NoPongTimeout, connection);
 
                         SendPing();
                         connection.IsSecondPingAttempt = true;

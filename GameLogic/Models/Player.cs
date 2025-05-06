@@ -3,45 +3,34 @@
 /// <summary>
 /// Represents a player.
 /// </summary>
-public class Player : IEquatable<Player>
+/// <remarks>
+/// Initializes a new instance of the <see cref="Player"/> class.
+/// </remarks>
+/// <param name="id">The id of the player.</param>
+/// <remarks>
+/// <para>
+/// The <see cref="Tank"/> property is set to <see langword="null"/>.
+/// See its documentation for more information.
+/// </para>
+/// </remarks>
+public class Player(string id) : IEquatable<Player>
 {
     private const int RegenTicks = 50;
-    private Tank tank;
+    private Tank tank = null!;
+
+#if !STEREO
+    private uint color;
+    private string nickname = null!;
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Player"/> class.
     /// </summary>
     /// <param name="id">The id of the player.</param>
-    /// <param name="nickname">The nickname of the player.</param>
-    /// <param name="color">The color of the player.</param>
-    /// <remarks>
-    /// <para>
-    /// The <see cref="Tank"/> property is set to <see langword="null"/>.
-    /// See its documentation for more information.
-    /// </para>
-    /// </remarks>
-    public Player(string id, string nickname, uint color)
-    {
-        this.Id = id;
-        this.Nickname = nickname;
-        this.Color = color;
-        this.tank = null!;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Player"/> class.
-    /// </summary>
-    /// <param name="id">The id of the player.</param>
-    /// <param name="nickname">The nickname of the player.</param>
-    /// <param name="color">The color of the player.</param>
     /// <param name="remainingTicksToRegen">The remaining ticks to regenerate the tank.</param>
     /// <param name="visibilityGrid">The visibility grid of the player.</param>
-    /// <remarks>
-    /// The <see cref="Tank"/> property is set to <see langword="null"/>.
-    /// See its documentation for more information.
-    /// </remarks>
-    public Player(string id, string nickname, uint color, int? remainingTicksToRegen, bool[,]? visibilityGrid)
-        : this(id, nickname, color)
+    internal Player(string id, int? remainingTicksToRegen, bool[,]? visibilityGrid)
+        : this(id)
     {
         this.RemainingTicksToRegen = remainingTicksToRegen;
         this.VisibilityGrid = visibilityGrid;
@@ -55,22 +44,48 @@ public class Player : IEquatable<Player>
     /// <summary>
     /// Gets the id of the player.
     /// </summary>
-    public string Id { get; private set; }
+    public string Id { get; private set; } = id;
+
+#if !STEREO
 
     /// <summary>
     /// Gets the nickname of the player.
     /// </summary>
-    public string Nickname { get; private set; }
+    public required string Nickname
+    {
+        get => this.nickname;
+        init => this.nickname = value;
+    }
 
     /// <summary>
     /// Gets the score of the player.
     /// </summary>
     public int Score { get; internal set; } = 0;
 
+#endif
+
+#if STEREO
+
     /// <summary>
     /// Gets the color of the player.
     /// </summary>
-    public uint Color { get; internal set; }
+    /// <remarks>
+    /// The color is the same as the team color.
+    /// </remarks>
+    public uint Color => this.Team.Color;
+
+#else
+
+    /// <summary>
+    /// Gets the color of the player.
+    /// </summary>
+    public required uint Color
+    {
+        get => this.color;
+        init => this.color = value;
+    }
+
+#endif
 
     /// <summary>
     /// Gets the number of players killed by this player.
@@ -82,10 +97,15 @@ public class Player : IEquatable<Player>
     /// </summary>
     public int Ping { get; set; }
 
+#if !STEREO
+    // TODO: Move it to tank class
+
     /// <summary>
     /// Gets a value indicating whether the player is using radar.
     /// </summary>
     public bool IsUsingRadar { get; internal set; }
+
+#endif
 
     /// <summary>
     /// Gets the regeneration progress of the tank.
@@ -126,7 +146,7 @@ public class Player : IEquatable<Player>
         internal set
         {
             this.tank = value;
-            this.Tank.Died += (s, e) => this.RemainingTicksToRegen = RegenTicks;
+            this.tank.Died += (s, e) => this.RemainingTicksToRegen = RegenTicks;
         }
     }
 
@@ -134,6 +154,15 @@ public class Player : IEquatable<Player>
     /// Gets the visibility grid of the player.
     /// </summary>
     public bool[,]? VisibilityGrid { get; private set; }
+
+#if STEREO
+
+    /// <summary>
+    /// Gets the team of the player.
+    /// </summary>
+    public Team Team { get; internal set; } = null!;
+
+#endif
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.
@@ -166,20 +195,30 @@ public class Player : IEquatable<Player>
         return HashCode.Combine(this.Id);
     }
 
+#if CLIENT
+
     /// <summary>
     /// Updates the player from another player.
     /// </summary>
     /// <param name="player">The player to update from.</param>
     public void UpdateFrom(Player player)
     {
-        this.Nickname = player.Nickname;
-        this.Color = player.Color;
+#if !STEREO
+        this.color = player.Color;
+        this.nickname = player.Nickname;
         this.Score = player.Score;
+#endif
         this.Ping = player.Ping;
-        this.tank = player.tank;
         this.RemainingTicksToRegen = player.RemainingTicksToRegen;
         this.VisibilityGrid = player.VisibilityGrid;
+
+        if (player.Tank is not null)
+        {
+            this.tank?.UpdateFrom(player.Tank);
+        }
     }
+
+#endif
 
     /// <summary>
     /// Calculates the visibility grid for the player.

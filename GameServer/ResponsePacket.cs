@@ -14,6 +14,15 @@ namespace GameServer;
 internal record class ResponsePacket(IPacketPayload Payload, Logger Log, List<JsonConverter>? Converters = null)
 {
     /// <summary>
+    /// Gets the buffer of the serialized packet.
+    /// </summary>
+    /// <value>
+    /// A byte array representing the serialized packet
+    /// or <see langword="null"/> if the packet has not been sent yet.
+    /// </value>
+    public byte[]? Buffer { get; private set; }
+
+    /// <summary>
     /// Sends the packet to a client.
     /// </summary>
     /// <param name="connection">The connection to send the packet to.</param>
@@ -35,18 +44,16 @@ internal record class ResponsePacket(IPacketPayload Payload, Logger Log, List<Js
     {
         var options = GetSerializationOptions(connection);
 
-        byte[] buffer;
-
         if (serializationLock is not null)
         {
             lock (serializationLock)
             {
-                buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
+                this.Buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
             }
         }
         else
         {
-            buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
+            this.Buffer = PacketSerializer.ToByteArray(this.Payload, this.Converters ?? [], options);
         }
 
         await connection.SendPacketSemaphore.WaitAsync(CancellationToken.None);
@@ -64,7 +71,7 @@ internal record class ResponsePacket(IPacketPayload Payload, Logger Log, List<Js
             }
 
             await connection.Socket.SendAsync(
-                new ArraySegment<byte>(buffer),
+                new ArraySegment<byte>(this.Buffer),
                 WebSocketMessageType.Text,
                 endOfMessage: true,
                 cancellationToken);

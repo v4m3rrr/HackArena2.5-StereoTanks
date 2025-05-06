@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using GameLogic;
 
 namespace GameServer;
 
@@ -51,7 +52,11 @@ internal class CommandLineOptions
         "grid-dimension",
         Required = false,
         HelpText = "The dimension of the grid.",
+#if STEREO
+        Default = 20)]
+#else
         Default = 24)]
+#endif
     public int GridDimension { get; private set; }
 
     /// <summary>
@@ -106,6 +111,24 @@ internal class CommandLineOptions
         HelpText = "Whether to run the game in sandbox mode.",
         Default = false)]
     public bool SandboxMode { get; private set; }
+
+    /// <summary>
+    /// Gets the timeout duration in milliseconds to wait for a pong response from a player.
+    /// </summary>
+    /// <remarks>
+    /// If a player does not respond with a pong within this timeout after the first ping,
+    /// a second ping is sent. If no pong is received within the same duration after the second ping,
+    /// the player is removed from the game.
+    /// </remarks>
+    [Option(
+        'k',
+        "no-pong-timeout",
+        Required = false,
+        HelpText = "Timeout duration in milliseconds to wait for a pong from a player. " +
+            "If not received within this time after the first ping, a second ping is sent. " +
+            "If still not received, the player is removed from the game.",
+        Default = 10_000)]
+    public int NoPongTimeout { get; private set; }
 
 #if HACKATHON
 

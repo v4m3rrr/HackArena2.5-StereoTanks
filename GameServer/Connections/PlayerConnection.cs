@@ -10,9 +10,9 @@ namespace GameServer;
 /// </summary>
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
-/// <param name="Instance">The player instance.</param>
-/// <param name="Log">The logger.</param>
 /// <param name="Data">The connection data of the player.</param>
+/// <param name="Log">The logger.</param>
+/// <param name="Instance">The player instance.</param>
 internal record class PlayerConnection(
     HttpListenerContext Context,
     WebSocket Socket,
@@ -21,10 +21,32 @@ internal record class PlayerConnection(
     Player Instance)
     : Connection(Context, Socket, Data, Log)
 {
+#if STEREO
+
+    /// <summary>
+    /// Gets the team of the player.
+    /// </summary>
+    public required Team Team { get; init; }
+
+#endif
+
     /// <summary>
     /// Gets the player connection data.
     /// </summary>
     public new ConnectionData.Player Data { get; } = Data;
+
+    /// <summary>
+    /// Gets the player identifier.
+    /// </summary>
+    /// <remarks>
+    /// This is primarily used for logging purposes.
+    /// </remarks>
+    public string Identifier
+#if STEREO
+        => $"{this.Team.Name}/{this.Instance.Tank.Type}";
+#else
+        => this.Instance.Nickname;
+#endif
 
     /// <summary>
     /// Gets or sets a value indicating whether the player
@@ -50,6 +72,15 @@ internal record class PlayerConnection(
 
 #endif
 
+#if HACKATHON && STEREO
+
+    /// <summary>
+    /// Gets or sets the last sent game state.
+    /// </summary>
+    public byte[]? LastSentGameStateBuffer { get; set; }
+
+#endif
+
     /// <summary>
     /// Resets the game tick properties of the player.
     /// </summary>
@@ -67,6 +98,13 @@ internal record class PlayerConnection(
     /// <inheritdoc/>
     public override string ToString()
     {
-        return $"{base.ToString()}, Type={this.Data.Type}, Nickname={this.Instance.Nickname}";
+        return
+#if HACKATHON
+            $"{base.ToString()}, Type={this.Data.Type}";
+#elif STEREO
+            $"{base.ToString()}, TeamName={this.Instance.Team.Name}, TankType={this.Instance.Tank.Type}";
+#else
+            $"{base.ToString()}, Nickname={this.Instance.Nickname}";
+#endif
     }
 }

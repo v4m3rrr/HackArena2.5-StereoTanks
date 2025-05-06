@@ -3,32 +3,47 @@ using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
-namespace GameClient.LobbySceneComponents;
+namespace GameClient.UI.LobbySceneComponents;
 
 /// <summary>
 /// Represents a player slot panel.
 /// </summary>
 internal class PlayerSlotPanel : Component
 {
+#if !STEREO
     private readonly RoundedSolidColor background;
-    private readonly RoundedSolidColor iconBackground;
-    private readonly TankSpriteIcon tankSpriteIcon;
     private readonly ScalableTexture2D waitingIcon;
     private readonly Text playerNick;
+#endif
+
+    private readonly RoundedSolidColor iconBackground;
+    private readonly TankSpriteIcon tankSpriteIcon;
 
     private Player? player;
 
+#if STEREO
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
+    /// </summary>
+    /// <param name="tankType">The type of tank to display.</param>
+    public PlayerSlotPanel(TankType tankType)
+    {
+#else
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
     /// </summary>
     public PlayerSlotPanel()
     {
+#endif
+
+#if !STEREO
         this.background = new RoundedSolidColor(GameClientCore.ThemeColor, 21)
         {
             Parent = this,
             AutoAdjustRadius = true,
             Opacity = 0.35f,
         };
+#endif
 
         this.iconBackground = new RoundedSolidColor(Color.White, 21)
         {
@@ -37,17 +52,25 @@ internal class PlayerSlotPanel : Component
             Opacity = 0.3f,
             Transform =
             {
-                RelativeSize = new Vector2(0.8f),
+                RelativeSize = new Vector2(0.85f),
                 Alignment = Alignment.Left,
                 RelativeOffset = new Vector2(0.04f, 0.0f),
                 Ratio = new Ratio(1, 1),
             },
         };
 
+#if STEREO
+        this.tankSpriteIcon = new TankSpriteIcon(tankType)
+#else
         this.tankSpriteIcon = new TankSpriteIcon()
+#endif
         {
             Parent = this.iconBackground,
+#if STEREO
+            IsEnabled = true,
+#else
             IsEnabled = false,
+#endif
             Transform =
             {
                 RelativeSize = new Vector2(0.55f),
@@ -55,6 +78,13 @@ internal class PlayerSlotPanel : Component
                 Ratio = new Ratio(1, 1),
             },
         };
+
+#if STEREO
+        this.tankSpriteIcon.SetColor(Color.White);
+        this.tankSpriteIcon.SetOpacity(0.5f);
+#endif
+
+#if !STEREO
 
         this.waitingIcon = new ScalableTexture2D("Images/Icons/waiting.svg")
         {
@@ -101,6 +131,8 @@ internal class PlayerSlotPanel : Component
                 Alignment = Alignment.Center,
             },
         };
+
+#endif
     }
 
     /// <summary>
@@ -117,10 +149,26 @@ internal class PlayerSlotPanel : Component
             }
 
             this.player = value;
-            this.playerNick.Value = value?.Nickname ?? "Waiting...";
 
+#if !STEREO
+            this.playerNick.Value = value?.Nickname ?? "Waiting...";
             this.waitingIcon.IsEnabled = value is null;
+#endif
+
+#if STEREO
+            if (value is null)
+            {
+                this.tankSpriteIcon.SetColor(Color.White);
+                this.tankSpriteIcon.SetOpacity(0.5f);
+            }
+            else
+            {
+                this.tankSpriteIcon.SetColor(new Color(value!.Color));
+                this.tankSpriteIcon.SetOpacity(1f);
+            }
+#else
             this.tankSpriteIcon.IsEnabled = value is not null;
+#endif
 
             if (value is not null)
             {
@@ -128,6 +176,8 @@ internal class PlayerSlotPanel : Component
             }
         }
     }
+
+#if !STEREO
 
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
@@ -139,4 +189,6 @@ internal class PlayerSlotPanel : Component
 
         base.Update(gameTime);
     }
+
+#endif
 }

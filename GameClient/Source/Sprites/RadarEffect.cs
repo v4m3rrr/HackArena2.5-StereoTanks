@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GameClient.UI;
+using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -81,7 +82,11 @@ internal class RadarEffect : ISprite
 
         this.UpdateEffect(gameTime);
 
+#if STEREO
+        if (this.IsPlayerTank && this.Tank is LightTank light && !light.IsUsingRadar)
+#else
         if (this.IsPlayerTank && !this.Tank.Owner.IsUsingRadar)
+#endif
         {
             foreach (IDetectableByRadar sprite in this.detectedSprites)
             {
@@ -103,7 +108,11 @@ internal class RadarEffect : ISprite
             return;
         }
 
+#if STEREO
+        if (this.IsPlayerTank && this.Tank is LightTank light && !light.IsUsingRadar)
+#else
         if (this.IsPlayerTank && !this.Tank.Owner.IsUsingRadar)
+#endif
         {
             foreach (IDetectableByRadar sprite in this.detectedSprites)
             {

@@ -21,6 +21,10 @@ internal abstract class PlayerBarComponent(Player player) : Component
     public static void LoadContent()
     {
         BulletCount.LoadStaticContent();
+#if STEREO
+        Abilities.LoadStaticContent();
+#else
         SecondaryItems.LoadStaticContent();
+#endif
     }
 }

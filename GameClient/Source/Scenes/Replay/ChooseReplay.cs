@@ -57,7 +57,7 @@ internal class ChooseReplay : Scene
             DebugConsole.ThrowError(ex);
         }
 
-        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 22)
+        var titleFont = new LocalizedScalableFont(22)
         {
             AutoResize = true,
             Spacing = 5,

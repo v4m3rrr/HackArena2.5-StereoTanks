@@ -315,7 +315,11 @@ public class Zone : IEquatable<Zone>
         {
             if (this.updateCount % 2 == 0)
             {
+#if STEREO
+                captured.Player.Team.Score++;
+#else
                 captured.Player.Score++;
+#endif
             }
         }
         else if (tanksInZone.Count == 1)
@@ -325,7 +329,11 @@ public class Zone : IEquatable<Zone>
             {
                 if (this.updateCount % 2 == 0)
                 {
+#if STEREO
+                    captured.Player.Team.Score++;
+#else
                     captured.Player.Score++;
+#endif
                 }
 
                 if (this.updateCount % 4 == 0 && tank.Health < 80)
@@ -411,7 +419,6 @@ public class Zone : IEquatable<Zone>
         var remainingTicks = this.remainingTicksToCapture.GetValueOrDefault(player, TicksToCapture);
         this.remainingTicksToCapture[player] = --remainingTicks;
         return remainingTicks;
-
     }
 
     private void RemovePlayerFromRemainingTicksToCapture(Player player)

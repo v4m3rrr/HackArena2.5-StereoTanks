@@ -1,4 +1,5 @@
-﻿using Serilog.Core;
+﻿using GameLogic;
+using Serilog.Core;
 
 namespace GameServer;
 
@@ -15,17 +16,29 @@ internal class PlayerManager(GameInstance game, Logger log)
     [
         /* ABGR */
         0xFFFF48C5,
+#if !STEREO
         0xFF1F2AFF,
         0xFF2ACBEB,
+#endif
         0xFF36DE27,
     ];
 
+#if STEREO
+    /// <summary>
+    /// Adds a player.
+    /// </summary>
+    /// <param name="connectionData">The connection data of the player.</param>
+    /// <param name="team">The team of the player.</param>
+    /// <returns>The player instance.</returns>
+    public Player CreatePlayer(ConnectionData.Player connectionData, out Team team)
+#else
     /// <summary>
     /// Adds a player.
     /// </summary>
     /// <param name="connectionData">The connection data of the player.</param>
     /// <returns>The player instance.</returns>
-    public GameLogic.Player CreatePlayer(ConnectionData.Player connectionData)
+    public Player CreatePlayer(ConnectionData.Player connectionData)
+#endif
     {
         log.Verbose("Creating player for ({connection})", connectionData);
 
@@ -35,19 +48,66 @@ internal class PlayerManager(GameInstance game, Logger log)
             id = Guid.NewGuid().ToString();
         } while (game.Players.Any(p => p.Instance.Id == id));
 
-        var nickname = connectionData.Nickname;
-        log.Verbose("Player ID: {id} ({nickname})", id, nickname);
+#if STEREO
+        var playerIdentifier = $"{connectionData.TeamName}/{connectionData.TankType}";
+#else
+        var playerIdentifier = connectionData.Nickname;
+#endif
 
+        log.Verbose("Player ID: {id} ({playerIdentifier})", id, playerIdentifier);
+
+#if STEREO
+        var teamName = connectionData.TeamName;
+        var color = this.GetTeamColor(teamName);
+#else
         var color = this.GetPlayerColor();
-        log.Verbose("Player color: {color} ({nickname})", color, nickname);
+#endif
+        log.Verbose("Player color: {color} ({playerIdentifier})", color, playerIdentifier);
 
-        log.Verbose("Creating player instance for ({nickname})", nickname);
-        var instance = new GameLogic.Player(id, connectionData.Nickname, color);
-        log.Verbose("Player instance created for ({nickname})", nickname);
+#if STEREO
+        log.Verbose("Trying to get team ({teamName})", teamName);
+        var foundTeam = game.Teams.FirstOrDefault(t => t.Name == teamName);
+        if (foundTeam is null)
+        {
+            log.Verbose("Team not found ({teamName}), creating a new one", teamName);
+            team = new Team(teamName, color);
+            log.Verbose("New team created ({teamName})", connectionData.TeamName);
+        }
+        else
+        {
+            log.Verbose("Team found ({teamName})", connectionData.TeamName);
+            team = foundTeam;
+        }
+#endif
 
-        log.Verbose("Creating player tank ({nickname})", nickname);
+        log.Verbose("Creating player instance for ({playerIdentifier})", playerIdentifier);
+        var instance = new Player(id)
+        {
+#if STEREO
+            Team = team,
+#else
+            Color = color,
+            Nickname = connectionData.Nickname,
+#endif
+        };
+        log.Verbose("Player instance created for ({playerIdentifier})", playerIdentifier);
+
+#if STEREO
+        log.Verbose("Adding player to team ({teamName})", team.Name);
+        team.AddPlayer(instance);
+        log.Verbose("Player added to team ({teamName})", team.Name);
+#endif
+
+        log.Verbose("Creating player tank ({playerIdentifier})", playerIdentifier);
+
+#if STEREO
+        _ = game.GameManager.Status is not GameStatus.Running
+            ? Grid.GenerateDeclaredTankStub(instance, connectionData.TankType)
+            : game.Grid.GenerateTank(instance, connectionData.TankType);
+#else
         _ = game.Grid.GenerateTank(instance);
-        log.Verbose("Player tank created ({nickname})", nickname);
+#endif
+        log.Verbose("Player tank created ({playerIdentifier})", playerIdentifier);
 
         log.Verbose("Player created for ({connection})", connectionData);
 
@@ -60,10 +120,33 @@ internal class PlayerManager(GameInstance game, Logger log)
     /// <param name="player">The player connection.</param>
     public void RemovePlayer(PlayerConnection player)
     {
-        log.Verbose("Removing player tank ({nickname})", player.Instance.Nickname);
+        log.Verbose("Removing player tank ({identifier})", player.Identifier);
         _ = game.Grid.RemoveTank(player.Instance);
-        log.Verbose("Player tank removed ({nickname})", player.Instance.Nickname);
+        log.Verbose("Player tank removed ({identifier})", player.Identifier);
     }
+
+#if STEREO
+
+    private uint GetTeamColor(string teamName)
+    {
+        var team = game.Teams.FirstOrDefault(t => t.Name == teamName);
+        if (team is not null)
+        {
+            return team.Color;
+        }
+
+        foreach (uint color in Colors)
+        {
+            if (!game.Teams.Any(t => t.Color == color))
+            {
+                return color;
+            }
+        }
+
+        return (uint)((0xFF << 24) | Random.Next(0xFFFFFF));
+    }
+
+#else
 
     private uint GetPlayerColor()
     {
@@ -77,4 +160,6 @@ internal class PlayerManager(GameInstance game, Logger log)
 
         return (uint)((0xFF << 24) | Random.Next(0xFFFFFF));
     }
+
+#endif
 }

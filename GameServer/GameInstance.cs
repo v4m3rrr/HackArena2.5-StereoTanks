@@ -97,6 +97,15 @@ internal class GameInstance
     /// </summary>
     public IEnumerable<PlayerConnection> Players => this.connections.Values.OfType<PlayerConnection>();
 
+#if STEREO
+
+    /// <summary>
+    /// Gets the teams.
+    /// </summary>
+    public IEnumerable<Team> Teams => this.Players.Select(x => x.Team).Distinct();
+
+#endif
+
     /// <summary>
     /// Gets the spectator connections.
     /// </summary>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Xml;
+using Microsoft.Xna.Framework;
 
 namespace GameClient;
 
@@ -38,6 +39,30 @@ internal static class Localization
     public static string GetNativeLanguageName(Language language)
     {
         return NativeNames.TryGetValue(language, out var value) ? value : language.ToString();
+    }
+
+    /// <summary>
+    /// Gets the localized font path based on the current language setting.
+    /// </summary>
+    /// <returns>The path to the localized font file.</returns>
+    public static string GetLocalizedFontPath()
+    {
+        var path = GameSettings.Language switch
+        {
+            Language.English or Language.French => Styles.Fonts.Paths.Main,
+            Language.Polish => "Content\\Fonts\\Exo-SemiBold.ttf",
+            Language.Russian => "Content\\Fonts\\GrtskZetta-Semibold.ttf",
+            _ => null,
+        };
+
+        if (path is null)
+        {
+            DebugConsole.SendMessage($"Missing font path for {GameSettings.Language} language", Color.Yellow);
+            DebugConsole.SendMessage("Using default font path", Color.Yellow);
+            path = Styles.Fonts.Paths.Main;
+        }
+
+        return path;
     }
 
     /// <summary>

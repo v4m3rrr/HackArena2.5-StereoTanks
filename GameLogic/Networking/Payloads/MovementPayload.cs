@@ -1,28 +1,27 @@
-﻿namespace GameLogic.Networking;
+﻿using GameLogic.Networking.Exceptions;
+
+namespace GameLogic.Networking;
 
 /// <summary>
 /// Represents a movement payload.
 /// </summary>
-/// <param name="direction">The tank movement direction.</param>
-public class MovementPayload(MovementDirection direction) : IPacketPayload, IActionPayload
+/// <param name="direction"> The direction of the movement.</param>
+public class MovementPayload(MovementDirection direction) : ActionPayload
 {
     /// <inheritdoc/>
-    public PacketType Type => PacketType.Movement;
-
-    /// <inheritdoc/>
-    public string? GameStateId { get; init; }
+    public override PacketType Type => PacketType.Movement;
 
     /// <summary>
-    /// Gets the tank movement direction.
+    /// Gets the direction of the movement.
     /// </summary>
     public MovementDirection Direction { get; } = direction;
 
     /// <inheritdoc/>
-    void IActionPayload.ValidateEnums()
+    internal override void ValidateEnums()
     {
         if (!Enum.IsDefined(this.Direction))
         {
-            throw new Exceptions.ConvertEnumFailed<MovementDirection>(this.Direction.ToString());
+            throw new PayloadEnumValidationError<MovementDirection>(this.Direction);
         }
     }
 }

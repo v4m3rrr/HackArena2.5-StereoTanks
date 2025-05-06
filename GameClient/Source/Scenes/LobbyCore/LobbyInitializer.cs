@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
-using GameClient.LobbySceneComponents;
 using GameClient.Networking;
+using GameClient.UI.LobbySceneComponents;
+using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -99,6 +100,50 @@ internal class LobbyInitializer(Lobby lobby)
         return button;
     }
 
+#if STEREO
+
+    public List<TeamSlotPanel> CreateTeamSlotPanels()
+    {
+        var container = new Container()
+        {
+            Parent = lobby.BaseComponent,
+            Transform =
+            {
+                RelativeSize = new Vector2(0.7f, 0.42f),
+                Alignment = Alignment.Center,
+                RelativeOffset = new Vector2(0.0f, 0.05f),
+            },
+        };
+
+        var leftListBox = new TeamSlotPanel()
+        {
+            Parent = container,
+            Orientation = MonoRivUI.Orientation.Vertical,
+            Transform =
+            {
+                RelativePadding = new Vector4(0.01f),
+                RelativeSize = new Vector2(0.49f, 1f),
+                Alignment = Alignment.Left,
+            },
+        };
+
+        var rightListBox = new TeamSlotPanel()
+        {
+            Parent = container,
+            Orientation = MonoRivUI.Orientation.Vertical,
+            Transform =
+            {
+                RelativePadding = new Vector4(0.01f),
+                RelativeSize = new Vector2(0.49f, 1f),
+                Alignment = Alignment.Right,
+            },
+        };
+
+        return [leftListBox, rightListBox];
+    }
+
+#else
+
     /// <summary>
     /// Creates player slot panels.
     /// </summary>
@@ -110,18 +155,18 @@ internal class LobbyInitializer(Lobby lobby)
             Parent = lobby.BaseComponent,
             Transform =
             {
-                RelativeSize = new Vector2(0.7f, 0.4f),
+                RelativeSize = new Vector2(0.7f, 0.42f),
                 Alignment = Alignment.Center,
                 RelativeOffset = new Vector2(0.0f, 0.05f),
             },
         };
 
-        const float relativeSpacing = 0.01f;
+        const float relativeSpacing = 0.002f;
 
         var upperListBox = new FlexListBox()
         {
             Parent = container,
-            Orientation = Orientation.Horizontal,
+            Orientation = MonoRivUI.Orientation.Horizontal,
             Spacing = (int)(0.01f * ScreenController.Width),
             Transform =
             {
@@ -133,7 +178,7 @@ internal class LobbyInitializer(Lobby lobby)
         var bottomListBox = new FlexListBox()
         {
             Parent = container,
-            Orientation = Orientation.Horizontal,
+            Orientation = MonoRivUI.Orientation.Horizontal,
             Spacing = (int)(relativeSpacing * ScreenController.Width),
             Transform =
             {
@@ -168,6 +213,8 @@ internal class LobbyInitializer(Lobby lobby)
 
         return panels;
     }
+
+#endif
 
     /// <summary>
     /// Creates a continue button to start the replay.

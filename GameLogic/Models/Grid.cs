@@ -21,7 +21,9 @@ public class Grid(int dimension, int seed)
     private List<Bullet> bullets = [];
     private List<Laser> lasers = [];
     private List<Mine> mines = [];
+#if !STEREO
     private List<SecondaryItem> items = [];
+#endif
 
     private FogOfWarManager fogOfWarManager = new(new bool[0, 0]);
 
@@ -95,10 +97,33 @@ public class Grid(int dimension, int seed)
     /// </summary>
     public IEnumerable<Mine> Mines => this.mines;
 
+#if !STEREO
+
     /// <summary>
     /// Gets the items.
     /// </summary>
     public IEnumerable<SecondaryItem> Items => this.items;
+
+#endif
+
+#if STEREO && SERVER
+
+    /// <summary>
+    /// Generates a declared tank stub.
+    /// </summary>
+    /// <param name="owner">The owner of the tank to generate the stub for.</param>
+    /// <param name="type">The type of the tank to generate the stub for.</param>
+    /// <returns>The generated declared tank stub.</returns>
+    public static DeclaredTankStub GenerateDeclaredTankStub(Player owner, TankType type)
+    {
+        var declaredTank = new DeclaredTankStub(owner, type);
+        owner.Tank = declaredTank;
+        return declaredTank;
+    }
+
+#endif
+
+#if CLIENT || (SERVER && HACKATHON && STEREO)
 
     /// <summary>
     /// Updates the grid state from a payload.
@@ -128,7 +153,7 @@ public class Grid(int dimension, int seed)
     /// </para>
     /// <para>
     /// If the dimensions of the grid have changed, this method raises the
-    /// <see cref="DimensionsChanging"/>  event before updating the dimensions,
+    /// <see cref="DimensionsChanging"/> event before updating the dimensions,
     /// and the <see cref="DimensionsChanged"/> event after updating the dimensions.
     /// </para>
     /// </remarks>
@@ -137,10 +162,12 @@ public class Grid(int dimension, int seed)
         this.StateUpdating?.Invoke(this, EventArgs.Empty);
 
         var map = payload.Map;
+
         var tiles = map.Tiles;
+        var wallGrid = tiles.WallGrid;
 
         // Update the dimensions of the grid.
-        var newDim = tiles.WallGrid.GetLength(0);
+        var newDim = wallGrid.GetLength(0);
         if (newDim != this.Dim)
         {
             this.DimensionsChanging?.Invoke(this, EventArgs.Empty);
@@ -246,15 +273,21 @@ public class Grid(int dimension, int seed)
             }
         }
 
+#if !STEREO
         // Update the items.
         this.items = [.. tiles.Items];
+#endif
 
         this.StateUpdated?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// Generates the map.
-    /// </summary>
+#endif
+
+#if SERVER
+
+        /// <summary>
+        /// Generates the map.
+        /// </summary>
     public void GenerateMap()
     {
         this.generator.GenerationWarning += (s, e) => this.GenerationWarning?.Invoke(s, e);
@@ -275,40 +308,75 @@ public class Grid(int dimension, int seed)
         this.generator.GenerationWarning -= (s, e) => this.GenerationWarning?.Invoke(s, e);
     }
 
+#endif
+
+#if SERVER
+#if STEREO
+    /// <summary>
+    /// Generates a tank.
+    /// </summary>
+    /// <param name="owner">The owner of the tank.</param>
+    /// <param name="type">The type of the tank.</param>
+    /// <returns>The generated tank.</returns>
+    public Tank GenerateTank(Player owner, TankType type)
+#else
     /// <summary>
     /// Generates a tank.
     /// </summary>
     /// <param name="owner">The owner of the tank.</param>
     /// <returns>The generated tank.</returns>
     public Tank GenerateTank(Player owner)
+#endif
     {
         var (x, y) = this.GetTankSpawnPostion();
 
         var tankDirection = EnumUtils.Random<Direction>(this.random);
         var turretDirection = EnumUtils.Random<Direction>(this.random);
 
+#if STEREO
+        Tank tank = type switch
+        {
+            TankType.Light => new LightTank(x, y, tankDirection, turretDirection, owner),
+            TankType.Heavy => new HeavyTank(x, y, tankDirection, turretDirection, owner),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+        };
+#else
         var tank = new Tank(x, y, tankDirection, turretDirection, owner);
+#endif
 
         owner.Tank = tank;
         this.tanks.Add(tank);
 
         tank.Turret.BulletShot += this.queuedBullets.Enqueue;
 
-        tank.Turret.LaserUsed += (lasers) =>
+#if STEREO
+        if (tank is HeavyTank tankHeavy)
+#endif
         {
-            lock (this.lasersLock)
+#if STEREO
+            tankHeavy.Turret.LaserUsed += (lasers) =>
+#else
+            tank.Turret.LaserUsed += (lasers) =>
+#endif
             {
-                this.lasers.AddRange(lasers);
-            }
-        };
+                lock (this.lasersLock)
+                {
+                    this.lasers.AddRange(lasers);
+                }
+            };
 
-        tank.MineDropped += (sender, mine) =>
-        {
-            lock (this.minesLock)
+#if STEREO
+            tankHeavy.MineDropped += (sender, mine) =>
+#else
+            tank.MineDropped += (sender, mine) =>
+#endif
             {
-                this.mines.Add(mine);
-            }
-        };
+                lock (this.minesLock)
+                {
+                    this.mines.Add(mine);
+                }
+            };
+        }
 
         owner.TankRegenerated += (s, e) =>
         {
@@ -316,6 +384,7 @@ public class Grid(int dimension, int seed)
             tank.SetPosition(x, y);
         };
 
+#if !STEREO
         tank.Dying += (s, e) =>
         {
             if (tank.SecondaryItemType is { } itemType)
@@ -329,9 +398,28 @@ public class Grid(int dimension, int seed)
                 }
             }
         };
+#endif
 
         return tank;
     }
+
+#endif
+
+#if STEREO && SERVER
+
+    /// <summary>
+    /// Generates a tank from a stub.
+    /// </summary>
+    /// <param name="stub">The stub to generate the tank from.</param>
+    /// <returns>The generated tank.</returns>
+    public Tank GenerateTank(DeclaredTankStub stub)
+    {
+        return this.GenerateTank(stub.Owner, stub.Type);
+    }
+
+#endif
+
+#if SERVER
 
     /// <summary>
     /// Removes a tank.
@@ -367,6 +455,10 @@ public class Grid(int dimension, int seed)
         return tank;
     }
 
+#endif
+
+#if SERVER
+
     /// <summary>
     /// Tries to move a tank.
     /// </summary>
@@ -394,6 +486,10 @@ public class Grid(int dimension, int seed)
             tank.SetPosition(x, y);
         }
     }
+
+#endif
+
+#if !STEREO && SERVER
 
     /// <summary>
     /// Generates a new item on the map.
@@ -452,6 +548,8 @@ public class Grid(int dimension, int seed)
         return item;
     }
 
+#endif
+
     /// <summary>
     /// Updates the tanks' regeneration progress.
     /// </summary>
@@ -466,6 +564,21 @@ public class Grid(int dimension, int seed)
             .ToList()
             .ForEach(x => x.UpdateRegenerationProgress());
     }
+
+#if STEREO
+
+    /// <summary>
+    /// Updates the tanks' abilities regeneration progress.
+    /// </summary>
+    internal void UpdateAbilitiesRegenerationProgress()
+    {
+        foreach (var tank in this.tanks)
+        {
+            tank.UpdateAbilitiesCooldown();
+        }
+    }
+
+#endif
 
     /// <summary>
     /// Updates the bullets.
@@ -542,7 +655,11 @@ public class Grid(int dimension, int seed)
                 foreach (Tank tank in tanksInLaser)
                 {
                     var damageTaken = tank.TakeDamage(laser.Damage!.Value, laser.Shooter);
+#if STEREO
+                    laser.Shooter!.Team.Score += damageTaken;
+#else
                     laser.Shooter!.Score += damageTaken;
+#endif
                 }
 
                 lock (this.minesLock)
@@ -650,6 +767,8 @@ public class Grid(int dimension, int seed)
         }
     }
 
+#if !STEREO
+
     /// <summary>
     /// Picks up the items that are on the same cell as the tanks
     /// and sets the tanks' secondary item type.
@@ -675,6 +794,8 @@ public class Grid(int dimension, int seed)
         }
     }
 
+#endif
+
     /// <summary>
     /// Updates the players' stun effects.
     /// </summary>
@@ -682,7 +803,7 @@ public class Grid(int dimension, int seed)
     {
         foreach (Tank tank in this.tanks)
         {
-            tank.UpdateStunables();
+            tank.UpdateStunEffects();
         }
     }
 
@@ -702,11 +823,18 @@ public class Grid(int dimension, int seed)
             this.tanks,
             this.bullets,
             this.lasers,
-            this.mines,
-            this.items);
+            this.mines)
+#if !STEREO
+        {
+            Items = this.items,
+        }
+#endif
+        ;
 
         return new MapPayload(visibility, tiles, this.zones);
     }
+
+#if !STEREO
 
     private static SecondaryItemType? GetRandomItemByWeight(
         Dictionary<SecondaryItemType, double> itemWeights,
@@ -768,6 +896,8 @@ public class Grid(int dimension, int seed)
         return null;
     }
 
+#endif
+
     private (int X, int Y) GetTankSpawnPostion()
     {
         int x, y, attempts = 0;
@@ -819,11 +949,15 @@ public class Grid(int dimension, int seed)
             yield return mine;
         }
 
+#if !STEREO
+
         IEnumerable<SecondaryItem> items = this.items.Where(i => i.X == x && i.Y == y);
         foreach (SecondaryItem item in items)
         {
             yield return item;
         }
+
+#endif
     }
 
     private bool IsCellWithinBounds(int x, int y)
@@ -841,7 +975,12 @@ public class Grid(int dimension, int seed)
             case TankCollision tankCollision:
                 destroyedBullets.Add(bullet);
                 var damageTaken = tankCollision.Tank.TakeDamage(bullet.Damage!.Value, bullet.Shooter);
+#if STEREO
+                bullet.Shooter!.Team.Score += damageTaken / 2;
+#else
                 bullet.Shooter!.Score += damageTaken / 2;
+#endif
+
                 break;
 
             case BulletCollision bulletCollision:
@@ -883,6 +1022,12 @@ public class Grid(int dimension, int seed)
     internal record class MapPayload(VisibilityPayload? Visibility, TilesPayload Tiles, List<Zone> Zones);
 
     /// <summary>
+    /// Represents a visibility payload for the grid.
+    /// </summary>
+    /// <param name="VisibilityGrid">The visibility grid of the grid.</param>
+    internal record class VisibilityPayload(bool[,] VisibilityGrid);
+
+    /// <summary>
     /// Represents a tiles payload for the grid.
     /// </summary>
     /// <param name="WallGrid">The wall grid of the grid.</param>
@@ -890,18 +1035,18 @@ public class Grid(int dimension, int seed)
     /// <param name="Bullets">The bullets of the grid.</param>
     /// <param name="Lasers">The lasers on the grid.</param>
     /// <param name="Mines">The mines on the grid.</param>
-    /// <param name="Items">The items on the grid.</param>
     internal record class TilesPayload(
         Wall?[,] WallGrid,
         List<Tank> Tanks,
         List<Bullet> Bullets,
         List<Laser> Lasers,
-        List<Mine> Mines,
-        List<SecondaryItem> Items);
-
-    /// <summary>
-    /// Represents a visibility payload for the grid.
-    /// </summary>
-    /// <param name="VisibilityGrid">The visibility grid of the grid.</param>
-    internal record class VisibilityPayload(bool[,] VisibilityGrid);
+        List<Mine> Mines)
+    {
+#if !STEREO
+        /// <summary>
+        /// Gets the items on the grid.
+        /// </summary>
+        public required List<SecondaryItem> Items { get; init; }
+#endif
+    }
 }

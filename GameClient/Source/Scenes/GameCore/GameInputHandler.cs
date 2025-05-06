@@ -10,33 +10,36 @@ namespace GameClient.Scenes.GameCore;
 /// <summary>
 /// Represents the keyboard handler.
 /// </summary>
-internal static class GameInputHandler
+internal class GameInputHandler
 {
-    private static readonly List<Func<IPacketPayload?>> Handlers = [
-        () =>
-        {
-            RotationPayload? payload = HandleTankRotationPayload();
-            payload = HandleTurretRotationPayload(payload);
-            return payload;
-        },
-        HandleMovementPayload,
-#if DEBUG
-        HandleGiveSecondaryItemPayload,
+#if STEREO
+
+    private readonly TankType? tankType;
+
+#pragma warning disable IDE0290
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GameInputHandler"/> class.
+    /// </summary>
+    /// <param name="tankType">The type of the tank.</param>
+    public GameInputHandler(TankType? tankType)
+    {
+        this.tankType = tankType;
+    }
+#pragma warning restore IDE0290
+
 #endif
-        HandleAbilityUsePayload,
-    ];
 
     /// <summary>
-    /// Handles the input payload.
+    /// Handles the input.
     /// </summary>
     /// <returns>
     /// The handled input payload.
     /// </returns>
-    public static IPacketPayload? HandleInputPayload()
+    public IPacketPayload? HandleInput()
     {
         IPacketPayload? payload = null;
 
-        foreach (var handler in Handlers)
+        foreach (var handler in this.GetHandlers())
         {
             payload = handler();
             if (payload != null)
@@ -45,7 +48,7 @@ internal static class GameInputHandler
             }
         }
 
-#if DEBUG
+#if DEBUG && !STEREO
 
         if (KeyboardController.IsKeyDown(Keys.LeftShift))
         {
@@ -60,6 +63,54 @@ internal static class GameInputHandler
 #endif
 
         return payload;
+    }
+
+    /// <summary>
+    /// Gets the handlers for the input payload.
+    /// </summary>
+    /// <returns>The handlers for the input payload.</returns>
+    protected internal IEnumerable<Func<IPacketPayload?>> GetHandlers()
+    {
+        yield return () =>
+        {
+            RotationPayload? payload = HandleTankRotationPayload();
+            payload = HandleTurretRotationPayload(payload);
+            return payload;
+        };
+
+        yield return HandleMovementPayload;
+
+#if DEBUG && !STEREO
+        yield return HandleGiveSecondaryItemPayload;
+#endif
+
+#if DEBUG && STEREO
+        yield return this.HandleChargeAbilityPayload;
+#endif
+
+#if STEREO
+        if (this.tankType is { } tankType)
+        {
+            yield return () => HandleAbilityUsePayload(tankType);
+        }
+
+        yield return () =>
+        {
+            GoToPayload? payload = HandleGoToPayload();
+            RotationPayload? rotationPayload = HandleTurretRotationPayload(null);
+            if (payload is not null && rotationPayload is not null)
+            {
+                payload = new GoToPayload(payload.X, payload.Y)
+                {
+                    TurretRotation = rotationPayload.TurretRotation,
+                };
+            }
+
+            return payload;
+        };
+#else
+        yield return HandleAbilityUsePayload;
+#endif
     }
 
     private static RotationPayload? HandleTankRotationPayload()
@@ -108,7 +159,41 @@ internal static class GameInputHandler
         return payload;
     }
 
+#if STEREO
+
+    private static GoToPayload? HandleGoToPayload()
+    {
+        if (!MouseController.IsLeftButtonPressed())
+        {
+            return null;
+        }
+
+        if (Scene.Current is not Game gameScene)
+        {
+            return null;
+        }
+
+        var gridComponent = gameScene.BaseComponent.GetChild<GridComponent>();
+        if (gridComponent is null || !MouseController.IsComponentFocused(gridComponent))
+        {
+            return null;
+        }
+
+        var mousePosition = MouseController.Position;
+        var gridLocation = gridComponent.Transform.Location;
+        var tileSize = gridComponent.TileSize;
+        var tileX = (mousePosition.X - gridLocation.X) / tileSize;
+        var tileY = (mousePosition.Y - gridLocation.Y) / tileSize;
+        return new GoToPayload(tileX, tileY);
+    }
+
+#endif
+
+#if STEREO
+    private static AbilityUsePayload? HandleAbilityUsePayload(TankType tankType)
+#else
     private static AbilityUsePayload? HandleAbilityUsePayload()
+#endif
     {
         AbilityUsePayload? payload = null;
 
@@ -116,19 +201,35 @@ internal static class GameInputHandler
         {
             payload = new AbilityUsePayload(AbilityType.FireBullet);
         }
+#if STEREO
+        else if (tankType is TankType.Heavy && KeyboardController.IsKeyHit(Keys.D1))
+#else
         else if (KeyboardController.IsKeyHit(Keys.D1))
+#endif
         {
             payload = new AbilityUsePayload(AbilityType.UseLaser);
         }
+#if STEREO
+        else if (tankType is TankType.Light && KeyboardController.IsKeyHit(Keys.D1))
+#else
         else if (KeyboardController.IsKeyHit(Keys.D2))
+#endif
         {
             payload = new AbilityUsePayload(AbilityType.FireDoubleBullet);
         }
+#if STEREO
+        else if (tankType is TankType.Light && KeyboardController.IsKeyHit(Keys.D2))
+#else
         else if (KeyboardController.IsKeyHit(Keys.D3))
+#endif
         {
             payload = new AbilityUsePayload(AbilityType.UseRadar);
         }
+#if STEREO
+        else if (tankType is TankType.Heavy && KeyboardController.IsKeyHit(Keys.D2))
+#else
         else if (KeyboardController.IsKeyHit(Keys.D4))
+#endif
         {
             payload = new AbilityUsePayload(AbilityType.DropMine);
         }
@@ -136,7 +237,44 @@ internal static class GameInputHandler
         return payload;
     }
 
-#if DEBUG
+#if DEBUG && STEREO
+
+    private ChargeAbilityPayload? HandleChargeAbilityPayload()
+    {
+        if (!KeyboardController.IsKeyDown(Keys.LeftControl))
+        {
+            return null;
+        }
+
+        ChargeAbilityPayload? payload = null;
+
+        if (KeyboardController.IsKeyHit(Keys.D1))
+        {
+            var ability = this.tankType switch
+            {
+                TankType.Light => AbilityType.FireDoubleBullet,
+                TankType.Heavy => AbilityType.UseLaser,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+            payload = new ChargeAbilityPayload(ability);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D2))
+        {
+            var ability = this.tankType switch
+            {
+                TankType.Light => AbilityType.UseRadar,
+                TankType.Heavy => AbilityType.DropMine,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+            payload = new ChargeAbilityPayload(ability);
+        }
+
+        return payload;
+    }
+
+#endif
+
+#if DEBUG && !STEREO
 
     private static GiveSecondaryItemPayload? HandleGiveSecondaryItemPayload()
     {

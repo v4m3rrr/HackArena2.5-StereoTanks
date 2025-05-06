@@ -15,34 +15,46 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         var jObject = JObject.Load(reader);
 
         var id = jObject["id"]!.Value<string>()!;
-        var nickname = jObject["nickname"]!.Value<string>()!;
-        var color = jObject["color"]!.Value<uint>()!;
         var ping = jObject["ping"]!.Value<int>()!;
+#if !STEREO
+        var color = jObject["color"]!.Value<uint>()!;
+        var nickname = jObject["nickname"]!.Value<string>()!;
+#endif
 
         Grid.VisibilityPayload? visibility = default;
 
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(id))
         {
-            var score = jObject["score"]!.Value<int>()!;
             var remainingTicksToRegen = jObject["ticksToRegen"]!.Value<int?>();
+#if !STEREO
+            var score = jObject["score"]!.Value<int>()!;
             var isUsingRadar = jObject["isUsingRadar"]!.Value<bool>();
+#endif
 
             if (context is GameSerializationContext.Spectator)
             {
                 visibility = jObject["visibility"]!.ToObject<Grid.VisibilityPayload>(serializer)!;
             }
 
-            return new Player(id, nickname, color, remainingTicksToRegen, visibility?.VisibilityGrid)
+            return new Player(id, remainingTicksToRegen, visibility?.VisibilityGrid)
             {
                 Ping = ping,
+#if !STEREO
+                Color = color,
+                Nickname = nickname,
                 Score = score,
                 IsUsingRadar = isUsingRadar,
+#endif
             };
         }
 
-        return new Player(id, nickname, color)
+        return new Player(id)
         {
             Ping = ping,
+#if !STEREO
+            Color = color,
+            Nickname = nickname,
+#endif
         };
     }
 
@@ -52,16 +64,20 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         var jObject = new JObject
         {
             ["id"] = value!.Id,
-            ["nickname"] = value.Nickname,
-            ["color"] = value.Color,
             ["ping"] = value.Ping,
+#if !STEREO
+            ["color"] = value.Color,
+            ["nickname"] = value.Nickname,
+#endif
         };
 
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Id))
         {
-            jObject["score"] = value.Score;
             jObject["ticksToRegen"] = value.RemainingTicksToRegen;
+#if !STEREO
+            jObject["score"] = value.Score;
             jObject["isUsingRadar"] = value.IsUsingRadar;
+#endif
         }
 
         if (context is GameSerializationContext.Spectator)

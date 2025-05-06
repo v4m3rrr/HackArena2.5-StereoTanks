@@ -15,7 +15,7 @@ internal static class UI
     /// </summary>
     public static IButton<Container>.Style ButtonStyle { get; } = new()
     {
-        ["Font"] = new ScalableFont(Fonts.Paths.Main, 18)
+        ["Font"] = new LocalizedScalableFont(18)
         {
             AutoResize = true,
             Spacing = 15,
@@ -131,6 +131,12 @@ internal static class UI
                     var newWidth = textComponent.Dimensions.X + Math.Abs(offsetTextFromTexture) + textComponent.Font.Spacing;
                     button.Transform.SetRelativeSizeFromAbsolute(x: newWidth);
                 }
+
+                textComponent.Font.Reloaded += (s, e) =>
+                {
+                    textComponent.Transform.ForceRecalulcation();
+                    AdjustButtonSize();
+                };
 
                 textComponent.ValueChanged += (s, e) =>
                 {

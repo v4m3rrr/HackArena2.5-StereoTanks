@@ -7,6 +7,11 @@
 public class SerializationContext(EnumSerializationFormat enumSerialization)
 {
     /// <summary>
+    /// Gets the default serialization context.
+    /// </summary>
+    public static SerializationContext Default => new(SerializationOptions.Default.EnumSerialization);
+
+    /// <summary>
     /// Gets the enum serialization format.
     /// </summary>
     public EnumSerializationFormat EnumSerialization { get; } = enumSerialization;

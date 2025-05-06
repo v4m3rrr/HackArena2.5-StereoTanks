@@ -1,5 +1,5 @@
+using GameLogic;
 using GameLogic.Networking;
-using GameServer;
 
 namespace GameServer;
 
@@ -10,19 +10,42 @@ namespace GameServer;
 internal record class ConnectionData(EnumSerializationFormat EnumSerialization)
 {
 #if DEBUG
+
     /// <summary>
     /// Gets a value indicating whether
     /// the connection was made by quick join.
     /// </summary>
     public bool QuickJoin { get; init; }
+
 #endif
 
     /// <summary>
-    /// Represents the connection data of a player.
+    /// Initializes a new instance of the <see cref="ConnectionData"/> class.
     /// </summary>
-    /// <param name="Nickname">The nickname of the player.</param>
     /// <param name="Type">The type of the player.</param>
     /// <param name="EnumSerialization">The enum serialization format.</param>
-    public record class Player(string Nickname, PlayerType Type, EnumSerializationFormat EnumSerialization)
-        : ConnectionData(EnumSerialization);
+    public record class Player(PlayerType Type, EnumSerializationFormat EnumSerialization)
+        : ConnectionData(EnumSerialization)
+    {
+#if STEREO
+
+        /// <summary>
+        /// Gets the team name of the player.
+        /// </summary>
+        public required string TeamName { get; init; }
+
+        /// <summary>
+        /// Gets the tank type of the player.
+        /// </summary>
+        public required TankType TankType { get; init; }
+
+#else
+
+        /// <summary>
+        /// Gets the nickname of the player.
+        /// </summary>
+        public required string Nickname { get; init; }
+
+#endif
+    }
 }

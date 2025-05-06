@@ -42,7 +42,11 @@ internal class PlayerSlotPanel : Component
             },
         };
 
+#if STEREO
+        var tankSpriteIcon = new TankSpriteIcon(player.Tank.Type)
+#else
         var tankSpriteIcon = new TankSpriteIcon()
+#endif
         {
             Parent = iconBackground,
             Transform =
@@ -70,6 +74,8 @@ internal class PlayerSlotPanel : Component
                 Alignment = Alignment.Right,
             },
         };
+
+#if !STEREO
 
         // Nickname
         _ = new Text(font, Color.White)
@@ -99,5 +105,7 @@ internal class PlayerSlotPanel : Component
                 RelativeOffset = new Vector2(-0.05f, 0.0f),
             },
         };
+
+#endif
     }
 }

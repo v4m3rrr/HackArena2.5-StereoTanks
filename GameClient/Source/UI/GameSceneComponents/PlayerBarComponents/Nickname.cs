@@ -4,6 +4,8 @@ using MonoRivUI;
 
 namespace GameClient.GameSceneComponents.PlayerBarComponents;
 
+#if !STEREO
+
 /// <summary>
 /// Represents a player's nickname displayed on a player bar.
 /// </summary>
@@ -46,3 +48,5 @@ internal class Nickname : PlayerBarComponent
         this.text.Color = this.Player.Tank?.IsDead ?? true ? Color.DarkGray : Color.White;
     }
 }
+
+#endif

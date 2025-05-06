@@ -58,7 +58,11 @@ internal class MapGenerator(int dimension, int seed)
     {
         const int height = 4;
         const int width = 4;
+#if STEREO
+        const int count = 1;
+#else
         const int count = 2;
+#endif
         const int maxAttempts = 10000;
 
         var zones = new List<Zone>();

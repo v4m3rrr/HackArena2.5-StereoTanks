@@ -3,6 +3,8 @@ using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
+#if !STEREO
+
 namespace GameClient.GameSceneComponents;
 
 /// <summary>
@@ -75,3 +77,5 @@ internal class PlayerStatsBar : PlayerBar
         };
     }
 }
+
+#endif

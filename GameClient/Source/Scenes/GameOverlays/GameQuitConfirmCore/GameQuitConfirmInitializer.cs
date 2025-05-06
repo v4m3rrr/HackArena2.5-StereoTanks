@@ -18,7 +18,7 @@ internal class GameQuitConfirmInitializer(GameQuitConfirm gameQuitConfirm)
     /// <returns>The created title.</returns>
     public LocalizedWrappedText CreateQuestion()
     {
-        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 26)
+        var titleFont = new LocalizedScalableFont(26)
         {
             AutoResize = true,
             Spacing = 10,

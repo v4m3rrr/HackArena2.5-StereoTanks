@@ -17,9 +17,13 @@ internal class GameComponents
     /// </param>
     public GameComponents(GameInitializer initializer)
     {
+#if STEREO
+        this.TeamBarPanels = initializer.CreateTeamBarPanels();
+#else
         var (identityPanel, statsPanel) = initializer.CreatePlayerBarPanels();
         this.PlayerIdentityBarPanel = identityPanel;
         this.PlayerStatsBarPanel = statsPanel;
+#endif
 
         this.Grid = initializer.CreateGridComponent();
         this.Timer = initializer.CreateTimer();
@@ -30,6 +34,15 @@ internal class GameComponents
 #endif
     }
 
+#if STEREO
+
+    /// <summary>
+    /// Gets the team bar panel.
+    /// </summary>
+    public IEnumerable<TeamBarPanel> TeamBarPanels { get; }
+
+#else
+
     /// <summary>
     /// Gets the player identity bar panel.
     /// </summary>
@@ -39,6 +52,8 @@ internal class GameComponents
     /// Gets the player stats bar panel.
     /// </summary>
     public PlayerBarPanel<PlayerStatsBar> PlayerStatsBarPanel { get; }
+
+#endif
 
     /// <summary>
     /// Gets the grid component.

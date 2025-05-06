@@ -19,7 +19,18 @@ internal class TankSprite : PlayerBarComponent
     public TankSprite(Player player)
         : base(player)
     {
-        this.tankTexture = new ScalableTexture2D("Images/Game/tank.svg")
+#if STEREO
+        var staticTankTexture = player.Tank.Type switch
+        {
+            TankType.Light => "Images/Game/tank_light.svg",
+            TankType.Heavy => "Images/Game/tank_heavy.svg",
+            _ => throw new ArgumentOutOfRangeException(nameof(player), $"Invalid tank type: {player.Tank.Type}"),
+        };
+#else
+        var staticTankTexture = "Images/Game/tank.svg";
+#endif
+
+        this.tankTexture = new ScalableTexture2D(staticTankTexture)
         {
             Parent = this,
             Color = new Color(player.Color),

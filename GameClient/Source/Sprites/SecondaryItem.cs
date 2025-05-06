@@ -5,6 +5,8 @@ using MonoRivUI;
 
 namespace GameClient.Sprites;
 
+#if !STEREO
+
 /// <summary>
 /// Represents a secondary map item sprite.
 /// </summary>
@@ -118,3 +120,5 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
         UpdateStaticTextureSize(size);
     }
 }
+
+#endif

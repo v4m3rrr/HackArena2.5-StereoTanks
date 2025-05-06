@@ -7,8 +7,7 @@ namespace GameLogic.Networking.GameState;
 /// <summary>
 /// Represents a grid state json converter.
 /// </summary>
-/// <param name="context">The serialization context.</param>
-internal class GridVisibilityJsonConverter(GameSerializationContext context) : JsonConverter<Grid.VisibilityPayload>
+internal class GridVisibilityJsonConverter() : JsonConverter<Grid.VisibilityPayload>
 {
     /// <inheritdoc/>
     public override Grid.VisibilityPayload? ReadJson(JsonReader reader, Type objectType, Grid.VisibilityPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)

@@ -101,7 +101,11 @@ internal class GameEnd : Scene
         this.replayArgs = args.ReplayArgs;
 #endif
 
+#if STEREO
+        this.updater.UpdateScoreboard(args.Teams);
+#else
         this.updater.UpdateScoreboard(args.Players);
+#endif
 
 #if HACKATHON
         this.updater.UpdateMatchName(Game.Settings?.MatchName);

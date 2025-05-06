@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+#if !STEREO
+
 namespace GameLogic.Networking.GameState;
 
 /// <summary>
@@ -37,3 +39,5 @@ internal class ItemJsonConverter(GameSerializationContext context) : JsonConvert
         jObject.WriteTo(writer);
     }
 }
+
+#endif

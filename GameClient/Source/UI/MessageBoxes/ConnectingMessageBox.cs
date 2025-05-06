@@ -27,7 +27,7 @@ internal class ConnectingMessageBox : MessageBox<RoundedSolidColor>
         this.Box.Transform.RelativePadding = new Vector4(0.05f);
         this.Box.Load();
 
-        var font = new ScalableFont(Styles.Fonts.Paths.Main, 18)
+        var font = new LocalizedScalableFont(18)
         {
             AutoResize = true,
             Spacing = 8,

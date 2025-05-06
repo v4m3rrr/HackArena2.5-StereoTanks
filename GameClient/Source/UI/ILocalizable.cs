@@ -19,7 +19,7 @@ internal interface ILocalizable
     /// <summary>
     /// Refreshes all localizable objects.
     /// </summary>
-    public static void RefreshAll()
+    static void RefreshAll()
     {
         for (int i = References.Count - 1; i >= 0; i--)
         {
@@ -38,7 +38,7 @@ internal interface ILocalizable
     /// Adds a reference to the localizable object.
     /// </summary>
     /// <param name="reference">The reference to add.</param>
-    public static void AddReference(ILocalizable reference)
+    static void AddReference(ILocalizable reference)
     {
         References.Add(new WeakReference<ILocalizable>(reference));
     }
@@ -46,5 +46,5 @@ internal interface ILocalizable
     /// <summary>
     /// Refreshes the localizable object.
     /// </summary>
-    public void Refresh();
+    void Refresh();
 }

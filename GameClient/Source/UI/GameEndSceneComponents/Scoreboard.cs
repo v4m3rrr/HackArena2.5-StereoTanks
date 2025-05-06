@@ -25,6 +25,39 @@ internal class Scoreboard : Component
         };
     }
 
+#if STEREO
+
+    /// <summary>
+    /// Sets the teams to display on the scoreboard.
+    /// </summary>
+    /// <param name="teams">
+    /// The sorted teams to display on the scoreboard.
+    /// </param>
+    public void SetTeams(Team[] teams)
+    {
+        this.listBox.Clear();
+
+#warning add teamslotpanel
+
+        var players = teams
+            .SelectMany(t => t.Players)
+            .ToArray();
+
+        for (int i = 0; i < teams.Length; i++)
+        {
+            _ = new PlayerSlotPanel(players[i])
+            {
+                Parent = this.listBox.ContentContainer,
+                Transform =
+                {
+                    RelativeSize = new Vector2(1.0f, 0.22f),
+                },
+            };
+        }
+    }
+
+#else
+
     /// <summary>
     /// Sets the players to display on the scoreboard.
     /// </summary>
@@ -47,4 +80,6 @@ internal class Scoreboard : Component
             };
         }
     }
+
+#endif
 }

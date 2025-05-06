@@ -310,6 +310,8 @@ internal static class CommandInitializer
             return false;
         }
 
+#if !STEREO
+
         [Command("Sets score to a player.")]
         private static async void SetScore(
             [Argument("A player nick to sets points")] string nick,
@@ -329,6 +331,8 @@ internal static class CommandInitializer
                 $"Packet \"Set player '{nick}' points to {points} \" has been sent to the server.",
                 Color.Green);
         }
+
+#endif
 
         [Command("Force end the game.")]
         private static async void ForceEnd()

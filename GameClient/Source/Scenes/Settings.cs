@@ -62,7 +62,7 @@ internal class Settings : Scene, IOverlayScene
 
         this.Hiding += (s, e) => GameSettings.SaveSettings();
 
-        var titleFont = new ScalableFont(Styles.Fonts.Paths.Main, 22)
+        var titleFont = new LocalizedScalableFont(22)
         {
             AutoResize = true,
             Spacing = 5,
@@ -143,7 +143,7 @@ internal class Settings : Scene, IOverlayScene
             },
         };
 
-        var itemFont = new ScalableFont(Styles.Fonts.Paths.Main, 13)
+        var itemFont = new LocalizedScalableFont(13)
         {
             AutoResize = true,
             Spacing = 5,
@@ -157,7 +157,15 @@ internal class Settings : Scene, IOverlayScene
 
         // Language
         {
-            var (_, selector) = CreateItem<Language>(generalSection, new LocalizedString("Labels.Language"), itemFont, false, 2.8f);
+            var languagesCount = Enum.GetNames(typeof(Language)).Length;
+            var (_, selector) = CreateItem<Language>(
+                generalSection,
+                new LocalizedString("Labels.Language"),
+                itemFont,
+                scrollable: false,
+                localized: false,
+                0.95f * languagesCount);
+
             selector.CurrentItemPredicate = (x) => x == GameSettings.Language;
             selector.ItemSelected += (s, item) =>
             {
@@ -172,8 +180,16 @@ internal class Settings : Scene, IOverlayScene
                 var nativeName = Localization.GetNativeLanguageName(language);
 
                 var button = new Button<Container>(new Container());
-                button.ApplyStyle(Styles.Settings.SelectorButtonItem);
+                button.ApplyStyle(Styles.Settings.GetSelectorButtonItem());
+
                 var text = button.Component.GetChild<Text>()!;
+                text.Font = LocalizedScalableFont.GetNativeLocalizedFont(
+                    language,
+                    itemFont.Size,
+                    itemFont.MinSize,
+                    itemFont.MaxSize,
+                    itemFont.Spacing,
+                    itemFont.AutoResize);
                 text.Value = nativeName;
                 text.Case = TextCase.Upper;
 
@@ -182,6 +198,14 @@ internal class Settings : Scene, IOverlayScene
 
                 button.Clicked += (s, e) => GameSettings.Language = language;
                 button.Clicked += (s, e) => selector.SelectItem(item);
+
+                selector.ItemSelecting += (s, i) =>
+                {
+                    if (item == i)
+                    {
+                        selector.InactiveContainer.GetChild<Text>()!.Font = text.Font;
+                    }
+                };
             }
 
             selector.SelectCurrentItem();
@@ -192,7 +216,14 @@ internal class Settings : Scene, IOverlayScene
 
         // Resolution
         {
-            var (_, selector) = CreateItem<Point>(graphicsSection, new LocalizedString("Labels.Resolution"), itemFont, true, 3.1f);
+            var (_, selector) = CreateItem<Point>(
+                graphicsSection,
+                new LocalizedString("Labels.Resolution"),
+                itemFont,
+                scrollable: true,
+                localized: false,
+                3.1f);
+
             selector.RelativeHeight = 5f;
             selector.ScrollToSelected = true;
             selector.ElementFixedHeight = (int)(60 * ScreenController.Scale.Y);
@@ -227,7 +258,7 @@ internal class Settings : Scene, IOverlayScene
                 string description = GetResolutionWithAspectRatio(resolution);
 
                 var button = new Button<Container>(new Container());
-                button.ApplyStyle(Styles.Settings.SelectorButtonItem);
+                button.ApplyStyle(Styles.Settings.GetSelectorButtonItem());
                 var text = button.Component.GetChild<Text>()!;
                 text.Value = description;
                 text.Case = TextCase.Lower;
@@ -258,11 +289,18 @@ internal class Settings : Scene, IOverlayScene
 
         // Display mode
         {
-            var (_, selector) = CreateItem<ScreenType>(graphicsSection, new LocalizedString("Labels.DisplayMode"), itemFont, false, 2.1f);
+            var (_, selector) = CreateItem<ScreenType>(
+                graphicsSection,
+                new LocalizedString("Labels.DisplayMode"),
+                itemFont,
+                scrollable: false,
+                localized: true,
+                2.1f);
+
             selector.CurrentItemPredicate = (x) => x == ScreenController.ScreenType;
             selector.ItemSelected += (s, item) =>
             {
-                selector.InactiveContainer.GetChild<Text>()!.Value = item?.Name ?? string.Empty;
+                selector.InactiveContainer.GetChild<LocalizedText>()!.Value = new LocalizedString($"Labels.DisplayMode{item!.Value}");
             };
 
             GameSettings.ScreenTypeChanged += (s, e) => selector.SelectCurrentItem();
@@ -278,9 +316,10 @@ internal class Settings : Scene, IOverlayScene
                 }
 
                 var button = new Button<Container>(new Container());
-                button.ApplyStyle(Styles.Settings.SelectorButtonItem);
-                var text = button.Component.GetChild<Text>()!;
-                text.Value = typeName;
+                button.ApplyStyle(Styles.Settings.GetSelectorButtonItem(localized: true));
+
+                var text = button.Component.GetChild<LocalizedText>()!;
+                text.Value = new LocalizedString($"Labels.DisplayMode{typeName}");
                 text.Case = TextCase.Upper;
 
                 var item = new Selector<ScreenType>.Item(button, screenType, typeName);
@@ -351,6 +390,7 @@ internal class Settings : Scene, IOverlayScene
         LocalizedString name,
         ScalableFont font,
         bool scrollable,
+        bool localized = false,
         float relativeHeight = 1f)
         where T_Item : notnull
     {
@@ -387,7 +427,7 @@ internal class Settings : Scene, IOverlayScene
             CloseAfterSelect = true,
         };
 
-        selector.ApplyStyle(Styles.Settings.SelectorStyle);
+        selector.ApplyStyle(Styles.Settings.GetSelectorStyle(localized));
 
         return (container, selector);
     }

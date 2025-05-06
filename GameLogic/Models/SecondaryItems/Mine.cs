@@ -203,7 +203,11 @@ public class Mine : IStunEffect, IEquatable<Mine>
         // Do not award points if it was suicide
         if (damager is not null && damageTaken is not null)
         {
+#if STEREO
+            damager.Team.Score += damageTaken.Value;
+#else
             damager.Score += damageTaken.Value;
+#endif
         }
 
         tank?.Stun(this);

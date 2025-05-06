@@ -44,7 +44,7 @@ public static class JsonConverterUtils
         return format switch
         {
             EnumSerializationFormat.Int => (T)Enum.ToObject(typeof(T), token.Value<int>()),
-            EnumSerializationFormat.String => (T)Enum.Parse(typeof(T), token.Value<string>()!),
+            EnumSerializationFormat.String => (T)Enum.Parse(typeof(T), token.Value<string>()!, ignoreCase: true),
             _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
         };
     }
