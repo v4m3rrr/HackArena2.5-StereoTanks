@@ -37,6 +37,10 @@ internal class Settings : Scene, IOverlayScene
             MainEffect.Rotation -= 0.1f * (float)gameTime.ElapsedGameTime.TotalSeconds;
             MainEffect.Rotation %= MathHelper.TwoPi;
         }
+        else
+        {
+            this.overlayBackground.Transform.Size = ScreenController.CurrentSize;
+        }
 
         base.Update(gameTime);
     }
