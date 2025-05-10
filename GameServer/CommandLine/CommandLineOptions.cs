@@ -224,6 +224,16 @@ internal class CommandLineOptions
         Default = false)]
     public bool SkipValidation { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether to log packets.
+    /// </summary>
+    [Option(
+        "log-packets",
+        Required = false,
+        HelpText = "Whether to log packets.",
+        Default = false)]
+    public bool LogPackets { get; private set; }
+
 #endif
 
     /// <summary>
