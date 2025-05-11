@@ -1,45 +1,43 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net.WebSockets;
-using System.Reflection;
 using GameLogic;
 using GameLogic.Networking;
-using Serilog.Core;
+using Serilog;
 
 namespace GameServer;
 
 /// <summary>
-/// Represents a game instance.
+/// Represents a single match instance of the game.
 /// </summary>
-internal class GameInstance
+internal sealed class GameInstance
 {
     private readonly ConcurrentDictionary<WebSocket, Connection> connections = new();
     private readonly ConcurrentBag<PlayerConnection> disconnectedConnectionsWhileInGame = [];
-    private readonly Logger log;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GameInstance"/> class.
     /// </summary>
-    /// <param name="options">The command line options.</param>
-    /// <param name="log">The logger.</param>
-    public GameInstance(CommandLineOptions options, Logger log)
+    /// <param name="options">The command-line options.</param>
+    /// <param name="logger">The logger instance.</param>
+    public GameInstance(CommandLineOptions options, ILogger logger)
+        : this(options, logger, replayPath: null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GameInstance"/> class.
+    /// </summary>
+    /// <param name="options">The command-line options.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="replayPath">Optional replay file path.</param>
+    public GameInstance(CommandLineOptions options, ILogger logger, string? replayPath)
     {
         this.Options = options;
+        this.logger = logger;
 
-        this.log = log;
         int seed = options.Seed!.Value;
         int dimension = options.GridDimension;
-
-#if HACKATHON
-        bool eagerBroadcast = options.EagerBroadcast;
-        string? matchName = options.MatchName;
-#else
-        bool eagerBroadcast = false;
-        string? matchName = null;
-#endif
-
-        var version = Assembly.GetExecutingAssembly().GetName().Version!;
-        var versionText = $"v{version.Major}.{version.Minor}.{version.Build}";
 
         this.Settings = new ServerSettings(
             dimension,
@@ -48,78 +46,72 @@ internal class GameInstance
             options.SandboxMode ? null : options.Ticks,
             options.BroadcastInterval,
             options.SandboxMode,
-            eagerBroadcast,
-            matchName,
-            versionText);
+            GetVersion())
+        {
+#if HACKATHON
+            EagerBroadcast = options.EagerBroadcast,
+            MatchName = options.MatchName,
+#endif
+        };
 
         this.Grid = new Grid(dimension, seed);
 
-        this.LobbyManager = new LobbyManager(this, log);
-        this.GameManager = new GameManager(this, log);
-        this.PlayerManager = new PlayerManager(this, log);
-        this.PacketHandler = new PacketHandler(this, log);
-        this.PayloadHelper = new PayloadHelper(this);
+        this.Systems = new GameSystems(this.Grid);
+        this.TickLoop = new GameTickLoop(this, logger);
+        this.StateUpdater = new GameStateUpdater(this.Systems);
 
-        PacketSerializer.ExceptionThrew += (Exception ex) =>
-        {
-            log.Error(ex, "An error has been thrown in PacketSerializer.");
-        };
+        this.LobbyManager = new LobbyManager(this, logger);
+        this.GameManager = new GameManager(this, logger);
+        this.PlayerManager = new PlayerManager(this, logger);
+        this.PacketHandler = new PacketHandler(this, logger);
+        this.PayloadHelper = new PayloadHelper(this);
+        this.ReplayManager = replayPath is not null ? new ReplayManager(this, replayPath, logger) : null;
+
+        PacketSerializer.ExceptionThrew += ex => logger.Error(ex, "PacketSerializer threw an error.");
 
         _ = Task.Run(this.HandleStartGame);
         _ = Task.Run(this.RemoveAbortedConnections);
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GameInstance"/> class.
-    /// </summary>
-    /// <param name="options">The command line options.</param>
-    /// <param name="log">The logger.</param>
-    /// <param name="replayPath">The path to save the replay.</param>
-    public GameInstance(CommandLineOptions options, Logger log, string replayPath)
-        : this(options, log)
-    {
-        Debug.Assert(options.SaveReplay, "Replay path provided without saving replay.");
-        this.ReplayManager = new ReplayManager(this, replayPath, log);
-    }
-
-    /// <summary>
-    /// Gets the connections.
+    /// Gets all current connections.
     /// </summary>
     public IEnumerable<Connection> Connections => this.connections.Values;
 
     /// <summary>
-    /// Gets the connection sockets.
+    /// Gets all WebSocket references for active connections.
     /// </summary>
     public IEnumerable<WebSocket> ConnectionSockets => this.connections.Keys;
 
     /// <summary>
-    /// Gets the player connections.
+    /// Gets the list of player connections.
     /// </summary>
     public IEnumerable<PlayerConnection> Players => this.connections.Values.OfType<PlayerConnection>();
 
-#if STEREO
-
     /// <summary>
-    /// Gets the teams.
-    /// </summary>
-    public IEnumerable<Team> Teams => this.Players.Select(x => x.Team).Distinct();
-
-#endif
-
-    /// <summary>
-    /// Gets the spectator connections.
+    /// Gets the list of spectator connections.
     /// </summary>
     public IEnumerable<SpectatorConnection> Spectators => this.connections.Values.OfType<SpectatorConnection>();
 
     /// <summary>
-    /// Gets the disconnected in game players.
+    /// Gets the list of players that disconnected during the game.
     /// </summary>
     public IEnumerable<PlayerConnection> DisconnectedInGamePlayers => this.disconnectedConnectionsWhileInGame;
 
     /// <summary>
-    /// Gets the command line options.
+    /// Gets the command-line options.
     /// </summary>
     public CommandLineOptions Options { get; }
+
+    /// <summary>
+    /// Gets the server settings for this instance.
+    /// </summary>
+    public ServerSettings Settings { get; }
+
+    /// <summary>
+    /// Gets the grid representing the game map.
+    /// </summary>
+    public Grid Grid { get; }
 
     /// <summary>
     /// Gets the lobby manager.
@@ -137,88 +129,92 @@ internal class GameInstance
     public PlayerManager PlayerManager { get; }
 
     /// <summary>
-    /// Gets the replay manager.
-    /// </summary>
-    public ReplayManager? ReplayManager { get; }
-
-    /// <summary>
     /// Gets the packet handler.
     /// </summary>
     public PacketHandler PacketHandler { get; }
 
     /// <summary>
-    /// Gets the server settings.
-    /// </summary>
-    public ServerSettings Settings { get; }
-
-    /// <summary>
-    /// Gets the payload helper.
+    /// Gets the payload helper for serializing responses.
     /// </summary>
     public PayloadHelper PayloadHelper { get; }
 
     /// <summary>
-    /// Gets the grid of the game.
+    /// Gets the replay manager.
     /// </summary>
-    public Grid Grid { get; private set; }
+    public ReplayManager? ReplayManager { get; }
+
+#if STEREO
+    /// <summary>
+    /// Gets the list of teams (only for Stereo mode).
+    /// </summary>
+    public IEnumerable<Team> Teams => this.Players.Select(x => x.Team).Distinct();
+#endif
 
     /// <summary>
-    /// Adds a connection.
+    /// Gets the tick loop for the game instance.
+    /// </summary>
+    public GameTickLoop TickLoop { get; }
+
+    /// <summary>
+    /// Gets the state updater for the game instance.
+    /// </summary>
+    public GameStateUpdater StateUpdater { get; }
+
+    /// <summary>
+    /// Gets the game systems for the game instance.
+    /// </summary>
+    public GameSystems Systems { get; }
+
+    /// <summary>
+    /// Adds a connection to the game instance.
     /// </summary>
     /// <param name="connection">The connection to add.</param>
     public void AddConnection(Connection connection)
     {
         if (this.connections.TryAdd(connection.Socket, connection))
         {
-            this.log.Information($"Connection added: {connection}");
+            this.logger.Information("Connection added: {connection}", connection);
         }
         else
         {
-            this.log.Error($"Failed to add connection: {connection}");
+            this.logger.Error("Failed to add connection: {connection}", connection);
         }
     }
 
     /// <summary>
-    /// Removes a connection.
+    /// Removes a connection from the game instance.
     /// </summary>
-    /// <param name="socket">The socket of the connection to remove.</param>
+    /// <param name="socket">The WebSocket of the connection to remove.</param>
     public void RemoveConnection(WebSocket socket)
     {
-        bool removed;
-        Connection? connection;
-
-        lock (this.GameManager)
+        if (this.connections.TryRemove(socket, out var connection))
         {
-            removed = this.connections.TryRemove(socket, out connection);
-            if (removed)
-            {
-                this.log.Information($"Connection removed: {connection}");
+            this.logger.Information("Connection removed: {connection}", connection);
 
-                if (connection is PlayerConnection p)
+            if (connection is PlayerConnection player)
+            {
+                this.PlayerManager.RemovePlayer(player);
+
+                if (this.GameManager.Status is GameStatus.Running && !this.Settings.SandboxMode)
                 {
-                    this.PlayerManager.RemovePlayer(p);
+                    this.disconnectedConnectionsWhileInGame.Add(player);
+                    this.logger.Information("Player marked as disconnected in game: {player}", player);
                 }
             }
         }
-
-        if (!removed)
+        else
         {
-            this.log.Error($"Failed to remove connection: {connection}.");
-        }
-        else if (connection is PlayerConnection player
-            && this.GameManager.Status is GameStatus.Running
-            && !this.Settings.SandboxMode)
-        {
-            this.disconnectedConnectionsWhileInGame.Add(player);
-            this.log.Information(
-                "Connection marked as a disconnected while in game: {player}.", player);
+            this.logger.Error("Failed to remove connection: {socket}", socket);
         }
     }
 
-    /// <summary>
-    /// Handles the start of the game.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task HandleStartGame()
+    private static string GetVersion()
+    {
+        var version = typeof(GameInstance).Assembly.GetName().Version!;
+        return $"v{version.Major}.{version.Minor}.{version.Build}";
+    }
+
+    private async Task HandleStartGame()
     {
         while (this.GameManager.Status is GameStatus.InLobby && this.Players.Count() < this.Settings.NumberOfPlayers)
         {
@@ -232,21 +228,11 @@ internal class GameInstance
     {
         while (true)
         {
-            this.log.Verbose("Checking for aborted connections.");
-
-            var abortedConnections = this.connections.Values
-            .Where(x => x.Socket.State is WebSocketState.Aborted)
-            .ToList();
-
-            this.log.Verbose($"Found {abortedConnections.Count} aborted connections.");
-
-            foreach (Connection connection in abortedConnections)
+            var aborted = this.connections.Values.Where(c => c.Socket.State is WebSocketState.Aborted).ToList();
+            foreach (var conn in aborted)
             {
-                lock (this.GameManager)
-                {
-                    this.log.Information($"Removing aborted connection: {connection}");
-                    this.RemoveConnection(connection.Socket);
-                }
+                this.logger.Information("Removing aborted connection: {connection}", conn);
+                this.RemoveConnection(conn.Socket);
             }
 
             await Task.Delay(1000);

@@ -64,6 +64,8 @@ internal class TankSprite : PlayerBarComponent
             return;
         }
 
+        this.tankTexture.Opacity = this.turretTexture.Opacity = this.Player.IsTankDead ? 0.6f : 1f;
+
         if (this.Player.Tank is not null)
         {
             var tankDirection = this.Player.Tank.Direction;

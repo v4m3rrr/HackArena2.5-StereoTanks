@@ -14,18 +14,23 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
     /// <inheritdoc/>
     public override Turret? ReadJson(JsonReader reader, Type objectType, Turret? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var jsonObject = JObject.Load(reader);
-        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
-        var bulletCount = jsonObject["bulletCount"]?.Value<int>();
-        var remainingTicksToBullet = jsonObject["ticksToBullet"]?.Value<int?>();
+        var jObject = JObject.Load(reader);
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jObject["direction"]!, context.EnumSerialization);
+        var turret = new Turret(direction);
 
-        if (bulletCount is null)
+        if (context is GameSerializationContext.Spectator || jObject["bulletCount"] is not null)
         {
-            // Player perspective for other players
-            return new Turret(direction);
+            turret.Bullet = new BulletAbility(null!)
+            {
+                Count = jObject["bulletCount"]!.Value<int>(),
+                RemainingRegenerationTicks = jObject["ticksToBullet"]!.Value<int?>(),
+            };
+
+            turret.DoubleBullet = new DoubleBulletAbility(null!);
+            turret.Laser = new LaserAbility(null!);
         }
 
-        return new Turret(direction, bulletCount.Value, remainingTicksToBullet);
+        return turret;
     }
 
     /// <inheritdoc/>
@@ -38,8 +43,8 @@ internal class TurretJsonConverter(GameSerializationContext context) : JsonConve
 
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Tank.Owner.Id))
         {
-            jObject["bulletCount"] = value.BulletCount;
-            jObject["ticksToBullet"] = value.RemainingTicksToBullet;
+            jObject["bulletCount"] = value.Bullet!.Count;
+            jObject["ticksToBullet"] = value.Bullet.RemainingRegenerationTicks;
         }
 
         jObject.WriteTo(writer);

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
@@ -8,10 +7,10 @@ namespace GameClient.Sprites;
 /// <summary>
 /// Represents a fog of war sprite.
 /// </summary>
-/// <param name="visibilityGrid">The visibility grid.</param>
+/// <param name="tank">The tank logic associated with this fog of war.</param>
 /// <param name="grid">The grid component.</param>
 /// <param name="color">The color of the fog of war.</param>
-internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color) : ISprite
+internal class FogOfWar(GameLogic.Tank tank, GridComponent grid, Color color) : ISprite
 {
     private static readonly ScalableTexture2D.Static Texture = new("Images/Game/fog_of_war.svg");
 
@@ -20,9 +19,15 @@ internal class FogOfWar(bool[,] visibilityGrid, GridComponent grid, Color color)
     private readonly Vector2 origin = Vector2.One / 2f;
 
     /// <summary>
+    /// Gets the tank logic associated with this fog of war.
+    /// </summary>
+    public GameLogic.Tank Tank { get; } = tank;
+
+    /// <summary>
     /// Gets or sets the visibility grid.
     /// </summary>
-    public bool[,] VisibilityGrid { get; set; } = visibilityGrid;
+    public bool[,] VisibilityGrid { get; set; } = tank.VisibilityGrid
+        ?? throw new InvalidOperationException("The tank logic does not have a visibility grid.");
 
     /// <inheritdoc/>
     public static void LoadContent()

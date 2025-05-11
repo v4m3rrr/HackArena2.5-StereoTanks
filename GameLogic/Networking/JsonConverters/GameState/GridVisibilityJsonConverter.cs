@@ -7,10 +7,10 @@ namespace GameLogic.Networking.GameState;
 /// <summary>
 /// Represents a grid state json converter.
 /// </summary>
-internal class GridVisibilityJsonConverter() : JsonConverter<Grid.VisibilityPayload>
+internal class GridVisibilityJsonConverter() : JsonConverter<VisibilityPayload>
 {
     /// <inheritdoc/>
-    public override Grid.VisibilityPayload? ReadJson(JsonReader reader, Type objectType, Grid.VisibilityPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override VisibilityPayload? ReadJson(JsonReader reader, Type objectType, VisibilityPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
         var jObject = JArray.Load(reader);
 
@@ -28,16 +28,16 @@ internal class GridVisibilityJsonConverter() : JsonConverter<Grid.VisibilityPayl
             }
         }
 
-        return new Grid.VisibilityPayload(visibilityGrid);
+        return new VisibilityPayload(visibilityGrid);
     }
 
     /// <inheritdoc/>
-    public override void WriteJson(JsonWriter writer, Grid.VisibilityPayload? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, VisibilityPayload? value, JsonSerializer serializer)
     {
         var jObject = new JArray();
 
-        var width = value!.VisibilityGrid.GetLength(0);
-        var height = value!.VisibilityGrid.GetLength(1);
+        var width = value!.Grid.GetLength(0);
+        var height = value!.Grid.GetLength(1);
 
         var sb = new StringBuilder(width);
 
@@ -47,7 +47,7 @@ internal class GridVisibilityJsonConverter() : JsonConverter<Grid.VisibilityPayl
 
             for (int x = 0; x < width; x++)
             {
-                _ = sb.Append(value.VisibilityGrid[x, y] ? '1' : '0');
+                _ = sb.Append(value.Grid[x, y] ? '1' : '0');
             }
 
             jObject.Add(sb.ToString());

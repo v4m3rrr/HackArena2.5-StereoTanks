@@ -34,45 +34,31 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
             },
         };
 
+        List<(IRegenerable, ScalableTexture2D.Static)> regenerables = [];
+
         if (player.Tank is LightTank light)
         {
-            // Double bullet
-            _ = new Item(player, DoubleBulletStaticTexture, () => light.Turret.DoubleBulletRegenProgress)
-            {
-                Parent = this.listBox.ContentContainer,
-            };
-
-            // Radar
-            _ = new Item(player, RadarStaticTexture, () => light.RadarRegenProgress)
-            {
-                Parent = this.listBox.ContentContainer,
-            };
+            regenerables.Add((light.Turret.DoubleBullet!, DoubleBulletStaticTexture));
+            regenerables.Add((light.Radar!, RadarStaticTexture));
         }
         else if (player.Tank is HeavyTank heavy)
         {
-            // Laser
-            _ = new Item(player, LaserStaticTexture, () => heavy.Turret.LaserRegenProgress)
-            {
-                Parent = this.listBox.ContentContainer,
-            };
-
-            // Mine
-            _ = new Item(player, MineStaticTexture, () => heavy.MineRegenProgress)
-            {
-                Parent = this.listBox.ContentContainer,
-            };
+            regenerables.Add((heavy.Turret.Laser!, LaserStaticTexture));
+            regenerables.Add((heavy.Mine!, MineStaticTexture));
         }
-        else
+
+        foreach (var (regenerable, staticTexture) in regenerables)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(player),
-                player.Tank.Type,
-                "Tank type not supported.");
+            _ = new Item(player, staticTexture, () => regenerable.RegenerationProgress)
+            {
+                Parent = this.listBox.ContentContainer,
+            };
         }
 
         this.listBox.Components.Last().Transform.SizeChanged += (s, e) =>
         {
             var size = (s as Transform)!.Size;
+
             DoubleBulletStaticTexture.Transform.Size = size;
             LaserStaticTexture.Transform.Size = size;
             RadarStaticTexture.Transform.Size = size;
@@ -83,8 +69,8 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
     /// <inheritdoc/>
     public static void LoadStaticContent()
     {
-        LaserStaticTexture.Load();
         DoubleBulletStaticTexture.Load();
+        LaserStaticTexture.Load();
         RadarStaticTexture.Load();
         MineStaticTexture.Load();
     }
@@ -99,7 +85,7 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        if (this.Player.IsDead)
+        if (this.Player.IsTankDead)
         {
             return;
         }
@@ -157,7 +143,7 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
 
             if (progress is null)
             {
-                if (this.player.IsDead)
+                if (this.player.IsTankDead)
                 {
                     this.Background.Color = Color.White;
                     this.Background.Opacity = 0.27f;

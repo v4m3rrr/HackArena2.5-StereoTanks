@@ -1,13 +1,14 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using GameLogic.Networking.GameState;
+﻿using GameLogic.Networking.GameState;
+using GameLogic.Networking.Map;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking;
 
 /// <summary>
 /// Represents a grid state payload.
 /// </summary>
-public class GameStatePayload : IPacketPayload
+internal class GameStatePayload : IPacketPayload
 {
 #if STEREO
 
@@ -23,7 +24,7 @@ public class GameStatePayload : IPacketPayload
     }
 
     [JsonConstructor]
-    private GameStatePayload(int tick, List<Team> teams, Grid.MapPayload map)
+    private GameStatePayload(int tick, List<Team> teams, MapPayload map)
     {
         this.Tick = tick;
         this.Teams = teams;
@@ -44,7 +45,7 @@ public class GameStatePayload : IPacketPayload
     }
 
     [JsonConstructor]
-    private GameStatePayload(int tick, List<Player> players, Grid.MapPayload map)
+    private GameStatePayload(int tick, List<Player> players, MapPayload map)
     {
         this.Tick = tick;
         this.Players = players;
@@ -85,10 +86,10 @@ public class GameStatePayload : IPacketPayload
 #endif
 
     /// <summary>
-    /// Gets the map state.
+    /// Gets or sets the map state.
     /// </summary>
     [JsonProperty]
-    internal Grid.MapPayload Map { get; }
+    internal MapPayload Map { get; set; }
 
     /// <summary>
     /// Gets the converters to use during
@@ -102,8 +103,8 @@ public class GameStatePayload : IPacketPayload
     public static List<JsonConverter> GetConverters(GameSerializationContext context)
     {
         return [
-#if STEREO
             new TankJsonConverter(context),
+#if STEREO
             new HeavyTankJsonConverter(context),
             new LightTankJsonConverter(context),
             new HeavyTurretJsonConverter(context),
@@ -122,7 +123,7 @@ public class GameStatePayload : IPacketPayload
             new ItemJsonConverter(context),
 #endif
             new WallJsonConverter(context),
-            new ZoneJsonConverter(context),
+            new ZoneJsonConverter(),
             new PlayerJsonConverter(context)];
     }
 
@@ -133,6 +134,8 @@ public class GameStatePayload : IPacketPayload
     {
 #if STEREO
 
+        private bool[,]? visibilityGrid;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ForPlayer"/> class.
         /// </summary>
@@ -142,15 +145,16 @@ public class GameStatePayload : IPacketPayload
         /// <param name="teams">The list of teams.</param>
         /// <param name="grid">The grid state.</param>
         public ForPlayer(string id, int tick, Player player, List<Team> teams, Grid grid)
-            : this(id, tick, teams, grid.ToMapPayload(player))
+            : this(id, tick, teams, grid.ToMapPayload(player), player.Id)
         {
         }
 
         [JsonConstructor]
-        private ForPlayer(string id, int tick, List<Team> teams, Grid.MapPayload map)
+        private ForPlayer(string id, int tick, List<Team> teams, MapPayload map, string playerId)
             : base(tick, teams, map)
         {
             this.Id = id;
+            this.PlayerId = playerId;
         }
 
 #else
@@ -164,16 +168,16 @@ public class GameStatePayload : IPacketPayload
         /// <param name="players">The list of players.</param>
         /// <param name="grid">The grid state.</param>
         public ForPlayer(string id, int tick, Player player, List<Player> players, Grid grid)
-            : this(id, tick, players, grid.ToMapPayload(player))
+            : this(id, tick, players, grid.ToMapPayload(player), player.Id)
         {
         }
 
         [JsonConstructor]
-        [SuppressMessage("CodeQuality", "IDE0051", Justification = "Used by Newtonsoft.Json.")]
-        private ForPlayer(string id, int tick, List<Player> players, Grid.MapPayload map)
+        private ForPlayer(string id, int tick, List<Player> players, MapPayload map, string playerId)
             : base(tick, players, map)
         {
             this.Id = id;
+            this.PlayerId = playerId;
         }
 
 #endif
@@ -184,9 +188,70 @@ public class GameStatePayload : IPacketPayload
         public string Id { get; }
 
         /// <summary>
-        /// Gets the visibility grid of the player.
+        /// Gets the player id.
+        /// </summary>
+        public string PlayerId { get; }
+
+        /// <summary>
+        /// Gets the player visibility grid.
         /// </summary>
         [JsonIgnore]
-        public bool[,] VisibilityGrid => this.Map.Visibility!.VisibilityGrid;
+#if !STEREO
+        /* Backwards compatibility */
+        public bool[,] VisibilityGrid => this.Map.Visibility!.Grid;
+#else
+        public bool[,] VisibilityGrid => this.visibilityGrid ??= this.GetVisibilityGrid();
+#endif
+
+#if STEREO
+
+        /// <summary>
+        /// Parses the raw JSON game state payload and extracts a mapping of player IDs to team names.
+        /// </summary>
+        /// <param name="rawGameStatePayload">The raw game state payload JSON object.</param>
+        /// <returns>
+        /// A dictionary where keys are player IDs and values are their corresponding team names.
+        /// </returns>
+        public static Dictionary<string, string> GetPlayerTeamMap(JObject rawGameStatePayload)
+        {
+            return rawGameStatePayload["teams"]!
+                .SelectMany(team => team["players"]!.Select(player => new
+                {
+                    PlayerId = player["id"]!.Value<string>()!,
+                    TeamName = team["name"]!.Value<string>()!,
+                }))
+                .ToDictionary(p => p.PlayerId, p => p.TeamName);
+        }
+
+        private bool[,] GetVisibilityGrid()
+        {
+            bool[,] grid = null!;
+
+            foreach (var team in this.Teams)
+            {
+                if (team.CombinedVisibilityGrid is null)
+                {
+                    continue;
+                }
+
+                if (grid is null)
+                {
+                    grid = team.CombinedVisibilityGrid;
+                    continue;
+                }
+
+                for (int i = 0; i < grid.GetLength(0); i++)
+                {
+                    for (int j = 0; j < grid.GetLength(1); j++)
+                    {
+                        grid[i, j] |= team.CombinedVisibilityGrid[i, j];
+                    }
+                }
+            }
+
+            return grid;
+        }
+
+#endif
     }
 }

@@ -9,9 +9,8 @@ namespace GameLogic;
 /// The grid representing the walls.
 /// A cell is considered a wall if the value is <c>true</c>.
 /// </param>
-internal class FogOfWarManager(bool[,] wallGrid)
+internal class FogOfWarManager(Wall[,] wallGrid)
 {
-    private readonly bool[,] wallGrid = wallGrid;
     private readonly int width = wallGrid.GetLength(0);
     private readonly int height = wallGrid.GetLength(1);
 
@@ -34,9 +33,10 @@ internal class FogOfWarManager(bool[,] wallGrid)
     /// This method also checks if the element
     /// is within the bounds of the visibility grid.
     /// </remarks>
-    public static bool IsElementVisible(bool[,] visibilityGrid, int x, int y)
+    public static bool IsElementVisible(bool[,]? visibilityGrid, int x, int y)
     {
-        return x >= 0 && x < visibilityGrid.GetLength(0)
+        return visibilityGrid is not null
+            && x >= 0 && x < visibilityGrid.GetLength(0)
             && y >= 0 && y < visibilityGrid.GetLength(1)
             && visibilityGrid[x, y];
     }
@@ -61,7 +61,7 @@ internal class FogOfWarManager(bool[,] wallGrid)
         {
             var (x, y) = queue.Dequeue();
 
-            if (visited[x, y] || this.wallGrid[x, y])
+            if (visited[x, y] || wallGrid[x, y] is not null)
             {
                 continue;
             }
@@ -138,7 +138,7 @@ internal class FogOfWarManager(bool[,] wallGrid)
 
         while (x != endX || y != endY)
         {
-            if (this.wallGrid[x, y])
+            if (wallGrid[x, y] is not null)
             {
                 break;
             }
@@ -183,7 +183,7 @@ internal class FogOfWarManager(bool[,] wallGrid)
             int ix = (int)Math.Floor(x0);
             int iy = (int)Math.Floor(y0);
 
-            if (this.wallGrid[ix, iy])
+            if (wallGrid[ix, iy] is not null)
             {
                 return false;
             }

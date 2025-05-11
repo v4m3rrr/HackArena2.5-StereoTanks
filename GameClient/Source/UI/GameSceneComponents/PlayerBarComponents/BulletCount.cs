@@ -1,5 +1,4 @@
-﻿using System;
-using GameLogic;
+﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -12,6 +11,7 @@ internal class BulletCount : PlayerBarComponent, ILoadStaticContent
 {
     private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/bullet.svg");
 
+    private readonly BulletAbility ability;
     private readonly ScalableTexture2D[] textures;
     private readonly ScalableTexture2D[] backgroundTextures;
     private readonly ListBox listBox;
@@ -23,8 +23,13 @@ internal class BulletCount : PlayerBarComponent, ILoadStaticContent
     public BulletCount(Player player)
         : base(player)
     {
-        this.textures = new ScalableTexture2D[Turret.MaxBulletCount];
-        this.backgroundTextures = new ScalableTexture2D[Turret.MaxBulletCount];
+        var turret = player.Tank.Turret;
+
+        this.ability = turret.Bullet
+            ?? throw new InvalidOperationException("The turret does not have a bullet ability.");
+
+        this.textures = new ScalableTexture2D[BulletAbility.MaxBullets];
+        this.backgroundTextures = new ScalableTexture2D[BulletAbility.MaxBullets];
 
         this.listBox = new ListBox
         {
@@ -76,23 +81,23 @@ internal class BulletCount : PlayerBarComponent, ILoadStaticContent
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        if (!this.IsEnabled || (this.Player.Tank?.IsDead ?? true))
+        if (!this.IsEnabled || this.Player.IsTankDead)
         {
             return;
         }
 
-        var bulletCount = this.Player.Tank.Turret.BulletCount;
-        var bulletRegenProgress = this.Player.Tank.Turret.BulletRegenProgress;
+        var count = this.ability.Count;
+        var regenerationProgress = this.ability.RegenerationProgress;
 
         for (int i = 0; i < this.textures.Length; i++)
         {
-            if (i < bulletCount)
+            if (i < count)
             {
                 this.EnableTexture(i, null, Color.White);
             }
-            else if (bulletRegenProgress is not null && i == bulletCount)
+            else if (regenerationProgress is { } progress && i == count)
             {
-                var sourceRect = CalculateBulletRegenSourceRect(bulletRegenProgress.Value);
+                var sourceRect = CalculateBulletRegenSourceRect(progress);
                 this.EnableTexture(i, sourceRect, Color.White * 0.75f);
             }
             else
@@ -109,7 +114,7 @@ internal class BulletCount : PlayerBarComponent, ILoadStaticContent
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        if (!this.IsEnabled || (this.Player.Tank?.IsDead ?? true))
+        if (!this.IsEnabled || this.Player.IsTankDead)
         {
             return;
         }

@@ -19,7 +19,6 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
     private static readonly ScalableTexture2D.Static MineStaticTexture = new("Images/Game/MapItems/mine.svg");
 
     private readonly ScalableTexture2D texture;
-    private readonly GameLogic.SecondaryItem logic;
     private readonly GridComponent grid;
 
     /// <summary>
@@ -29,7 +28,7 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
     /// <param name="grid">The grid component.</param>
     public SecondaryItem(GameLogic.SecondaryItem logic, GridComponent grid)
     {
-        this.logic = logic;
+        this.Logic = logic;
         this.grid = grid;
         this.grid.DrawDataChanged += (s, e) => this.UpdateDestination();
 
@@ -44,6 +43,11 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
 
         this.UpdateDestination();
     }
+
+    /// <summary>
+    /// Gets the secondary item logic.
+    /// </summary>
+    public GameLogic.SecondaryItem Logic { get; private set; }
 
     /// <inheritdoc/>
     float IDetectableByRadar.Opacity
@@ -65,7 +69,7 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
     /// <inheritdoc/>
     IDetectableByRadar IDetectableByRadar.Copy()
     {
-        return new SecondaryItem(this.logic, this.grid);
+        return new SecondaryItem(this.Logic, this.grid);
     }
 
     /// <inheritdoc/>
@@ -111,8 +115,8 @@ internal class SecondaryItem : ISprite, IDetectableByRadar
 
         var size = new Point(tileSize, tileSize);
         var location = new Point(
-             gridLeft + (this.logic.X * tileSize) + drawOffset,
-             gridTop + (this.logic.Y * tileSize) + drawOffset);
+             gridLeft + (this.Logic.X * tileSize) + drawOffset,
+             gridTop + (this.Logic.Y * tileSize) + drawOffset);
 
         this.texture.Transform.Size = size;
         this.texture.Transform.Location = location;

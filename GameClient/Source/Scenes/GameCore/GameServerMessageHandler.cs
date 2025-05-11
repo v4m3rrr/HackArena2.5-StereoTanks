@@ -103,49 +103,42 @@ internal static class GameServerMessageHandler
     /// <param name="updater">The game updater.</param>
     public static void HandleGameStatePacket(Packet packet, GameUpdater updater)
     {
-        try
-        {
-            var isSpectator = ServerConnection.Data.IsSpectator;
+        bool isSpectator = ServerConnection.Data.IsSpectator;
 
-            GameSerializationContext context = isSpectator
-                ? new GameSerializationContext.Spectator()
-                : new GameSerializationContext.Player(Game.PlayerId!);
+        GameSerializationContext serializationContext = isSpectator
+            ? new GameSerializationContext.Spectator()
+            : new GameSerializationContext.Player(Game.PlayerId!)
+            {
+#if STEREO
+                PlayerTeamMap = GameStatePayload.ForPlayer.GetPlayerTeamMap(packet.Payload),
+#endif
+            };
 
-            var converters = GameStatePayload.GetConverters(context);
-            var serializer = PacketSerializer.GetSerializer(converters);
+        var converters = GameStatePayload.GetConverters(serializationContext);
+        var serializer = PacketSerializer.GetSerializer(converters);
 
-            GameStatePayload gameState = isSpectator
-                ? packet.GetPayload<GameStatePayload>(serializer)
-                : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
-
-            updater.UpdateTimer(gameState.Tick);
-            updater.UpdateGridLogic(gameState);
+        var gameState = isSpectator
+            ? packet.GetPayload<GameStatePayload>(serializer)
+            : packet.GetPayload<GameStatePayload.ForPlayer>(serializer);
 
 #if STEREO
-            updater.UpdateTeams(gameState.Teams);
-            updater.RefreshTeamBarPanels();
+        updater.UpdateTeams(gameState.Teams);
 #else
-            updater.UpdatePlayers(gameState.Players);
-            updater.RefreshPlayerBarPanels();
+        updater.UpdatePlayers(gameState.Players);
 #endif
 
-            if (gameState is GameStatePayload.ForPlayer playerGameState)
-            {
-                updater.UpdatePlayerFogOfWar(playerGameState);
-            }
-            else if (isSpectator)
-            {
-                updater.UpdatePlayersFogOfWar();
-            }
+        updater.UpdateGrid(gameState);
 
-            updater.EnableGridComponent();
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine("An error occurred while handling the game state packet.");
-            Debug.WriteLine(ex);
-            Debug.WriteLine(ex.StackTrace);
-        }
+#if STEREO
+        updater.UpdateTeams(gameState.Teams);
+        updater.RefreshTeamBarPanels();
+#else
+        updater.UpdatePlayers(gameState.Players);
+        updater.RefreshPlayerBarPanels();
+#endif
+
+        updater.UpdateTimer(gameState.Tick);
+        updater.EnableGridComponent();
     }
 
     /// <summary>

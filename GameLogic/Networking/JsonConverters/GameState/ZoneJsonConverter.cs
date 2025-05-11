@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GameLogic.ZoneStates;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking.GameState;
@@ -6,10 +7,7 @@ namespace GameLogic.Networking.GameState;
 /// <summary>
 /// Represents a zone json converter.
 /// </summary>
-/// <param name="context">The serialization context.</param>
-#pragma warning disable CS9113
-internal class ZoneJsonConverter(GameSerializationContext context) : JsonConverter<Zone>
-#pragma warning restore CS9113
+internal class ZoneJsonConverter : JsonConverter<Zone>
 {
     /// <inheritdoc/>
     public override Zone? ReadJson(JsonReader reader, Type objectType, Zone? existingValue, bool hasExistingValue, JsonSerializer serializer)
@@ -23,9 +21,12 @@ internal class ZoneJsonConverter(GameSerializationContext context) : JsonConvert
         var index = jObject["index"]!.Value<char>()!;
 
         var statusToken = jObject["status"]!;
-        var status = DeserializeZoneStatus(statusToken, serializer);
+        var status = DeserializeZoneState(statusToken, serializer);
 
-        return new Zone(x, y, width, height, index, status);
+        return new Zone(x, y, width, height, index)
+        {
+            State = status,
+        };
     }
 
     /// <inheritdoc/>
@@ -38,32 +39,32 @@ internal class ZoneJsonConverter(GameSerializationContext context) : JsonConvert
             ["width"] = value!.Width,
             ["height"] = value!.Height,
             ["index"] = value!.Index,
-            ["status"] = SerializeZoneStatus(value.Status, serializer),
+            ["status"] = SerializeZoneState(value.State, serializer),
         };
 
         jObject.WriteTo(writer);
     }
 
-    private static ZoneStatus DeserializeZoneStatus(JToken token, JsonSerializer serializer)
+    private static ZoneState DeserializeZoneState(JToken token, JsonSerializer serializer)
     {
         var type = token["type"]!.Value<string>();
 
         return type switch
         {
-            "beingCaptured" => token.ToObject<ZoneStatus.BeingCaptured>(serializer)!,
-            "captured" => token.ToObject<ZoneStatus.Captured>(serializer)!,
-            "beingContested" => token.ToObject<ZoneStatus.BeingContested>(serializer)!,
-            "beingRetaken" => token.ToObject<ZoneStatus.BeingRetaken>(serializer)!,
-            "neutral" => token.ToObject<ZoneStatus.Neutral>(serializer)!,
-            _ => throw new JsonSerializationException($"Unknown ZoneStatus type: {type}"),
+            "beingCaptured" => token.ToObject<BeingCapturedZoneState>(serializer)!,
+            "captured" => token.ToObject<CapturedZoneState>(serializer)!,
+            "beingContested" => token.ToObject<BeingContestedZoneState>(serializer)!,
+            "beingRetaken" => token.ToObject<BeingRetakenZoneState>(serializer)!,
+            "neutral" => token.ToObject<NeutralZoneState>(serializer)!,
+            _ => throw new JsonSerializationException($"Unknown ZoneState type: {type}"),
         };
     }
 
-    private static JObject SerializeZoneStatus(ZoneStatus status, JsonSerializer serializer)
+    private static JObject SerializeZoneState(ZoneState state, JsonSerializer serializer)
     {
-        var jObject = JObject.FromObject(status, serializer);
-        var type = status.GetType().Name;
-        jObject["type"] = char.ToLowerInvariant(type[0]) + type.Substring(1);
+        var jObject = JObject.FromObject(state, serializer);
+        var type = state.GetType().Name;
+        jObject["type"] = char.ToLowerInvariant(type[0]) + type.Split("ZoneState")[0][1..];
         return jObject;
     }
 }

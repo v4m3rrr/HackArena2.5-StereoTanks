@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using CommandLine;
 using CommandLine.Text;
-using Serilog.Core;
+using Serilog;
 
 namespace GameServer;
 
@@ -11,19 +11,19 @@ namespace GameServer;
 /// </summary>
 internal static partial class CommandLineParser
 {
-    private static Logger log = default!;
+    private static ILogger logger = default!;
 
     /// <summary>
     /// Parses the command line arguments.
     /// </summary>
     /// <param name="args">The command line arguments.</param>
-    /// <param name="log">The log.</param>
+    /// <param name="logger">The logger.</param>
     /// <returns>
     /// The parsed options or <see langword="null"/> if the options are invalid.
     /// </returns>
-    public static CommandLineOptions? Parse(string[] args, Logger log)
+    public static CommandLineOptions? Parse(string[] args, ILogger logger)
     {
-        CommandLineParser.log = log;
+        CommandLineParser.logger = logger;
 
         var parser = new Parser(with =>
         {
@@ -57,7 +57,7 @@ internal static partial class CommandLineParser
             {
                 foreach (var err in errs)
                 {
-                    log.Error("{err}", err);
+                    logger.Error("{err}", err);
                 }
 
                 var helpText = GenerateHelpText(parserResult);
@@ -74,43 +74,43 @@ internal static partial class CommandLineParser
     {
         if (!opts.SkipHostRegexValidation && !HostRegex().IsMatch(opts.Host))
         {
-            log.Error("Invalid host. Must be a valid IP address or 'localhost'.");
+            logger.Error("Invalid host. Must be a valid IP address or 'localhost'.");
             return false;
         }
 
         if (opts.Port is < 1 or > 65535)
         {
-            log.Error("Invalid port. Must be between 1 and 65535.");
+            logger.Error("Invalid port. Must be between 1 and 65535.");
             return false;
         }
 
         if (!opts.SandboxMode && opts.NumberOfPlayers is < 2 or > 4)
         {
-            log.Error("Invalid number of players. Must be between 2 and 4.");
+            logger.Error("Invalid number of players. Must be between 2 and 4.");
             return false;
         }
 
         if (opts.BroadcastInterval <= 0)
         {
-            log.Error("Invalid broadcast interval. Must be at least 1.");
+            logger.Error("Invalid broadcast interval. Must be at least 1.");
             return false;
         }
 
         if (opts.SandboxMode && opts.SaveReplay)
         {
-            log.Error("Cannot save replay in sandbox mode.");
+            logger.Error("Cannot save replay in sandbox mode.");
             return false;
         }
 
         if (!opts.SaveReplay && opts.ReplayFilepath is not null)
         {
-            log.Warning(
+            logger.Warning(
                 "Argument \"--replay-filepath\" provided without \"-r\" or \"--save-replay\", ignoring.");
         }
 
         if (!opts.SaveReplay && opts.OverwriteReplayFile)
         {
-            log.Warning(
+            logger.Warning(
                 "Argument \"--overwrite-record-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
         }
 
@@ -120,7 +120,7 @@ internal static partial class CommandLineParser
 
             if (!opts.OverwriteReplayFile && File.Exists(replayPath))
             {
-                log.Error($"Record file '{replayPath}' already exists. Use --overwrite-record-file to overwrite.");
+                logger.Error($"Record file '{replayPath}' already exists. Use --overwrite-record-file to overwrite.");
                 return false;
             }
 
@@ -128,7 +128,7 @@ internal static partial class CommandLineParser
             var pathWithoutExtension = Path.GetFileNameWithoutExtension(replayPath);
             if (opts.SaveResults && pathWithoutExtension.ToLower().EndsWith("_results"))
             {
-                log.Error("The record file cannot end with '_results'.");
+                logger.Error("The record file cannot end with '_results'.");
                 return false;
             }
 #endif
@@ -137,7 +137,7 @@ internal static partial class CommandLineParser
             var supportedExtensions = new[] { ".json", ".zip", ".tar.gz", ".txt", string.Empty };
             if (supportedExtensions.All(e => e != pathExtension))
             {
-                log.Warning(
+                logger.Warning(
                     "Unsupported record file extension '{pathExtension}'. " +
                     "Supported extensions are: {supportedExtensions}. " +
                     "You can still save the record file with the unsupported extension, but it may not work properly.",
@@ -151,7 +151,7 @@ internal static partial class CommandLineParser
             }
             catch (Exception ex)
             {
-                log.Error("Failed to create directory for record file '{replayPath}': {message}", replayPath, ex.Message);
+                logger.Error("Failed to create directory for record file '{replayPath}': {message}", replayPath, ex.Message);
                 return false;
             }
 
@@ -161,7 +161,7 @@ internal static partial class CommandLineParser
             }
             catch (Exception ex)
             {
-                log.Error("Failed to create record file '{replayPath}': {message}", replayPath, ex.Message);
+                logger.Error("Failed to create record file '{replayPath}': {message}", replayPath, ex.Message);
                 return false;
             }
         }

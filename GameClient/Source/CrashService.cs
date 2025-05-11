@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -105,9 +103,9 @@ internal static class CrashService
         if (DebugConsole.Instance is { } dc && dc.IsContentLoaded)
         {
             sb.AppendLine("-------------------------------------------------")
-                .AppendLine("Recent 20 Debug Messages:");
+                .AppendLine("Recent 200 Debug Messages:");
 
-            var debugMessages = DebugConsole.Instance.GetRecentMessages(20);
+            var debugMessages = DebugConsole.Instance.GetRecentMessages(200);
             debugMessages.Reverse();
             foreach (var message in debugMessages)
             {

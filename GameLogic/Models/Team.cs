@@ -61,31 +61,54 @@ public class Team : IEquatable<Team>
     public IEnumerable<Player> Players => this.players;
 
     /// <summary>
-    /// Determines whether the specified object is equal to the current object.
+    /// Gets the combined visibility grid for the team,
+    /// merged from the visibility of all member tanks.
     /// </summary>
-    /// <param name="obj">The object to compare with the current object.</param>
-    /// <returns>
-    /// <see langword="true"/> if the specified object is equal to the current object;
-    /// otherwise, <see langword="false"/>.
-    /// </returns>
+    public bool[,]? CombinedVisibilityGrid
+    {
+        get
+        {
+            bool[,]? grid = null;
+
+            foreach (var player in this.players)
+            {
+                if (player.Tank.VisibilityGrid is null)
+                {
+                    continue;
+                }
+
+                if (grid is null)
+                {
+                    var dim = player.Tank.VisibilityGrid.GetLength(0);
+                    grid = new bool[dim, dim];
+                }
+
+                for (int x = 0; x < grid.GetLength(0); x++)
+                {
+                    for (int y = 0; y < grid.GetLength(1); y++)
+                    {
+                        grid[x, y] |= player.Tank.VisibilityGrid[x, y];
+                    }
+                }
+            }
+
+            return grid;
+        }
+    }
+
+    /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return this.Equals(obj as Team);
     }
 
-    /// <inheritdoc cref="Equals(object)"/>
-    /// <remarks>
-    /// The teams are considered equal if they have the same name.
-    /// </remarks>
+    /// <inheritdoc/>
     public bool Equals(Team? other)
     {
         return this.Name == other?.Name;
     }
 
-    /// <summary>
-    /// Gets the hash code of the team.
-    /// </summary>
-    /// <returns>The hash code of the team.</returns>
+    /// <inheritdoc/>
     public override int GetHashCode()
     {
         return HashCode.Combine(this.Name);

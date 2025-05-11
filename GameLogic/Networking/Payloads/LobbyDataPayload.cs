@@ -8,10 +8,12 @@ namespace GameLogic.Networking;
 /// Represents a game state payload.
 /// </summary>
 /// <param name="PlayerId">The player id.</param>
+/// <param name="TeamName">The team name.</param>
 /// <param name="Teams">The list of teams.</param>
 /// <param name="ServerSettings">The server settings.</param>
 public record class LobbyDataPayload(
     string? PlayerId,
+    string? TeamName,
     List<Team> Teams,
     ServerSettings ServerSettings) : IPacketPayload
 #else

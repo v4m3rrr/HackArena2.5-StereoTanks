@@ -7,6 +7,16 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
     : SerializationContext(enumSerialization)
 {
     /// <summary>
+    /// Gets a value indicating whether the context is a spectator.
+    /// </summary>
+    public bool IsSpectator => this is Spectator;
+
+    /// <summary>
+    /// Gets a value indicating whether the context is a player.
+    /// </summary>
+    public bool IsPlayer => this is Player;
+
+    /// <summary>
     /// Determines whether the context is a player with the specified id.
     /// </summary>
     /// <param name="id">The id to check.</param>
@@ -19,6 +29,26 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
         return this is Player player && player.Id == id;
     }
 
+#if STEREO
+
+    /// <summary>
+    /// Determines whether the context is a player of the same team.
+    /// </summary>
+    /// <param name="teammateId">The id of the teammate to check against the current player.</param>
+    /// <returns>
+    /// <see langword="true"/> if the context is a player of the same team;
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
+    public bool IsTeammate(string teammateId)
+    {
+        return this is Player player
+            && player.Id != teammateId
+            && player.PlayerTeamMap.TryGetValue(teammateId, out var teamName)
+            && teamName == player.PlayerTeamMap[player.Id];
+    }
+
+#endif
+
     /// <summary>
     /// Represents a player serialization context.
     /// </summary>
@@ -30,9 +60,6 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
         /// Initializes a new instance of the <see cref="Player"/> class.
         /// </summary>
         /// <param name="id">The id of the player.</param>
-        /// <remarks>
-        /// This constructor should be used on the client side.
-        /// </remarks>
         public Player(string id)
             : base(EnumSerializationFormat.Int)
         {
@@ -51,37 +78,56 @@ public abstract class GameSerializationContext(EnumSerializationFormat enumSeria
             : base(enumSerialization)
         {
             this.Id = player.Id;
-            this.VisibilityGrid = player.VisibilityGrid;
+
 #if STEREO
-            this.IsUsingRadar = (player.Tank as LightTank)?.IsUsingRadar;
+            this.IsUsingRadar = player.Tank.GetAbility<RadarAbility>()?.IsActive!;
+            this.VisibilityGrid = player.Team.CombinedVisibilityGrid;
+            this.PlayerTeamMap = player.Team.Players.ToDictionary(p => p.Id, p => player.Team.Name);
 #else
-            this.IsUsingRadar = player.IsUsingRadar;
+            this.IsUsingRadar = player.Tank.GetAbility<RadarAbility>()?.IsActive ?? false;
+            this.VisibilityGrid = player.Tank.VisibilityGrid;
 #endif
         }
 
 #endif
 
-        /// <summary>
-        /// Gets the id of the player.
-        /// </summary>
+            /// <summary>
+            /// Gets the id of the player.
+            /// </summary>
         public string Id { get; }
 
-        /// <summary>
-        /// Gets the visibility grid of the player.
-        /// </summary>
-        /// <remarks>
-        /// On the client side, this property is always <see langword="null"/>.
-        /// </remarks>
-        public bool[,]? VisibilityGrid { get; }
+#if STEREO
 
         /// <summary>
-        /// Gets a value indicating whether the player is using radar.
+        /// Gets the team name of the player.
         /// </summary>
+        public
+#if CLIENT
+        required
+#endif
+        IReadOnlyDictionary<string, string> PlayerTeamMap
+        {
+            get;
+#if CLIENT
+            init;
+#endif
+        }
+
+#endif
+
+            /// <summary>
+            /// Gets a value indicating whether the player is using radar.
+            /// </summary>
 #if STEREO
         public bool? IsUsingRadar { get; }
 #else
         public bool IsUsingRadar { get; }
 #endif
+
+        /// <summary>
+        /// Gets the visibility grid of the player.
+        /// </summary>
+        public bool[,]? VisibilityGrid { get; }
     }
 
     /// <summary>

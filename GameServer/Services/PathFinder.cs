@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using GameLogic;
+﻿using GameLogic;
 using GameLogic.Networking;
 using GameLogic.Networking.GoToElements;
 using GameServer.Enums;
@@ -34,7 +33,7 @@ internal class PathFinder
         this.tank = player.Tank;
 
         this.grid = new Grid(this.gridDim, serverSettings.Seed);
-        this.grid.UpdateFromGameStatePayload(gameState);
+        GameStateApplier.ApplyToGrid(this.grid, gameState);
 
         this.wallGrid = new bool[this.gridDim, this.gridDim];
         for (int i = 0; i < this.gridDim; i++)
@@ -191,7 +190,7 @@ internal class PathFinder
         penalty += penalties.Mine * this.grid.Mines.Count(b => b.X == x && b.Y == y);
         penalty += penalties.Laser * this.grid.Lasers.Count(b => b.X == x && b.Y == y);
 
-        if (tick == this.gameState.Tick + 1 && !this.gameState.VisibilityGrid[x, y])
+        if (tick == this.gameState.Tick + 1 && !this.gameState.VisibilityGrid![x, y])
         {
             penalty += penalties.Blindly;
         }

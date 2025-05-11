@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
 using GameLogic.Networking;
-using Serilog.Core;
+using Serilog;
 
 namespace GameServer;
 
@@ -11,13 +11,13 @@ namespace GameServer;
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
 /// <param name="EnumSerialization">The enum serialization format.</param>
-/// <param name="Log">The logger.</param>
+/// <param name="Logger">The logger.</param>
 internal record class UnknownConnection(
     HttpListenerContext Context,
     WebSocket Socket,
     EnumSerializationFormat EnumSerialization,
-    Logger Log)
-    : Connection(Context, Socket, new ConnectionData(EnumSerialization), Log)
+    ILogger Logger)
+    : Connection(Context, Socket, new ConnectionData(EnumSerialization), Logger)
 {
     /// <summary>
     /// Gets or sets the target type of the connection.

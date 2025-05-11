@@ -45,7 +45,7 @@ internal class Nickname : PlayerBarComponent
 
         base.Update(gameTime);
 
-        this.text.Color = this.Player.Tank?.IsDead ?? true ? Color.DarkGray : Color.White;
+        this.text.Color = this.Player.IsTankDead ? Color.DarkGray : Color.White;
     }
 }
 

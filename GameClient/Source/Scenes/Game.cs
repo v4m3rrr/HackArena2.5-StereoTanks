@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
@@ -81,9 +77,11 @@ internal class Game : Scene
     public static string? PlayerId { get; set; }
 
 #if STEREO
+
     private IEnumerable<Player> Players => this.teams.SelectMany(t => t.Players);
 
     private Player? Player => this.Players.FirstOrDefault(p => p.Id == PlayerId);
+
 #endif
 
     /// <inheritdoc/>
@@ -196,7 +194,7 @@ internal class Game : Scene
 #endif
     {
 #if STEREO
-        var inputHandler = new GameInputHandler(this.Player?.Tank.Type);
+        var inputHandler = new GameInputHandler(this.Player?.Tank?.Type);
 #else
         var inputHandler = new GameInputHandler();
 #endif
@@ -291,7 +289,7 @@ internal class Game : Scene
     {
         var gameState = this.replayGameStates[tick];
         this.updater.UpdateTimer(gameState.Tick);
-        this.updater.UpdateGridLogic(gameState);
+        this.updater.UpdateGrid(gameState);
 
 #if STEREO
         this.updater.UpdateTeams(gameState.Teams);
@@ -300,7 +298,6 @@ internal class Game : Scene
         this.updater.UpdatePlayers(gameState.Players);
         this.updater.RefreshPlayerBarPanels();
 #endif
-        this.updater.UpdatePlayersFogOfWar();
     }
 
     private async void Game_Showing(object? sender, SceneDisplayEventArgs? e)
@@ -310,9 +307,19 @@ internal class Game : Scene
 
         if (!this.isReplay)
         {
-            ServerConnection.BufferSize = 1024 * 32;
             ServerConnection.MessageReceived += this.Connection_MessageReceived;
         }
+
+#if DEBUG
+
+        if (!this.isReplay)
+        {
+            var lobbyDataRequest = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
+            var packet = PacketSerializer.Serialize(lobbyDataRequest);
+            await ServerConnection.SendAsync(packet);
+        }
+
+#endif
 
         this.components.MenuButton.IsEnabled = !this.isReplay
 #if HACKATHON
@@ -357,19 +364,6 @@ internal class Game : Scene
             }
         }
 
-        if (!this.isReplay)
-        {
-            var gameSceneLoadedPayload = new EmptyPayload() { Type = PacketType.ReadyToReceiveGameState };
-            var packet = PacketSerializer.Serialize(gameSceneLoadedPayload);
-            await ServerConnection.SendAsync(packet);
-        }
-
-        if (!this.isReplay && Settings is null)
-        {
-            var lobbyDataRequest = new EmptyPayload() { Type = PacketType.LobbyDataRequest };
-            var packet = PacketSerializer.Serialize(lobbyDataRequest);
-            await ServerConnection.SendAsync(packet);
-        }
 #if HACKATHON
         else
         {
@@ -389,11 +383,17 @@ internal class Game : Scene
             this.updater.UpdateMatchName(matchName);
         }
 #endif
+
+        if (!this.isReplay)
+        {
+            var gameSceneLoadedPayload = new EmptyPayload() { Type = PacketType.ReadyToReceiveGameState };
+            var packet = PacketSerializer.Serialize(gameSceneLoadedPayload);
+            await ServerConnection.SendAsync(packet);
+        }
     }
 
     private async void Game_Hiding(object? sender, EventArgs e)
     {
-        this.components.Grid.ResetAllFogsOfWar();
         this.updater.DisableGridComponent();
 
         /* TODO: Unload content */

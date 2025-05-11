@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using GameLogic;
+﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -90,7 +88,7 @@ internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        if (this.Player.IsDead)
+        if (this.Player.IsTankDead)
         {
             return;
         }
@@ -139,7 +137,7 @@ internal class SecondaryItems : PlayerBarComponent, ILoadStaticContent
 
         public override void Update(GameTime gameTime)
         {
-            if (!this.IsEnabled)
+            if (!this.IsEnabled || this.player.IsTankDead)
             {
                 return;
             }

@@ -9,17 +9,11 @@
 /// <param name="Ticks">The number of ticks per game.</param>
 /// <param name="BroadcastInterval">The interval in milliseconds between broadcasts.</param>
 /// <param name="SandboxMode">Whether to enable sandbox mode.</param>
-/// <param name="EagerBroadcast">Whether to broadcast the game state eagerly.</param>
-/// <param name="MatchName">The name of the match.</param>
 /// <param name="Version">The version of the server.</param>
 /// <remarks>
 /// <para>
 /// <paramref name="Ticks"/> are <see langword="null"/>
 /// when the game sandbox mode is enabled.
-/// </para>
-/// <para>
-/// <paramref name="EagerBroadcast"/> and <paramref name="MatchName"/>
-/// are only available in HACKATHON builds.
 /// </para>
 /// </remarks>
 public record class ServerSettings(
@@ -29,6 +23,19 @@ public record class ServerSettings(
     int? Ticks,
     int BroadcastInterval,
     bool SandboxMode,
-    bool EagerBroadcast,
-    string? MatchName,
-    string Version);
+    string Version)
+{
+#if HACKATHON
+
+    /// <summary>
+    /// Gets a value indicating whether to broadcast the game state eagerly.
+    /// </summary>
+    public required bool EagerBroadcast { get; init; }
+
+    /// <summary>
+    /// Gets the name of the match.
+    /// </summary>
+    public required string? MatchName { get; init; }
+
+#endif
+}

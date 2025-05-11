@@ -3,6 +3,8 @@ using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking.LobbyData;
 
+#pragma warning disable CS9113
+
 /// <summary>
 /// Represents a player json converter.
 /// </summary>

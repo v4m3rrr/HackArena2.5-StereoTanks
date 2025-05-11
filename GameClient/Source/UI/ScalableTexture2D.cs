@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
@@ -146,5 +145,4 @@ internal class ScalableTexture2D : TextureComponent
             this.TextureChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-
 }

@@ -7,41 +7,14 @@
 /// Initializes a new instance of the <see cref="Player"/> class.
 /// </remarks>
 /// <param name="id">The id of the player.</param>
-/// <remarks>
-/// <para>
-/// The <see cref="Tank"/> property is set to <see langword="null"/>.
-/// See its documentation for more information.
-/// </para>
-/// </remarks>
 public class Player(string id) : IEquatable<Player>
 {
-    private const int RegenTicks = 50;
-    private Tank tank = null!;
-
 #if !STEREO
     private uint color;
     private string nickname = null!;
 #endif
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Player"/> class.
-    /// </summary>
-    /// <param name="id">The id of the player.</param>
-    /// <param name="remainingTicksToRegen">The remaining ticks to regenerate the tank.</param>
-    /// <param name="visibilityGrid">The visibility grid of the player.</param>
-    internal Player(string id, int? remainingTicksToRegen, bool[,]? visibilityGrid)
-        : this(id)
-    {
-        this.RemainingTicksToRegen = remainingTicksToRegen;
-        this.VisibilityGrid = visibilityGrid;
-    }
-
-    /// <summary>
-    /// Occurs when the tank regenerates.
-    /// </summary>
-    internal event EventHandler? TankRegenerated;
-
-    /// <summary>
+     /// <summary>
     /// Gets the id of the player.
     /// </summary>
     public string Id { get; private set; } = id;
@@ -97,63 +70,10 @@ public class Player(string id) : IEquatable<Player>
     /// </summary>
     public int Ping { get; set; }
 
-#if !STEREO
-    // TODO: Move it to tank class
-
     /// <summary>
-    /// Gets a value indicating whether the player is using radar.
+    /// Gets or sets the tank of the player.
     /// </summary>
-    public bool IsUsingRadar { get; internal set; }
-
-#endif
-
-    /// <summary>
-    /// Gets the regeneration progress of the tank.
-    /// </summary>
-    /// <value>
-    /// The regeneration progress of the tank as a value between 0 and 1.
-    /// </value>
-    /// <remarks>
-    /// The value is <see langword="null"/> if the tank is not dead.
-    /// </remarks>
-    public float? RegenProgress => this.RemainingTicksToRegen is not null
-        ? 1 - (this.RemainingTicksToRegen / (float)RegenTicks)
-        : null;
-
-    /// <summary>
-    /// Gets the remaining ticks to regenerate the tank.
-    /// </summary>
-    /// <remarks>
-    /// The value is <see langword="null"/> if the tank is not dead.
-    /// </remarks>
-    public int? RemainingTicksToRegen { get; private set; }
-
-    /// <summary>
-    /// Gets a value indicating whether the player is dead.
-    /// </summary>
-    public bool IsDead => this.Tank is null || this.Tank.IsDead;
-
-    /// <summary>
-    /// Gets the tank of the player.
-    /// </summary>
-    /// <remarks>
-    /// The setter is internal because the owner is set
-    /// in the <see cref="Grid.UpdateFromGameStatePayload"/> method.
-    /// </remarks>
-    public Tank Tank
-    {
-        get => this.tank;
-        internal set
-        {
-            this.tank = value;
-            this.tank.Died += (s, e) => this.RemainingTicksToRegen = RegenTicks;
-        }
-    }
-
-    /// <summary>
-    /// Gets the visibility grid of the player.
-    /// </summary>
-    public bool[,]? VisibilityGrid { get; private set; }
+    public Tank Tank { get; set; } = default!;
 
 #if STEREO
 
@@ -164,32 +84,74 @@ public class Player(string id) : IEquatable<Player>
 
 #endif
 
+#if CLIENT
+
     /// <summary>
-    /// Determines whether the specified object is equal to the current object.
+    /// Gets or sets the remaining regeneration ticks of the player tank.
     /// </summary>
-    /// <param name="obj">The object to compare with the current object.</param>
-    /// <returns>
-    /// <see langword="true"/> if the specified object is equal to the current object;
-    /// otherwise, <see langword="false"/>.
-    /// </returns>
+    /// <remarks>
+    /// It is used to display the regeneration progress of the tank.
+    /// </remarks>
+    public int? RemainingRespawnTankTicks { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the player tank is dead.
+    /// </summary>
+    public bool IsTankDead => this.RemainingRespawnTankTicks is not null;
+
+    /// <summary>
+    /// Gets the regeneration progress of the tank.
+    /// </summary>
+    /// <remarks>
+    /// It is used to display the regeneration progress of the tank.
+    /// </remarks>
+    public float? RespawnTankProgress => RegenerationUtils.GetRegenerationProgres(
+        this.RemainingRespawnTankTicks, Tank.RegenerationTicks);
+
+#endif
+
+#if !STEREO
+
+    /* Backward compatibility */
+
+#pragma warning disable SA1201
+
+    private bool? isUsingRadar;
+    private bool[,]? visibilityGrid;
+
+    /// <summary>
+    /// Gets the visibility grid of the player.
+    /// </summary>
+    internal bool? IsUsingRadar
+    {
+        get => this.Tank?.Radar?.IsActive ?? this.isUsingRadar;
+        init => this.isUsingRadar = value;
+    }
+
+    /// <summary>
+    /// Gets the visibility grid of the player.
+    /// </summary>
+    internal bool[,]? VisibilityGrid
+    {
+        get => this.Tank?.VisibilityGrid ?? this.visibilityGrid;
+        init => this.visibilityGrid = value;
+    }
+
+#endif
+
+    /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return this.Equals(obj as Player);
     }
 
-    /// <inheritdoc cref="Equals(object)"/>
-    /// <remarks>
-    /// The players are considered equal if they have the same id.
-    /// </remarks>
+    /// <inheritdoc/>
     public bool Equals(Player? other)
     {
         return this.Id == other?.Id;
     }
 
-    /// <summary>
-    /// Gets the hash code of the player.
-    /// </summary>
-    /// <returns>The hash code of the player.</returns>
+    /// <inheritdoc/>
     public override int GetHashCode()
     {
         return HashCode.Combine(this.Id);
@@ -209,45 +171,19 @@ public class Player(string id) : IEquatable<Player>
         this.Score = player.Score;
 #endif
         this.Ping = player.Ping;
-        this.RemainingTicksToRegen = player.RemainingTicksToRegen;
-        this.VisibilityGrid = player.VisibilityGrid;
+
+#if !STEREO
+        /* Backward compatibility */
+        this.visibilityGrid = player.VisibilityGrid;
+#endif
+
+        this.RemainingRespawnTankTicks = player.RemainingRespawnTankTicks;
 
         if (player.Tank is not null)
         {
-            this.tank?.UpdateFrom(player.Tank);
+            this.Tank?.UpdateFrom(player.Tank);
         }
     }
 
 #endif
-
-    /// <summary>
-    /// Calculates the visibility grid for the player.
-    /// </summary>
-    /// <param name="calculator">The fog of war calculator to use.</param>
-    internal void CalculateVisibilityGrid(FogOfWarManager calculator)
-    {
-        const int angle = 144;
-
-        this.VisibilityGrid = this.IsDead
-            ? calculator.EmptyGrid
-            : calculator.CalculateVisibilityGrid(this.Tank, angle);
-    }
-
-    /// <summary>
-    /// Regenerates the tank over time, if it is dead.
-    /// </summary>
-    internal void UpdateRegenerationProgress()
-    {
-        if (!this.Tank.IsDead)
-        {
-            return;
-        }
-
-        if (--this.RemainingTicksToRegen <= 0)
-        {
-            this.Tank.SetHealth(100);
-            this.RemainingTicksToRegen = null;
-            this.TankRegenerated?.Invoke(this, EventArgs.Empty);
-        }
-    }
 }

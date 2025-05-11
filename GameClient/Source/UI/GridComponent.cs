@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using GameClient.Networking;
 using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -9,10 +7,12 @@ namespace GameClient;
 
 /// <summary>
 /// Represents the grid component.
+/// Handles layout, update and draw loops, and delegates synchronization.
 /// </summary>
 internal class GridComponent : Component
 {
     private readonly object syncLock = new();
+    private readonly List<ISyncService> syncServices = [];
 
     private readonly List<Sprites.Tank> tanks = [];
     private readonly List<Sprites.Bullet> bullets = [];
@@ -23,7 +23,7 @@ internal class GridComponent : Component
 #if !STEREO
     private readonly List<Sprites.SecondaryItem> mapItems = [];
 #endif
-    private readonly Dictionary<Player, Sprites.FogOfWar> fogsOfWar = [];
+    private readonly List<Sprites.FogOfWar> fogsOfWar = [];
 
     private Sprites.Wall.Solid?[,] solidWalls;
     private List<Sprites.Wall.Border> borderWalls = [];
@@ -35,9 +35,21 @@ internal class GridComponent : Component
     {
         this.Logic = Grid.Empty;
         this.solidWalls = new Sprites.Wall.Solid?[0, 0];
-        this.Logic.DimensionsChanged += this.Logic_DimensionsChanged;
-        this.Logic.StateUpdated += this.Logic_StateDeserialized;
+
+        this.Logic.DimensionsChanged += this.OnDimensionsChanged;
         this.Transform.SizeChanged += (s, e) => this.UpdateDrawData();
+
+#if !STEREO
+        this.syncServices.Add(new MapItemSyncService(this, this.mapItems));
+#endif
+        this.syncServices.Add(new TankSyncService(this,  this.tanks));
+        this.syncServices.Add(new BulletSyncService(this, this.bullets));
+        this.syncServices.Add(new LaserSyncService(this, this.lasers));
+        this.syncServices.Add(new MineSyncService(this, this.mines));
+        this.syncServices.Add(new ZoneSyncService(this, this.zones));
+        this.syncServices.Add(new WallSyncService(this, () => this.solidWalls, walls => this.solidWalls = walls, this.borderWalls));
+        this.syncServices.Add(new RadarSyncService(this, this.radarEffects));
+        this.syncServices.Add(new FogOfWarSyncService(this, this.fogsOfWar));
     }
 
     /// <summary>
@@ -51,24 +63,25 @@ internal class GridComponent : Component
     public Grid Logic { get; private set; }
 
     /// <summary>
-    /// Gets the tile size.
+    /// Gets the tile size in pixels.
     /// </summary>
-    /// <value>The tile size in pixels.</value>
     public int TileSize { get; private set; }
 
     /// <summary>
-    /// Gets the draw offset.
+    /// Gets the pixel offset to center the grid.
     /// </summary>
-    /// <value>The draw offset in pixels to center the grid.</value>
     public int DrawOffset { get; private set; }
 
-    private IEnumerable<ISprite> Sprites
+    /// <summary>
+    /// Gets all sprites (tanks, bullets, zones, etc.) for rendering.
+    /// </summary>
+    public IEnumerable<ISprite> AllSprites
     {
         get
         {
             lock (this.syncLock)
             {
-                return this.fogsOfWar.Values.Cast<ISprite>()
+                return this.fogsOfWar.Cast<ISprite>()
                     .Concat(this.zones)
 #if !STEREO
                     .Concat(this.mapItems)
@@ -97,7 +110,7 @@ internal class GridComponent : Component
 
             base.Update(gameTime);
 
-            foreach (ISprite sprite in this.Sprites.ToList())
+            foreach (ISprite sprite in this.AllSprites.ToList())
             {
                 sprite.Update(gameTime);
             }
@@ -116,7 +129,7 @@ internal class GridComponent : Component
 
             base.Draw(gameTime);
 
-            foreach (ISprite sprite in this.Sprites.ToList())
+            foreach (ISprite sprite in this.AllSprites.ToList())
             {
                 sprite.Draw(gameTime);
             }
@@ -124,51 +137,31 @@ internal class GridComponent : Component
     }
 
     /// <summary>
-    /// Updates the fog of war.
-    /// </summary>
-    /// <param name="player">The player whose fog of war will be updated.</param>
-    /// <param name="visibilityGrid">The visibility grid.</param>
-    public void UpdatePlayerFogOfWar(Player player, bool[,] visibilityGrid)
-    {
-        lock (this.syncLock)
-        {
-            if (!this.fogsOfWar.TryGetValue(player, out var fogOfWar))
-            {
-                fogOfWar = new Sprites.FogOfWar(visibilityGrid, this, new Color(player.Color));
-                this.fogsOfWar[player] = fogOfWar;
-            }
-            else
-            {
-                fogOfWar.VisibilityGrid = visibilityGrid;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Resets all fogs of war.
-    /// </summary>
-    public void ResetAllFogsOfWar()
-    {
-        lock (this.syncLock)
-        {
-            this.fogsOfWar.Clear();
-        }
-    }
-
-    /// <summary>
-    /// Resets the fog of war.
-    /// </summary>
-    /// <param name="player">The player whose fog of war will be reset.</param>
-    public void ResetFogOfWar(Player player)
-    {
-        _ = this.fogsOfWar.Remove(player);
-    }
-
-    /// <summary>
-    /// Clears all sprites.
+    /// Synchronizes all visual subsystems with the current game logic state.
     /// </summary>
     /// <remarks>
-    /// This method do not unload the textures.
+    /// This method sequentially invokes all registered <see cref="ISyncService"/> implementations
+    /// to update the corresponding sprites (e.g., tanks, bullets, fog of war, walls).
+    /// It is thread-safe and protected by an internal synchronization lock.
+    /// </remarks>
+    public void Sync()
+    {
+        lock (this.syncLock)
+        {
+            foreach (var service in this.syncServices)
+            {
+                service.Sync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clears all rendered sprite data from the client-side grid,
+    /// resetting all visual elements to an empty state.
+    /// </summary>
+    /// <remarks>
+    /// The operation is thread-safe
+    /// and protected by an internal synchronization lock.
     /// </remarks>
     public void ClearSprites()
     {
@@ -188,7 +181,7 @@ internal class GridComponent : Component
         }
     }
 
-    private void Logic_DimensionsChanged(object? sender, EventArgs args)
+    private void OnDimensionsChanged(object? sender, EventArgs args)
     {
         this.UpdateDrawData();
 
@@ -211,216 +204,6 @@ internal class GridComponent : Component
         this.borderWalls = borderWalls;
     }
 
-    private void Logic_StateDeserialized(object? sender, EventArgs args)
-    {
-        try
-        {
-            // A temporary solution to fix builds on Linux.
-            // Loading textures on a separate thread causes a crash.
-            // In the future, all textures will be loaded before the game starts.
-#if WINDOWS
-            lock (this.syncLock)
-            {
-                this.SyncWalls();
-                this.SyncTanks();
-                this.SyncBullets();
-                this.SyncLasers();
-                this.SyncZones();
-#if !STEREO
-                this.SyncMapItems();
-#endif
-                this.SyncMines();
-                this.SyncRadarEffect();
-            }
-#else
-                GameClientCore.InvokeOnMainThread(() =>
-            {
-                // Do we need lock here?
-                this.SyncWalls();
-                this.SyncTanks();
-                this.SyncBullets();
-                this.SyncLasers();
-                this.SyncZones();
-#if !STEREO
-                this.SyncMapItems();
-#endif
-                this.SyncMines();
-                this.SyncRadarEffect();
-            });
-#endif
-        }
-        catch (Exception e)
-        {
-            DebugConsole.ThrowError(e);
-        }
-    }
-
-    private void SyncWalls()
-    {
-        for (int i = 0; i < this.Logic.WallGrid.GetLength(0); i++)
-        {
-            for (int j = 0; j < this.Logic.WallGrid.GetLength(1); j++)
-            {
-                var newWallLogic = this.Logic.WallGrid[i, j];
-                if (newWallLogic is null)
-                {
-                    this.solidWalls[i, j] = null;
-                }
-                else if (this.solidWalls[i, j] is null)
-                {
-                    var wall = new Sprites.Wall.Solid(newWallLogic, this);
-                    this.solidWalls[i, j] = wall;
-                }
-                else
-                {
-                    this.solidWalls[i, j]?.UpdateLogic(newWallLogic);
-                }
-            }
-        }
-    }
-
-    private void SyncTanks()
-    {
-        foreach (var tank in this.Logic.Tanks)
-        {
-            var tankSprite = this.tanks.FirstOrDefault(t => t.Logic.Equals(tank));
-            if (tankSprite == null)
-            {
-                tankSprite = new Sprites.Tank(tank, this);
-                this.tanks.Add(tankSprite);
-            }
-            else
-            {
-                tankSprite.UpdateLogic(tank);
-            }
-        }
-
-        _ = this.tanks.RemoveAll(t => !this.Logic.Tanks.Any(t2 => t2.Equals(t.Logic)));
-    }
-
-    private void SyncBullets()
-    {
-        foreach (var bullet in this.Logic.Bullets)
-        {
-            var bulletSprite = this.bullets.FirstOrDefault(b => b.Logic.Equals(bullet));
-            if (bulletSprite == null)
-            {
-                bulletSprite = bullet is DoubleBullet doubleBullet
-                    ? new Sprites.DoubleBullet(doubleBullet, this)
-                    : new Sprites.Bullet(bullet, this);
-                this.bullets.Add(bulletSprite);
-            }
-            else
-            {
-                bulletSprite.UpdateLogic(bullet);
-            }
-        }
-
-        _ = this.bullets.RemoveAll(b => !this.Logic.Bullets.Any(b2 => b2.Equals(b.Logic)));
-    }
-
-    private void SyncZones()
-    {
-        foreach (var zone in this.Logic.Zones)
-        {
-            var zoneSprite = this.zones.FirstOrDefault(z => z.Logic.Equals(zone));
-            if (zoneSprite == null)
-            {
-                zoneSprite = new Sprites.Zone(zone, this);
-                this.zones.Add(zoneSprite);
-            }
-            else
-            {
-                zoneSprite.UpdateLogic(zone);
-            }
-        }
-
-        _ = this.zones.RemoveAll(z => !this.Logic.Zones.Any(z2 => z2.Equals(z.Logic)));
-    }
-
-#if !STEREO
-
-    private void SyncMapItems()
-    {
-        this.mapItems.Clear();
-        foreach (var item in this.Logic.Items)
-        {
-            var sprite = new Sprites.SecondaryItem(item, this);
-            this.mapItems.Add(sprite);
-        }
-    }
-
-#endif
-
-    private void SyncLasers()
-    {
-        foreach (var laser in this.Logic.Lasers)
-        {
-            var laserSprite = this.lasers.FirstOrDefault(l => l.Logic.Equals(laser));
-            if (laserSprite == null)
-            {
-                laserSprite = new Sprites.Laser(laser, this);
-                this.lasers.Add(laserSprite);
-            }
-            else
-            {
-                laserSprite.UpdateLogic(laser);
-            }
-        }
-
-        _ = this.lasers.RemoveAll(l => !this.Logic.Lasers.Any(l2 => l2.Equals(l.Logic)));
-    }
-
-    private void SyncRadarEffect()
-    {
-        foreach (var effect in this.radarEffects.ToList())
-        {
-            var newTank = this.Logic.Tanks.FirstOrDefault(t => t.Equals(effect.Tank));
-
-            if (effect.IsExpired || newTank is null)
-            {
-                _ = this.radarEffects.Remove(effect);
-            }
-            else
-            {
-                effect.UpdateTank(newTank);
-            }
-        }
-
-        foreach (var tank in this.Logic.Tanks)
-        {
-#if STEREO
-            if (tank is LightTank light && light.IsUsingRadar)
-#else
-            if (tank.Owner.IsUsingRadar)
-#endif
-            {
-                var effect = new Sprites.RadarEffect(tank, this, this.Sprites);
-                this.radarEffects.Add(effect);
-            }
-        }
-    }
-
-    private void SyncMines()
-    {
-        foreach (var mine in this.Logic.Mines)
-        {
-            var mineSprite = this.mines.FirstOrDefault(m => m.Logic.Equals(mine));
-            if (mineSprite == null)
-            {
-                mineSprite = new Sprites.Mine(mine, this);
-                this.mines.Add(mineSprite);
-            }
-            else
-            {
-                mineSprite.UpdateLogic(mine);
-            }
-        }
-
-        _ = this.mines.RemoveAll(m => m.IsFullyExploded);
-        _ = this.mines.RemoveAll(m => !this.Logic.Mines.Any(m2 => m2.Equals(m.Logic)));
-    }
-
     private void UpdateDrawData()
     {
         if (this.Logic.Dim == 0)
@@ -428,10 +211,9 @@ internal class GridComponent : Component
             return;
         }
 
-        var gridDim = this.Logic.Dim;
         var size = this.Transform.Size.X;
-        var tileSize = this.TileSize = size / gridDim;
-        this.DrawOffset = (int)((size - (gridDim * tileSize)) / 2f);
+        var tileSize = this.TileSize = size / this.Logic.Dim;
+        this.DrawOffset = (int)((size - (this.Logic.Dim * tileSize)) / 2f);
         this.DrawDataChanged?.Invoke(this, EventArgs.Empty);
     }
 }

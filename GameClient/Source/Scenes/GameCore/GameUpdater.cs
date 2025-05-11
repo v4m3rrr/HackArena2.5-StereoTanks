@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using GameLogic;
 using GameLogic.Networking;
 
@@ -53,15 +50,16 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// Updates the grid logic from the game state payload.
     /// </summary>
     /// <param name="payload">The game state payload.</param>
-    public void UpdateGridLogic(GameStatePayload payload)
+    public void UpdateGrid(GameStatePayload payload)
     {
         try
         {
-            components.Grid.Logic.UpdateFromGameStatePayload(payload);
+            GameStateApplier.ApplyToGrid(components.Grid.Logic, payload);
+            components.Grid.Sync();
         }
         catch (Exception ex)
         {
-            DebugConsole.ThrowError("An error occurred while updating the grid logic.");
+            DebugConsole.ThrowError("An error occurred while updating the grid.");
             DebugConsole.ThrowError(ex, withTraceback: true);
         }
     }
@@ -92,14 +90,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
             teams
                 .Where(t => !updatedTeams.Contains(t))
                 .ToList()
-                .ForEach(t =>
-                {
-                    _ = teams.Remove(t);
-                    foreach (var player in t.Players)
-                    {
-                        components.Grid.ResetFogOfWar(player);
-                    }
-                });
+                .ForEach(t => teams.Remove(t));
 
             foreach (Team team in teams)
             {
@@ -138,11 +129,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
             players
                 .Where(x => !updatedPlayers.Contains(x.Value))
                 .ToList()
-                .ForEach(x =>
-                {
-                    _ = players.Remove(x.Key);
-                    components.Grid.ResetFogOfWar(x.Value);
-                });
+                .ForEach(x => players.Remove(x.Key));
         }
     }
 
@@ -218,43 +205,6 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     }
 
 #endif
-
-    /// <summary>
-    /// Updates the player's fog of war.
-    /// </summary>
-    /// <param name="payload">The player's game state payload.</param>
-    public void UpdatePlayerFogOfWar(GameStatePayload.ForPlayer payload)
-    {
-        var player = players[Game.PlayerId!];
-        components.Grid.UpdatePlayerFogOfWar(player, payload.VisibilityGrid);
-    }
-
-    /// <summary>
-    /// Updates the players' fog of war.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This method should be called after updating the players.
-    /// </para>
-    /// <para>
-    /// This method updates the fog of war for all players
-    /// and should be called only for spectators.
-    /// </para>
-    /// </remarks>
-    public void UpdatePlayersFogOfWar()
-    {
-        foreach (var player in players.Values)
-        {
-            if (player.VisibilityGrid is not null)
-            {
-                components.Grid.UpdatePlayerFogOfWar(player, player.VisibilityGrid);
-            }
-            else
-            {
-                components.Grid.ResetFogOfWar(player);
-            }
-        }
-    }
 
     /// <summary>
     /// Updates the timer.

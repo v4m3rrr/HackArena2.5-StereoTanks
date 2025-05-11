@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Threading.Tasks;
 using GameClient.Networking;
 using GameClient.Scenes.GameCore;
 using GameClient.Scenes.LobbyCore;
-using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -230,7 +226,7 @@ internal class Lobby : Scene
                     break;
 
                 case PacketType.GameStarting:
-                case PacketType.GameInProgress when ServerConnection.Data.IsSpectator:
+                case PacketType.GameInProgress when !ServerConnection.Data.IsSpectator:
                 case PacketType.GameInProgress when Game.Settings?.SandboxMode ?? false:
                 case PacketType.GameStarted when ServerConnection.Data.IsSpectator:
                     Change<Game>();

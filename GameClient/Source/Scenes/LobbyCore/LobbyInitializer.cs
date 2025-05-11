@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using GameClient.Networking;
+﻿using GameClient.Networking;
 using GameClient.UI.LobbySceneComponents;
-using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -102,6 +100,10 @@ internal class LobbyInitializer(Lobby lobby)
 
 #if STEREO
 
+    /// <summary>
+    /// Creates team slot panels.
+    /// </summary>
+    /// <returns>The created team slot panels.</returns>
     public List<TeamSlotPanel> CreateTeamSlotPanels()
     {
         var container = new Container()
@@ -161,13 +163,13 @@ internal class LobbyInitializer(Lobby lobby)
             },
         };
 
-        const float relativeSpacing = 0.002f;
+        const float relativeSpacing = 0.01f;
 
         var upperListBox = new FlexListBox()
         {
             Parent = container,
             Orientation = MonoRivUI.Orientation.Horizontal,
-            Spacing = (int)(0.01f * ScreenController.Width),
+            Spacing = (int)(relativeSpacing * ScreenController.Width),
             Transform =
             {
                 RelativeSize = new Vector2(1f, 0.46f),

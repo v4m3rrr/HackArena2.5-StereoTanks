@@ -9,24 +9,32 @@ namespace GameLogic.Networking.GameState;
 /// Represents a light turret JSON converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class HeavyTurretJsonConverter(GameSerializationContext context) : JsonConverter<HeavyTurret>
+internal class HeavyTurretJsonConverter(GameSerializationContext context)
+    : JsonConverter<HeavyTurret>
 {
     /// <inheritdoc/>
     public override HeavyTurret? ReadJson(JsonReader reader, Type objectType, HeavyTurret? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var jsonObject = JObject.Load(reader);
-        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
-        var bulletCount = jsonObject["bulletCount"]?.Value<int>();
+        var jObject = JObject.Load(reader);
 
-        if (bulletCount is null)
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jObject["direction"]!, context.EnumSerialization);
+        var turret = new HeavyTurret(direction);
+
+        if (context is GameSerializationContext.Spectator || jObject["bulletCount"] is not null)
         {
-            // Player perspective for other players
-            return new HeavyTurret(direction);
+            turret.Bullet = new BulletAbility(null!)
+            {
+                Count = jObject["bulletCount"]!.Value<int>(),
+                RemainingRegenerationTicks = jObject["ticksToBullet"]!.Value<int?>(),
+            };
+
+            turret.Laser = new LaserAbility(null!)
+            {
+                RemainingRegenerationTicks = jObject["ticksToLaser"]!.Value<int?>(),
+            };
         }
 
-        var remainingTicksToBullet = jsonObject["ticksToBullet"]?.Value<int?>();
-        var remainingTicksToLaser = jsonObject["ticksToLaser"]?.Value<int?>();
-        return new HeavyTurret(direction, bulletCount.Value, remainingTicksToBullet, remainingTicksToLaser);
+        return turret;
     }
 
     /// <inheritdoc/>
@@ -39,9 +47,9 @@ internal class HeavyTurretJsonConverter(GameSerializationContext context) : Json
 
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Tank.Owner.Id))
         {
-            jObject["bulletCount"] = value.BulletCount;
-            jObject["ticksToBullet"] = value.RemainingTicksToBullet;
-            jObject["ticksToLaser"] = value.RemainingTicksToLaser;
+            jObject["bulletCount"] = value.Bullet!.Count;
+            jObject["ticksToBullet"] = value.Bullet.RemainingRegenerationTicks;
+            jObject["ticksToLaser"] = value.Laser!.RemainingRegenerationTicks;
         }
 
         jObject.WriteTo(writer);

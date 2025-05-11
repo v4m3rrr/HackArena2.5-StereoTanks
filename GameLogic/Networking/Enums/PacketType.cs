@@ -190,7 +190,7 @@ public enum PacketType
     /// <summary>
     /// The charge ability packet type.
     /// </summary>
-    ChargeAbility = DebugGroup | HasPayload | 0x5,
+    FullyRegenerateAbility = DebugGroup | HasPayload | 0x5,
 
 #else
 

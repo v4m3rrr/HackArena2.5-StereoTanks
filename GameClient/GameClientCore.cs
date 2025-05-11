@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -275,8 +274,17 @@ public class GameClientCore : Game
 
         base.Initialize();
 
-        PacketSerializer.ExceptionThrew += (e) => DebugConsole.ThrowError(e);
-        Packet.GetPayloadFailed += (e) => DebugConsole.ThrowError(e);
+        PacketSerializer.ExceptionThrew += (e) =>
+        {
+            DebugConsole.ThrowError(e);
+            Debug.WriteLine(e);
+        };
+
+        Packet.GetPayloadFailed += (e) =>
+        {
+            DebugConsole.ThrowError(e);
+            Debug.WriteLine(e);
+        };
 
         ServerConnection.MessageReceived += (s, e) =>
         {

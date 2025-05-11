@@ -17,40 +17,49 @@ internal class TankJsonConverter(GameSerializationContext context) : JsonConvert
     /// <inheritdoc/>
     public override Tank? ReadJson(JsonReader reader, Type objectType, Tank? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var jsonObject = JObject.Load(reader);
+        var jObject = JObject.Load(reader);
 
 #if STEREO
 
-        var type = JsonConverterUtils.ReadEnum<TankType>(jsonObject["type"]!);
+        var type = JsonConverterUtils.ReadEnum<TankType>(jObject["type"]!);
         return type switch
         {
-            TankType.Light => this.lightTankConverter.ReadJson(jsonObject.CreateReader(), typeof(LightTank), null, false, serializer),
-            TankType.Heavy => this.heavyTankConverter.ReadJson(jsonObject.CreateReader(), typeof(HeavyTank), null, false, serializer),
+            TankType.Light => this.lightTankConverter.ReadJson(jObject.CreateReader(), typeof(LightTank), null, false, serializer),
+            TankType.Heavy => this.heavyTankConverter.ReadJson(jObject.CreateReader(), typeof(HeavyTank), null, false, serializer),
             _ => throw new ArgumentOutOfRangeException(nameof(reader), type, null),
         };
 
 #else
 
-        int x = jsonObject["x"]?.Value<int>() ?? -1;
-        int y = jsonObject["y"]?.Value<int>() ?? -1;
+        int x = jObject["x"]?.Value<int>() ?? -1;
+        int y = jObject["y"]?.Value<int>() ?? -1;
+        string ownerId = jObject["ownerId"]!.Value<string>()!;
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jObject["direction"]!, context.EnumSerialization);
+        var turret = jObject["turret"]!.ToObject<Turret>(serializer)!;
 
-        var ownerId = jsonObject["ownerId"]!.Value<string>()!;
-        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
-        var turret = jsonObject["turret"]!.ToObject<Turret>(serializer)!;
+        var playerStub = new Player(ownerId)
+        {
+            Nickname = string.Empty,
+            Color = default,
+        };
 
-        Tank? tank = null;
+        var tank = new Tank(x, y, direction, playerStub)
+        {
+            Turret = turret,
+        };
+
         if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(ownerId))
         {
-            var health = jsonObject["health"]!.Value<int?>();
-            var secondaryItem = jsonObject["secondaryItem"]!;
-            SecondaryItemType? secondaryItemType = secondaryItem.Type is not JTokenType.Null
-                ? JsonConverterUtils.ReadEnum<SecondaryItemType>(jsonObject["secondaryItem"]!)
+            tank.Health = jObject["health"]!.Value<int>();
+
+            tank.SecondaryItemType = jObject["secondaryItem"]!.Type is not JTokenType.Null
+                ? JsonConverterUtils.ReadEnum<SecondaryItemType>(jObject["secondaryItem"]!)
                 : null;
 
-            return new Tank(x, y, ownerId, health ?? 0, direction, turret, secondaryItemType);
+            tank.Mine = new MineAbility(null!);
         }
 
-        return new Tank(x, y, ownerId, direction, turret);
+        return tank;
 
 #endif
     }

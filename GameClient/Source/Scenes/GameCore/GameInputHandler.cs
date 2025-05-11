@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using GameLogic;
+﻿using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework.Input;
 using MonoRivUI;
@@ -48,14 +46,16 @@ internal class GameInputHandler
             }
         }
 
-#if DEBUG && !STEREO
+#if DEBUG
 
         if (KeyboardController.IsKeyDown(Keys.LeftShift))
         {
             payload = payload switch
             {
                 AbilityUsePayload a => new GlobalAbilityUsePayload(a.AbilityType),
+#if !STEREO
                 GiveSecondaryItemPayload g => new GlobalGiveSecondaryItemPayload(g.Item),
+#endif
                 _ => payload,
             };
         }
@@ -85,7 +85,7 @@ internal class GameInputHandler
 #endif
 
 #if DEBUG && STEREO
-        yield return this.HandleChargeAbilityPayload;
+        yield return this.HandleFullyRegenerateAbilityPayload;
 #endif
 
 #if STEREO
@@ -182,6 +182,12 @@ internal class GameInputHandler
         var mousePosition = MouseController.Position;
         var gridLocation = gridComponent.Transform.Location;
         var tileSize = gridComponent.TileSize;
+
+        if (tileSize == 0)
+        {
+            return null;
+        }
+
         var tileX = (mousePosition.X - gridLocation.X) / tileSize;
         var tileY = (mousePosition.Y - gridLocation.Y) / tileSize;
         return new GoToPayload(tileX, tileY);
@@ -239,14 +245,14 @@ internal class GameInputHandler
 
 #if DEBUG && STEREO
 
-    private ChargeAbilityPayload? HandleChargeAbilityPayload()
+    private FullyRegenerateAbilityPayload? HandleFullyRegenerateAbilityPayload()
     {
         if (!KeyboardController.IsKeyDown(Keys.LeftControl))
         {
             return null;
         }
 
-        ChargeAbilityPayload? payload = null;
+        FullyRegenerateAbilityPayload? payload = null;
 
         if (KeyboardController.IsKeyHit(Keys.D1))
         {
@@ -256,7 +262,7 @@ internal class GameInputHandler
                 TankType.Heavy => AbilityType.UseLaser,
                 _ => throw new ArgumentOutOfRangeException(),
             };
-            payload = new ChargeAbilityPayload(ability);
+            payload = new FullyRegenerateAbilityPayload(ability);
         }
         else if (KeyboardController.IsKeyHit(Keys.D2))
         {
@@ -266,7 +272,7 @@ internal class GameInputHandler
                 TankType.Heavy => AbilityType.DropMine,
                 _ => throw new ArgumentOutOfRangeException(),
             };
-            payload = new ChargeAbilityPayload(ability);
+            payload = new FullyRegenerateAbilityPayload(ability);
         }
 
         return payload;

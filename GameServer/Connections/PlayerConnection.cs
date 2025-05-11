@@ -1,7 +1,8 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
 using GameLogic;
-using Serilog.Core;
+using GameLogic.Networking;
+using Serilog;
 
 namespace GameServer;
 
@@ -11,15 +12,15 @@ namespace GameServer;
 /// <param name="Context">The HTTP listener context.</param>
 /// <param name="Socket">The WebSocket.</param>
 /// <param name="Data">The connection data of the player.</param>
-/// <param name="Log">The logger.</param>
+/// <param name="Logger">The logger.</param>
 /// <param name="Instance">The player instance.</param>
 internal record class PlayerConnection(
     HttpListenerContext Context,
     WebSocket Socket,
     ConnectionData.Player Data,
-    Logger Log,
+    ILogger Logger,
     Player Instance)
-    : Connection(Context, Socket, Data, Log)
+    : Connection(Context, Socket, Data, Logger)
 {
 #if STEREO
 
@@ -75,9 +76,9 @@ internal record class PlayerConnection(
 #if HACKATHON && STEREO
 
     /// <summary>
-    /// Gets or sets the last sent game state.
+    /// Gets or sets the last sent game state payload.
     /// </summary>
-    public byte[]? LastSentGameStateBuffer { get; set; }
+    public GameStatePayload.ForPlayer? LastGameStatePayload { get; set; }
 
 #endif
 

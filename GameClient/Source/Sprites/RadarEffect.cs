@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using GameClient.UI;
+﻿using GameClient.UI;
 using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
@@ -45,6 +44,8 @@ internal class RadarEffect : ISprite
         };
 
         this.circle.Load();
+
+        this.UpdateEffect(new GameTime());
     }
 
     /// <summary>
@@ -58,9 +59,10 @@ internal class RadarEffect : ISprite
     /// <remarks>
     /// The radar effect is expired when both the effect and detection times are over.
     /// </remarks>
-    public bool IsExpired => this.effectRemainingTime <= 0 && (this.detectionRemainingTime <= 0 || !this.IsPlayerTank);
+    public bool IsExpired => this.effectRemainingTime <= 0
+        && (this.detectionRemainingTime <= 0 || this.RadarAbility is null);
 
-    private bool IsPlayerTank => Scenes.Game.PlayerId == this.Tank.Owner.Id;
+    private RadarAbility? RadarAbility => this.Tank.GetAbility<RadarAbility>();
 
     /// <summary>
     /// Updates the tank logic that activated the radar effect.
@@ -74,6 +76,11 @@ internal class RadarEffect : ISprite
     /// <inheritdoc/>
     public void Update(GameTime gameTime)
     {
+        if (this.Tank.IsDead)
+        {
+            return;
+        }
+
         if (this.IsExpired)
         {
             this.circle.Texture.Dispose();
@@ -82,48 +89,28 @@ internal class RadarEffect : ISprite
 
         this.UpdateEffect(gameTime);
 
-#if STEREO
-        if (this.IsPlayerTank && this.Tank is LightTank light && !light.IsUsingRadar)
-#else
-        if (this.IsPlayerTank && !this.Tank.Owner.IsUsingRadar)
-#endif
+        foreach (IDetectableByRadar sprite in this.detectedSprites)
         {
-            foreach (IDetectableByRadar sprite in this.detectedSprites)
-            {
-                sprite.Update(gameTime);
-            }
+            sprite.Update(gameTime);
         }
 
-        if (this.IsPlayerTank)
-        {
-            this.UpdateDetection(gameTime);
-        }
+        this.UpdateDetection(gameTime);
     }
 
     /// <inheritdoc/>
     public void Draw(GameTime gameTime)
     {
-        if (this.IsExpired)
+        if (this.IsExpired || this.Tank.IsDead)
         {
             return;
         }
 
-#if STEREO
-        if (this.IsPlayerTank && this.Tank is LightTank light && !light.IsUsingRadar)
-#else
-        if (this.IsPlayerTank && !this.Tank.Owner.IsUsingRadar)
-#endif
+        foreach (IDetectableByRadar sprite in this.detectedSprites)
         {
-            foreach (IDetectableByRadar sprite in this.detectedSprites)
-            {
-                sprite.Draw(gameTime);
-            }
+            sprite.Draw(gameTime);
         }
 
-        if (!this.Tank.IsDead)
-        {
-            this.circle.Draw(gameTime);
-        }
+        this.circle.Draw(gameTime);
     }
 
     private static List<IDetectableByRadar> GetDetectedSprites(GameLogic.Tank tank, IEnumerable<ISprite> sprites)
@@ -131,7 +118,7 @@ internal class RadarEffect : ISprite
         var detectedSprites = new List<IDetectableByRadar>();
         foreach (var sprite in sprites)
         {
-            if (sprite is Tank spriteTank && spriteTank.Logic == tank)
+            if (sprite is Tank spriteTank && spriteTank.Logic.Equals(tank))
             {
                 continue;
             }

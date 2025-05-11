@@ -85,6 +85,7 @@ public static class PacketSerializer
 
             var settings = new JsonSerializerSettings()
             {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 ContractResolver = ContractResolver,
                 Formatting = options.Formatting,
                 Converters = [new PacketJsonConverter(context)],
@@ -147,6 +148,7 @@ public static class PacketSerializer
         {
             var settings = new JsonSerializerSettings()
             {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 ContractResolver = ContractResolver,
             };
 

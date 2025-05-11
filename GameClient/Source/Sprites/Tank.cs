@@ -20,7 +20,6 @@ internal class Tank : ISprite, IDetectableByRadar
 
     private readonly GridComponent grid;
     private readonly ScalableTexture2D turretTexture;
-
     private readonly ScalableTexture2D tankTexture;
 
     /// <summary>

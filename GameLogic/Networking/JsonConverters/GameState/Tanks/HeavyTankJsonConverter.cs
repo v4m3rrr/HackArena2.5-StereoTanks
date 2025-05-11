@@ -6,31 +6,55 @@ namespace GameLogic.Networking.GameState;
 #if STEREO
 
 /// <summary>
-/// Represents a heavy tank JSON converter.
+/// Converts <see langword="HeavyTank"/> JSON snapshot with per-player visibility.
 /// </summary>
-/// <param name="context">The serialization context.</param>
-internal class HeavyTankJsonConverter(GameSerializationContext context) : JsonConverter<HeavyTank>
+/// <param name="context">The serialization context with enum format and player scope.</param>
+internal class HeavyTankJsonConverter(GameSerializationContext context)
+    : JsonConverter<HeavyTank>
 {
     /// <inheritdoc/>
-    public override HeavyTank? ReadJson(JsonReader reader, Type objectType, HeavyTank? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override HeavyTank? ReadJson(
+        JsonReader reader,
+        Type objectType,
+        HeavyTank? existingValue,
+        bool hasExistingValue,
+        JsonSerializer serializer)
     {
-        var jsonObject = JObject.Load(reader);
+        var jObject = JObject.Load(reader);
 
-        int x = jsonObject["x"]?.Value<int>() ?? -1;
-        int y = jsonObject["y"]?.Value<int>() ?? -1;
+        int x = jObject["x"]?.Value<int>() ?? -1;
+        int y = jObject["y"]?.Value<int>() ?? -1;
+        string ownerId = jObject["ownerId"]!.Value<string>()!;
+        var direction = JsonConverterUtils.ReadEnum<Direction>(jObject["direction"]!, context.EnumSerialization);
 
-        var ownerId = jsonObject["ownerId"]!.Value<string>()!;
-        var direction = JsonConverterUtils.ReadEnum<Direction>(jsonObject["direction"]!);
-        var turret = jsonObject["turret"]!.ToObject<HeavyTurret>(serializer)!;
+        var turretToken = jObject["turret"]!;
+        var turret = turretToken.ToObject<HeavyTurret>(serializer)!;
 
-        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(ownerId))
+        var tank = new HeavyTank(x, y, direction, new Player(ownerId))
         {
-            var health = jsonObject["health"]!.Value<int?>();
-            var ticksToMine = jsonObject["ticksToMine"]?.Value<int?>();
-            return new HeavyTank(x, y, ownerId, health ?? 0, direction, turret, ticksToMine);
+            Turret = turret,
+        };
+
+        var isSpectator = context is GameSerializationContext.Spectator;
+        var isOwner = !isSpectator && context.IsPlayerWithId(ownerId);
+        var isTeammate = !isOwner && context.IsTeammate(ownerId);
+
+        if (isSpectator || isOwner)
+        {
+            tank.Health = jObject["health"]!.Value<int>();
+
+            tank.Mine = new MineAbility(null!)
+            {
+                RemainingRegenerationTicks = jObject["ticksToMine"]!.Value<int?>(),
+            };
         }
 
-        return new HeavyTank(x, y, ownerId, direction, turret);
+        if (isSpectator || isOwner || isTeammate)
+        {
+            tank.VisibilityGrid = jObject["visibility"]?.ToObject<VisibilityPayload>(serializer)!.Grid;
+        }
+
+        return tank;
     }
 
     /// <inheritdoc/>
@@ -44,16 +68,26 @@ internal class HeavyTankJsonConverter(GameSerializationContext context) : JsonCo
             ["turret"] = JObject.FromObject(value.Turret, serializer),
         };
 
-        if (context is GameSerializationContext.Spectator)
+        var isSpectator = context is GameSerializationContext.Spectator;
+        var isOwner = !isSpectator && context.IsPlayerWithId(value.OwnerId);
+        var isTeammate = !isOwner && context.IsTeammate(value.OwnerId);
+
+        if (isSpectator)
         {
             jObject["x"] = value.X;
             jObject["y"] = value.Y;
         }
 
-        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Owner.Id))
+        if (isSpectator || isOwner)
         {
             jObject["health"] = value.Health;
-            jObject["ticksToMine"] = value.RemainingTicksToMine;
+            jObject["ticksToMine"] = value.Mine!.RemainingRegenerationTicks;
+        }
+
+        if (isSpectator || isOwner || isTeammate)
+        {
+            var visibilityPayload = new VisibilityPayload(value.VisibilityGrid!);
+            jObject["visibility"] = JToken.FromObject(visibilityPayload, serializer);
         }
 
         jObject.WriteTo(writer);

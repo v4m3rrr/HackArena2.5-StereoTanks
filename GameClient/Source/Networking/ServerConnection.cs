@@ -1,4 +1,3 @@
-using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -41,7 +40,11 @@ internal static class ServerConnection
     /// <summary>
     /// Gets or sets the buffer size for the WebSocket messages.
     /// </summary>
-    public static int BufferSize { get; set; } = 1024 * 32;
+#if DEBUG
+    public static int BufferSize { get; set; } = 1024 * 64;
+#else
+    public static int BufferSize { get; set; } = 1024 * 16;
+#endif
 
     /// <summary>
     /// Gets or sets the timeout for the server connection in seconds.
@@ -74,7 +77,7 @@ internal static class ServerConnection
     /// <summary>
     /// Gets the connection data.
     /// </summary>
-    public static ConnectionData Data { get; private set; }
+    public static ConnectionData Data { get; private set; } = default!;
 
     /// <summary>
     /// Connects to the specified server.

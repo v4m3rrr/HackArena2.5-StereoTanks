@@ -1,5 +1,4 @@
-﻿using System;
-using GameLogic;
+﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -41,10 +40,9 @@ internal class HealthBar : PlayerBarComponent
 
         this.bar.IsEnabled = true;
 
-        if (this.Player.RegenProgress is not null)
+        if (this.Player.RespawnTankProgress is { } progress)
         {
             this.bar.Color = new Color(this.bar.Color, 100);
-            var progress = this.Player.RegenProgress ?? 0f;
             if (this.bar.IsEnabled = progress > 0f)
             {
                 this.bar.Transform.RelativeSize = new Vector2(progress, RelativeHeight);
@@ -53,7 +51,7 @@ internal class HealthBar : PlayerBarComponent
             return;
         }
 
-        var hp = this.Player.Tank?.Health;
+        var hp = this.Player.Tank.Health;
 
         if (hp is null)
         {

@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -139,17 +138,19 @@ internal static class GameSettings
         try
         {
             string json = await GameClientCore.InvokeOnMainThreadAsync(() => File.ReadAllText(SettingsFilePath));
-            var settings = JsonSerializer.Deserialize<SettingsData>(json);
+            var settingsData = JsonSerializer.Deserialize<SettingsData>(json);
 
-            Language = settings.Language;
-            await SetResolution(settings.ResolutionWidth, settings.ResolutionHeight);
-            await SetScreenType(settings.ScreenType);
+            Language = settingsData.Language;
+            await SetResolution(settingsData.ResolutionWidth, settingsData.ResolutionHeight);
+            await SetScreenType(settingsData.ScreenType);
+            data = settingsData;
         }
         catch (Exception ex)
         {
             DebugConsole.ThrowError($"Failed to load settings. Default settings will be used.");
             DebugConsole.ThrowError(ex);
             SetDefaultSettings();
+            SaveSettings();
         }
     }
 

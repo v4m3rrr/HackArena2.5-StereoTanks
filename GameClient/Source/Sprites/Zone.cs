@@ -1,5 +1,5 @@
-﻿using System;
-using GameLogic;
+﻿using GameLogic;
+using GameLogic.ZoneStates;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -96,7 +96,7 @@ internal class Zone : ISprite
     /// <inheritdoc/>
     public void Update(GameTime gameTime)
     {
-        if (this.Logic.Status is ZoneStatus.Neutral)
+        if (this.Logic.State is NeutralZoneState)
         {
             this.index.Color = Color.White * IndexOpacity;
             foreach (ScalableTexture2D texture in this.textures)
@@ -107,10 +107,10 @@ internal class Zone : ISprite
             return;
         }
 
-        if (this.Logic.Status is ZoneStatus.BeingCaptured beingCaptured)
+        if (this.Logic.State is BeingCapturedZoneState beingCaptured)
         {
             var color = new Color(beingCaptured.Player.Color);
-            float progress = 1 - ((float)beingCaptured.RemainingTicks / GameLogic.Zone.TicksToCapture);
+            float progress = 1 - ((float)beingCaptured.RemainingTicks / ZoneSystem.TicksToCapture);
             float progressIndex = progress * this.textures.Length;
             float lastImageProgress = Math.Abs(((this.textures.Length - progressIndex) % 1) - 1) % 1;
 
@@ -131,7 +131,7 @@ internal class Zone : ISprite
             return;
         }
 
-        if (this.Logic.Status is ZoneStatus.Captured captured)
+        if (this.Logic.State is CapturedZoneState captured)
         {
             var color = new Color(captured.Player.Color);
             this.index.Color = color * IndexOpacity;
@@ -141,7 +141,7 @@ internal class Zone : ISprite
             }
         }
 
-        if (this.Logic.Status is ZoneStatus.BeingContested beingContested)
+        if (this.Logic.State is BeingContestedZoneState beingContested)
         {
             var color = beingContested.CapturedBy is not null ? new Color(beingContested.CapturedBy.Color) : Color.White;
             this.index.Color = color * IndexOpacity;
@@ -152,13 +152,13 @@ internal class Zone : ISprite
             }
         }
 
-        if (this.Logic.Status is ZoneStatus.BeingRetaken beingRetaken)
+        if (this.Logic.State is BeingRetakenZoneState beingRetaken)
         {
             var capturedColor = new Color(beingRetaken.CapturedBy.Color);
             var retakenColor = new Color(beingRetaken.RetakenBy.Color);
             this.index.Color = capturedColor * IndexOpacity;
 
-            float progress = 1 - ((float)beingRetaken.RemainingTicks / GameLogic.Zone.TicksToCapture);
+            float progress = 1 - ((float)beingRetaken.RemainingTicks / ZoneSystem.TicksToCapture);
             float progressIndex = progress * this.textures.Length;
             float lastImageProgress = Math.Abs(((this.textures.Length - progressIndex) % 1) - 1) % 1;
 

@@ -1,12 +1,10 @@
-﻿#if HACKATHON
-
-using GameClient.Scenes.Replay.MatchResultsCore;
-using GameClient.Styles;
+﻿using GameClient.Scenes.Replay.MatchResultsCore;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
-using System.Collections.Generic;
 
 namespace GameClient.UI.MatchResultsSceneComponents;
+
+#if HACKATHON
 
 /// <summary>
 /// Represents a player slot panel.

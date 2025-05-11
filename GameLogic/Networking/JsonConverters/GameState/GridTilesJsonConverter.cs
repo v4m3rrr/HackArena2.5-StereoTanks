@@ -1,19 +1,18 @@
 ﻿using System.Diagnostics;
+using GameLogic.Networking.Map;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace GameLogic.Networking.GameState;
 
-#pragma warning disable CA1822 // Mark members as static
-
 /// <summary>
 /// Represents a grid state json converter.
 /// </summary>
 /// <param name="context">The serialization context.</param>
-internal class GridTilesJsonConverter(GameSerializationContext context) : JsonConverter<Grid.TilesPayload>
+internal class GridTilesJsonConverter(GameSerializationContext context) : JsonConverter<TilesPayload>
 {
     /// <inheritdoc/>
-    public override Grid.TilesPayload? ReadJson(JsonReader reader, Type objectType, Grid.TilesPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override TilesPayload? ReadJson(JsonReader reader, Type objectType, TilesPayload? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
         switch (context)
         {
@@ -28,7 +27,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
     }
 
     /// <inheritdoc/>
-    public override void WriteJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, TilesPayload? value, JsonSerializer serializer)
     {
         switch (context)
         {
@@ -44,7 +43,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         }
     }
 
-    private Grid.TilesPayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
+    private TilesPayload ReadPlayerJson(JsonReader reader, JsonSerializer serializer)
     {
         var jObject = JArray.Load(reader);
 
@@ -114,7 +113,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             }
         }
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines)
+        return new TilesPayload(wallGrid, tanks, bullets, lasers, mines)
 #if !STEREO
             {
                 Items = items,
@@ -123,7 +122,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             ;
     }
 
-    private Grid.TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
+    private TilesPayload ReadSpectatorJson(JsonReader reader, JsonSerializer serializer)
     {
         var jObject = JObject.Load(reader);
 
@@ -142,7 +141,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         var items = jObject["items"]!.ToObject<List<SecondaryItem>>(serializer)!;
 #endif
 
-        return new Grid.TilesPayload(wallGrid, tanks, bullets, lasers, mines)
+        return new TilesPayload(wallGrid, tanks, bullets, lasers, mines)
 #if !STEREO
             {
                 Items = items,
@@ -151,10 +150,10 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
             ;
     }
 
-    private void WritePlayerJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
+    private void WritePlayerJson(JsonWriter writer, TilesPayload? value, JsonSerializer serializer)
     {
         var playerContext = (context as GameSerializationContext.Player)!;
-        var visibilityGrid = playerContext.VisibilityGrid!;
+        var visibilityGrid = playerContext.VisibilityGrid;
 
         bool IsVisible(int x, int y)
         {
@@ -275,7 +274,7 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
         jObject.WriteTo(writer);
     }
 
-    private void WriteSpectatorJson(JsonWriter writer, Grid.TilesPayload? value, JsonSerializer serializer)
+    private void WriteSpectatorJson(JsonWriter writer, TilesPayload? value, JsonSerializer serializer)
     {
         var jObject = new JObject
         {
