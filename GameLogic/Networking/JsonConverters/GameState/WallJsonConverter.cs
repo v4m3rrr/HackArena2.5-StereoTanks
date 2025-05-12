@@ -14,10 +14,14 @@ internal class WallJsonConverter(GameSerializationContext context) : JsonConvert
     {
         var jObject = JObject.Load(reader);
 
-        return new Wall()
+        var x = jObject["x"]?.Value<int>()! ?? -1;
+        var y = jObject["y"]?.Value<int>()! ?? -1;
+
+        return new Wall(x, y)
         {
-            X = jObject["x"]?.Value<int>()! ?? -1,
-            Y = jObject["y"]?.Value<int>()! ?? -1,
+#if STEREO
+            Type = JsonConverterUtils.ReadEnum<WallType>(jObject["type"]!, context.EnumSerialization),
+#endif
         };
     }
 
@@ -31,6 +35,10 @@ internal class WallJsonConverter(GameSerializationContext context) : JsonConvert
             jObject["x"] = value!.X;
             jObject["y"] = value!.Y;
         }
+
+#if STEREO
+        jObject["type"] = JsonConverterUtils.WriteEnum(value!.Type, context.EnumSerialization);
+#endif
 
         jObject.WriteTo(writer);
     }

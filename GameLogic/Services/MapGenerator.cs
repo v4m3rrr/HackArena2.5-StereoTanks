@@ -27,7 +27,7 @@ internal class MapGenerator(int dimension, int seed)
     /// where <c>true</c> means a wall
     /// and <c>false</c> means an empty space.
     /// </returns>
-    public bool[,] GenerateWalls(IEnumerable<Zone> zones)
+    public Wall?[,] GenerateWalls(IEnumerable<Zone> zones)
     {
         var grid = new bool[this.dim, this.dim];
 
@@ -47,7 +47,29 @@ internal class MapGenerator(int dimension, int seed)
         this.ConnectEnclosedAreas(grid);
         this.RemoveSomeWallsFromZones(grid, zones);
 
-        return grid;
+#if STEREO
+        var penetrableMask = this.GeneratePenetrableMaskWithFalloff(grid, zones);
+#endif
+
+        var wallGrid = new Wall?[this.dim, this.dim];
+        for (int x = 0; x < this.dim; x++)
+        {
+            for (int y = 0; y < this.dim; y++)
+            {
+                wallGrid[x, y] = grid[x, y]
+                    ? new Wall(x, y)
+                    {
+#if STEREO
+                        Type = penetrableMask[x, y]
+                            ? WallType.Penetrable
+                            : WallType.Solid,
+#endif
+                    }
+                    : null;
+            }
+        }
+
+        return wallGrid;
     }
 
     /// <summary>
@@ -115,6 +137,55 @@ internal class MapGenerator(int dimension, int seed)
 
         return zones;
     }
+
+#if STEREO
+
+    private bool[,] GeneratePenetrableMaskWithFalloff(
+        bool[,] grid,
+        IEnumerable<Zone> zones,
+        float innerChance = 0.66f,
+        float minChance = 0.24f)
+    {
+        var mask = new bool[this.dim, this.dim];
+
+        // Precompute all distances
+        int[,] minDistances = new int[this.dim, this.dim];
+        int maxDistance = 0;
+
+        for (int x = 0; x < this.dim; x++)
+        {
+            for (int y = 0; y < this.dim; y++)
+            {
+                int min = zones.Min(z => z.ManhattanDistanceTo(x, y));
+                minDistances[x, y] = min;
+                maxDistance = Math.Max(maxDistance, min);
+            }
+        }
+
+        for (int x = 0; x < this.dim; x++)
+        {
+            for (int y = 0; y < this.dim; y++)
+            {
+                if (!grid[x, y])
+                {
+                    continue;
+                }
+
+                int distance = minDistances[x, y];
+                float t = maxDistance > 0 ? (float)distance / maxDistance : 0f;
+                float chance = (innerChance * (1 - t)) + (minChance * t);
+
+                if (this.random.NextSingle() < chance)
+                {
+                    mask[x, y] = true;
+                }
+            }
+        }
+
+        return mask;
+    }
+
+#endif
 
     private void RemoveSomeWallsFromZones(bool[,] grid, IEnumerable<Zone> zones)
     {

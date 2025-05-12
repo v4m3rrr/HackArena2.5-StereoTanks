@@ -3,22 +3,24 @@
 /// <summary>
 /// Represents a wall.
 /// </summary>
-public class Wall
+public class Wall(int x, int y)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Wall"/> class.
-    /// </summary>
-    internal Wall()
-    {
-    }
-
     /// <summary>
     /// Gets the X position of the wall.
     /// </summary>
-    public int X { get; internal init; }
+    public int X { get; } = x;
 
     /// <summary>
     /// Gets the Y position of the wall.
     /// </summary>
-    public int Y { get; internal init; }
+    public int Y { get; } = y;
+
+#if STEREO
+
+    /// <summary>
+    /// Gets the type of the wall.
+    /// </summary>
+    public WallType Type { get; init; }
+
+#endif
 }

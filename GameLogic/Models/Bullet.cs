@@ -89,17 +89,17 @@ public class Bullet : IEquatable<Bullet>
     public Direction Direction { get; private set; }
 
     /// <summary>
-    /// Gets the speed of the bullet.
+    /// Gets or sets the speed of the bullet.
     /// </summary>
     /// <value>
     /// The speed of the bullet per second.
     /// </value>
-    public float Speed { get; private set; }
+    public float Speed { get; set; }
 
     /// <summary>
-    /// Gets the damage dealt by the bullet.
+    /// Gets or sets the damage dealt by the bullet.
     /// </summary>
-    public int? Damage { get; private set; }
+    public int? Damage { get; set; }
 
     /// <summary>
     /// Gets the type of the bullet.

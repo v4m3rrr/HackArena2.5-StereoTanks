@@ -32,8 +32,12 @@ internal sealed class BulletCollisionSystem(
                 this.ResolveBulletVsTank(bullet, tankCollision.Tank);
                 break;
 
-            case Collision when collision.Type is CollisionType.Wall or CollisionType.Border:
-                this.ResolveBulletVsWall(bullet, collision);
+            case WallCollision wallCollision:
+                this.ResolveBulletVsWall(bullet, wallCollision.Wall);
+                break;
+
+            case Collision when collision.Type is CollisionType.Border:
+                this.ResolveBulletVsBorder(bullet, collision);
                 break;
         }
     }
@@ -102,7 +106,23 @@ internal sealed class BulletCollisionSystem(
         }
     }
 
-    private void ResolveBulletVsWall(Bullet bullet, Collision collision)
+    private void ResolveBulletVsWall(Bullet bullet, Wall wall)
+    {
+#if STEREO
+
+        if (wall.Type is WallType.Penetrable)
+        {
+            bullet.Speed = Math.Max(1f, bullet.Speed / 2);
+            bullet.Damage /= 2;
+            return;
+        }
+
+#endif
+
+        _ = grid.Bullets.Remove(bullet);
+    }
+
+    private void ResolveBulletVsBorder(Bullet bullet, Collision collision)
     {
         _ = grid.Bullets.Remove(bullet);
     }

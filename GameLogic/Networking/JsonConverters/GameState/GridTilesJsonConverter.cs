@@ -172,9 +172,11 @@ internal class GridTilesJsonConverter(GameSerializationContext context) : JsonCo
 
                 if (value.WallGrid[i, j] is { } w)
                 {
+                    var obj = JObject.FromObject(w, serializer);
                     var wall = new JObject()
                     {
                         { "type", "wall" },
+                        { "payload",  obj },
                     };
                     cell.Add(wall);
                 }

@@ -56,9 +56,9 @@ internal static class CollisionDetector
                 return new Collision(CollisionType.Border);
             }
 
-            if (grid.WallGrid[x, y] is not null)
+            if (grid.WallGrid[x, y] is { } wall)
             {
-                return new Collision(CollisionType.Wall);
+                return new WallCollision(wall);
             }
 
             foreach (var tank in grid.Tanks)

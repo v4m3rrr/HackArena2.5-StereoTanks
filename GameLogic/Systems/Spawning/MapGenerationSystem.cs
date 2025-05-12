@@ -20,18 +20,11 @@ internal sealed class MapGenerationSystem(Grid grid)
         }
 
         var zones = this.generator.GenerateZones();
-        var wallMask = this.generator.GenerateWalls(zones);
+        var wallGrid = this.generator.GenerateWalls(zones);
+        Array.Copy(wallGrid, grid.WallGrid, wallGrid.Length);
 
         grid.Zones.Clear();
         grid.Zones.AddRange(zones);
-
-        for (int x = 0; x < grid.Dim; x++)
-        {
-            for (int y = 0; y < grid.Dim; y++)
-            {
-                grid.WallGrid[x, y] = wallMask[x, y] ? new Wall() { X = x, Y = y } : null;
-            }
-        }
 
         if (onWarning is not null)
         {

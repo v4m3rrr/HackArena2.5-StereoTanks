@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using GameLogic;
+using Microsoft.Xna.Framework;
 using MonoRivUI;
 
 namespace GameClient.Sprites;
@@ -9,13 +10,16 @@ namespace GameClient.Sprites;
 internal abstract class Wall : ISprite
 {
     private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/wall.svg");
+#if STEREO
+    private static readonly ScalableTexture2D.Static PenetrableStaticTexture = new("Images/Game/penetrable_wall.svg");
+#endif
 
     private readonly ScalableTexture2D texture;
     private readonly GridComponent grid;
 
-    private Wall(GridComponent grid)
+    private Wall(GridComponent grid, ScalableTexture2D.Static staticTexture)
     {
-        this.texture = new ScalableTexture2D(StaticTexture)
+        this.texture = new ScalableTexture2D(staticTexture)
         {
             Transform =
             {
@@ -37,10 +41,33 @@ internal abstract class Wall : ISprite
     /// </summary>
     protected abstract Point Position { get; }
 
+#if STEREO
+
+    /// <summary>
+    /// Creates a wall from the given logic.
+    /// </summary>
+    /// <param name="logic">The wall logic.</param>
+    /// <param name="grid">The grid component.</param>
+    /// <returns>The wall created from the logic.</returns>
+    public static WallWithLogic? FromType(GameLogic.Wall logic, GridComponent grid)
+    {
+        return logic.Type switch
+        {
+            WallType.Solid => new Solid(logic, grid),
+            WallType.Penetrable => new Penetrable(logic, grid),
+            _ => null,
+        };
+    }
+
+#endif
+
     /// <inheritdoc/>
     public static void LoadContent()
     {
         StaticTexture.Load();
+#if STEREO
+        PenetrableStaticTexture.Load();
+#endif
     }
 
     /// <inheritdoc/>
@@ -58,6 +85,9 @@ internal abstract class Wall : ISprite
     {
         int tileSize = this.grid.TileSize;
         StaticTexture.Transform.Size = new Point(tileSize);
+#if STEREO
+        PenetrableStaticTexture.Transform.Size = new Point(tileSize);
+#endif
         this.texture.Transform.Size = new Point(tileSize);
     }
 
@@ -83,8 +113,8 @@ internal abstract class Wall : ISprite
     /// </remarks>
     internal class Border : Wall
     {
-        private int x;
-        private int y;
+        private readonly int x;
+        private readonly int y;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Border"/> class.
@@ -94,7 +124,7 @@ internal abstract class Wall : ISprite
         /// <param name="y">The y position of the wall.</param>
         /// <param name="grid">The grid component.</param>
         public Border(int x, int y, GridComponent grid)
-            : base(grid)
+            : base(grid, StaticTexture)
         {
             this.x = x;
             this.y = y;
@@ -109,23 +139,23 @@ internal abstract class Wall : ISprite
     }
 
     /// <summary>
-    /// Represents a solid wall.
+    /// Represents a wall with logic.
     /// </summary>
-    /// <remarks>
-    /// A solid wall is a wall that is placed on the grid.
-    /// </remarks>
-    internal class Solid : Wall
+    internal abstract class WallWithLogic : Wall
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Solid"/> class.
+        /// Initializes a new instance of the <see cref="WallWithLogic"/> class.
         /// </summary>
         /// <param name="logic">The wall logic.</param>
         /// <param name="grid">The grid component.</param>
-        public Solid(GameLogic.Wall logic, GridComponent grid)
-            : base(grid)
+        /// <param name="staticTexture">The static texture of the wall.</param>
+        protected WallWithLogic(
+            GameLogic.Wall logic,
+            GridComponent grid,
+            ScalableTexture2D.Static staticTexture)
+            : base(grid, staticTexture)
         {
             this.Logic = logic;
-            this.texture.Opacity = 1f;
             this.UpdateSize();
             this.UpdateLocation();
         }
@@ -148,4 +178,35 @@ internal abstract class Wall : ISprite
             this.UpdateLocation();
         }
     }
+
+    /// <summary>
+    /// Represents a solid wall.
+    /// </summary>
+    /// <remarks>
+    /// A solid wall is a wall that is placed on the grid.
+    /// </remarks>
+    /// <param name="logic">The wall logic.</param>
+    /// <param name="grid">The grid component.</param>
+    internal class Solid(GameLogic.Wall logic, GridComponent grid)
+        : WallWithLogic(logic, grid, StaticTexture)
+    {
+    }
+
+#if STEREO
+
+    /// <summary>
+    /// Represents a solid wall.
+    /// </summary>
+    /// <remarks>
+    /// A penetrable wall is a wall that is placed on the grid
+    /// and bullets can pass through it.
+    /// </remarks>
+    /// <param name="logic">The wall logic.</param>
+    /// <param name="grid">The grid component.</param>
+    internal class Penetrable(GameLogic.Wall logic, GridComponent grid)
+        : WallWithLogic(logic, grid, PenetrableStaticTexture)
+    {
+    }
+
+#endif
 }

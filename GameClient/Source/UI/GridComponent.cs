@@ -25,7 +25,7 @@ internal class GridComponent : Component
 #endif
     private readonly List<Sprites.FogOfWar> fogsOfWar = [];
 
-    private Sprites.Wall.Solid?[,] solidWalls;
+    private Sprites.Wall.WallWithLogic?[,] walls;
     private List<Sprites.Wall.Border> borderWalls = [];
 
     /// <summary>
@@ -34,7 +34,7 @@ internal class GridComponent : Component
     public GridComponent()
     {
         this.Logic = Grid.Empty;
-        this.solidWalls = new Sprites.Wall.Solid?[0, 0];
+        this.walls = new Sprites.Wall.WallWithLogic?[0, 0];
 
         this.Logic.DimensionsChanged += this.OnDimensionsChanged;
         this.Transform.SizeChanged += (s, e) => this.UpdateDrawData();
@@ -47,7 +47,7 @@ internal class GridComponent : Component
         this.syncServices.Add(new LaserSyncService(this, this.lasers));
         this.syncServices.Add(new MineSyncService(this, this.mines));
         this.syncServices.Add(new ZoneSyncService(this, this.zones));
-        this.syncServices.Add(new WallSyncService(this, () => this.solidWalls, walls => this.solidWalls = walls, this.borderWalls));
+        this.syncServices.Add(new WallSyncService(this, () => this.walls, walls => this.walls = walls, this.borderWalls));
         this.syncServices.Add(new RadarSyncService(this, this.radarEffects));
         this.syncServices.Add(new FogOfWarSyncService(this, this.fogsOfWar));
     }
@@ -91,7 +91,7 @@ internal class GridComponent : Component
                     .Concat(this.bullets)
                     .Concat(this.lasers)
                     .Concat(this.radarEffects)
-                    .Concat(this.solidWalls.Cast<ISprite>().Where(x => x is not null))
+                    .Concat(this.walls.Cast<ISprite>().Where(x => x is not null))
                     .Concat(this.borderWalls.Cast<ISprite>())
                     .Where(x => x is not null)!;
             }
@@ -177,7 +177,7 @@ internal class GridComponent : Component
             this.mapItems.Clear();
 #endif
             this.fogsOfWar.Clear();
-            this.solidWalls = new Sprites.Wall.Solid?[this.Logic.Dim, this.Logic.Dim];
+            this.walls = new Sprites.Wall.WallWithLogic?[this.Logic.Dim, this.Logic.Dim];
         }
     }
 
@@ -185,7 +185,7 @@ internal class GridComponent : Component
     {
         this.UpdateDrawData();
 
-        this.solidWalls = new Sprites.Wall.Solid?[this.Logic.Dim, this.Logic.Dim];
+        this.walls = new Sprites.Wall.WallWithLogic?[this.Logic.Dim, this.Logic.Dim];
 
         var borderWalls = new List<Sprites.Wall.Border>();
         for (int i = 0; i < this.Logic.Dim; i++)

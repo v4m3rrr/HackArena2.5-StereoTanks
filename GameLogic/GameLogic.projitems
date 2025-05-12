@@ -13,6 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\DoubleBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\StunBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\HealingBulletAbility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)collisions\WallCollision.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums\WallType.cs" />
     <Compile Include="..\GameLogic\Interfaces\IBulletFiringAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\LaserAbility.cs" />

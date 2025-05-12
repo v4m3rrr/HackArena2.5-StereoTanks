@@ -1,4 +1,6 @@
-﻿namespace GameClient.Networking;
+﻿using GameLogic;
+
+namespace GameClient.Networking;
 
 /// <summary>
 /// Synchronizes wall and border sprites with the wall grid in the game logic.
@@ -9,8 +11,8 @@
 /// <param name="borderWalls">The list of border wall sprites to synchronize.</param>
 internal sealed class WallSyncService(
     GridComponent parent,
-    Func<Sprites.Wall.Solid?[,]> getWallGrid,
-    Action<Sprites.Wall.Solid?[,]> setWallGrid,
+    Func<Sprites.Wall.WallWithLogic?[,]> getWallGrid,
+    Action<Sprites.Wall.WallWithLogic?[,]> setWallGrid,
     List<Sprites.Wall.Border> borderWalls)
     : ISyncService
 {
@@ -22,7 +24,7 @@ internal sealed class WallSyncService(
 
         if (wallGrid.GetLength(0) != logicGrid.GetLength(0) || wallGrid.GetLength(1) != logicGrid.GetLength(1))
         {
-            wallGrid = new Sprites.Wall.Solid?[logicGrid.GetLength(0), logicGrid.GetLength(1)];
+            wallGrid = new Sprites.Wall.WallWithLogic?[logicGrid.GetLength(0), logicGrid.GetLength(1)];
             setWallGrid(wallGrid);
         }
 
@@ -37,7 +39,11 @@ internal sealed class WallSyncService(
                 }
                 else if (wallGrid[x, y] is null)
                 {
+#if STEREO
+                    wallGrid[x, y] = Sprites.Wall.FromType(logicWall, parent);
+#else
                     wallGrid[x, y] = new Sprites.Wall.Solid(logicWall, parent);
+#endif
                 }
                 else
                 {

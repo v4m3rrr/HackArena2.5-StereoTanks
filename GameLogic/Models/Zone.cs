@@ -65,6 +65,23 @@ public class Zone(int x, int y, int width, int height, char index) : IEquatable<
         return this.Contains(tank.X, tank.Y);
     }
 
+    /// <summary>
+    /// Calculates the Manhattan distance from a point to the nearest edge of the zone.
+    /// </summary>
+    /// <param name="x">The x-coordinate of the point.</param>
+    /// <param name="y">The y-coordinate of the point.</param>
+    /// <returns>The Manhattan distance from the point to the zone.</returns>
+    /// <remarks>
+    /// If the point is inside the zone, the distance is 0.
+    /// </remarks>
+    public int ManhattanDistanceTo(int x, int y)
+    {
+        int clampedX = Math.Clamp(x, this.X, this.X + this.Width - 1);
+        int clampedY = Math.Clamp(y, this.Y, this.Y + this.Height - 1);
+
+        return Math.Abs(x - clampedX) + Math.Abs(y - clampedY);
+    }
+
     /// <inheritdoc/>
     public override bool Equals(object? other)
     {

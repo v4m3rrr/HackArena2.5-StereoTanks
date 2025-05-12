@@ -262,8 +262,6 @@ internal class GameInputHandler
             return null;
         }
 
-        FullyRegenerateAbilityPayload? payload = null;
-
         AbilityType? ability;
         if (KeyboardController.IsKeyHit(Keys.D1))
         {
