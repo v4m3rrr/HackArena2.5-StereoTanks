@@ -11,6 +11,9 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\BulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\DoubleBulletAbility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Abilities\StunBulletAbility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Abilities\HealingBulletAbility.cs" />
+    <Compile Include="..\GameLogic\Interfaces\IBulletFiringAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\LaserAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\MineAbility.cs" />
@@ -38,9 +41,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Models\Grid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\Player.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\SecondaryItem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Models\Abilities\DoubleBullet.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Models\Abilities\Laser.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Models\Abilities\Mine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Laser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Mine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\Tank.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)models\tanks\DeclaredTankStub.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\Tanks\HeavyTank.cs" />

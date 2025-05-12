@@ -23,17 +23,13 @@ internal class BulletJsonConverter(GameSerializationContext context) : JsonConve
 
         if (context is GameSerializationContext.Player)
         {
-            return type == BulletType.Double
-                ? new DoubleBullet(id, x, y, direction, speed)
-                : new Bullet(id, x, y, direction, speed);
+            return new Bullet(id, x, y, direction, type, speed);
         }
 
         var damage = jObject["damage"]!.Value<int>();
         var shooterId = jObject["shooterId"]!.Value<string>()!;
 
-        return type == BulletType.Double
-                ? new DoubleBullet(id, x, y, direction, speed, damage, shooterId)
-                : new Bullet(id, x, y, direction, speed, damage, shooterId);
+        return new Bullet(id, x, y, direction, type, speed, damage, shooterId);
     }
 
     /// <inheritdoc/>

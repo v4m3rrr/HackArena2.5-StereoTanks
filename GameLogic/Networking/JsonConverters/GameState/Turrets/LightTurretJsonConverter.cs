@@ -32,6 +32,16 @@ internal class LightTurretJsonConverter(GameSerializationContext context)
             {
                 RemainingRegenerationTicks = jObject["ticksToDoubleBullet"]!.Value<int?>(),
             };
+
+            turret.HealingBullet = new HealingBulletAbility(null!)
+            {
+                RemainingRegenerationTicks = jObject["ticksToHealingBullet"]!.Value<int?>(),
+            };
+
+            turret.StunBullet = new StunBulletAbility(null!)
+            {
+                RemainingRegenerationTicks = jObject["ticksToStunBullet"]!.Value<int?>(),
+            };
         }
 
         return turret;
@@ -50,6 +60,8 @@ internal class LightTurretJsonConverter(GameSerializationContext context)
             jObject["bulletCount"] = value.Bullet!.Count;
             jObject["ticksToBullet"] = value.Bullet.RemainingRegenerationTicks;
             jObject["ticksToDoubleBullet"] = value.DoubleBullet!.RemainingRegenerationTicks;
+            jObject["ticksToHealingBullet"] = value.HealingBullet!.RemainingRegenerationTicks;
+            jObject["ticksToStunBullet"] = value.StunBullet!.RemainingRegenerationTicks;
         }
 
         jObject.WriteTo(writer);

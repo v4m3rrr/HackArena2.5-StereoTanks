@@ -46,10 +46,7 @@ internal sealed class TurretFactory(StunSystem stunSystem)
     {
         var turret = new LightTurret(direction);
 
-        turret.Bullet = new BulletAbility(stunSystem)
-        {
-            Turret = turret,
-        };
+        this.InitializeSharedAbilities(turret);
 
         turret.DoubleBullet = new DoubleBulletAbility(stunSystem)
         {
@@ -68,10 +65,7 @@ internal sealed class TurretFactory(StunSystem stunSystem)
     {
         var turret = new HeavyTurret(direction);
 
-        turret.Bullet = new BulletAbility(stunSystem)
-        {
-            Turret = turret,
-        };
+        this.InitializeSharedAbilities(turret);
 
         turret.Laser = new LaserAbility(stunSystem)
         {
@@ -79,6 +73,24 @@ internal sealed class TurretFactory(StunSystem stunSystem)
         };
 
         return turret;
+    }
+
+    private void InitializeSharedAbilities(Turret turret)
+    {
+        turret.Bullet = new BulletAbility(stunSystem)
+        {
+            Turret = turret,
+        };
+
+        turret.HealingBullet = new HealingBulletAbility(stunSystem)
+        {
+            Turret = turret,
+        };
+
+        turret.StunBullet = new StunBulletAbility(stunSystem)
+        {
+            Turret = turret,
+        };
     }
 
 #endif

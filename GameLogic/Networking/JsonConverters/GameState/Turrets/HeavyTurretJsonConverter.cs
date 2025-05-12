@@ -32,6 +32,16 @@ internal class HeavyTurretJsonConverter(GameSerializationContext context)
             {
                 RemainingRegenerationTicks = jObject["ticksToLaser"]!.Value<int?>(),
             };
+
+            turret.HealingBullet = new HealingBulletAbility(null!)
+            {
+                RemainingRegenerationTicks = jObject["ticksToHealingBullet"]!.Value<int?>(),
+            };
+
+            turret.StunBullet = new StunBulletAbility(null!)
+            {
+                RemainingRegenerationTicks = jObject["ticksToStunBullet"]!.Value<int?>(),
+            };
         }
 
         return turret;
@@ -49,6 +59,8 @@ internal class HeavyTurretJsonConverter(GameSerializationContext context)
         {
             jObject["bulletCount"] = value.Bullet!.Count;
             jObject["ticksToBullet"] = value.Bullet.RemainingRegenerationTicks;
+            jObject["ticksToHealingBullet"] = value.HealingBullet!.RemainingRegenerationTicks;
+            jObject["ticksToStunBullet"] = value.StunBullet!.RemainingRegenerationTicks;
             jObject["ticksToLaser"] = value.Laser!.RemainingRegenerationTicks;
         }
 

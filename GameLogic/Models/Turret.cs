@@ -50,6 +50,20 @@ public class Turret
 
 #endif
 
+#if STEREO
+
+    /// <summary>
+    /// Gets or sets the healing bullet ability of the turret.
+    /// </summary>
+    internal HealingBulletAbility? HealingBullet { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stun bullet ability of the turret.
+    /// </summary>
+    internal StunBulletAbility? StunBullet { get; set; }
+
+#endif
+
     /// <summary>
     /// Returns all active abilities owned by this turret.
     /// </summary>
@@ -62,8 +76,19 @@ public class Turret
         {
             yield return this.Bullet;
         }
+#if STEREO
 
-#if !STEREO
+        if (this.HealingBullet is not null)
+        {
+            yield return this.HealingBullet;
+        }
+
+        if (this.StunBullet is not null)
+        {
+            yield return this.StunBullet;
+        }
+
+#else
 
         if (this.DoubleBullet is not null)
         {
@@ -86,8 +111,10 @@ public class Turret
     {
         this.Direction = snapshot.Direction;
         this.Bullet?.UpdateFrom(snapshot.Bullet!);
-
-#if !STEREO
+#if STEREO
+        this.HealingBullet?.UpdateFrom(snapshot.HealingBullet!);
+        this.StunBullet?.UpdateFrom(snapshot.StunBullet!);
+#else
         this.DoubleBullet?.UpdateFrom(snapshot.DoubleBullet!);
         this.Laser?.UpdateFrom(snapshot.Laser!);
 #endif

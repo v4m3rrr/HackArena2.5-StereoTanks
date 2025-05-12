@@ -20,10 +20,7 @@ internal sealed class BulletSyncService(
             var sprite = bulletSprites.FirstOrDefault(b => b.Logic.Equals(bullet));
             if (sprite == null)
             {
-                sprite = bullet is DoubleBullet dbl
-                    ? new Sprites.DoubleBullet(dbl, parent)
-                    : new Sprites.Bullet(bullet, parent);
-
+                sprite = new Sprites.Bullet(bullet, parent);
                 bulletSprites.Add(sprite);
             }
             else

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using GameLogic;
+﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
@@ -11,7 +9,16 @@ namespace GameClient.Sprites;
 /// </summary>
 internal class Bullet : ISprite, IDetectableByRadar
 {
-    private static readonly ScalableTexture2D.Static StaticTexture = new("Images/Game/bullet_ts.svg");
+    private static readonly Dictionary<BulletType, ScalableTexture2D.Static> StaticTextures = new()
+    {
+        [BulletType.Basic] = new("Images/Game/bullet_ts.svg"),
+        [BulletType.Double] = new("Images/Game/double_bullet_ts.svg"),
+#if STEREO
+        [BulletType.Healing] = new("Images/Game/healing_bullet_ts.svg"),
+        [BulletType.Stun] = new("Images/Game/stun_bullet_ts.svg"),
+#endif
+    };
+
     private static float heightPercentage;
 
     private readonly ScalableTexture2D texture;
@@ -27,21 +34,16 @@ internal class Bullet : ISprite, IDetectableByRadar
     /// <param name="logic">The bullet logic.</param>
     /// <param name="grid">The grid component.</param>
     public Bullet(GameLogic.Bullet logic, GridComponent grid)
-        : this(logic, grid, StaticTexture)
     {
-    }
+        if (!StaticTextures.TryGetValue(logic.Type, out var staticTexture))
+        {
+            DebugConsole.SendMessage(
+                $"[Sprites.Bullet] Unknown bullet type: {logic.Type}. Using basic texture.",
+                Color.Yellow);
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Bullet"/> class.
-    /// </summary>
-    /// <param name="logic">The bullet logic.</param>
-    /// <param name="grid">The grid component.</param>
-    /// <param name="staticTexture">
-    /// The static texture that will be used
-    /// to create a new scalable texture for the bullet.
-    /// </param>
-    protected Bullet(GameLogic.Bullet logic, GridComponent grid, ScalableTexture2D.Static staticTexture)
-    {
+            staticTexture = StaticTextures[BulletType.Basic];
+        }
+
         this.texture = new ScalableTexture2D(staticTexture)
         {
             RelativeOrigin = new Vector2(0.5f),
@@ -83,31 +85,34 @@ internal class Bullet : ISprite, IDetectableByRadar
     /// <inheritdoc/>
     public static async void LoadContent()
     {
-        StaticTexture.Load();
-
-        var data = new Color[StaticTexture.Texture.Width * StaticTexture.Texture.Height];
-        await GameClientCore.InvokeOnMainThreadAsync(() => StaticTexture.Texture.GetData(data));
-
-        int firstHeight = -1;
-        int lastHeight = -1;
-
-        for (int i = 0; i < StaticTexture.Texture.Height; i++)
+        foreach (var staticTexture in StaticTextures.Values)
         {
-            for (int j = 0; j < StaticTexture.Texture.Width; j++)
-            {
-                if (data[(i * StaticTexture.Texture.Width) + j].A > 0)
-                {
-                    if (firstHeight == -1)
-                    {
-                        firstHeight = i;
-                    }
+            staticTexture.Load();
 
-                    lastHeight = i;
+            var data = new Color[staticTexture.Texture.Width * staticTexture.Texture.Height];
+            await GameClientCore.InvokeOnMainThreadAsync(() => staticTexture.Texture.GetData(data));
+
+            int firstHeight = -1;
+            int lastHeight = -1;
+
+            for (int i = 0; i < staticTexture.Texture.Height; i++)
+            {
+                for (int j = 0; j < staticTexture.Texture.Width; j++)
+                {
+                    if (data[(i * staticTexture.Texture.Width) + j].A > 0)
+                    {
+                        if (firstHeight == -1)
+                        {
+                            firstHeight = i;
+                        }
+
+                        lastHeight = i;
+                    }
                 }
             }
-        }
 
-        heightPercentage = (float)(lastHeight - firstHeight) / StaticTexture.Texture.Height;
+            heightPercentage = (float)(lastHeight - firstHeight) / staticTexture.Texture.Height;
+        }
     }
 
     /// <inheritdoc/>
@@ -158,7 +163,7 @@ internal class Bullet : ISprite, IDetectableByRadar
             gridTop + ((int)(this.position.Y * tileSize)) + drawOffset);
         var size = new Point(tileSize);
 
-        StaticTexture.Transform.Size = size;
+        StaticTextures[this.Logic.Type].Transform.Size = size;
 
         this.texture.Transform.Location = location;
         this.texture.Transform.Size = size;

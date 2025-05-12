@@ -29,4 +29,18 @@ public enum AbilityType
     /// Drops a mine.
     /// </summary>
     DropMine,
+
+#if STEREO
+
+    /// <summary>
+    /// Fires a healing bullet.
+    /// </summary>
+    FireHealingBullet,
+
+    /// <summary>
+    /// Fires a stun bullet.
+    /// </summary>
+    FireStunBullet,
+
+#endif
 }

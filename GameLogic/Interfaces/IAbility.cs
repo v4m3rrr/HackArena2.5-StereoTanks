@@ -1,8 +1,8 @@
 namespace GameLogic;
 
 /// <summary>
-/// Represents an executable capability that can be owned
-/// by an entity (e.g., a tank or turret).
+/// Represents an ability that can be executed by a game entity,
+/// such as a <see cref="Tank"/> or its <see cref="Turret"/>.
 /// </summary>
 internal interface IAbility
 {

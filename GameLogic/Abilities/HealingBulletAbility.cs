@@ -1,19 +1,15 @@
-﻿namespace GameLogic;
+namespace GameLogic;
+
+#if STEREO
 
 /// <summary>
-/// Represents a double bullet shooting ability owned by a turret.
+/// Represents a healing bullet shooting ability owned by a turret.
 /// </summary>
 /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class DoubleBulletAbility(StunSystem stunSystem)
-#if STEREO
+internal sealed class HealingBulletAbility(StunSystem stunSystem)
     : IRegenerable, IBulletFiringAbility
-#else
-    : IBulletFiringAbility
-#endif
 {
-#if STEREO
     private int? remainingRegenerationTicks = null;
-#endif
 
     /// <summary>
     /// Gets the turret that owns this ability.
@@ -23,17 +19,11 @@ internal sealed class DoubleBulletAbility(StunSystem stunSystem)
     /// <inheritdoc/>
     public bool CanUse
         => !this.Turret.Tank.IsDead
-#if STEREO
         && this.remainingRegenerationTicks is null
-#else
-        && this.Turret.Tank.SecondaryItemType is SecondaryItemType.DoubleBullet
-#endif
         && !stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
 
-#if STEREO
-
     /// <inheritdoc/>
-    public int TotalRegenerationTicks => 100;
+    public int TotalRegenerationTicks => 50;
 
     /// <inheritdoc/>
     public int? RemainingRegenerationTicks
@@ -53,19 +43,11 @@ internal sealed class DoubleBulletAbility(StunSystem stunSystem)
     /// <inheritdoc/>
     public float? RegenerationProgress => RegenerationUtils.GetRegenerationProgres(this);
 
-#endif
-
     /// <inheritdoc/>
     public void Use()
     {
-#if STEREO
         this.remainingRegenerationTicks = this.TotalRegenerationTicks;
-#else
-        this.Turret.Tank.SecondaryItemType = null;
-#endif
     }
-
-#if STEREO
 
     /// <inheritdoc/>
     public void RegenerateTick()
@@ -79,16 +61,14 @@ internal sealed class DoubleBulletAbility(StunSystem stunSystem)
         this.remainingRegenerationTicks = null;
     }
 
-#endif
-
     /// <summary>
     /// Updates the ability from another instance.
     /// </summary>
     /// <param name="snapshot">The ability to update from.</param>
-    public void UpdateFrom(DoubleBulletAbility snapshot)
+    public void UpdateFrom(HealingBulletAbility snapshot)
     {
-#if STEREO
         this.remainingRegenerationTicks = snapshot.RemainingRegenerationTicks;
-#endif
     }
 }
+
+#endif

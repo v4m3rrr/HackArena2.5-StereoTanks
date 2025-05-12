@@ -51,7 +51,7 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
         return type switch
         {
             AbilityType.FireBullet
-                => () => game.Systems.Bullet.TryFireBullet(player.Tank.Turret.Bullet!),
+                => () => game.Systems.Bullet.TryFireBullet(player.Tank.Turret.Bullet!, BulletType.Basic),
 #if !STEREO
             AbilityType.UseRadar
                 => () => game.Systems.Radar.TryUseRadar(player.Tank.Radar!),
@@ -60,7 +60,7 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
                 => () => game.Systems.Mine.TryDropMine(player.Tank.Mine!),
 
             AbilityType.FireDoubleBullet
-                => () => game.Systems.Bullet.TryFireDoubleBullet(player.Tank.Turret.DoubleBullet!),
+                => () => game.Systems.Bullet.TryFireBullet(player.Tank.Turret.DoubleBullet!, BulletType.Double),
 
             AbilityType.UseLaser
                 => () => game.Systems.Laser.TryUseLaser(player.Tank.Turret.Laser!),
@@ -74,10 +74,16 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
                 => () => game.Systems.Mine.TryDropMine(heavy.Mine!),
 
             AbilityType.FireDoubleBullet when player.Tank.Turret is LightTurret light
-                => () => game.Systems.Bullet.TryFireDoubleBullet(light.DoubleBullet!),
+                => () => game.Systems.Bullet.TryFireBullet(light.DoubleBullet!, BulletType.Double),
 
             AbilityType.UseLaser when player.Tank.Turret is HeavyTurret heavy
                 => () => game.Systems.Laser.TryUseLaser(heavy.Laser!),
+
+            AbilityType.FireHealingBullet when player.Tank.Turret is Turret turret
+                => () => game.Systems.Bullet.TryFireBullet(turret.HealingBullet!, BulletType.Healing),
+
+            AbilityType.FireStunBullet when player.Tank.Turret is Turret turret
+                => () => game.Systems.Bullet.TryFireBullet(turret.StunBullet!, BulletType.Stun),
 
             _ => null,
 #endif
@@ -102,6 +108,8 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
             AbilityType.UseLaser when tank.Turret is HeavyTurret heavy => heavy.Laser,
             AbilityType.UseRadar when tank is LightTank light => light.Radar,
             AbilityType.DropMine when tank is HeavyTank heavy => heavy.Mine,
+            AbilityType.FireHealingBullet => tank.Turret.HealingBullet,
+            AbilityType.FireStunBullet => tank.Turret.StunBullet,
             _ => null,
         };
 

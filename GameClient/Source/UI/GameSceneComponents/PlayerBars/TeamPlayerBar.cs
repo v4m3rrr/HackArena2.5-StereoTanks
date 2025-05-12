@@ -66,9 +66,9 @@ internal class TeamPlayerBar : PlayerBar
             },
         };
 
-        topRow.SetResizeFactor(bulletCount, 2.6f);
-        topRow.SetResizeFactor(abilities, 2.6f);
-        topRow.SetResizeFactor(spaceContainer, 3.2f);
+        topRow.SetResizeFactor(bulletCount, 3.2f);
+        topRow.SetResizeFactor(abilities, 5.2f);
+        topRow.SetResizeFactor(spaceContainer, 1f);
         topRow.SetResizeFactor(tankSprite, 2.6f);
 
         // Health bar

@@ -14,9 +14,9 @@ internal class GameSystems
         this.Heal = new HealSystem();
         this.Damage = new DamageSystem(this.Heal);
         this.Score = new ScoreSystem();
-        this.BulletCollision = new(grid, this.Damage, this.Score);
-        this.Bullet = new BulletSystem(grid, this.BulletCollision);
         this.Stun = new StunSystem();
+        this.BulletCollision = new BulletCollisionSystem(grid, this.Damage, this.Heal, this.Score, this.Stun);
+        this.Bullet = new BulletSystem(grid, this.BulletCollision);
         this.Visibility = new VisibilitySystem(grid);
         this.Zone = new ZoneSystem(grid, this.Score, this.Heal);
 
@@ -35,7 +35,6 @@ internal class GameSystems
         };
 
         this.AbilityMaintenance = new AbilityMaintenanceSystem(grid);
-        this.BulletCollision = new BulletCollisionSystem(grid, this.Damage, this.Score);
         this.Despawn = new DespawnSystem(grid, this.Heal, this.Score, this.Zone)
         {
 #if !STEREO

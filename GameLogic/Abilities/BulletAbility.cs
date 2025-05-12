@@ -4,7 +4,8 @@
 /// Represents a basic bullet shooting ability owned by a turret.
 /// </summary>
 /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class BulletAbility(StunSystem stunSystem) : IRegenerable, IAbility
+internal sealed class BulletAbility(StunSystem stunSystem)
+    : IRegenerable, IBulletFiringAbility
 {
     /// <summary>
     /// The maximum number of bullets that can be held at once.

@@ -165,7 +165,6 @@ internal class Game : Scene
         GameSceneComponents.PlayerBarComponent.LoadContent();
 
         Sprites.Bullet.LoadContent();
-        Sprites.DoubleBullet.LoadContent();
         Sprites.FogOfWar.LoadContent();
         Sprites.Mine.LoadContent();
 #if !STEREO

@@ -1,5 +1,7 @@
 namespace GameLogic;
 
+#pragma warning disable CS9113
+
 /// <summary>
 /// Handles removal of tanks and related cleanup from the grid.
 /// </summary>

@@ -239,6 +239,16 @@ internal class GameInputHandler
         {
             payload = new AbilityUsePayload(AbilityType.DropMine);
         }
+#if STEREO
+        else if (KeyboardController.IsKeyHit(Keys.D3))
+        {
+            payload = new AbilityUsePayload(AbilityType.FireHealingBullet);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D4))
+        {
+            payload = new AbilityUsePayload(AbilityType.FireStunBullet);
+        }
+#endif
 
         return payload;
     }
@@ -254,28 +264,39 @@ internal class GameInputHandler
 
         FullyRegenerateAbilityPayload? payload = null;
 
+        AbilityType? ability;
         if (KeyboardController.IsKeyHit(Keys.D1))
         {
-            var ability = this.tankType switch
+            ability = this.tankType switch
             {
                 TankType.Light => AbilityType.FireDoubleBullet,
                 TankType.Heavy => AbilityType.UseLaser,
-                _ => throw new ArgumentOutOfRangeException(),
+                _ => null,
             };
-            payload = new FullyRegenerateAbilityPayload(ability);
         }
         else if (KeyboardController.IsKeyHit(Keys.D2))
         {
-            var ability = this.tankType switch
+            ability = this.tankType switch
             {
                 TankType.Light => AbilityType.UseRadar,
                 TankType.Heavy => AbilityType.DropMine,
-                _ => throw new ArgumentOutOfRangeException(),
+                _ => null,
             };
-            payload = new FullyRegenerateAbilityPayload(ability);
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D3))
+        {
+            ability = AbilityType.FireHealingBullet;
+        }
+        else if (KeyboardController.IsKeyHit(Keys.D4))
+        {
+            ability = AbilityType.FireStunBullet;
+        }
+        else
+        {
+            return null;
         }
 
-        return payload;
+        return new FullyRegenerateAbilityPayload(ability!.Value);
     }
 
 #endif

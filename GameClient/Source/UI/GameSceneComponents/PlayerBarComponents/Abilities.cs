@@ -5,6 +5,7 @@ using MonoRivUI;
 namespace GameClient.GameSceneComponents.PlayerBarComponents;
 
 #if STEREO
+
 /// <summary>
 /// Represents the secondary items of a player displayed on a player bar.
 /// </summary>
@@ -14,6 +15,8 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
     private static readonly ScalableTexture2D.Static DoubleBulletStaticTexture = new("Images/Game/PlayerBarIcons/double_bullet.svg");
     private static readonly ScalableTexture2D.Static RadarStaticTexture = new("Images/Game/PlayerBarIcons/radar.svg");
     private static readonly ScalableTexture2D.Static MineStaticTexture = new("Images/Game/PlayerBarIcons/mine.svg");
+    private static readonly ScalableTexture2D.Static HealingBulletStaticTexture = new("Images/Game/PlayerBarIcons/healing_bullet.svg");
+    private static readonly ScalableTexture2D.Static StunBulletStaticTexture = new("Images/Game/PlayerBarIcons/stun_bullet.svg");
 
     private readonly ListBox listBox;
 
@@ -34,18 +37,22 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
             },
         };
 
+        var tank = player.Tank;
         List<(IRegenerable, ScalableTexture2D.Static)> regenerables = [];
 
-        if (player.Tank is LightTank light)
+        if (tank is LightTank light)
         {
             regenerables.Add((light.Turret.DoubleBullet!, DoubleBulletStaticTexture));
             regenerables.Add((light.Radar!, RadarStaticTexture));
         }
-        else if (player.Tank is HeavyTank heavy)
+        else if (tank is HeavyTank heavy)
         {
             regenerables.Add((heavy.Turret.Laser!, LaserStaticTexture));
             regenerables.Add((heavy.Mine!, MineStaticTexture));
         }
+
+        regenerables.Add((tank.Turret.HealingBullet!, HealingBulletStaticTexture));
+        regenerables.Add((tank.Turret.StunBullet!, StunBulletStaticTexture));
 
         foreach (var (regenerable, staticTexture) in regenerables)
         {
@@ -63,6 +70,10 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
             LaserStaticTexture.Transform.Size = size;
             RadarStaticTexture.Transform.Size = size;
             MineStaticTexture.Transform.Size = size;
+#if STEREO
+            HealingBulletStaticTexture.Transform.Size = size;
+            StunBulletStaticTexture.Transform.Size = size;
+#endif
         };
     }
 
@@ -73,6 +84,10 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
         LaserStaticTexture.Load();
         RadarStaticTexture.Load();
         MineStaticTexture.Load();
+#if STEREO
+        HealingBulletStaticTexture.Load();
+        StunBulletStaticTexture.Load();
+#endif
     }
 
     /// <inheritdoc/>

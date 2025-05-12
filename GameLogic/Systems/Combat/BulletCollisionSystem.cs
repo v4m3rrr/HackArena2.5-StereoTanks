@@ -5,11 +5,15 @@ namespace GameLogic;
 /// </summary>
 /// <param name="grid">The grid containing the bullets and other objects.</param>
 /// <param name="damageSystem">The damage system for applying damage to tanks.</param>
+/// <param name="healSystem">The heal system for applying healing to tanks.</param>
 /// <param name="scoreSystem">The score system for awarding points.</param>
+/// <param name="stunSystem">The stun system for applying stun effects to tanks.</param>
 internal sealed class BulletCollisionSystem(
     Grid grid,
     DamageSystem damageSystem,
-    ScoreSystem scoreSystem)
+    HealSystem healSystem,
+    ScoreSystem scoreSystem,
+    StunSystem stunSystem)
 {
     /// <summary>
     /// Resolves all bullet-related collisions passed from the detection phase.
@@ -39,18 +43,19 @@ internal sealed class BulletCollisionSystem(
         _ = grid.Bullets.Remove(a);
         _ = grid.Bullets.Remove(b);
 
-        bool onlyOneIsDouble = a is DoubleBullet ^ b is DoubleBullet;
+        bool onlyOneIsDouble = a.Type is BulletType.Double ^ b.Type is BulletType.Double;
         if (!onlyOneIsDouble)
         {
             return;
         }
 
-        var doubleBullet = a is DoubleBullet ? a : b;
+        var doubleBullet = a.Type is BulletType.Double ? a : b;
 
         var downgraded = new Bullet(
             doubleBullet.X,
             doubleBullet.Y,
             doubleBullet.Direction,
+            BulletType.Basic,
             doubleBullet.Speed,
             doubleBullet.Damage!.Value / 2,
             doubleBullet.Shooter!);
@@ -62,7 +67,34 @@ internal sealed class BulletCollisionSystem(
     {
         _ = grid.Bullets.Remove(bullet);
 
-        int dealt = damageSystem.ApplyDamage(tank, bullet.Damage!.Value, bullet.Shooter);
+        int dealt = 0;
+
+        switch (bullet.Type)
+        {
+            case BulletType.Basic or BulletType.Double:
+                dealt = damageSystem.ApplyDamage(tank, bullet.Damage!.Value, bullet.Shooter);
+                break;
+
+#if STEREO
+
+            case BulletType.Healing:
+                const int healingAmount = 20;
+                healSystem.Heal(tank, healingAmount);
+                break;
+
+            case BulletType.Stun:
+                const int ticks = 10;
+                var stun = bullet.Shooter?.Tank.Type switch
+                {
+                    TankType.Heavy => StunBlockEffect.Movement,
+                    TankType.Light => StunBlockEffect.AbilityUse,
+                    _ => StunBlockEffect.None,
+                };
+                stunSystem.ApplyStun(tank, stun, ticks);
+                break;
+
+#endif
+        }
 
         if (dealt > 0 && bullet.Shooter is not null)
         {

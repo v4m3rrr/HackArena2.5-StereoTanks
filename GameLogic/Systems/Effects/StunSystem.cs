@@ -10,6 +10,18 @@ internal sealed class StunSystem
     /// <summary>
     /// Applies a stun to the specified tank.
     /// </summary>
+    /// <param name="tank">The target tank to apply the stun to.</param>
+    /// <param name="effect">The stun effect as flag to apply.</param>
+    /// <param name="ticks">The number of ticks the stun should last.</param>
+    public void ApplyStun(Tank tank, StunBlockEffect effect, int ticks)
+    {
+        var stunEffect = new StunEffect(ticks, effect);
+        this.ApplyStun(tank, stunEffect);
+    }
+
+    /// <summary>
+    /// Applies a stun to the specified tank.
+    /// </summary>
     /// <param name="tank">The target tank.</param>
     /// <param name="stun">The stun effect to apply.</param>
     public void ApplyStun(Tank tank, IStunEffect stun)
@@ -84,5 +96,15 @@ internal sealed class StunSystem
     {
         return this.stunMap.TryGetValue(tank, out var effects)
             && effects.Keys.Any(e => e.StunBlockEffect.HasFlag(effect));
+    }
+
+    private class StunEffect(int stunTicks, StunBlockEffect stunBlockEffect)
+        : IStunEffect
+    {
+        /// <inheritdoc/>
+        public int StunTicks { get; } = stunTicks;
+
+        /// <inheritdoc/>
+        public StunBlockEffect StunBlockEffect { get; } = stunBlockEffect;
     }
 }

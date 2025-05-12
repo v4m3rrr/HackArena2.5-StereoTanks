@@ -16,6 +16,7 @@ public class Bullet : IEquatable<Bullet>
     /// <param name="x">The x coordinate of the bullet.</param>
     /// <param name="y">The y coordinate of the bullet.</param>
     /// <param name="direction">The direction of the bullet.</param>
+    /// <param name="type">The type of the bullet.</param>
     /// <param name="speed">The speed of the bullet per second.</param>
     /// <param name="damage">The damage dealt by the bullet.</param>
     /// <param name="shooter">The tank that shot the bullet.</param>
@@ -23,8 +24,15 @@ public class Bullet : IEquatable<Bullet>
     /// <para>This constructor should be used when a tank shoots a bullet.</para>
     /// <para>The <see cref="Id"/> property is set automatically.</para>
     /// </remarks>
-    internal Bullet(int x, int y, Direction direction, float speed, int damage, Player shooter)
-        : this(idCounter++, x, y, direction, speed, damage, shooter.Id)
+    internal Bullet(
+        int x,
+        int y,
+        Direction direction,
+        BulletType type,
+        float speed,
+        int damage,
+        Player shooter)
+        : this(idCounter++, x, y, direction, type, speed, damage, shooter.Id)
     {
         this.Shooter = shooter;
     }
@@ -38,12 +46,14 @@ public class Bullet : IEquatable<Bullet>
     /// <param name="direction">The direction of the bullet.</param>
     /// <param name="speed">The speed of the bullet per second.</param>
     /// <param name="damage">The damage dealt by the bullet.</param>
+    /// <param name="type">The type of the bullet.</param>
     /// <param name="shooterId">The id of the player that shot the bullet.</param>
     internal Bullet(
         int id,
         int x,
         int y,
         Direction direction,
+        BulletType type,
         float speed,
         int? damage = null,
         string? shooterId = null)
@@ -52,6 +62,7 @@ public class Bullet : IEquatable<Bullet>
         this.x = x;
         this.y = y;
         this.Direction = direction;
+        this.Type = type;
         this.Speed = speed;
         this.Damage = damage;
         this.ShooterId = shooterId;
@@ -91,6 +102,11 @@ public class Bullet : IEquatable<Bullet>
     public int? Damage { get; private set; }
 
     /// <summary>
+    /// Gets the type of the bullet.
+    /// </summary>
+    public BulletType Type { get; private set; }
+
+    /// <summary>
     /// Gets the id of the owner of the bullet.
     /// </summary>
     internal string? ShooterId { get; private set; }
@@ -99,11 +115,6 @@ public class Bullet : IEquatable<Bullet>
     /// Gets or sets the tank that shot the bullet.
     /// </summary>
     internal Player? Shooter { get; set; }
-
-    /// <summary>
-    /// Gets the type of the bullet.
-    /// </summary>
-    internal virtual BulletType Type => BulletType.Basic;
 
     /// <summary>
     /// Updates the bullet's position based on the current direction, speed and delta time.
@@ -156,5 +167,9 @@ public class Bullet : IEquatable<Bullet>
         this.x = snapshot.X;
         this.y = snapshot.Y;
         this.Direction = snapshot.Direction;
+        this.Type = snapshot.Type;
+        this.Speed = snapshot.Speed;
+        this.Damage = snapshot.Damage;
+        this.ShooterId = snapshot.ShooterId;
     }
 }

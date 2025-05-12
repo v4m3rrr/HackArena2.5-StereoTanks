@@ -72,10 +72,11 @@ internal sealed class BulletSystem(Grid grid, BulletCollisionSystem collisionSys
     /// Attempts to fire a single bullet from the specified turret.
     /// </summary>
     /// <param name="ability">The bullet ability used to fire.</param>
+    /// <param name="type">The type of bullet to fire.</param>
     /// <returns>
     /// The fired bullet if successful; otherwise, <see langword="null"/>.
     /// </returns>
-    public Bullet? TryFireBullet(BulletAbility ability)
+    public Bullet? TryFireBullet(IBulletFiringAbility ability, BulletType type)
     {
         if (!ability.CanUse)
         {
@@ -92,6 +93,7 @@ internal sealed class BulletSystem(Grid grid, BulletCollisionSystem collisionSys
             bulletX,
             bulletY,
             turret.Direction,
+            type,
             speed: 2.0f,
             damage: 20,
             turret.Tank.Owner);
@@ -100,40 +102,6 @@ internal sealed class BulletSystem(Grid grid, BulletCollisionSystem collisionSys
         ability.Use();
 
         return bullet;
-    }
-
-    /// <summary>
-    /// Tries to fire double bullets from a turret with the double bullet ability.
-    /// </summary>
-    /// <param name="ability">The turret ability used to fire.</param>
-    /// <returns>
-    /// <see langword="true"/> if the bullets were fired; otherwise, <see langword="false"/>.
-    /// </returns>
-    public bool TryFireDoubleBullet(DoubleBulletAbility ability)
-    {
-        if (!ability.CanUse)
-        {
-            return false;
-        }
-
-        var turret = ability.Turret;
-        var tank = turret.Tank;
-        var (nx, ny) = DirectionUtils.Normal(turret.Direction);
-        int bulletX = tank.X + nx;
-        int bulletY = tank.Y + ny;
-
-        var doubleBullet = new DoubleBullet(
-            bulletX,
-            bulletY,
-            turret.Direction,
-            speed: 2.0f,
-            damage: 20 * 2,
-            tank.Owner);
-
-        this.queuedBullets.Enqueue(doubleBullet);
-        ability.Use();
-
-        return true;
     }
 
     /// <summary>
