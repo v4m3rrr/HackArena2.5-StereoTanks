@@ -43,6 +43,43 @@ internal sealed class DebugPacketHandler(GameInstance game, ILogger logger)
                 return true;
 
 #if STEREO
+            case PacketType.SetScore:
+#else
+            case PacketType.SetPlayerScore:
+#endif
+                var setScorePayload = packet.GetPayload<SetScorePayload>();
+                logger.Debug("Set score packet received from {connection}.", connection);
+
+#if STEREO
+                var teamName = setScorePayload.TeamName;
+#else
+                var playerNick = setScorePayload.PlayerNick;
+#endif
+
+                try
+                {
+#if STEREO
+                    this.actionHandler.SetScore(teamName, setScorePayload.Score);
+#else
+                    this.actionHandler.SetScore(playerNick, setScorePayload.Score);
+#endif
+                }
+                catch (ArgumentException ex)
+                {
+                    errorPayload = new ErrorPayload(
+                        PacketType.InvalidPayloadErrorWithPayload,
+#if STEREO
+                        $"Cannot set score for team {teamName}. {ex}");
+#else
+                        $"Cannot set score for player {playerNick}. {ex}");
+#endif
+
+                    await new ResponsePacket(errorPayload, logger).SendAsync(connection);
+                }
+
+                return true;
+
+#if STEREO
 
             case PacketType.FullyRegenerateAbility:
                 var chargePayload = packet.GetPayload<FullyRegenerateAbilityPayload>();

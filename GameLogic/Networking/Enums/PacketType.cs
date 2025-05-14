@@ -159,7 +159,16 @@ public enum PacketType
     /// </summary>
     GameStateDebugGroup = 0xC0,
 
-#if !STEREO
+#if STEREO
+
+    /// <summary>
+    /// The set score packet type.
+    /// </summary>
+    SetScore = GameStateDebugGroup | HasPayload | 0x1,
+
+#else
+    
+    /* Backwards compatibility */
 
     /// <summary>
     /// The set player score packet type.

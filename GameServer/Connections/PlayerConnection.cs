@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.WebSockets;
+using System.Text;
 using GameLogic;
 using GameLogic.Networking;
 using Serilog;
@@ -73,7 +74,7 @@ internal record class PlayerConnection(
 
 #endif
 
-#if HACKATHON && STEREO
+#if STEREO
 
     /// <summary>
     /// Gets or sets the last sent game state payload.
@@ -99,13 +100,20 @@ internal record class PlayerConnection(
     /// <inheritdoc/>
     public override string ToString()
     {
-        return
+        var sb = new StringBuilder();
+        sb.Append(base.ToString())
+
 #if HACKATHON
-            $"{base.ToString()}, Type={this.Data.Type}";
-#elif STEREO
-            $"{base.ToString()}, TeamName={this.Instance.Team.Name}, TankType={this.Instance.Tank.Type}";
-#else
-            $"{base.ToString()}, Nickname={this.Instance.Nickname}";
+            .Append(", Type=").Append(this.Data.Type)
 #endif
+
+#if STEREO
+            .Append(", TeamName=").Append(this.Instance.Team.Name)
+            .Append(", TankType=").Append(this.Instance.Tank.Type);
+#else
+            .Append(", Nickname=").Append(this.Instance.Nickname);
+#endif
+
+        return sb.ToString();
     }
 }

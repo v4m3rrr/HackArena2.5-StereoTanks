@@ -310,29 +310,37 @@ internal static class CommandInitializer
             return false;
         }
 
-#if !STEREO
-
-        [Command("Sets score to a player.")]
+#if STEREO
+        [Command("Sets a score to a team.")]
         private static async void SetScore(
-            [Argument("A player nick to sets points")] string nick,
-            [Argument("A points to sets")] int points)
+            [Argument("The name of the team whose score is to be set.")] string name,
+            [Argument("The number of points to assign to the specified team.")] int points)
+#else
+        [Command("Sets a score to a player.")]
+        private static async void SetScore(
+            [Argument("The nickname of the player whose score is to be set.")] string name,
+            [Argument("The number of points to assign to the specified player.")] int points)
+#endif
         {
             if (ThrowErrorIfNotGameScene() || ThrowErrorIfNotConnectedToServer())
             {
                 return;
             }
 
-            var payload = new SetPlayerScorePayload(nick, points);
+            var payload = new SetScorePayload(name, points);
             var message = PacketSerializer.Serialize(payload);
 
             await ServerConnection.SendAsync(message);
 
+#if STEREO
             DebugConsole.SendMessage(
-                $"Packet \"Set player '{nick}' points to {points} \" has been sent to the server.",
+                $"Packet \"Set team '{name}' points to {points}\" has been sent to the server.",
+#else
+            DebugConsole.SendMessage(
+                $"Packet \"Set player '{name}' points to {points}\" has been sent to the server.",
+#endif
                 Color.Green);
         }
-
-#endif
 
         [Command("Force end the game.")]
         private static async void ForceEnd()

@@ -163,10 +163,10 @@ internal class MainMenu : Scene
         var quickJoinFont = new ScalableFont(Styles.Fonts.Paths.Main, 9);
 
 #if STEREO
-        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Light, "Team 1");
-        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Heavy, "Team 1");
-        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Light, "Team 2");
-        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Heavy, "Team 2");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Light, "Team1");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Heavy, "Team1");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Light, "Team2");
+        _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont, TankType.Heavy, "Team2");
 #else
         _ = CreateQuickJoinPlayerButton(quickJoinListBox, quickJoinFont);
 #endif

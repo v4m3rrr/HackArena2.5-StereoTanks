@@ -107,7 +107,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\GiveSecondaryItemPayload.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\GlobalAbilityUsePayload.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\GlobalGiveSecondaryItemPayload.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\SetPlayerScorePayload.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\DebugPayloads\SetScorePayload.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\EmptyPayload.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\ErrorPayload.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\Payloads\Exceptions\PayloadEnumValidationError.cs" />

@@ -114,6 +114,16 @@ internal static partial class CommandLineParser
                 "Argument \"--overwrite-record-file\" provided without \"-r\" or \"--save-replay\", ignoring.");
         }
 
+#if HACKATHON
+
+        if (opts.SaveResults && !opts.SaveReplay)
+        {
+            logger.Error("The results can only be saved if the replay is saved.");
+            return false;
+        }
+
+#endif
+
         if (opts.SaveReplay && opts.ReplayFilepath is not null)
         {
             string replayPath = Path.GetFullPath(opts.ReplayFilepath);

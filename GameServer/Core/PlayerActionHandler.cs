@@ -93,6 +93,58 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
 #if DEBUG && STEREO
 
     /// <summary>
+    /// Sets the score of a team.
+    /// </summary>
+    /// <param name="teamName">The name of the team whose score should be set.</param>
+    /// <param name="score">The score to set for the team.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the team with the specified name is not found
+    /// or when the score is negative.
+    /// </exception>
+    public void SetScore(string teamName, int score)
+    {
+        var team = game.Players.FirstOrDefault(p =>
+            string.Equals(p.Instance.Team.Name, teamName, StringComparison.OrdinalIgnoreCase))?.Team
+            ?? throw new ArgumentException($"Team with name {teamName} not found.");
+
+        if (score < 0)
+        {
+            throw new ArgumentException("Score cannot be negative.");
+        }
+
+        team.Score = score;
+    }
+
+#elif DEBUG
+
+    /// <summary>
+    /// Sets the score of a player.
+    /// </summary>
+    /// <param name="playerNick">The nickname of the player whose score should be set.</param>
+    /// <param name="score">The score to set for the player.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the player with the specified nickname is not found
+    /// or when the score is negative.
+    /// </exception>
+    public void SetScore(string playerNick, int score)
+    {
+        var player = game.Players.FirstOrDefault(p =>
+            string.Equals(p.Instance.Nickname, playerNick, StringComparison.OrdinalIgnoreCase))?.Instance
+            ?? throw new ArgumentException($"Player with nickname {playerNick} not found.");
+
+        if (score < 0)
+        {
+            throw new ArgumentException("Score cannot be negative.");
+        }
+
+        player.Score = score;
+    }
+
+#endif
+
+#if DEBUG && STEREO
+
+    /// <summary>
     /// Instantly regenerates the specified ability of a player to its fully usable state.
     /// </summary>
     /// <param name="player">The player whose ability should be regenerated.</param>
