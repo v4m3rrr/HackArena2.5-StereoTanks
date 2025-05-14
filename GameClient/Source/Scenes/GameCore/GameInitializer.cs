@@ -55,9 +55,9 @@ internal class GameInitializer(Game game)
     {
         var boxRelativeSize = new Vector2(0.22f, 1.0f);
         var boxRelativePadding = new Vector4(0.1f);
-        var boxRelativeOffset = new Vector2(0.015f, 0.05f);
+        var boxRelativeOffset = new Vector2(0.015f, 0.3f);
         var boxSpacing = 15;
-        var boxElementsAlignment = Alignment.Center;
+        var boxElementsAlignment = Alignment.Top;
 
         var leftBox = new TeamBarPanel()
         {
@@ -182,7 +182,7 @@ internal class GameInitializer(Game game)
             Transform =
             {
                 Alignment = Alignment.Top,
-                RelativeOffset = new Vector2(0.0f, 0.045f),
+                RelativeOffset = new Vector2(0.0f, 0.04f),
             },
         };
     }

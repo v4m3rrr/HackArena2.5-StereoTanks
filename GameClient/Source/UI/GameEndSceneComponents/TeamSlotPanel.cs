@@ -1,42 +1,35 @@
-﻿using GameClient.UI.SceneComponents;
-using GameLogic;
+﻿using GameLogic;
 using Microsoft.Xna.Framework;
 using MonoRivUI;
 
 namespace GameClient.UI.GameEndSceneComponents;
 
-#if !STEREO
+#if STEREO
 
 /// <summary>
-/// Represents a player slot panel.
+/// Represents a team slot panel.
 /// </summary>
-/// <remarks>
-/// The player slot panel displays the player's nickname,
-/// score and tank icon on the game end screen.
-/// </remarks>
-internal class PlayerSlotPanel : Component
+internal class TeamSlotPanel : Component
 {
-    private readonly RoundedSolidColor background;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
+    /// Initializes a new instance of the <see cref="TeamSlotPanel"/> class.
     /// </summary>
-    /// <param name="player">The player to display.</param>
-    public PlayerSlotPanel(Player player)
+    /// <param name="team">The team to represent.</param>
+    public TeamSlotPanel(Team team)
+        : base()
     {
-        var color = new Color(player.Color);
+        var teamColor = new Color(team.Color);
 
-        this.background = new RoundedSolidColor(GameClientCore.ThemeColor, 20)
+        var background = new RoundedSolidColor(GameClientCore.ThemeColor, 30)
         {
             AutoAdjustRadius = true,
             Parent = this,
             Opacity = 0.45f,
         };
 
-        var iconBackground = new RoundedSolidColor(Color.White, 15)
+        var teamColorContainer = new Container()
         {
             Parent = this,
-            Opacity = 0.3f,
             Transform =
             {
                 Alignment = Alignment.Left,
@@ -44,18 +37,16 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        var tankSpriteIcon = new TankSpriteIcon()
+        // Team color
+        _ = new RoundedSolidColor(teamColor, int.MaxValue)
         {
-            Parent = iconBackground,
+            Parent = teamColorContainer,
             Transform =
             {
-                RelativeSize = new Vector2(0.55f),
+                RelativeSize = new Vector2(0.29f),
                 Alignment = Alignment.Center,
-                Ratio = new Ratio(1, 1),
             },
         };
-
-        tankSpriteIcon.SetColor(color);
 
         var font = new ScalableFont(Styles.Fonts.Paths.Main, 19)
         {
@@ -63,21 +54,21 @@ internal class PlayerSlotPanel : Component
             Spacing = 8,
         };
 
-        var nickContainer = new Container()
+        var teamNameContainer = new Container()
         {
             Parent = this,
             Transform =
             {
-                RelativeSize = new Vector2(0.82f, 1f),
+                RelativeSize = new Vector2(0.88f, 1f),
                 Alignment = Alignment.Right,
             },
         };
 
-        // Nickname
+        // Teamname
         _ = new Text(font, Color.White)
         {
-            Parent = nickContainer,
-            Value = player.Nickname,
+            Parent = teamNameContainer,
+            Value = team.Name,
             Case = TextCase.Upper,
             TextAlignment = Alignment.Left,
             TextShrink = TextShrinkMode.HeightAndWidth,
@@ -89,10 +80,10 @@ internal class PlayerSlotPanel : Component
         };
 
         // Score
-        _ = new Text(font, color)
+        _ = new Text(font, teamColor)
         {
-            Parent = this.background,
-            Value = player.Score.ToString(),
+            Parent = background,
+            Value = team.Score.ToString(),
             TextAlignment = Alignment.Right,
             Transform =
             {
@@ -101,7 +92,6 @@ internal class PlayerSlotPanel : Component
                 RelativeOffset = new Vector2(-0.05f, 0.0f),
             },
         };
-
     }
 }
 

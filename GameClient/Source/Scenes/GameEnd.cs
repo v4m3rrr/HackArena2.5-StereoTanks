@@ -77,7 +77,7 @@ internal class GameEnd : Scene
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
     {
-        MainEffect.Rotation += 0.3f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MainEffect.Rotation += 0.25f * (float)gameTime.ElapsedGameTime.TotalSeconds;
         MainEffect.Rotation %= MathHelper.TwoPi;
     }
 

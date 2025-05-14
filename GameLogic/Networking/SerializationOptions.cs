@@ -18,7 +18,7 @@ public class SerializationOptions
 #if DEBUG
     public Formatting Formatting { get; init; } = Formatting.Indented;
 #else
-    public Formatting Formatting { get; init; } = Formatting.None;  
+    public Formatting Formatting { get; init; } = Formatting.None;
 #endif
 
     /// <summary>

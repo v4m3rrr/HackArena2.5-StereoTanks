@@ -21,7 +21,7 @@ internal class Scoreboard : Component
         this.listBox = new AlignedListBox
         {
             Parent = this,
-            Orientation = MonoRivUI.Orientation.Vertical,
+            Orientation = Orientation.Vertical,
             Spacing = 10,
             ElementsAlignment = Alignment.Center,
         };

@@ -37,15 +37,9 @@ internal class Scoreboard : Component
     {
         this.listBox.Clear();
 
-#warning add teamslotpanel
-
-        var players = teams
-            .SelectMany(t => t.Players)
-            .ToArray();
-
         for (int i = 0; i < teams.Length; i++)
         {
-            _ = new PlayerSlotPanel(players[i])
+            _ = new TeamSlotPanel(teams[i])
             {
                 Parent = this.listBox.ContentContainer,
                 Transform =

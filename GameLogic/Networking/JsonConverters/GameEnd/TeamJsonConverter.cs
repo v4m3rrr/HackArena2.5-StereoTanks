@@ -17,9 +17,13 @@ internal class TeamJsonConverter : JsonConverter<Team>
 
         var name = jObject["name"]!.Value<string>()!;
         var color = jObject["color"]!.Value<uint>()!;
+        var score = jObject["score"]!.Value<int>()!;
         var players = jObject["players"]!.ToObject<List<Player>>(serializer)!;
 
-        var team = new Team(name, color, players);
+        var team = new Team(name, color, players)
+        {
+            Score = score,
+        };
 
         foreach (var player in players)
         {

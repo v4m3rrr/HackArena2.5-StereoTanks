@@ -146,11 +146,13 @@ internal sealed class PlayerConnectionHandler(
         await this.AcceptAsync(connection);
         _ = Task.Run(() => PacketListeningService.StartReceivingAsync(game, connection, game.PacketHandler, logger));
 
+#if DEBUG
         if (quickJoin)
         {
             game.GameManager.StartGame();
             await game.LobbyManager.SendLobbyDataTo(connection);
         }
+#endif
 
         if (game.GameManager.Status is GameStatus.InLobby)
         {

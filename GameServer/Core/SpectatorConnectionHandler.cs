@@ -31,8 +31,6 @@ internal sealed class SpectatorConnectionHandler(
 
 #if DEBUG
         _ = bool.TryParse(context.Request.QueryString["quickJoin"], out bool quickJoin);
-#else
-        const bool quickJoin = false;
 #endif
 
         var connectionData = new ConnectionData(unknown.EnumSerialization)
@@ -51,11 +49,14 @@ internal sealed class SpectatorConnectionHandler(
 
         await game.LobbyManager.SendLobbyDataTo(connection);
 
+#if DEBUG
         if (quickJoin)
         {
             game.GameManager.StartGame();
         }
-        else if (game.GameManager.IsInProgess)
+        else
+#endif
+        if (game.GameManager.IsInProgess)
         {
             await game.LobbyManager.SendGameStartedTo(connection);
         }

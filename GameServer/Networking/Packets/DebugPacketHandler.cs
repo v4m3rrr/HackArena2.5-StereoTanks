@@ -69,9 +69,9 @@ internal sealed class DebugPacketHandler(GameInstance game, ILogger logger)
                     errorPayload = new ErrorPayload(
                         PacketType.InvalidPayloadErrorWithPayload,
 #if STEREO
-                        $"Cannot set score for team {teamName}. {ex}");
+                        $"Cannot set score for team {teamName}. {ex.Message}");
 #else
-                        $"Cannot set score for player {playerNick}. {ex}");
+                        $"Cannot set score for player {playerNick}. {ex.Message}");
 #endif
 
                     await new ResponsePacket(errorPayload, logger).SendAsync(connection);

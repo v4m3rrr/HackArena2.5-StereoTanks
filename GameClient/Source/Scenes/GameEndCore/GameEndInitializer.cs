@@ -33,7 +33,11 @@ internal class GameEndInitializer(GameEnd gameEnd)
             Transform =
             {
                 Alignment = Alignment.Top,
+#if STEREO
+                RelativeOffset = new Vector2(0.0f, 0.28f),
+#else
                 RelativeOffset = new Vector2(0.0f, 0.1f),
+#endif
             },
         };
     }
