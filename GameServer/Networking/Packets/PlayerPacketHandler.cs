@@ -51,10 +51,7 @@ internal sealed class PlayerPacketHandler(
 
 #if HACKATHON
 
-        if (!this.ValidateGameStateForBot(player, packet))
-        {
-            return Task.FromResult(true);
-        }
+        this.ValidateGameStateForBot(player, packet);
 
 #endif
 
@@ -155,11 +152,11 @@ internal sealed class PlayerPacketHandler(
 
 #if HACKATHON
 
-    private bool ValidateGameStateForBot(PlayerConnection player, Packet packet)
+    private void ValidateGameStateForBot(PlayerConnection player, Packet packet)
     {
         if (!player.IsHackathonBot)
         {
-            return true;
+            return;
         }
 
         var gameStateIdProperty = JsonNamingPolicy.CamelCase.ConvertName(nameof(ActionPayload.GameStateId));
@@ -172,17 +169,14 @@ internal sealed class PlayerPacketHandler(
             if (receivedId is null)
             {
                 this.SendWarning(player, "GameStateId is missing in the payload");
-                return false;
             }
 
             if (!isCurrent)
             {
                 this.SendWarning(player, PacketType.SlowResponseWarning);
-                return false;
             }
 
             player.HasMadeActionToCurrentGameState = true;
-            return true;
         }
     }
 
