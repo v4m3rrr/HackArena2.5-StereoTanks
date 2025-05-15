@@ -16,24 +16,28 @@ internal class TeamBar : BaseBar
     /// Initializes a new instance of the <see cref="TeamBar"/> class.
     /// </summary>
     /// <param name="team">The team the bar represents.</param>
-    public TeamBar(Team team)
+    /// <param name="isPlayerTeam">Indicates whether the team is the player's team.</param>
+    public TeamBar(Team team, bool? isPlayerTeam = null)
     {
         this.Team = team;
 
         this.Background.Transform.RelativePadding
             = new Vector4(0.04f, 0.2f, 0.04f, 0.14f);
 
-        // Score
-        _ = new Score(team)
+        if (isPlayerTeam is null or true)
         {
-            Parent = this.Container,
-            Transform =
+            // Score
+            _ = new Score(team)
             {
-                RelativeSize = new Vector2(0.35f, 0.5f),
-                Alignment = Alignment.Right,
-                RelativePadding = new Vector4(0.1f),
-            },
-        };
+                Parent = this.Container,
+                Transform =
+                {
+                    RelativeSize = new Vector2(0.35f, 0.5f),
+                    Alignment = Alignment.Right,
+                    RelativePadding = new Vector4(0.1f),
+                },
+            };
+        }
 
         // Name
         _ = new Name(team)

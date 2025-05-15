@@ -24,7 +24,10 @@ internal class TeamBarPanel : AlignedListBox
     {
         if (this.TeamBar is null)
         {
-            var teamBar = new TeamBar(team)
+            var isPlayerTeam = Scenes.Game.PlayerId is null
+                || team.Players.Any(p => p.Id == Scenes.Game.PlayerId);
+
+            var teamBar = new TeamBar(team, isPlayerTeam)
             {
                 Parent = this.ContentContainer,
                 Transform =
