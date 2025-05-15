@@ -71,6 +71,8 @@ internal sealed class PacketHandler
             return;
         }
 
+        PacketLogger.LogReceived(connection, packet);
+
         bool handled = false;
         foreach (var handler in this.subhandlers)
         {
