@@ -1,5 +1,7 @@
 namespace GameLogic;
 
+#if !STEREO
+
 /// <summary>
 /// Defines a contract for capturable zone states.
 /// </summary>
@@ -15,3 +17,5 @@ internal interface ICaptureState
     /// </summary>
     int RemainingTicks { get; set; }
 }
+
+#endif

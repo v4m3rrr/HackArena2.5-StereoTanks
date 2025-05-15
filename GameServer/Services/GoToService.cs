@@ -22,27 +22,27 @@ internal sealed class GoToService(GameInstance game, ILogger logger)
     /// <param name="player">The player connection.</param>
     /// <param name="packet">The received packet.</param>
     /// <param name="context">The resolved GoTo context if valid.</param>
-    /// <param name="error">The generated error payload if any.</param>
+    /// <param name="responsePayload">The optional response payload to send back to the player.</param>
     /// <returns><see langword="true"/> if resolution succeeded; otherwise, <see langword="false"/>.</returns>
     public bool TryResolve(
         PlayerConnection player,
         Packet packet,
         out Context? context,
-        out ErrorPayload? error)
+        out IPacketPayload? responsePayload)
     {
         context = null;
-        error = null;
+        responsePayload = null;
 
         var payload = packet.GetPayload<GoToPayload>(out var exception);
         if (exception is not null)
         {
-            error = new ErrorPayload(PacketType.InternalErrorWithPayload, exception.Message);
+            responsePayload = new ErrorPayload(PacketType.InternalErrorWithPayload, exception.Message);
             return false;
         }
 
         if (player.LastGameStatePayload is null)
         {
-            error = new ErrorPayload(PacketType.InternalErrorWithPayload, "No last sent game state");
+            responsePayload = new ErrorPayload(PacketType.InternalErrorWithPayload, "No last sent game state");
             return false;
         }
 

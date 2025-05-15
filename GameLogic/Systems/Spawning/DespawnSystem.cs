@@ -42,9 +42,8 @@ internal sealed class DespawnSystem(Grid grid, HealSystem healSystem, ScoreSyste
 
 #if !STEREO
         scoreSystem.OnPlayerRemoved(owner);
-#endif
-
         zoneSystem.OnPlayerRemoved(owner);
+#endif
 
         _ = grid.Tanks.Remove(tank);
         _ = grid.Bullets.RemoveAll(b => b.Shooter?.Equals(owner) ?? false);

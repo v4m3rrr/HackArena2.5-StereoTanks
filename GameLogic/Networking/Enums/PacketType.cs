@@ -102,6 +102,11 @@ public enum PacketType
 #if STEREO
 
     /// <summary>
+    /// The capture zone packet type.
+    /// </summary>
+    CaptureZone = PlayerResponseActionGroup | 0x4,
+
+    /// <summary>
     /// The go to packet type.
     /// </summary>
     GoTo = PlayerResponseActionGroup | HasPayload | 0x6,
@@ -167,7 +172,7 @@ public enum PacketType
     SetScore = GameStateDebugGroup | HasPayload | 0x1,
 
 #else
-    
+
     /* Backwards compatibility */
 
     /// <summary>

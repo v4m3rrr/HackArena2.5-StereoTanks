@@ -2,6 +2,72 @@ using GameLogic.ZoneStateSystems;
 
 namespace GameLogic;
 
+#if STEREO
+
+/// <summary>
+/// Represents the runtime context for a specific <see cref="Zone"/> instance.
+/// </summary>
+internal class ZoneContext(Zone zone, ScoreSystem scoreSystem)
+{
+    /// <summary>
+    /// The initial neutral resistance that must be
+    /// reduced before scoring starts.
+    /// </summary>
+    public const float InitialNeutralControl = 50f;
+
+    private const float PointsPerTick = 0.3f;
+
+    /// <summary>
+    /// Gets the associated zone.
+    /// </summary>
+    public Zone Zone => zone;
+
+    /// <summary>
+    /// Updates the zone state for the current tick.
+    /// This includes reducing neutral control and awarding points.
+    /// </summary>
+    public void Update()
+    {
+        float totalPressure = zone.Shares.ByTeam.Values.Sum();
+        zone.Shares.NeutralControl = Math.Max(0f, InitialNeutralControl - totalPressure);
+
+        if (!zone.Shares.IsScoringAvailable)
+        {
+            return;
+        }
+
+        foreach (Team team in zone.Shares.ByTeam.Keys)
+        {
+            float normalized = zone.Shares.GetNormalized(team);
+            float score = normalized * PointsPerTick;
+            scoreSystem.AwardScore(team, score);
+        }
+    }
+
+    /// <summary>
+    /// Adds a number of shares to the specified team.
+    /// </summary>
+    /// <param name="team">The team to modify.</param>
+    /// <param name="value">The number of shares to add.</param>
+    public void AddShares(Team team, float value)
+    {
+        zone.Shares.ByTeam[team] = zone.Shares.ByTeam.TryGetValue(team, out float current)
+            ? current + value
+            : value;
+    }
+
+    /// <summary>
+    /// Initializes the zone shares at the beginning of the game.
+    /// </summary>
+    public void Initialize()
+    {
+        zone.Shares.NeutralControl = InitialNeutralControl;
+        zone.Shares.ByTeam.Clear();
+    }
+}
+
+#else
+
 /// <summary>
 /// Represents the runtime context for a specific <see cref="Zone"/> instance.
 /// </summary>
@@ -145,3 +211,5 @@ internal class ZoneContext(Zone zone, Dictionary<Type, IStateSystem> stateSystem
         this.Zone.State = this.StateSystem.OnPlayerRemoved(this, this.Zone.State, player);
     }
 }
+
+#endif

@@ -108,6 +108,8 @@ internal class GameInputHandler
 
             return payload;
         };
+
+        yield return HandleCaptureZonePayload;
 #else
         yield return HandleAbilityUsePayload;
 #endif
@@ -191,6 +193,13 @@ internal class GameInputHandler
         var tileX = (mousePosition.X - gridLocation.X) / tileSize;
         var tileY = (mousePosition.Y - gridLocation.Y) / tileSize;
         return new GoToPayload(tileX, tileY);
+    }
+
+    private static CaptureZonePayload? HandleCaptureZonePayload()
+    {
+        return KeyboardController.IsKeyDown(Keys.C)
+            ? new CaptureZonePayload()
+            : null;
     }
 
 #endif

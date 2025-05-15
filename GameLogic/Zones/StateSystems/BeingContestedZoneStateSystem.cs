@@ -2,6 +2,8 @@ using GameLogic.ZoneStates;
 
 namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 /// <summary>
 /// Handles the logic for a contested zone where multiple tanks are present.
 /// </summary>
@@ -81,3 +83,5 @@ internal class BeingContestedZoneStateSystem : IStateSystem<BeingContestedZoneSt
             : state;
     }
 }
+
+#endif

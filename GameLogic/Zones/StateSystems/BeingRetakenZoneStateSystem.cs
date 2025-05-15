@@ -2,6 +2,8 @@ using GameLogic.ZoneStates;
 
 namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 /// <summary>
 /// Handles the logic for a captured zone that is being retaken by another player.
 /// </summary>
@@ -76,3 +78,5 @@ internal class BeingRetakenZoneStateSystem : IStateSystem<BeingRetakenZoneState>
             : state;
     }
 }
+
+#endif

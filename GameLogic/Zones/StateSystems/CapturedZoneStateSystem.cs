@@ -2,6 +2,8 @@ using GameLogic.ZoneStates;
 
 namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 #pragma warning disable CS9113
 
 /// <summary>
@@ -73,3 +75,5 @@ internal class CapturedZoneStateSystem(ScoreSystem scoreSystem, HealSystem healS
             : state;
     }
 }
+
+#endif

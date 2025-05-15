@@ -2,6 +2,8 @@ using Newtonsoft.Json;
 
 namespace GameLogic.ZoneStates;
 
+#if !STEREO
+
 /// <summary>
 /// Represents a zone that is being retaken.
 /// </summary>
@@ -43,3 +45,5 @@ public class BeingRetakenZoneState(Player capturedBy, Player retakenBy, int rema
     [JsonProperty]
     internal string RetakenById { get; private set; } = retakenBy?.Id!;
 }
+
+#endif

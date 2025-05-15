@@ -1,4 +1,5 @@
 ﻿using GameLogic.ZoneStates;
+using Newtonsoft.Json;
 
 namespace GameLogic;
 
@@ -32,10 +33,21 @@ public class Zone(int x, int y, int width, int height, char index) : IEquatable<
     /// </summary>
     public char Index { get; } = index;
 
+#if STEREO
+
+    /// <summary>
+    /// Gets the shares for the zone.
+    /// </summary>
+    public ZoneShares Shares { get; init; } = new ZoneShares();
+
+#else
+
     /// <summary>
     /// Gets or sets the state of the zone.
     /// </summary>
     public ZoneState State { get; set; } = new NeutralZoneState();
+
+#endif
 
     /// <summary>
     /// Determines whether the zone contains the specified point.
@@ -111,6 +123,10 @@ public class Zone(int x, int y, int width, int height, char index) : IEquatable<
     /// <param name="snapshot">The zone instance to copy state from.</param>
     public void UpdateFrom(Zone snapshot)
     {
+#if STEREO && CLIENT
+        this.Shares.UpdateFrom(snapshot.Shares);
+#elif !STEREO
         this.State = snapshot.State;
+#endif
     }
 }

@@ -20,12 +20,13 @@ internal class ZoneJsonConverter : JsonConverter<Zone>
         var height = jObject["height"]!.Value<int>()!;
         var index = jObject["index"]!.Value<char>()!;
 
-        var statusToken = jObject["status"]!;
-        var status = DeserializeZoneState(statusToken, serializer);
-
         return new Zone(x, y, width, height, index)
         {
-            State = status,
+#if STEREO
+            Shares = jObject["shares"]!.ToObject<ZoneShares>(serializer)!,
+#else
+            State = DeserializeZoneState(jObject["status"]!, serializer),
+#endif
         };
     }
 
@@ -39,11 +40,17 @@ internal class ZoneJsonConverter : JsonConverter<Zone>
             ["width"] = value!.Width,
             ["height"] = value!.Height,
             ["index"] = value!.Index,
+#if STEREO
+            ["shares"] = JObject.FromObject(value.Shares, serializer),
+#else
             ["status"] = SerializeZoneState(value.State, serializer),
+#endif
         };
 
         jObject.WriteTo(writer);
     }
+
+#if !STEREO
 
     private static ZoneState DeserializeZoneState(JToken token, JsonSerializer serializer)
     {
@@ -67,4 +74,6 @@ internal class ZoneJsonConverter : JsonConverter<Zone>
         jObject["type"] = char.ToLowerInvariant(type[0]) + type.Split("ZoneState")[0][1..];
         return jObject;
     }
+
+#endif
 }

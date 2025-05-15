@@ -124,6 +124,9 @@ internal class GameStatePayload : IPacketPayload
 #endif
             new WallJsonConverter(context),
             new ZoneJsonConverter(),
+#if STEREO
+            new ZoneSharesJsonConverter(),
+#endif
             new PlayerJsonConverter(context)];
     }
 

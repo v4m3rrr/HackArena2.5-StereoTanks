@@ -198,16 +198,30 @@ internal static class GameStateApplier
 
             if (existing is null)
             {
+#if STEREO && CLIENT
+                zoneSnapshot.Shares.NormalizedByTeam = zoneSnapshot.Shares.NormalizedByTeamName.ToDictionary(
+                    kvp => payload.Teams.First(t => t.Name == kvp.Key),
+                    kvp => kvp.Value);
+#elif !STEREO
                 AttachZonePlayers(zoneSnapshot, payload.Players);
+#endif
                 grid.Zones.Add(zoneSnapshot);
             }
             else
             {
                 existing.UpdateFrom(zoneSnapshot);
+#if STEREO && CLIENT
+                existing.Shares.NormalizedByTeam = zoneSnapshot.Shares.NormalizedByTeamName.ToDictionary(
+                    kvp => payload.Teams.First(t => t.Name == kvp.Key),
+                    kvp => kvp.Value);
+#elif !STEREO
                 AttachZonePlayers(existing, payload.Players);
+#endif
             }
         }
     }
+
+#if !STEREO
 
     private static void AttachZonePlayers(Zone zone, IEnumerable<Player> players)
     {
@@ -235,6 +249,8 @@ internal static class GameStateApplier
                 break;
         }
     }
+
+#endif
 }
 
 #endif

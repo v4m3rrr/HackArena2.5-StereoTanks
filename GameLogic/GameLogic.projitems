@@ -15,6 +15,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\HealingBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)collisions\WallCollision.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\WallType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)models\ZoneShares.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\ZoneSharesJsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)networking\payloads\action\CaptureZonePayload.cs" />
     <Compile Include="..\GameLogic\Interfaces\IBulletFiringAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\LaserAbility.cs" />
@@ -164,7 +167,6 @@
     <Folder Include="$(MSBuildThisFileDirectory)Networking\Payloads\Action\" />
     <Folder Include="$(MSBuildThisFileDirectory)Systems\Effects\" />
     <Folder Include="$(MSBuildThisFileDirectory)Systems\Scoring\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Zones\Interfaces\" />
     <Folder Include="$(MSBuildThisFileDirectory)Zones\StateSystems\" />
   </ItemGroup>
 </Project>

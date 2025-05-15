@@ -1,7 +1,10 @@
 ﻿using GameLogic;
+using GameLogic.Networking;
 using Serilog;
 
 namespace GameServer;
+
+#pragma warning disable CS9113
 
 /// <summary>
 /// Handles movement and ability-related player actions.
@@ -17,7 +20,6 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
     /// <param name="direction">The movement direction.</param>
     public void HandleMovement(PlayerConnection player, MovementDirection direction)
     {
-        logger.Verbose("Trying to move the tank of {player} {direction}.", player, direction);
         game.Systems.Movement.TryMoveTank(player.Instance.Tank, direction);
     }
 
@@ -39,6 +41,32 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
             game.Systems.Rotation.TryRotateTurret(player.Instance.Tank.Turret, turretRotation.Value);
         }
     }
+
+#if STEREO
+
+    /// <summary>
+    /// Handles the zone capture action.
+    /// </summary>
+    /// <param name="player">The player connection that initiated the action.</param>
+    /// <param name="responsePayload">The optional response payload to send back to the player.</param>
+    public void HandleZoneCapture(PlayerConnection player, out IPacketPayload? responsePayload)
+    {
+        var tank = player.Instance.Tank;
+        var zone = game.Grid.Zones.FirstOrDefault(z => z.Contains(tank));
+        responsePayload = null;
+
+        if (zone is null)
+        {
+            responsePayload = new ErrorPayload(
+                PacketType.CustomWarning,
+                "You are not in a zone that can be captured.");
+            return;
+        }
+
+        game.Systems.Zone.TryCaptureZone(zone, tank);
+    }
+
+#endif
 
     /// <summary>
     /// Gets the ability action delegate based on player tank type.

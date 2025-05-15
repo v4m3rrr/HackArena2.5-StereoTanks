@@ -2,6 +2,8 @@ using GameLogic.ZoneStates;
 
 namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 /// <summary>
 /// Handles the logic for a zone currently being captured by a player.
 /// </summary>
@@ -77,3 +79,5 @@ internal class BeingCapturedZoneStateSystem : IStateSystem<BeingCapturedZoneStat
             : new NeutralZoneState();
     }
 }
+
+#endif

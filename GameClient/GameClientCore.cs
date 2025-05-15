@@ -47,6 +47,7 @@ public class GameClientCore : Game
 
         var graphics = new GraphicsDeviceManager(this)
         {
+            GraphicsProfile = GraphicsProfile.HiDef,
             HardwareModeSwitch = false,
         };
 

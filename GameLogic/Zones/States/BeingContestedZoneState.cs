@@ -2,6 +2,8 @@ using Newtonsoft.Json;
 
 namespace GameLogic.ZoneStates;
 
+#if !STEREO
+
 /// <summary>
 /// Represents a zone that is being contested.
 /// </summary>
@@ -20,3 +22,5 @@ public class BeingContestedZoneState(Player? capturedBy) : ZoneState
     [JsonProperty]
     internal string? CapturedById { get; private set; } = capturedBy?.Id;
 }
+
+#endif

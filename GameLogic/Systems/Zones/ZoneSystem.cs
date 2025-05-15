@@ -3,6 +3,8 @@ using GameLogic.ZoneStateSystems;
 
 namespace GameLogic;
 
+#pragma warning disable CS9113
+
 /// <summary>
 /// Handles capture logic for zones.
 /// </summary>
@@ -17,6 +19,9 @@ internal sealed class ZoneSystem(Grid grid, ScoreSystem scoreSystem, HealSystem 
     public const int TicksToCapture = 50;
 
     private readonly List<ZoneContext> contexts = [];
+
+#if !STEREO
+
     private readonly Dictionary<Type, IStateSystem> stateSystems = new()
     {
         { typeof(NeutralZoneState), new NeutralZoneStateSystem() },
@@ -25,6 +30,8 @@ internal sealed class ZoneSystem(Grid grid, ScoreSystem scoreSystem, HealSystem 
         { typeof(BeingRetakenZoneState), new BeingRetakenZoneStateSystem() },
         { typeof(BeingContestedZoneState), new BeingContestedZoneStateSystem() },
     };
+
+#endif
 
     /// <summary>
     /// Updates all zones in the grid.
@@ -35,7 +42,13 @@ internal sealed class ZoneSystem(Grid grid, ScoreSystem scoreSystem, HealSystem 
         {
             if (!this.contexts.Any(z => z.Zone.Equals(zone)))
             {
+#if STEREO
+                var context = new ZoneContext(zone, scoreSystem);
+                context.Initialize();
+                this.contexts.Add(context);
+#else
                 this.contexts.Add(new ZoneContext(zone, this.stateSystems));
+#endif
             }
         }
 
@@ -43,14 +56,60 @@ internal sealed class ZoneSystem(Grid grid, ScoreSystem scoreSystem, HealSystem 
 
         foreach (var ctx in this.contexts)
         {
+#if STEREO
+            ctx.Update();
+#else
             var tanksInZone = grid.Tanks.Where(ctx.Zone.Contains).ToList();
             var tanksOutsideZone = grid.Tanks.Where(t => !ctx.Zone.Contains(t)).ToList();
-
             ctx.HandleTick(tanksInZone);
             ctx.UpdateProgress(tanksInZone, tanksOutsideZone);
             ctx.UpdateState(tanksInZone);
+#endif
         }
     }
+
+#if STEREO
+
+    /// <summary>
+    /// Attempts to capture a zone with the specified tank.
+    /// </summary>
+    /// <param name="zone">The zone to capture.</param>
+    /// <param name="tank">The tank attempting to capture the zone.</param>
+    public void TryCaptureZone(Zone zone, Tank tank)
+    {
+        var ctx = this.contexts.FirstOrDefault(z => z.Zone.Equals(zone));
+
+        if (ctx is null)
+        {
+            return;
+        }
+
+        var baseInfluence = tank.Type switch
+        {
+            TankType.Light => 0.0082f,
+            TankType.Heavy => 0.0131f,
+            _ => 1.0f,
+        };
+
+        var team = tank.Owner.Team;
+        float value;
+        if (zone.Shares.IsScoringAvailable)
+        {
+            var currentShareRatio = ctx.Zone.Shares.GetNormalized(team);
+            var multiplier = 1.25f - (currentShareRatio / 2f);
+            value = baseInfluence * multiplier * zone.Shares.TotalShares;
+        }
+        else
+        {
+            value = baseInfluence * ZoneContext.InitialNeutralControl;
+        }
+
+        ctx.AddShares(team, value);
+    }
+
+#endif
+
+#if !STEREO
 
     /// <summary>
     /// Notifies all zone contexts that the specified player has been removed from the game.
@@ -64,4 +123,6 @@ internal sealed class ZoneSystem(Grid grid, ScoreSystem scoreSystem, HealSystem 
             ctx.OnPlayerRemoved(player);
         }
     }
+
+#endif
 }

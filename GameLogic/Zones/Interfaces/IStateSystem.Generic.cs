@@ -1,5 +1,7 @@
 ﻿namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 /// <summary>
 /// Defines a strongly-typed interface for a zone state system
 /// operating on a specific state type.
@@ -19,3 +21,5 @@ internal interface IStateSystem<in T> : IStateSystem
     /// <inheritdoc cref="IStateSystem.OnPlayerRemoved(ZoneContext, ZoneState, Player)"/>
     ZoneState OnPlayerRemoved(ZoneContext context, T state, Player player);
 }
+
+#endif

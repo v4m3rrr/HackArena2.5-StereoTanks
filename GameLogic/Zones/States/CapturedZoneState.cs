@@ -2,6 +2,8 @@ using Newtonsoft.Json;
 
 namespace GameLogic.ZoneStates;
 
+#if !STEREO
+
 /// <summary>
 /// Represents a zone that is captured.
 /// </summary>
@@ -20,3 +22,5 @@ public class CapturedZoneState(Player player) : ZoneState
     [JsonProperty]
     internal string PlayerId { get; private set; } = player?.Id!;
 }
+
+#endif

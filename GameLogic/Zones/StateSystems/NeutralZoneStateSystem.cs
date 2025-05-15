@@ -2,6 +2,8 @@ using GameLogic.ZoneStates;
 
 namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 /// <summary>
 /// Handles the logic for a neutral zone.
 /// </summary>
@@ -50,3 +52,5 @@ internal class NeutralZoneStateSystem : IStateSystem<NeutralZoneState>
         return state;
     }
 }
+
+#endif

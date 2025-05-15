@@ -1,5 +1,7 @@
 ﻿namespace GameLogic.ZoneStateSystems;
 
+#if !STEREO
+
 /// <summary>
 /// Defines a contract for a zone state system.
 /// </summary>
@@ -31,3 +33,5 @@ internal interface IStateSystem
     /// <returns>The new state after the removal, or the original state if unaffected.</returns>
     ZoneState OnPlayerRemoved(ZoneContext context, ZoneState state, Player player);
 }
+
+#endif

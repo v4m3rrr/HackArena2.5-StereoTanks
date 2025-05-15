@@ -98,6 +98,8 @@ internal sealed class PlayerPacketHandler(
 
     private void DispatchPlayerAction(PlayerConnection player, Packet packet)
     {
+        IPacketPayload? responsePayload = null;
+
         switch (packet.Type)
         {
             case PacketType.Movement:
@@ -110,28 +112,33 @@ internal sealed class PlayerPacketHandler(
                 this.actionHandler.HandleRotation(player, rot.TankRotation, rot.TurretRotation);
                 break;
 
-#if STEREO
-
-            case PacketType.GoTo:
-                if (this.goToService.TryResolve(player, packet, out var ctx, out var error))
-                {
-                    this.goToService.Execute(ctx!);
-                }
-                else if (error is not null)
-                {
-                    var response = new ResponsePacket(error, logger);
-                    _ = response.SendAsync(player);
-                }
-
-                break;
-
-#endif
-
             case PacketType.AbilityUse:
                 var ability = packet.GetPayload<AbilityUsePayload>();
                 var action = this.actionHandler.GetAbilityAction(ability.AbilityType, player.Instance);
                 action?.Invoke();
                 break;
+
+#if STEREO
+
+            case PacketType.CaptureZone:
+                this.actionHandler.HandleZoneCapture(player, out responsePayload);
+                break;
+
+            case PacketType.GoTo:
+                if (this.goToService.TryResolve(player, packet, out var ctx, out responsePayload))
+                {
+                    this.goToService.Execute(ctx!);
+                }
+
+                break;
+
+#endif
+        }
+
+        if (responsePayload is not null)
+        {
+            var responsePacket = new ResponsePacket(responsePayload, logger);
+            _ = responsePacket.SendAsync(player);
         }
     }
 
