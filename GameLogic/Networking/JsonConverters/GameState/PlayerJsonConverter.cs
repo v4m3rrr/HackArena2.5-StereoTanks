@@ -24,7 +24,12 @@ internal class PlayerJsonConverter(GameSerializationContext context) : JsonConve
         var isSpectator = context is GameSerializationContext.Spectator;
         var isOwner = !isSpectator && context.IsPlayerWithId(id);
 
+#if STEREO
+        var isTeammate = !isOwner && context.IsTeammate(id);
+        if (isSpectator || isOwner || isTeammate)
+#else
         if (isSpectator || isOwner)
+#endif
         {
             var remainingTicksToRegen = jObject["ticksToRegen"]!.Value<int?>();
 #if !STEREO
