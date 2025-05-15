@@ -3,6 +3,7 @@ using GameLogic.ZoneStates;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
+using System.IO;
 
 namespace GameClient.Sprites;
 
@@ -53,7 +54,9 @@ internal class Zone : ISprite
             },
         };
 
-        this.effect = ContentController.Content.Load<Effect>("Shaders/AngleMask");
+        string path = Path.Combine(ContentController.Content.RootDirectory, "Shaders/AngleMask.mgfxo");
+        this.effect = new Effect(ScreenController.GraphicsDevice, File.ReadAllBytes(path));
+
         this.vertices = new VertexPositionTexture[4];
 #else
         for (int i = 0; i < 4; i++)

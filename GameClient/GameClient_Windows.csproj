@@ -104,9 +104,11 @@
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</None>
   </ItemGroup>
-
+	
   <ItemGroup>
-    <Folder Include="Content\NewFolder\" />
+    <Content Include="Content\Shaders\AngleMask.mgfxo">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">

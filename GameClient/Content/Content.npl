@@ -37,12 +37,5 @@
 				"TextureFormat": "Color"
 			}
 		},
-		"fxs": {
-			"path": "Shaders/*.fx",
-			"recursive": false,
-			"action": "build",
-			"importer": "EffectImporter",
-			"processor": "EffectProcessor"
-		}
 	}
 }
