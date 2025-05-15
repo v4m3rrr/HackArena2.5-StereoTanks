@@ -73,10 +73,8 @@ internal record class ResponsePacket(
                 return;
             }
 
-#if DEBUG
             var packet = PacketSerializer.Deserialize(this.Buffer);
             PacketLogger.LogSent(connection, packet);
-#endif
 
             await connection.Socket.SendAsync(
                 new ArraySegment<byte>(this.Buffer),

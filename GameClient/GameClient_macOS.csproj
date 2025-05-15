@@ -3,7 +3,7 @@
   <PropertyGroup>
 	<AssemblyName>GameClient</AssemblyName>
 	<AssemblyVersion>1.3.0.0</AssemblyVersion>
-	<Version>1.3.0-alpha.28</Version>
+	<Version>1.3.0-alpha.29</Version>
 	<Deterministic>false</Deterministic>
     <RootNamespace>GameClient</RootNamespace>
     <OutputType>WinExe</OutputType>
@@ -25,7 +25,7 @@
   
   <PropertyGroup Condition="$(Configuration.Contains('Stereo'))">
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-	<Version>1.0.0-alpha.28</Version>
+	<Version>1.0.0-alpha.29</Version>
 	<DefineConstants>$(DefineConstants);STEREO;HACKATHON</DefineConstants>
   </PropertyGroup>
 

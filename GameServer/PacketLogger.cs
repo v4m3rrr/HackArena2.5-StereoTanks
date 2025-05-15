@@ -4,8 +4,6 @@ using GameLogic.Networking;
 
 namespace GameServer;
 
-#if DEBUG
-
 /// <summary>
 /// Logs packets sent and received globally for debugging purposes (only in DEBUG).
 /// </summary>
@@ -89,5 +87,3 @@ internal static class PacketLogger
         }
     }
 }
-
-#endif

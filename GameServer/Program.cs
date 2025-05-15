@@ -30,12 +30,10 @@ internal static class Program
             return;
         }
 
-#if DEBUG
         if (options.LogPackets)
         {
             PacketLogger.Enable();
         }
-#endif
 
         PacketSerializer.ExceptionThrew += (e) => logger.Error(e, "Packet serialization error.");
 
