@@ -154,6 +154,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <summary>
     /// Refreshes the team bar panels.
     /// </summary>
+    /// <param name="teams">The collection of teams.</param>
     /// <remarks>
     /// <para>
     /// This method adjusts the team bar panels
@@ -163,17 +164,18 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// Should be called after <see cref="UpdateTeams"/>.
     /// </para>
     /// </remarks>
-    public void RefreshTeamBarPanels()
+    public void RefreshTeamBarPanels(IEnumerable<Team> teams)
     {
         GameClientCore.InvokeOnMainThread(() =>
         {
             lock (this.playerUpdateLock)
             {
+                var team = teams.FirstOrDefault(x => x.Players.Any(p => p.Id == Game.PlayerId));
                 components.TeamBarPanels
                     .Zip(teams, (panel, team) => (panel, team))
                     .Take(2)
                     .ToList()
-                    .ForEach(x => x.panel.Refresh(x.team, Game.PlayerId));
+                    .ForEach(x => x.panel.Refresh(x.team, team?.Name));
             }
         });
     }

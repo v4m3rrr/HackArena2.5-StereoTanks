@@ -55,7 +55,11 @@ internal class LightTurretJsonConverter(GameSerializationContext context)
             ["direction"] = JsonConverterUtils.WriteEnum(value!.Direction, context.EnumSerialization),
         };
 
-        if (context is GameSerializationContext.Spectator || context.IsPlayerWithId(value.Tank.Owner.Id))
+        var isSpectator = context is GameSerializationContext.Spectator;
+        var isOwner = !isSpectator && context.IsPlayerWithId(value.Tank.Owner.Id);
+        var isTeammate = !isOwner && context.IsTeammate(value.Tank.Owner.Id);
+
+        if (isSpectator || isOwner || isTeammate)
         {
             jObject["bulletCount"] = value.Bullet!.Count;
             jObject["ticksToBullet"] = value.Bullet.RemainingRegenerationTicks;

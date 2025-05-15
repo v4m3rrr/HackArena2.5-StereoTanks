@@ -131,7 +131,7 @@ internal static class GameServerMessageHandler
 
 #if STEREO
         updater.UpdateTeams(gameState.Teams);
-        updater.RefreshTeamBarPanels();
+        updater.RefreshTeamBarPanels(gameState.Teams);
 #else
         updater.UpdatePlayers(gameState.Players);
         updater.RefreshPlayerBarPanels();

@@ -292,7 +292,7 @@ internal class Game : Scene
 
 #if STEREO
         this.updater.UpdateTeams(gameState.Teams);
-        this.updater.RefreshTeamBarPanels();
+        this.updater.RefreshTeamBarPanels(gameState.Teams);
 #else
         this.updater.UpdatePlayers(gameState.Players);
         this.updater.RefreshPlayerBarPanels();

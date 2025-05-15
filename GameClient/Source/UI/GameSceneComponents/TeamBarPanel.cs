@@ -19,8 +19,8 @@ internal class TeamBarPanel : AlignedListBox
     /// Refreshes the player bars.
     /// </summary>
     /// <param name="team">The team to display.</param>
-    /// <param name="playerId">The player's id for whom the bar should be displayed.</param>
-    public void Refresh(Team team, string? playerId = null)
+    /// <param name="teamName">The team name for whom the bar should be displayed.</param>
+    public void Refresh(Team team, string? teamName = null)
     {
         if (this.TeamBar is null)
         {
@@ -45,7 +45,7 @@ internal class TeamBarPanel : AlignedListBox
         var newPlayerBars = team.Players
             .Where(p => this.PlayerBars.All(pb => !pb.Player.Equals(p))
                 && p is not null
-                && (playerId is null || p.Id == playerId))
+                && (teamName is null || p.Team.Name == teamName))
             .Select(p =>
             {
                 return new TeamPlayerBar(p)

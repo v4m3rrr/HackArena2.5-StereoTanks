@@ -39,7 +39,7 @@ internal class HeavyTankJsonConverter(GameSerializationContext context)
         var isOwner = !isSpectator && context.IsPlayerWithId(ownerId);
         var isTeammate = !isOwner && context.IsTeammate(ownerId);
 
-        if (isSpectator || isOwner)
+        if (isSpectator || isOwner || isTeammate)
         {
             tank.Health = jObject["health"]!.Value<int>();
 
@@ -47,10 +47,7 @@ internal class HeavyTankJsonConverter(GameSerializationContext context)
             {
                 RemainingRegenerationTicks = jObject["ticksToMine"]!.Value<int?>(),
             };
-        }
 
-        if (isSpectator || isOwner || isTeammate)
-        {
             tank.VisibilityGrid = jObject["visibility"]?.ToObject<VisibilityPayload>(serializer)!.Grid;
         }
 
@@ -78,14 +75,11 @@ internal class HeavyTankJsonConverter(GameSerializationContext context)
             jObject["y"] = value.Y;
         }
 
-        if (isSpectator || isOwner)
+        if (isSpectator || isOwner || isTeammate)
         {
             jObject["health"] = value.Health;
             jObject["ticksToMine"] = value.Mine!.RemainingRegenerationTicks;
-        }
 
-        if (isSpectator || isOwner || isTeammate)
-        {
             var visibilityPayload = new VisibilityPayload(value.VisibilityGrid!);
             jObject["visibility"] = JToken.FromObject(visibilityPayload, serializer);
         }
