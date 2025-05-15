@@ -91,7 +91,12 @@ internal sealed class LaserSystem(
 
                 if (laser.Shooter is { } shooter)
                 {
-                    scoreSystem.AwardScore(shooter, dealt);
+#if STEREO
+                    if (!shooter.Team.Equals(tank.Owner.Team))
+#endif
+                    {
+                        scoreSystem.AwardScore(shooter, dealt);
+                    }
                 }
             }
 

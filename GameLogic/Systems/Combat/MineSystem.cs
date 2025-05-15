@@ -126,9 +126,14 @@ internal sealed class MineSystem(
             mine.Damage!.Value,
             suicide ? null : mine.Layer);
 
-            if (mine.Layer is not null && !suicide)
+            if (mine.Layer is { } layer && !suicide)
             {
-                scoreSystem.AwardScore(mine.Layer, dealt);
+#if STEREO
+                if (!layer.Team.Equals(tank.Owner.Team))
+#endif
+                {
+                    scoreSystem.AwardScore(mine.Layer, dealt);
+                }
             }
 
             stunSystem.ApplyStun(tank, mine);

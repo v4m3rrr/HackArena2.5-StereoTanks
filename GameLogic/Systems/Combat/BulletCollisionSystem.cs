@@ -102,7 +102,12 @@ internal sealed class BulletCollisionSystem(
 
         if (dealt > 0 && bullet.Shooter is not null)
         {
-            scoreSystem.AwardScore(bullet.Shooter, dealt / 2);
+#if STEREO
+            if (!bullet.Shooter.Team.Equals(tank.Owner.Team))
+#endif
+            {
+                scoreSystem.AwardScore(bullet.Shooter, dealt / 2);
+            }
         }
     }
 
