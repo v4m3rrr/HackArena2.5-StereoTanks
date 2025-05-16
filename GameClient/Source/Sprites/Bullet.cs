@@ -192,7 +192,12 @@ internal class Bullet : ISprite, IDetectableByRadar
     {
         if (this.IsCollisionDetected)
         {
-            return;
+#if STEREO
+            if (this.collision is not WallCollision wc || wc.Wall.Type is WallType.Solid)
+#endif
+            {
+                return;
+            }
         }
 
         if (this.skipNextPositionUpdate)
