@@ -146,13 +146,13 @@ internal class GridComponent : Component
     /// </remarks>
     public void Sync()
     {
-        lock (this.syncLock)
+        GameClientCore.InvokeOnMainThread(() =>
         {
             foreach (var service in this.syncServices)
             {
                 service.Sync();
             }
-        }
+        });
     }
 
     /// <summary>

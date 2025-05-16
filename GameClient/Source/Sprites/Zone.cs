@@ -54,9 +54,11 @@ internal class Zone : ISprite
             },
         };
 
-        string path = Path.Combine(ContentController.Content.RootDirectory, "Shaders/AngleMask.mgfxo");
-        this.effect = new Effect(ScreenController.GraphicsDevice, File.ReadAllBytes(path));
-
+#if WINDOWS
+        this.effect = ContentController.Content.Load<Effect>("Shaders/AngleMask_DX");
+#else
+        this.effect = ContentController.Content.Load<Effect>("Shaders/AngleMask_GL");
+#endif
         this.vertices = new VertexPositionTexture[4];
 #else
         for (int i = 0; i < 4; i++)

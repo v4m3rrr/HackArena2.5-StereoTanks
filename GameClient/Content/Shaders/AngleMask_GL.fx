@@ -1,23 +1,28 @@
-static const float PI = 3.14159265359;
-static const float TWO_PI = 6.28318530718;
-
+#pragma target glsl
+#define PI 3.14159265359
+#define TWO_PI 6.28318530718
 #define MAX_SEGMENTS 8
+
+// Tekstura jako parametr (widoczna w C# jako "SpriteTexture")
+texture2D SpriteTexture;
+
+sampler2D SpriteSampler = sampler_state
+{
+    Texture = <SpriteTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
 
 cbuffer MaskParams : register(b0)
 {
     int NumSegments;
-    float GlobalOpacity = 1;
-    float Pct[MAX_SEGMENTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    float4 ColorArr[MAX_SEGMENTS] =
-    {
-        float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0),
-        float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0)
-    };
+    float GlobalOpacity;
+    float Pct[MAX_SEGMENTS];
+    float4 ColorArr[MAX_SEGMENTS];
 };
-
-
-Texture2D SpriteTexture : register(t0);
-SamplerState SpriteSampler : register(s0);
 
 struct VS_IN
 {
@@ -39,7 +44,7 @@ VS_OUT MainVS(VS_IN input)
     return o;
 }
 
-float4 MainPS(VS_OUT input) : SV_Target
+float4 MainPS(VS_OUT input) : COLOR
 {
     float2 uv = input.TexCoord;
     float2 dir = uv - float2(0.5, 0.5);
@@ -49,8 +54,12 @@ float4 MainPS(VS_OUT input) : SV_Target
 
     float cumAngle = 0;
     float4 maskCol = float4(0, 0, 0, 0);
-    for (int i = 0; i < NumSegments; ++i)
+
+    [unroll]
+    for (int i = 0; i < MAX_SEGMENTS; ++i)
     {
+        if (i >= NumSegments) break;
+
         cumAngle += Pct[i] * TWO_PI;
         if (ang < cumAngle)
         {
@@ -59,10 +68,10 @@ float4 MainPS(VS_OUT input) : SV_Target
         }
     }
 
-    float4 baseCol = SpriteTexture.Sample(SpriteSampler, uv);
+    float4 baseCol = tex2D(SpriteSampler, uv);
     float outAlpha = baseCol.a * maskCol.a * GlobalOpacity;
     float3 outRGB = baseCol.rgb * maskCol.rgb;
-    
+
     return float4(outRGB, outAlpha);
 }
 
@@ -70,7 +79,7 @@ technique AngleMaskEffect
 {
     pass P0
     {
-        VertexShader = compile vs_4_0 MainVS();
-        PixelShader = compile ps_4_0 MainPS();
+        VertexShader = compile vs_3_0 MainVS();
+        PixelShader = compile ps_3_0 MainPS();
     }
 }
