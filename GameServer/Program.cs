@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text;
 using GameLogic.Networking;
 using Serilog;
 
@@ -23,12 +24,29 @@ internal static class Program
         logger.Information("Starting MonoTanks server...");
 #endif
 
+        logger.Information("Version: {version}", GetVersion());
+
         CommandLineOptions? options = CommandLineParser.Parse(args, logger);
         if (options is null)
         {
             logger.Error("Failed to parse command-line options.");
             return;
         }
+
+#if HACKATHON
+        logger.Information("Hackathon mode enabled.");
+#endif
+
+        logger.Information("Number of players: {numberOfPlayers}", options.NumberOfPlayers);
+        logger.Information("Grid dimension: {dimension}", options.GridDimension);
+        logger.Information("Sandbox mode: {sandboxMode}", options.SandboxMode);
+        logger.Information("Ticks: {ticks}", options.Ticks);
+        logger.Information("Broadcast interval: {broadcastInterval}", options.BroadcastInterval);
+
+#if HACKATHON
+        logger.Information("Match name: {matchName}", options.MatchName);
+        logger.Information("Eager broadcast: {eagerBroadcast}", options.EagerBroadcast);
+#endif
 
         if (options.LogPackets)
         {
@@ -66,5 +84,61 @@ internal static class Program
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss:ffff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.File($"logs/{timestamp}.log")
             .CreateLogger();
+    }
+
+    private static string GetVersion()
+    {
+        var assembly = typeof(Program).Assembly;
+        var version = assembly.GetName().Version!;
+
+        var informationalVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+
+        var sb = new StringBuilder();
+        sb.Append('v');
+
+        if (informationalVersion is not null)
+        {
+#if RELEASE
+            sb.Append(informationalVersion.Split('+')[0]);
+#else
+            sb.Append(informationalVersion);
+#endif
+        }
+        else
+        {
+            sb.Append(version.Major)
+                .Append('.')
+                .Append(version.Minor)
+                .Append('.')
+                .Append(version.Build);
+        }
+
+#if WINDOWS
+        const string Platform = "Windows";
+#elif LINUX
+        const string Platform = "Linux";
+#elif OSX
+        const string Platform = "macOS";
+#else
+#error Platform not supported.
+#endif
+
+        sb.Append(" (")
+            .Append(Platform)
+            .Append(')');
+
+#if DEBUG
+        var configuration = assembly
+            .GetCustomAttribute<AssemblyConfigurationAttribute>()!
+            .Configuration;
+
+        sb.Append(" [")
+            .Append(configuration)
+            .Append(']');
+#endif
+
+        return sb.ToString();
     }
 }

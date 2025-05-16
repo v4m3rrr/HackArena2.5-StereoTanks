@@ -47,6 +47,7 @@ internal sealed class GameServerHost(CommandLineOptions options, ILogger logger)
             : new GameInstance(options, logger);
 
         logger.Information("Generating map...");
+        logger.Information("Seed: {seed}", options.Seed);
 
         var mapService = new MapGenerationSystem(this.game.Grid);
         mapService.GenerateMap((s, e) => logger.Warning("Map generation: {warning}", e));
