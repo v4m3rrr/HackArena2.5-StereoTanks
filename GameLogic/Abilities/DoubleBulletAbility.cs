@@ -3,17 +3,28 @@
 /// <summary>
 /// Represents a double bullet shooting ability owned by a turret.
 /// </summary>
-/// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class DoubleBulletAbility(StunSystem stunSystem)
+internal sealed class DoubleBulletAbility
 #if STEREO
     : IRegenerable, IBulletFiringAbility
 #else
     : IBulletFiringAbility
 #endif
 {
+    private readonly StunSystem stunSystem;
+
 #if STEREO
     private int? remainingRegenerationTicks = null;
 #endif
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DoubleBulletAbility"/> class.
+    /// </summary>
+    /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
+    public DoubleBulletAbility(StunSystem stunSystem)
+    {
+        this.stunSystem = stunSystem;
+        this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+    }
 
     /// <summary>
     /// Gets the turret that owns this ability.
@@ -28,12 +39,12 @@ internal sealed class DoubleBulletAbility(StunSystem stunSystem)
 #else
         && this.Turret.Tank.SecondaryItemType is SecondaryItemType.DoubleBullet
 #endif
-        && !stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
+        && !this.stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
 
 #if STEREO
 
     /// <inheritdoc/>
-    public int TotalRegenerationTicks => 100;
+    public int TotalRegenerationTicks => 60;
 
     /// <inheritdoc/>
     public int? RemainingRegenerationTicks

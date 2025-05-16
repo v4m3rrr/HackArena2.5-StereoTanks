@@ -5,11 +5,21 @@ namespace GameLogic;
 /// <summary>
 /// Represents a stun bullet shooting ability owned by a turret.
 /// </summary>
-/// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class StunBulletAbility(StunSystem stunSystem)
+internal sealed class StunBulletAbility
     : IRegenerable, IBulletFiringAbility
 {
+    private readonly StunSystem stunSystem;
     private int? remainingRegenerationTicks = null;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StunBulletAbility"/> class.
+    /// </summary>
+    /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
+    public StunBulletAbility(StunSystem stunSystem)
+    {
+        this.stunSystem = stunSystem;
+        this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+    }
 
     /// <summary>
     /// Gets the turret that owns this ability.
@@ -20,7 +30,7 @@ internal sealed class StunBulletAbility(StunSystem stunSystem)
     public bool CanUse
         => !this.Turret.Tank.IsDead
         && this.remainingRegenerationTicks is null
-        && !stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
+        && !this.stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
 
     /// <inheritdoc/>
     public int TotalRegenerationTicks => 200;

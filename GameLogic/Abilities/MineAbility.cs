@@ -3,17 +3,28 @@ namespace GameLogic;
 /// <summary>
 /// Represents a mine-dropping ability owned by a tank.
 /// </summary>
-/// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class MineAbility(StunSystem stunSystem)
+internal sealed class MineAbility
 #if STEREO
     : IRegenerable, IAbility
 #else
     : IAbility
 #endif
 {
+    private readonly StunSystem stunSystem;
+
 #if STEREO
     private int? remainingRegenerationTicks = null;
 #endif
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MineAbility"/> class.
+    /// </summary>
+    /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
+    public MineAbility(StunSystem stunSystem)
+    {
+        this.stunSystem = stunSystem;
+        this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+    }
 
     /// <summary>
     /// Gets the tank that owns this ability.
@@ -28,12 +39,12 @@ internal sealed class MineAbility(StunSystem stunSystem)
 #else
         && this.Tank.SecondaryItemType is SecondaryItemType.Mine
 #endif
-        && !stunSystem.IsBlocked(this.Tank, StunBlockEffect.AbilityUse);
+        && !this.stunSystem.IsBlocked(this.Tank, StunBlockEffect.AbilityUse);
 
 #if STEREO
 
     /// <inheritdoc/>
-    public int TotalRegenerationTicks => 80;
+    public int TotalRegenerationTicks => 100;
 
     /// <inheritdoc/>
     public int? RemainingRegenerationTicks

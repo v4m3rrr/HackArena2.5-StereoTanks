@@ -3,17 +3,28 @@
 /// <summary>
 /// Represents a laser firing ability owned by a turret.
 /// </summary>
-/// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class LaserAbility(StunSystem stunSystem)
+internal sealed class LaserAbility
 #if STEREO
     : IRegenerable, IAbility
 #else
     : IAbility
 #endif
 {
+    private readonly StunSystem stunSystem;
+
 #if STEREO
     private int? remainingRegenerationTicks = null;
 #endif
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LaserAbility"/> class.
+    /// </summary>
+    /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
+    public LaserAbility(StunSystem stunSystem)
+    {
+        this.stunSystem = stunSystem;
+        this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+    }
 
     /// <summary>
     /// Gets the turret that owns this ability.
@@ -28,7 +39,7 @@ internal sealed class LaserAbility(StunSystem stunSystem)
 #else
         && this.Turret.Tank.SecondaryItemType is SecondaryItemType.Laser
 #endif
-        && !stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
+        && !this.stunSystem.IsBlocked(this.Turret.Tank, StunBlockEffect.AbilityUse);
 
 #if STEREO
 

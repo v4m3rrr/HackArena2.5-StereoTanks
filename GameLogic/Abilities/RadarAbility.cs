@@ -3,19 +3,29 @@ namespace GameLogic;
 /// <summary>
 /// Represents a radar scan ability owned by a tank.
 /// </summary>
-/// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
-internal sealed class RadarAbility(StunSystem stunSystem)
+internal sealed class RadarAbility
 #if STEREO
     : IRegenerable, IAbility
 #else
     : IAbility
 #endif
 {
+    private readonly StunSystem stunSystem;
     private bool isActive;
 
 #if STEREO
-    private int? remainingRegenerationTicks = null;
+    private int? remainingRegenerationTicks;
 #endif
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RadarAbility"/> class.
+    /// </summary>
+    /// <param name="stunSystem">The stun system used to check if the ability is blocked.</param>
+    public RadarAbility(StunSystem stunSystem)
+    {
+        this.stunSystem = stunSystem;
+        this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+    }
 
     /// <summary>
     /// Gets the tank that owns this ability.
@@ -30,7 +40,7 @@ internal sealed class RadarAbility(StunSystem stunSystem)
 #else
         && this.Tank.SecondaryItemType is SecondaryItemType.Radar
 #endif
-        && !stunSystem.IsBlocked(this.Tank, StunBlockEffect.AbilityUse);
+        && !this.stunSystem.IsBlocked(this.Tank, StunBlockEffect.AbilityUse);
 
     /// <summary>
     /// Gets a value indicating whether the radar ability is active.
