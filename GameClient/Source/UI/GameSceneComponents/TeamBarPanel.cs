@@ -11,6 +11,11 @@ namespace GameClient.GameSceneComponents;
 /// </summary>
 internal class TeamBarPanel : AlignedListBox
 {
+    /// <summary>
+    /// Gets the team associated with this bar panel.
+    /// </summary>
+    public Team? Team => this.TeamBar?.Team;
+
     private TeamBar? TeamBar => this.ContentContainer.GetChild<TeamBar>();
 
     private IEnumerable<TeamPlayerBar> PlayerBars => this.ContentContainer.GetAllChildren<TeamPlayerBar>();
@@ -20,8 +25,19 @@ internal class TeamBarPanel : AlignedListBox
     /// </summary>
     /// <param name="team">The team to display.</param>
     /// <param name="teamName">The team name for whom the bar should be displayed.</param>
-    public void Refresh(Team team, string? teamName = null)
+    public void Refresh(Team? team, string? teamName = null)
     {
+        if (team is null)
+        {
+            this.Reset();
+            return;
+        }
+
+        if (this.TeamBar is not null && !this.TeamBar.Team.Equals(team))
+        {
+            this.Reset();
+        }
+
         if (this.TeamBar is null)
         {
             var isPlayerTeam = Scenes.Game.PlayerId is null
@@ -80,6 +96,19 @@ internal class TeamBarPanel : AlignedListBox
             .ForEach(x => x.Load());
 
         this.ForceUpdate();
+    }
+
+    private void Reset()
+    {
+        if (this.TeamBar is not null)
+        {
+            this.TeamBar.Parent = null;
+        }
+
+        foreach (TeamPlayerBar playerBar in this.PlayerBars.ToList())
+        {
+            playerBar.Parent = null;
+        }
     }
 }
 

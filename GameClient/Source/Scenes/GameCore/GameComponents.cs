@@ -39,7 +39,7 @@ internal class GameComponents
     /// <summary>
     /// Gets the team bar panel.
     /// </summary>
-    public IEnumerable<TeamBarPanel> TeamBarPanels { get; }
+    public List<TeamBarPanel> TeamBarPanels { get; }
 
 #else
 

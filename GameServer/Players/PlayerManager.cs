@@ -114,6 +114,8 @@ internal sealed class PlayerManager(GameInstance game, ILogger logger)
         _ = game.Systems.Despawn.RemoveTank(player.Instance);
 
 #if STEREO
+        player.Instance.Team.RemovePlayer(player.Instance);
+
         if (!game.Teams.Any(t => t.Equals(player.Team)))
         {
             game.Systems.Despawn.RemoveTeam(player.Instance.Team);

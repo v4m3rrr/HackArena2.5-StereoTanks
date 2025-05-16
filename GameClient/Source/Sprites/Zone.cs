@@ -3,7 +3,6 @@ using GameLogic.ZoneStates;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
-using System.IO;
 
 namespace GameClient.Sprites;
 
@@ -89,7 +88,7 @@ internal class Zone : ISprite
         }
 #endif
 
-        this.index = new Text(Font, Color.White * 0.5f)
+        this.index = new Text(Font, Color.White * IndexOpacity)
         {
             Value = logic.Index.ToString(),
             Transform = { Type = TransformType.Absolute },

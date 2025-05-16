@@ -11,7 +11,6 @@ namespace GameClient;
 /// </summary>
 internal class GridComponent : Component
 {
-    private readonly object syncLock = new();
     private readonly List<ISyncService> syncServices = [];
 
     private readonly List<Sprites.Tank> tanks = [];
@@ -79,7 +78,7 @@ internal class GridComponent : Component
     {
         get
         {
-            lock (this.syncLock)
+            lock (this)
             {
                 return this.fogsOfWar.Cast<ISprite>()
                     .Concat(this.zones)
@@ -101,7 +100,7 @@ internal class GridComponent : Component
     /// <inheritdoc/>
     public override void Update(GameTime gameTime)
     {
-        lock (this.syncLock)
+        lock (this)
         {
             if (!this.IsEnabled)
             {
@@ -120,7 +119,7 @@ internal class GridComponent : Component
     /// <inheritdoc/>
     public override void Draw(GameTime gameTime)
     {
-        lock (this.syncLock)
+        lock (this)
         {
             if (!this.IsEnabled)
             {
@@ -146,6 +145,18 @@ internal class GridComponent : Component
     /// </remarks>
     public void Sync()
     {
+#if WINDOWS
+
+        lock (this)
+        {
+            foreach (var service in this.syncServices)
+            {
+                service.Sync();
+            }
+        }
+
+#else
+
         GameClientCore.InvokeOnMainThread(() =>
         {
             foreach (var service in this.syncServices)
@@ -153,6 +164,8 @@ internal class GridComponent : Component
                 service.Sync();
             }
         });
+
+#endif
     }
 
     /// <summary>
@@ -165,7 +178,7 @@ internal class GridComponent : Component
     /// </remarks>
     public void ClearSprites()
     {
-        lock (this.syncLock)
+        lock (this)
         {
             this.tanks.Clear();
             this.bullets.Clear();

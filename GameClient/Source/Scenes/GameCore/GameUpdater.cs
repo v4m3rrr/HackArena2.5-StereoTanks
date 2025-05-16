@@ -21,8 +21,6 @@ internal class GameUpdater(GameComponents components, List<Team> teams)
 internal class GameUpdater(GameComponents components, Dictionary<string, Player> players)
 #endif
 {
-    private readonly object playerUpdateLock = new();
-
 #if STEREO
 #pragma warning disable IDE1006, SA1300
     private Dictionary<string, Player> players
@@ -72,18 +70,18 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// <param name="updatedTeams">The list of teams received from the server.</param>
     public void UpdateTeams(List<Team> updatedTeams)
     {
-        lock (this.playerUpdateLock)
+        lock (components.Grid)
         {
-            foreach (Team updatedTeam in updatedTeams)
+            foreach (Team team in updatedTeams)
             {
-                if (teams.All(t => !t.Equals(updatedTeam)))
+                if (teams.All(t => !t.Equals(team)))
                 {
-                    teams.Add(updatedTeam);
+                    teams.Add(team);
                 }
                 else
                 {
-                    var existingTeam = teams.First(t => t.Equals(updatedTeam));
-                    existingTeam.UpdateFrom(updatedTeam);
+                    var existingTeam = teams.First(t => t.Equals(team));
+                    existingTeam.UpdateFrom(team);
                 }
             }
 
@@ -112,7 +110,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// </param>
     public void UpdatePlayers(List<Player> updatedPlayers)
     {
-        lock (this.playerUpdateLock)
+        lock (components.Grid)
         {
             foreach (Player updatedPlayer in updatedPlayers)
             {
@@ -164,18 +162,23 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     /// Should be called after <see cref="UpdateTeams"/>.
     /// </para>
     /// </remarks>
-    public void RefreshTeamBarPanels(IEnumerable<Team> teams)
+    public void RefreshTeamBarPanels(List<Team> teams)
     {
         GameClientCore.InvokeOnMainThread(() =>
         {
-            lock (this.playerUpdateLock)
+            lock (components.Grid)
             {
-                var team = teams.FirstOrDefault(x => x.Players.Any(p => p.Id == Game.PlayerId));
-                components.TeamBarPanels
-                    .Zip(teams, (panel, team) => (panel, team))
-                    .Take(2)
-                    .ToList()
-                    .ForEach(x => x.panel.Refresh(x.team, team?.Name));
+                var playerTeamName = teams.FirstOrDefault(x => x.Players.Any(p => p.Id == Game.PlayerId))?.Name;
+                var teamBars = components.TeamBarPanels.OrderBy(x => x.Team is null ? int.MaxValue : teams.IndexOf(x.Team));
+
+                foreach (var teamBar in teamBars)
+                {
+                    Team? team = teamBar.Team is null
+                        ? teams.FirstOrDefault(t => !teamBars.Any(x => x.Team is not null && x.Team.Equals(t)))
+                        : teams.FirstOrDefault(t => t.Equals(teamBar.Team));
+
+                    teamBar.Refresh(team, playerTeamName);
+                }
             }
         });
     }
@@ -198,7 +201,7 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
     {
         GameClientCore.InvokeOnMainThread(() =>
         {
-            lock (this.playerUpdateLock)
+            lock (components.Grid)
             {
                 components.PlayerIdentityBarPanel.Refresh(players);
                 components.PlayerStatsBarPanel.Refresh(players, Game.PlayerId);
