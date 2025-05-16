@@ -33,7 +33,7 @@ internal sealed class MineAbility(StunSystem stunSystem)
 #if STEREO
 
     /// <inheritdoc/>
-    public int TotalRegenerationTicks => 100;
+    public int TotalRegenerationTicks => 80;
 
     /// <inheritdoc/>
     public int? RemainingRegenerationTicks

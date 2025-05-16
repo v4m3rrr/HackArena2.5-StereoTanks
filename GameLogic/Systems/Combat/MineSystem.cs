@@ -13,7 +13,11 @@ internal sealed class MineSystem(
     ScoreSystem scoreSystem,
     StunSystem stunSystem)
 {
+#if STEREO
+    private const int MineDamage = 35;
+#else
     private const int MineDamage = 50;
+#endif
 
     /// <summary>
     /// Attempts to drop a mine from the specified ability.
@@ -60,8 +64,7 @@ internal sealed class MineSystem(
                 continue;
             }
 
-            Tank? tank = grid.Tanks.FirstOrDefault(t => t.X == mine.X && t.Y == mine.Y);
-            this.HandleMineExplosion(mine, tank);
+            this.HandleMineExplosion(mine);
         }
     }
 
@@ -70,6 +73,17 @@ internal sealed class MineSystem(
     /// </summary>
     public void Update()
     {
+#if STEREO && SERVER
+        foreach (Mine mine in grid.Mines.ToList())
+        {
+            if (mine.ShouldExplodeNextTick)
+            {
+                mine.ShouldExplodeNextTick = false;
+                this.HandleMineExplosion(mine);
+            }
+        }
+#endif
+
         foreach (Mine mine in grid.Mines.ToList())
         {
             if (!grid.IsCellWithinBounds(mine.X, mine.Y)
@@ -85,15 +99,11 @@ internal sealed class MineSystem(
                 continue;
             }
 
-            if (!mine.IsExploded)
+            if (!mine.IsExploded && grid.Tanks.Any(t => t.X == mine.X && t.Y == mine.Y))
             {
-                Tank? tank = grid.Tanks.FirstOrDefault(t => t.X == mine.X && t.Y == mine.Y);
-                if (tank is not null)
-                {
-                    this.HandleMineExplosion(mine, tank);
-                }
+                this.HandleMineExplosion(mine);
             }
-            else
+            else if (mine.ExplosionRemainingTicks is not null)
             {
                 mine.DecreaseExplosionTicks();
             }
@@ -113,30 +123,65 @@ internal sealed class MineSystem(
         }
     }
 
-    private void HandleMineExplosion(Mine mine, Tank? tank)
+    private void HandleMineExplosion(Mine mine)
     {
-        mine.Explode();
-
-        if (tank is not null)
+        void TryDamageTankAt(int x, int y, float multiplier)
         {
-            bool suicide = mine.LayerId == tank.Owner.Id;
+            Tank? tank = grid.Tanks.FirstOrDefault(t => t.X == x && t.Y == y);
+
+            if (tank is null)
+            {
+                return;
+            }
+
+            var suicide = mine.LayerId == tank.Owner.Id;
+
+#if STEREO
+            suicide &= mine.Layer!.Team.Equals(tank.Owner.Team);
+#endif
 
             int dealt = damageSystem.ApplyDamage(
-            tank,
-            mine.Damage!.Value,
-            suicide ? null : mine.Layer);
+                tank,
+                (int)((mine.Damage!.Value * multiplier) + 0.5f),
+                suicide ? null : mine.Layer);
 
             if (mine.Layer is { } layer && !suicide)
             {
-#if STEREO
-                if (!layer.Team.Equals(tank.Owner.Team))
-#endif
-                {
-                    scoreSystem.AwardScore(mine.Layer, dealt);
-                }
+                scoreSystem.AwardScore(layer, dealt);
             }
 
-            stunSystem.ApplyStun(tank, mine);
+            var stunEffect = (mine as IStunEffect).StunBlockEffect;
+            var stunTicks = (mine as IStunEffect).StunTicks;
+            stunSystem.ApplyStun(tank, stunEffect, (int)((stunTicks * multiplier) + 0.5f));
         }
+
+        TryDamageTankAt(mine.X, mine.Y, multiplier: 1f);
+        mine.Explode();
+
+#if STEREO && SERVER
+        static bool IsDiagonal(int dx, int dy) => dx != 0 && dy != 0;
+
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                {
+                    continue;
+                }
+
+                int x = mine.X + dx;
+                int y = mine.Y + dy;
+                float multiplier = IsDiagonal(dx, dy) ? 0.45f : 0.7f;
+
+                TryDamageTankAt(x, y, multiplier);
+
+                if (grid.Mines.FirstOrDefault(m => m.X == x && m.Y == y && !m.IsExploded) is Mine otherMine)
+                {
+                    otherMine.ShouldExplodeNextTick = true;
+                }
+            }
+        }
+#endif
     }
 }

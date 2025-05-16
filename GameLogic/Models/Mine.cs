@@ -112,6 +112,15 @@ public class Mine : IStunEffect, IEquatable<Mine>
     /// </remarks>
     public bool IsFullyExploded => this.ExplosionRemainingTicks <= 0;
 
+#if STEREO && SERVER
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the mine should explode next tick.
+    /// </summary>
+    public bool ShouldExplodeNextTick { get; set; }
+
+#endif
+
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
