@@ -58,6 +58,22 @@ internal static class CollisionDetector
 
             if (grid.WallGrid[x, y] is { } wall)
             {
+#if STEREO
+                if (i == 0 && bullet.Speed == 2)
+                {
+                    /* Fix for the case when the bullet collides with a penetrable wall
+                     * and behind it is a solid wall.
+                     */
+
+                    var nx = DirectionUtils.Normal(bullet.Direction).X;
+                    var ny = DirectionUtils.Normal(bullet.Direction).Y;
+                    if (grid.WallGrid[x + nx, y + ny] is Wall wall2)
+                    {
+                        return new WallCollision(wall2);
+                    }
+                }
+#endif
+
                 return new WallCollision(wall);
             }
 
