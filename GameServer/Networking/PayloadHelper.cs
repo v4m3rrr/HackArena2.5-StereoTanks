@@ -169,11 +169,11 @@ internal class PayloadHelper(GameInstance game)
     {
         converters = GameEndPayload.GetConverters();
 
-        bool isValid = !game.DisconnectedInGamePlayers.Any();
+        bool isValid = game.IsValid && !game.DisconnectedInGamePlayers.Any();
 #if STEREO
         var teams = this.Teams;
         teams.Sort((x, y) => y.Score.CompareTo(x.Score));
-        return new GameEndResultsPayload(teams, isValid);
+        return new GameEndResultsPayload(teams, game.IsValid);
 #else
         var players = this.Players;
         players.AddRange(game.DisconnectedInGamePlayers.Select(x => x.Instance));

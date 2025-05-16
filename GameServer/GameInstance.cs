@@ -166,6 +166,11 @@ internal sealed class GameInstance
     public GameSystems Systems { get; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the game instance is valid.
+    /// </summary>
+    public bool IsValid { get; set; } = true;
+
+    /// <summary>
     /// Adds a connection to the game instance.
     /// </summary>
     /// <param name="connection">The connection to add.</param>

@@ -67,6 +67,7 @@ internal sealed class GameTickLoop(GameInstance game, ILogger logger)
                 catch (Exception ex)
                 {
                     logger.Error(ex, "Logic update failed");
+                    game.IsValid = false;
                 }
 
                 string stateId = Guid.NewGuid().ToString();
