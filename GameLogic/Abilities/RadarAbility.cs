@@ -24,7 +24,9 @@ internal sealed class RadarAbility
     public RadarAbility(StunSystem stunSystem)
     {
         this.stunSystem = stunSystem;
+#if STEREO
         this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+#endif
     }
 
     /// <summary>

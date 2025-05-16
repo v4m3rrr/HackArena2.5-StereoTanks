@@ -23,7 +23,9 @@ internal sealed class DoubleBulletAbility
     public DoubleBulletAbility(StunSystem stunSystem)
     {
         this.stunSystem = stunSystem;
+#if STEREO
         this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+#endif
     }
 
     /// <summary>

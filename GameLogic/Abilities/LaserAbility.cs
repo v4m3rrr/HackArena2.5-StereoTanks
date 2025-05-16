@@ -23,7 +23,9 @@ internal sealed class LaserAbility
     public LaserAbility(StunSystem stunSystem)
     {
         this.stunSystem = stunSystem;
+#if STEREO
         this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+#endif
     }
 
     /// <summary>

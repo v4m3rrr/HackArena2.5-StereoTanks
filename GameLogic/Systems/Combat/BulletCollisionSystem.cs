@@ -1,5 +1,7 @@
 namespace GameLogic;
 
+#pragma warning disable CS9113
+
 /// <summary>
 /// Resolves collisions between bullets and other objects (tanks, bullets).
 /// </summary>

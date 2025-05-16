@@ -101,7 +101,6 @@ internal class PlayerSlotPanel : Component
                 RelativeOffset = new Vector2(-0.05f, 0.0f),
             },
         };
-
     }
 }
 

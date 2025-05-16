@@ -23,7 +23,9 @@ internal sealed class MineAbility
     public MineAbility(StunSystem stunSystem)
     {
         this.stunSystem = stunSystem;
+#if STEREO
         this.remainingRegenerationTicks = this.TotalRegenerationTicks;
+#endif
     }
 
     /// <summary>
