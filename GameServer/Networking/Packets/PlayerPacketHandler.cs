@@ -65,8 +65,26 @@ internal sealed class PlayerPacketHandler(
             return Task.FromResult(true);
         }
 
-        this.DispatchPlayerAction(player, packet);
-        this.RegisterPlayerAction(player);
+        var action = this.GetPlayerAction(player, packet);
+
+        if (action is not null)
+        {
+            if (player.IsHackathonBot)
+            {
+                this.HackathonBotActions[player] = action;
+            }
+
+            lock (game)
+            {
+                if (!player.IsHackathonBot)
+                {
+                    action?.Invoke();
+                }
+
+                this.RegisterPlayerAction(player);
+            }
+        }
+
         return Task.FromResult(true);
     }
 
@@ -98,38 +116,38 @@ internal sealed class PlayerPacketHandler(
         return true;
     }
 
-    private void DispatchPlayerAction(PlayerConnection player, Packet packet)
+    private Action? GetPlayerAction(PlayerConnection player, Packet packet)
     {
+        Action? action = null;
         IPacketPayload? responsePayload = null;
 
         switch (packet.Type)
         {
             case PacketType.Movement:
                 var move = packet.GetPayload<MovementPayload>();
-                this.actionHandler.HandleMovement(player, move.Direction);
+                action = () => this.actionHandler.HandleMovement(player, move.Direction);
                 break;
 
             case PacketType.Rotation:
                 var rot = packet.GetPayload<RotationPayload>();
-                this.actionHandler.HandleRotation(player, rot.TankRotation, rot.TurretRotation);
+                action = () => this.actionHandler.HandleRotation(player, rot.TankRotation, rot.TurretRotation);
                 break;
 
             case PacketType.AbilityUse:
                 var ability = packet.GetPayload<AbilityUsePayload>();
-                var action = this.actionHandler.GetAbilityAction(ability.AbilityType, player.Instance);
-                action?.Invoke();
+                action = () => this.actionHandler.GetAbilityAction(ability.AbilityType, player.Instance)?.Invoke();
                 break;
 
 #if STEREO
 
             case PacketType.CaptureZone:
-                this.actionHandler.HandleZoneCapture(player, out responsePayload);
+                action = () => this.actionHandler.HandleZoneCapture(player, out responsePayload);
                 break;
 
             case PacketType.GoTo:
                 if (this.goToService.TryResolve(player, packet, out var ctx, out responsePayload))
                 {
-                    this.goToService.Execute(ctx!);
+                    action = () => this.goToService.Execute(ctx!);
                 }
 
                 break;
@@ -142,6 +160,8 @@ internal sealed class PlayerPacketHandler(
             var responsePacket = new ResponsePacket(responsePayload, logger);
             _ = responsePacket.SendAsync(player);
         }
+
+        return action;
     }
 
     private void RegisterPlayerAction(PlayerConnection player)
