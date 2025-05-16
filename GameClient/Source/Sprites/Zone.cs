@@ -130,38 +130,7 @@ internal class Zone : ISprite
     /// <inheritdoc/>
     public void Update(GameTime gameTime)
     {
-#if STEREO
-
-        const int MaxSegments = 8;
-
-        this.effect.Parameters["SpriteTexture"].SetValue(this.texture.Texture);
-        this.effect.Parameters["GlobalOpacity"].SetValue(TextureOpacity);
-
-        var segments = this.Logic.Shares.NormalizedByTeam
-            .Select(kvp =>
-            {
-                Team team = kvp.Key;
-                float share = kvp.Value;
-                Vector4 color = new Color(team.Color).ToVector4();
-                return (Share: share, Color: color);
-            })
-            .ToList();
-
-        if (segments.Count > MaxSegments - 1)
-        {
-            segments = [.. segments.Take(MaxSegments - 1)];
-        }
-
-        int middleIndex = segments.Count / 2;
-        segments.Insert(
-            middleIndex,
-            (Share: this.Logic.Shares.NormalizedNeutral, Color: Color.White.ToVector4()));
-
-        this.effect.Parameters["NumSegments"].SetValue(segments.Count);
-        this.effect.Parameters["Pct"].SetValue(segments.Select(s => s.Share).ToArray());
-        this.effect.Parameters["ColorArr"].SetValue(segments.Select(s => s.Color).ToArray());
-
-#else
+#if !STEREO
 
         if (this.Logic.State is NeutralZoneState)
         {
@@ -257,6 +226,8 @@ internal class Zone : ISprite
         var graphicsDevice = ScreenController.GraphicsDevice;
         var dest = this.texture.Transform.DestRectangle;
 
+        spriteBatch.End();
+
         var vp = graphicsDevice.Viewport;
         float l = (dest.Left / (float)vp.Width * 2f) - 1f;
         float r = (dest.Right / (float)vp.Width * 2f) - 1f;
@@ -278,6 +249,35 @@ internal class Zone : ISprite
         graphicsDevice.DepthStencilState = DepthStencilState.None;
         graphicsDevice.SetRenderTarget(null);
 
+        const int MaxSegments = 8;
+
+        this.effect.Parameters["SpriteTexture"].SetValue(this.texture.Texture);
+        this.effect.Parameters["GlobalOpacity"].SetValue(TextureOpacity);
+
+        var segments = this.Logic.Shares.NormalizedByTeam
+            .Select(kvp =>
+            {
+                Team team = kvp.Key;
+                float share = kvp.Value;
+                Vector4 color = new Color(team.Color).ToVector4();
+                return (Share: share, Color: color);
+            })
+            .ToList();
+
+        if (segments.Count > MaxSegments - 1)
+        {
+            segments = [.. segments.Take(MaxSegments - 1)];
+        }
+
+        int middleIndex = segments.Count / 2;
+        segments.Insert(
+            middleIndex,
+            (Share: this.Logic.Shares.NormalizedNeutral, Color: Color.White.ToVector4()));
+
+        this.effect.Parameters["NumSegments"].SetValue(segments.Count);
+        this.effect.Parameters["Pct"].SetValue(segments.Select(s => s.Share).ToArray());
+        this.effect.Parameters["ColorArr"].SetValue(segments.Select(s => s.Color).ToArray());
+
         this.effect.CurrentTechnique.Passes[0].Apply();
         graphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, this.vertices, 0, 2);
 
@@ -285,6 +285,10 @@ internal class Zone : ISprite
         graphicsDevice.DepthStencilState = oldDepthStencilState;
         graphicsDevice.RasterizerState = oldRasterizerState;
         graphicsDevice.SetRenderTargets(oldRenderTarget);
+
+        spriteBatch.Begin(
+            blendState: BlendState.NonPremultiplied,
+            transformMatrix: ScreenController.TransformMatrix);
 
         this.index.Draw(gameTime);
 

@@ -1,5 +1,6 @@
 ﻿using GameLogic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoRivUI;
 
 namespace GameClient.GameSceneComponents.PlayerBarComponents;
@@ -110,12 +111,23 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
 
     private class Item : Component
     {
+        private readonly Effect effect;
+        private readonly VertexPositionTexture[] vertices;
+
         private readonly Player player;
         private readonly Color playerColor;
         private readonly Func<float?> getProgress;
+        private float textureOpacity = 1f;
 
         public Item(Player player, ScalableTexture2D.Static staticTexture, Func<float?> getProgress)
         {
+#if WINDOWS
+            this.effect = ContentController.Content.Load<Effect>("Shaders/AngleMask_DX");
+#else
+            this.effect = ContentController.Content.Load<Effect>("Shaders/AngleMask_GL");
+#endif
+            this.vertices = new VertexPositionTexture[4];
+
             this.player = player;
             this.playerColor = new Color(player.Color);
             this.getProgress = getProgress;
@@ -125,6 +137,8 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
             this.Texture = new ScalableTexture2D(staticTexture)
             {
                 Parent = this.Background,
+                AutoDraw = false,
+                Color = Color.White,
                 Transform =
                 {
                     Alignment = Alignment.Center,
@@ -154,38 +168,109 @@ internal class Abilities : PlayerBarComponent, ILoadStaticContent
                 return;
             }
 
+            base.Update(gameTime);
+        }
+
+        public override void Draw(GameTime gameTime)
+        {
+            if (!this.IsEnabled)
+            {
+                return;
+            }
+
+            base.Draw(gameTime);
+
+            var spriteBatch = SpriteBatchController.SpriteBatch;
+            var graphicsDevice = ScreenController.GraphicsDevice;
             var progress = this.getProgress();
 
-            if (progress is null)
+            if (progress < 1f)
             {
-                if (this.player.IsTankDead)
-                {
-                    this.Background.Color = Color.White;
-                    this.Background.Opacity = 0.27f;
-                    this.Texture.Opacity = 0.44f;
-                }
-                else
-                {
-                    this.Background.Color = this.playerColor;
-                    this.Texture.Opacity = this.Background.Opacity = 1f;
-                }
+                spriteBatch.End();
+
+                var dest = this.Background.Transform.DestRectangle;
+                var vp = graphicsDevice.Viewport;
+                float l = ((dest.Left + 0.5f) / vp.Width * 2f) - 1f;
+                float r = ((dest.Right - 0.5f) / vp.Width * 2f) - 1f;
+                float t = -(((dest.Top + 0.5f) / vp.Height * 2f) - 1f);
+                float b = -(((dest.Bottom - 0.5f) / vp.Height * 2f) - 1f);
+
+                this.vertices[0] = new VertexPositionTexture(new Vector3(l, t, 0), new Vector2(0, 0));
+                this.vertices[1] = new VertexPositionTexture(new Vector3(r, t, 0), new Vector2(1, 0));
+                this.vertices[2] = new VertexPositionTexture(new Vector3(l, b, 0), new Vector2(0, 1));
+                this.vertices[3] = new VertexPositionTexture(new Vector3(r, b, 0), new Vector2(1, 1));
+
+                var oldRasterizerState = graphicsDevice.RasterizerState;
+                var oldBlendState = graphicsDevice.BlendState;
+                var oldDepthStencilState = graphicsDevice.DepthStencilState;
+                var oldRenderTarget = graphicsDevice.GetRenderTargets();
+
+                graphicsDevice.RasterizerState = RasterizerState.CullNone;
+                graphicsDevice.BlendState = BlendState.NonPremultiplied;
+                graphicsDevice.DepthStencilState = DepthStencilState.None;
+                graphicsDevice.SetRenderTarget(null);
+
+                this.effect.Parameters["SpriteTexture"].SetValue(this.Background.Texture);
+                this.effect.Parameters["GlobalOpacity"].SetValue(1.0f);
+
+                List<(float, Vector4)> segments = progress is null
+                    ? [(1f, this.playerColor.ToVector4())]
+                    : [(progress.Value, this.playerColor.ToVector4() * 0.75f), (1f - progress.Value, (Color.White * 0.3f).ToVector4())];
+
+                this.effect.Parameters["NumSegments"].SetValue(segments.Count);
+                this.effect.Parameters["Pct"].SetValue(segments.Select(s => s.Item1).ToArray());
+                this.effect.Parameters["ColorArr"].SetValue(segments.Select(s => s.Item2).ToArray());
+
+                this.effect.CurrentTechnique.Passes[0].Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, this.vertices, 0, 2);
+
+                dest = this.Texture.Transform.DestRectangle;
+                vp = graphicsDevice.Viewport;
+                l = (dest.Left / (float)vp.Width * 2f) - 1f;
+                r = (dest.Right / (float)vp.Width * 2f) - 1f;
+                t = -((dest.Top / (float)vp.Height * 2f) - 1f);
+                b = -((dest.Bottom / (float)vp.Height * 2f) - 1f);
+
+                this.vertices[0] = new VertexPositionTexture(new Vector3(l, t, 0), new Vector2(0, 0));
+                this.vertices[1] = new VertexPositionTexture(new Vector3(r, t, 0), new Vector2(1, 0));
+                this.vertices[2] = new VertexPositionTexture(new Vector3(l, b, 0), new Vector2(0, 1));
+                this.vertices[3] = new VertexPositionTexture(new Vector3(r, b, 0), new Vector2(1, 1));
+
+                this.effect.Parameters["SpriteTexture"].SetValue(this.Texture.Texture);
+                segments = progress is null
+                    ? [(1.1f, Color.White.ToVector4())]
+                    : [(progress.Value, Color.White.ToVector4() * 0.9f), (1f - progress.Value, (Color.White * 0.5f).ToVector4())];
+
+                this.effect.Parameters["NumSegments"].SetValue(segments.Count);
+                this.effect.Parameters["Pct"].SetValue(segments.Select(s => s.Item1).ToArray());
+                this.effect.Parameters["ColorArr"].SetValue(segments.Select(s => s.Item2).ToArray());
+
+                this.effect.CurrentTechnique.Passes[0].Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleStrip, this.vertices, 0, 2);
+
+                graphicsDevice.BlendState = oldBlendState;
+                graphicsDevice.DepthStencilState = oldDepthStencilState;
+                graphicsDevice.RasterizerState = oldRasterizerState;
+                graphicsDevice.SetRenderTargets(oldRenderTarget);
+
+                spriteBatch.Begin(
+                    blendState: BlendState.NonPremultiplied,
+                    transformMatrix: ScreenController.TransformMatrix);
             }
             else
             {
-                this.Background.Color = this.playerColor;
-                this.Background.Opacity = MathHelper.Lerp(0.27f, 1f, progress.Value);
-                this.Texture.Opacity = MathHelper.Lerp(0.44f, 0.73f, progress.Value);
+                this.Background.Draw(gameTime);
+                this.Texture.Draw(gameTime);
             }
-
-            base.Update(gameTime);
         }
 
         private RoundedSolidColor CreateBackground()
         {
             var radius = Math.Min(this.Transform.Size.X, this.Transform.Size.Y) / 5;
-            return new RoundedSolidColor(Color.LimeGreen, radius)
+            return new RoundedSolidColor(this.playerColor, radius)
             {
                 Parent = this,
+                AutoDraw = false,
                 Transform =
                 {
                     Alignment = Alignment.Center,
