@@ -23,6 +23,16 @@ internal sealed class ConnectionRoutingHandler(
     {
         string path = context.Request.Url?.AbsolutePath?.ToLowerInvariant() ?? string.Empty;
 
+        if (game.Options.JoinCode is not null)
+        {
+            string? joinCode = context.Request.QueryString["joinCode"];
+            if (string.IsNullOrWhiteSpace(joinCode) || !game.Options.JoinCode.Equals(joinCode, StringComparison.OrdinalIgnoreCase))
+            {
+                await this.RejectAsync("InvalidJoinCode");
+                return;
+            }
+        }
+
         switch (path)
         {
             case "/":
