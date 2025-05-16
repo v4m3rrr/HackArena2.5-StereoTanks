@@ -50,7 +50,11 @@ internal class MainMenu : Scene
     /// <inheritdoc/>
     protected override void Initialize(Component baseComponent)
     {
+#if STEREO
+        this.element = new ScalableTexture2D("Images/MainMenu/background_element_stereo.svg")
+#else
         this.element = new ScalableTexture2D("Images/MainMenu/background_element.svg")
+#endif
         {
             Parent = baseComponent,
             Transform =
