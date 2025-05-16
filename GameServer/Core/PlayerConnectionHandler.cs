@@ -46,7 +46,7 @@ internal sealed class PlayerConnectionHandler(
         }
 
 #if STEREO
-        string? teamName = context.Request.QueryString["teamName"];
+        string? teamName = context.Request.QueryString["teamName"]?.ToUpper();
         string? rawTankType = context.Request.QueryString["tankType"];
 
         if (string.IsNullOrWhiteSpace(teamName))
