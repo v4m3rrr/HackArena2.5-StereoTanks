@@ -33,6 +33,23 @@ internal class PathFinder
         this.tank = player.Tank;
 
         this.grid = new Grid(this.gridDim, serverSettings.Seed);
+
+        // We have to clone bullets to simulate them
+        // and avoid modifying the original game state.
+        for (int i = 0; i < gameState.Map.Tiles.Bullets.Count; i++)
+        {
+            var bullet = gameState.Map.Tiles.Bullets[i];
+            gameState.Map.Tiles.Bullets[i] = new Bullet(
+                bullet.Id,
+                bullet.X,
+                bullet.Y,
+                bullet.Direction,
+                bullet.Type,
+                bullet.Speed,
+                bullet.Damage,
+                bullet.ShooterId);
+        }
+
         GameStateApplier.ApplyToGrid(this.grid, gameState);
 
         this.wallGrid = new bool[this.gridDim, this.gridDim];
@@ -56,7 +73,7 @@ internal class PathFinder
     /// The next action to take in order to reach the target position,
     /// or <see langword="null"/> if no action is nedeed or possible.
     /// </returns>
-    public PathAction? GetNextAction(int targetX, int targetY, Costs costs, Penalties penalties)
+    public PathAction? GetNextAction(int targetX, int targetY, Costs costs, Penalties? penalties)
     {
         var visited = new HashSet<(int X, int Y, Direction Direction)>();
         var queue = new PriorityQueue<Node, float>();
@@ -182,23 +199,51 @@ internal class PathFinder
         }
     }
 
-    private float GetDangerPenalty(int x, int y, Penalties penalties, int tick)
+    private float GetDangerPenalty(int x, int y, Penalties? penalties, int tick)
     {
         var penalty = 0f;
 
-        penalty += penalties.Bullet * this.grid.Bullets.Count(b => b.X == x && b.Y == y);
-        penalty += penalties.Mine * this.grid.Mines.Count(b => b.X == x && b.Y == y);
-        penalty += penalties.Laser * this.grid.Lasers.Count(b => b.X == x && b.Y == y);
+        if (penalties is null)
+        {
+            return penalty;
+        }
+
+        if (penalties.Tank is float tankPenalty)
+        {
+            penalty += tankPenalty * this.grid.Tanks.Count(t => t.X == x && t.Y == y && !t.Equals(this.tank));
+        }
+
+        if (penalties.Bullet is float bulletPenalty)
+        {
+            penalty += bulletPenalty * this.grid.Bullets.Count(b => b.X == x && b.Y == y);
+        }
+
+        if (penalties.Mine is float minePenalty)
+        {
+            penalty += minePenalty * this.grid.Mines.Count(b => b.X == x && b.Y == y);
+        }
+
+        if (penalties.Laser is float laserPenalty)
+        {
+            penalty += laserPenalty * this.grid.Lasers.Count(b => b.X == x && b.Y == y);
+        }
 
         if (tick == this.gameState.Tick + 1 && !this.gameState.VisibilityGrid![x, y])
         {
-            penalty += penalties.Blindly;
+            if (penalties.Blindly is float blindlyPenalty)
+            {
+                penalty += blindlyPenalty;
+            }
         }
 
-        penalty += penalties.PerTile
-            .Where(p => p.X == x && p.Y == y)
-            .Select(p => p.Penalty)
-            .Sum();
+#if HACKATHON
+
+        if (penalties.PerTile is { } perTile)
+        {
+            penalty += perTile.Where(p => p.X == x && p.Y == y).Select(p => p.Penalty).Sum();
+        }
+
+#endif
 
         return penalty;
     }

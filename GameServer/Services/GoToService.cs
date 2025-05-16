@@ -42,7 +42,28 @@ internal sealed class GoToService(GameInstance game, ILogger logger)
 
         if (player.LastGameStatePayload is null)
         {
-            responsePayload = new ErrorPayload(PacketType.InternalErrorWithPayload, "No last sent game state");
+            responsePayload = new ErrorPayload(
+                PacketType.InternalErrorWithPayload,
+                "Missing sent game state payload to resolve GoTo.");
+
+            return false;
+        }
+
+        if (!game.Grid.IsCellWithinBounds(payload.X, payload.Y))
+        {
+            responsePayload = new ErrorPayload(
+                PacketType.InvalidPacketUsageErrorWithPayload,
+                "GoTo coordinates are out of bounds.");
+
+            return false;
+        }
+
+        if (game.Grid.WallGrid[payload.X, payload.Y] is not null)
+        {
+            responsePayload = new ErrorPayload(
+                PacketType.InvalidPacketUsageErrorWithPayload,
+                "GoTo coordinates lead to a wall.");
+
             return false;
         }
 

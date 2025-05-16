@@ -37,7 +37,11 @@ public class GoToPayload(int x, int y) : ActionPayload
     /// <summary>
     /// Gets the penalties associated with the pathfinding.
     /// </summary>
-    public Penalties Penalties { get; init; } = new();
+#if CLIENT
+    public Penalties? Penalties { get; init; } = new();
+#else
+    public Penalties? Penalties { get; init; }
+#endif
 }
 
 #endif

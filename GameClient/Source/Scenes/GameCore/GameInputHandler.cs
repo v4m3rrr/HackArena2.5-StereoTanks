@@ -192,7 +192,11 @@ internal class GameInputHandler
 
         var tileX = (mousePosition.X - gridLocation.X) / tileSize;
         var tileY = (mousePosition.Y - gridLocation.Y) / tileSize;
-        return new GoToPayload(tileX, tileY);
+
+        var logic = gridComponent.Logic;
+        return logic.IsCellWithinBounds(tileX, tileY) && logic.WallGrid[tileX, tileY] is null
+            ? new GoToPayload(tileX, tileY)
+            : null;
     }
 
     private static CaptureZonePayload? HandleCaptureZonePayload()

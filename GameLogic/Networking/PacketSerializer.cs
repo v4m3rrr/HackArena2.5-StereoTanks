@@ -141,15 +141,25 @@ public static class PacketSerializer
     /// Deserializes the serialized packet.
     /// </summary>
     /// <param name="serializedPacket">The serialized packet.</param>
+    /// <param name="converters">The converters to use during deserialization.</param>
+    /// <param name="options">The serialization options.</param>
     /// <returns>The deserialized packet.</returns>
-    public static Packet Deserialize(string serializedPacket)
+    public static Packet Deserialize(
+        string serializedPacket,
+        IEnumerable<JsonConverter>? converters = null,
+        SerializationOptions? options = null)
     {
+        converters ??= [];
+        options ??= SerializationOptions.Default;
+
         try
         {
             var settings = new JsonSerializerSettings()
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 ContractResolver = ContractResolver,
+                Formatting = options.Formatting,
+                Converters = [..converters],
             };
 
             return JsonConvert.DeserializeObject<Packet>(serializedPacket, settings)!;

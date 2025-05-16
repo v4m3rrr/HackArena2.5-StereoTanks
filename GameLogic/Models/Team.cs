@@ -70,7 +70,7 @@ public class Team : IEquatable<Team>
         {
             bool[,]? grid = null;
 
-            foreach (var player in this.players)
+            foreach (var player in this.players.ToList())
             {
                 if (player.Tank.VisibilityGrid is null)
                 {

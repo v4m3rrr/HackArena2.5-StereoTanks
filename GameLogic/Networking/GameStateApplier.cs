@@ -56,7 +56,13 @@ internal static class GameStateApplier
 
         foreach (var snapshot in visibleTanks)
         {
-            var owner = payload.Players.First(p => p.Id == snapshot.OwnerId);
+            var owner = payload.Players.FirstOrDefault(p => p.Id == snapshot.OwnerId);
+
+            if (owner is null)
+            {
+                continue;
+            }
+
             var existing = grid.Tanks.FirstOrDefault(t => t.OwnerId == snapshot.OwnerId);
 
             if (existing is null)
