@@ -98,7 +98,7 @@ internal sealed class GameManager(GameInstance game, ILogger logger)
         {
             var payload = game.PayloadHelper.GetGameEndPayload(connection, out var converters);
             var packet = new ResponsePacket(payload, logger, converters);
-            tasks.Add(packet.SendAsync(connection, cts.Token, this));
+            tasks.Add(packet.SendAsync(connection, cts.Token, game));
         }
 
         await Task.WhenAll(tasks);

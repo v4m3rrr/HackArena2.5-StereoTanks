@@ -71,7 +71,7 @@ internal sealed class PlayerPacketHandler(
         {
             if (player.IsHackathonBot)
             {
-                this.HackathonBotActions[player] = action;
+                this.HackathonBotActions.AddOrUpdate(player, action, (_, _) => action);
             }
 
             lock (game)

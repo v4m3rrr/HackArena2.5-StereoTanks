@@ -43,7 +43,7 @@ internal static class ServerConnection
 #if DEBUG
     public static int BufferSize { get; set; } = 1024 * 64;
 #else
-    public static int BufferSize { get; set; } = 1024 * 16;
+    public static int BufferSize { get; set; } = 1024 * 32;
 #endif
 
     /// <summary>
