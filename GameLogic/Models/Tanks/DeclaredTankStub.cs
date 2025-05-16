@@ -16,6 +16,9 @@ public class DeclaredTankStub(Player owner, TankType declaredTankType)
     /// <inheritdoc/>
     /// <value>The declared tank type.</value>
     public override TankType Type { get; } = declaredTankType;
+
+    /// <inheritdoc/>
+    public override int TotalRegenerationTicks => int.MaxValue;
 }
 
 #endif

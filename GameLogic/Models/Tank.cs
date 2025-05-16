@@ -13,10 +13,14 @@ public class Tank
 #endif
      : IRegenerable, IEquatable<Tank>
 {
+#if !STEREO
+
     /// <summary>
     /// The number of ticks required for the tank to regenerate.
     /// </summary>
     public const int RegenerationTicks = 50;
+
+#endif
 
     /// <summary>
     /// The maximum health of the tank.
@@ -81,8 +85,17 @@ public class Tank
     /// </summary>
     public bool IsDead => this.Health <= 0;
 
+#if STEREO
+
+    /// <inheritdoc/>
+    public abstract int TotalRegenerationTicks { get; }
+
+#else
+
     /// <inheritdoc/>
     public int TotalRegenerationTicks => RegenerationTicks;
+
+#endif
 
     /// <inheritdoc/>
     public int? RemainingRegenerationTicks
@@ -284,7 +297,7 @@ public class Tank
     /// Invokes the <see cref="Dying"/> event.
     /// </summary>
     /// <param name="e">The event arguments to pass to the event handler.</param>
-    internal void OnDying(EventArgs e)
+    internal virtual void OnDying(EventArgs e)
     {
         this.Dying?.Invoke(this, e);
     }
@@ -293,9 +306,9 @@ public class Tank
     /// Invokes the <see cref="Dying"/> event.
     /// </summary>
     /// <param name="e">The event arguments to pass to the event handler.</param>
-    internal void OnDied(EventArgs e)
+    internal virtual void OnDied(EventArgs e)
     {
-        this.remainingRegenerationTicks = RegenerationTicks;
+        this.remainingRegenerationTicks = this.TotalRegenerationTicks;
         this.Died?.Invoke(this, e);
     }
 }

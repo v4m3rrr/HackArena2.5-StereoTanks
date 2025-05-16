@@ -106,7 +106,7 @@ public class Player(string id) : IEquatable<Player>
     /// It is used to display the regeneration progress of the tank.
     /// </remarks>
     public float? RespawnTankProgress => RegenerationUtils.GetRegenerationProgres(
-        this.RemainingRespawnTankTicks, Tank.RegenerationTicks);
+        this.RemainingRespawnTankTicks, this.Tank.TotalRegenerationTicks);
 
 #endif
 

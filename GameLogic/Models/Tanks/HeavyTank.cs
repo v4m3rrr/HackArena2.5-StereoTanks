@@ -8,6 +8,11 @@ namespace GameLogic;
 public class HeavyTank : Tank
 {
     /// <summary>
+    /// The number of ticks required for the tank to regenerate.
+    /// </summary>
+    public const int RegenerationTicks = 55;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="HeavyTank"/> class.
     /// </summary>
     /// <param name="x">The x coordinate of the tank.</param>
@@ -20,6 +25,12 @@ public class HeavyTank : Tank
         this.Owner = owner;
     }
 
+    /// <inheritdoc/>
+    public override TankType Type => TankType.Heavy;
+
+    /// <inheritdoc/>
+    public override int TotalRegenerationTicks => RegenerationTicks;
+
     /// <summary>
     /// Gets the turret of the tank.
     /// </summary>
@@ -28,9 +39,6 @@ public class HeavyTank : Tank
         get => (HeavyTurret)base.Turret;
         internal set => base.Turret = value;
     }
-
-    /// <inheritdoc/>
-    public override TankType Type => TankType.Heavy;
 
     /// <summary>
     /// Gets or sets the mine ability of the tank.

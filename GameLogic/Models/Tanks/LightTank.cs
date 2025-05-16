@@ -8,6 +8,11 @@ namespace GameLogic;
 public class LightTank : Tank
 {
     /// <summary>
+    /// The number of ticks required for the tank to regenerate.
+    /// </summary>
+    public const int RegenerationTicks = 45;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="LightTank"/> class.
     /// </summary>
     /// <param name="x">The x coordinate of the tank.</param>
@@ -21,6 +26,9 @@ public class LightTank : Tank
 
     /// <inheritdoc/>
     public override TankType Type => TankType.Light;
+
+    /// <inheritdoc/>
+    public override int TotalRegenerationTicks => RegenerationTicks;
 
     /// <summary>
     /// Gets the turret of the tank.
