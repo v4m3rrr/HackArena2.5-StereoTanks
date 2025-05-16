@@ -67,7 +67,8 @@ internal static class CollisionDetector
 
                     var nx = DirectionUtils.Normal(bullet.Direction).X;
                     var ny = DirectionUtils.Normal(bullet.Direction).Y;
-                    if (grid.WallGrid[x + nx, y + ny] is Wall wall2)
+                    var (nextX, nextY) = (x + nx, y + ny);
+                    if (grid.IsCellWithinBounds(nextX, nextY) && grid.WallGrid[x + nx, y + ny] is Wall wall2)
                     {
                         return new WallCollision(wall2);
                     }

@@ -244,12 +244,20 @@ internal class Game : Scene
                 case PacketType.GameStarted:
                     break;
 
+                case PacketType.PlayerAlreadyMadeActionWarning:
+                    break;
+
+                case PacketType.CustomWarning:
+                    var customWarning = packet.GetPayload<CustomWarningPayload>();
+                    DebugConsole.SendMessage($"Server warning: {customWarning.Message}", Color.Yellow);
+                    break;
+
                 default:
                     if (!packet.Type.IsGroup(PacketType.ErrorGroup))
                     {
                         DebugConsole.SendMessage(
-                        $"Unknown packet type in Game scene: {packet.Type}",
-                        Color.Yellow);
+                            $"Unknown packet type in Game scene: {packet.Type}",
+                            Color.Yellow);
                     }
 
                     break;

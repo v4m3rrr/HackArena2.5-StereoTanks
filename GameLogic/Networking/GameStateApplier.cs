@@ -194,9 +194,9 @@ internal static class GameStateApplier
     private static void UpdateZones(Grid grid, GameStatePayload payload)
     {
         var newZones = payload.Map.Zones;
-        var newIds = new HashSet<char>(newZones.Select(z => z.Index));
 
-        _ = grid.Zones.RemoveAll(z => !newIds.Contains(z.Index));
+        _ = grid.Zones.RemoveAll(z => !newZones.Any(
+            zz => z.X == zz.X && z.Y == zz.Y && z.Height == zz.Height && z.Width == zz.Width));
 
         foreach (var zoneSnapshot in newZones)
         {

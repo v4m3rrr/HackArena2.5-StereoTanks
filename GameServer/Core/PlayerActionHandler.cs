@@ -57,8 +57,7 @@ internal sealed class PlayerActionHandler(GameInstance game, ILogger logger)
 
         if (zone is null)
         {
-            responsePayload = new ErrorPayload(
-                PacketType.CustomWarning,
+            responsePayload = new CustomWarningPayload(
                 "You are not in a zone that can be captured.");
             return;
         }
