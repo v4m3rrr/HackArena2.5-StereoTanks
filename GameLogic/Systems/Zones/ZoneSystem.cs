@@ -109,7 +109,22 @@ internal sealed class ZoneSystem(Grid grid, ScoreSystem scoreSystem, HealSystem 
 
 #endif
 
-#if !STEREO
+#if STEREO
+
+    /// <summary>
+    /// Notifies all zone contexts that the specified team has been removed from the game.
+    /// Each context will clear any capture-related state and update its zone state accordingly.
+    /// </summary>
+    /// <param name="team">The team that has been removed.</param>
+    public void OnTeamRemoved(Team team)
+    {
+        foreach (var ctx in this.contexts)
+        {
+            ctx.OnTeamRemoved(team);
+        }
+    }
+
+#else
 
     /// <summary>
     /// Notifies all zone contexts that the specified player has been removed from the game.

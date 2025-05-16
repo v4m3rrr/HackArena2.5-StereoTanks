@@ -52,4 +52,17 @@ internal sealed class DespawnSystem(Grid grid, HealSystem healSystem, ScoreSyste
 
         return tank;
     }
+
+#if STEREO
+
+    /// <summary>
+    /// Removes the team from the game grid and cleans up related game objects.
+    /// </summary>
+    /// <param name="team">The team to remove from the game grid.</param>
+    public void RemoveTeam(Team team)
+    {
+        zoneSystem.OnTeamRemoved(team);
+    }
+
+#endif
 }

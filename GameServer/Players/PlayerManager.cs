@@ -112,6 +112,13 @@ internal sealed class PlayerManager(GameInstance game, ILogger logger)
     {
         logger.Verbose("Despawning tank for player {identifier}", player.Identifier);
         _ = game.Systems.Despawn.RemoveTank(player.Instance);
+
+#if STEREO
+        if (!game.Teams.Any(t => t.Equals(player.Team)))
+        {
+            game.Systems.Despawn.RemoveTeam(player.Instance.Team);
+        }
+#endif
     }
 
 #if STEREO

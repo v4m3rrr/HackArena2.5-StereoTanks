@@ -31,16 +31,14 @@ internal class ZoneContext(Zone zone, ScoreSystem scoreSystem)
         float totalPressure = zone.Shares.ByTeam.Values.Sum();
         zone.Shares.NeutralControl = Math.Max(0f, InitialNeutralControl - totalPressure);
 
-        if (!zone.Shares.IsScoringAvailable)
+        if (zone.Shares.IsScoringAvailable)
         {
-            return;
-        }
-
-        foreach (Team team in zone.Shares.ByTeam.Keys)
-        {
-            float normalized = zone.Shares.GetNormalized(team);
-            float score = normalized * PointsPerTick;
-            scoreSystem.AwardScore(team, score);
+            foreach (Team team in zone.Shares.ByTeam.Keys)
+            {
+                float normalized = zone.Shares.GetNormalized(team);
+                float score = normalized * PointsPerTick;
+                scoreSystem.AwardScore(team, score);
+            }
         }
     }
 
@@ -63,6 +61,21 @@ internal class ZoneContext(Zone zone, ScoreSystem scoreSystem)
     {
         zone.Shares.NeutralControl = InitialNeutralControl;
         zone.Shares.ByTeam.Clear();
+    }
+
+    /// <summary>
+    /// Handles the removal of a team from the zone context,
+    /// including cleaning up their shares.
+    /// </summary>
+    /// <param name="team">The team that has been removed.</param>
+    public void OnTeamRemoved(Team team)
+    {
+        _ = zone.Shares.ByTeam.Remove(team);
+
+        if (zone.Shares.TotalShares < InitialNeutralControl)
+        {
+            zone.Shares.NeutralControl = InitialNeutralControl - zone.Shares.ByTeam.Values.Sum();
+        }
     }
 }
 
