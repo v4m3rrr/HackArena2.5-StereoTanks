@@ -104,7 +104,7 @@ public enum PacketType
     /// <summary>
     /// The capture zone packet type.
     /// </summary>
-    CaptureZone = PlayerResponseActionGroup | 0x4,
+    CaptureZone = PlayerResponseActionGroup | HasPayload | 0x4,
 
     /// <summary>
     /// The go to packet type.

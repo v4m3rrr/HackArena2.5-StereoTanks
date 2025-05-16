@@ -49,6 +49,11 @@ internal sealed class PlayerPacketHandler(
             return Task.FromResult(false);
         }
 
+        if (packet.Type is PacketType.GameStatusRequest)
+        {
+            return Task.FromResult(false);
+        }
+
 #if HACKATHON
 
         this.ValidateGameStateForBot(player, packet);
