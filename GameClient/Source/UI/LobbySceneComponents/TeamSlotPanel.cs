@@ -9,7 +9,7 @@ namespace GameClient.UI.LobbySceneComponents;
 /// <summary>
 /// Represents a team slot panel.
 /// </summary>
-internal class TeamSlotPanel : FlexListBox
+internal class TeamSlotPanel : Component
 {
     private readonly RoundedSolidColor background;
     private readonly ScalableTexture2D waitingIcon;
@@ -35,10 +35,13 @@ internal class TeamSlotPanel : FlexListBox
 
         var teamLabelContainer = new Container()
         {
-            Parent = this.ContentContainer,
+            Parent = this,
+            Transform =
+            {
+                RelativeSize = new Vector2(1f, 0.35f),
+                Alignment = Alignment.Top,
+            },
         };
-
-        this.SetResizeFactor(teamLabelContainer, 0.85f);
 
         var teamColorContainer = new Container()
         {
@@ -59,6 +62,7 @@ internal class TeamSlotPanel : FlexListBox
             Transform =
             {
                 RelativeSize = new Vector2(0.35f),
+                RelativeOffset = new Vector2(0.02f, 0f),
                 Alignment = Alignment.Center,
                 Ratio = new Ratio(1, 1),
             },
@@ -75,7 +79,7 @@ internal class TeamSlotPanel : FlexListBox
             },
         };
 
-        var font = new ScalableFont(Styles.Fonts.Paths.Main, 18)
+        var font = new LocalizedScalableFont(18)
         {
             AutoResize = true,
             Spacing = 5,
@@ -104,14 +108,26 @@ internal class TeamSlotPanel : FlexListBox
             },
         };
 
+        var playerSlotBox = new FlexListBox()
+        {
+            Parent = this,
+            Orientation = MonoRivUI.Orientation.Horizontal,
+            Transform =
+            {
+                RelativeSize = new Vector2(0.7f, 0.8f),
+                Alignment = Alignment.BottomLeft,
+                RelativePadding = new Vector4(0.05f, 0f, 0f, -0.05f),
+            },
+        };
+
         this.lightPlayerSlot = new PlayerSlotPanel(TankType.Light)
         {
-            Parent = this.ContentContainer,
+            Parent = playerSlotBox.ContentContainer,
         };
 
         this.heavyPlayerSlot = new PlayerSlotPanel(TankType.Heavy)
         {
-            Parent = this.ContentContainer,
+            Parent = playerSlotBox.ContentContainer,
         };
     }
 

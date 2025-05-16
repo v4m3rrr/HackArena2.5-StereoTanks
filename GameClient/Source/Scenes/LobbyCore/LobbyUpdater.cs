@@ -21,6 +21,7 @@ internal class LobbyUpdater(LobbyComponents components)
     {
         for (int i = 0; i < components.TeamSlotPanels.Count; i++)
         {
+            components.TeamSlotPanels[i].IsEnabled = true;
             components.TeamSlotPanels[i].Team = i < teams.Count ? teams[i] : null;
         }
     }

@@ -42,10 +42,14 @@
 	<ConnectionRejectedReason>
 		<InvalidJoinCode>Invalid join code!</InvalidJoinCode>
 		<MissingNickname>Nickname is required!</MissingNickname>
+		<MissingTeamName>Team name is required!</MissingTeamName>
+		<InvalidTankType>Invalid tank type!</InvalidTankType>
 		<NicknameExists>Nickname already exists!</NicknameExists>
 		<InvalidUrlPath>Invalid URL path!</InvalidUrlPath>
 		<GameFull>Game is full!</GameFull>
 		<GameInProgress>Game is in progress!</GameInProgress>
+		<TeamFull>Team is full!</TeamFull>
+		<TankTypeTaken>Tank type is already taken!</TankTypeTaken>
 		<TooManyFailedAttempts>Too many failed attempts! Try again later.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 

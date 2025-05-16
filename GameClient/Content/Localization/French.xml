@@ -42,10 +42,14 @@
 	<ConnectionRejectedReason>
 		<InvalidJoinCode>Le code de connexion est invalide!</InvalidJoinCode>
 		<MissingNickname>Le surnom est requis!</MissingNickname>
+		<MissingTeamName>Le nom de l'équipe est requis!</MissingTeamName>
+		<InvalidTankType>Type de char invalide!</InvalidTankType>
 		<NicknameExists>Ce surnom est déjà utilisé!</NicknameExists>
 		<InvalidUrlPath>Chemin d'URL invalide!</InvalidUrlPath>
 		<GameFull>La salle est pleine!</GameFull>
 		<GameInProgress>La partie est en cours!</GameInProgress>
+		<TeamFull>L'équipe est pleine!</TeamFull>
+		<TankTypeTaken>Type de char déjà pris!</TankTypeTaken>
 		<TooManyFailedAttempts>Trop de tentatives échouées! Réessayez plus tard.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 	

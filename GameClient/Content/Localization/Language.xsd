@@ -52,10 +52,14 @@
 		<xs:sequence>
 			<xs:element name="InvalidJoinCode" type="xs:string"/>
 			<xs:element name="MissingNickname" type="xs:string"/>
+			<xs:element name="MissingTeamName" type="xs:string"/>
+			<xs:element name="InvalidTankType" type="xs:string"/>
 			<xs:element name="NicknameExists" type="xs:string"/>
 			<xs:element name="InvalidUrlPath" type="xs:string"/>
 			<xs:element name="GameFull" type="xs:string"/>
 			<xs:element name="GameInProgress" type="xs:string"/>
+			<xs:element name="TeamFull" type="xs:string"/>
+			<xs:element name="TankTypeTaken" type="xs:string"/>
 			<xs:element name="TooManyFailedAttempts" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>

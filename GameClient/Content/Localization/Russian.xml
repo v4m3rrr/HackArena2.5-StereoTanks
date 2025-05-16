@@ -42,10 +42,14 @@
 	<ConnectionRejectedReason>
 		<InvalidJoinCode>Неверный код подключения!</InvalidJoinCode>
 		<MissingNickname>Требуется имя игрока!</MissingNickname>
+		<MissingTeamName>Требуется имя команды!</MissingTeamName>
+		<InvalidTankType>Неверный тип танка!</InvalidTankType>
 		<NicknameExists>Игрок с таким именем уже существует!</NicknameExists>
 		<InvalidUrlPath>Неверный путь URL!</InvalidUrlPath>
 		<GameFull>Лобби заполнено!</GameFull>
 		<GameInProgress>Игра уже идет!</GameInProgress>
+		<TeamFull>Команда заполнена!</TeamFull>
+		<TankTypeTaken>Тип танка уже занят!</TankTypeTaken>
 		<TooManyFailedAttempts>Слишком много неудачных попыток! Попробуйте снова позже.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 

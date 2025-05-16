@@ -103,7 +103,7 @@ internal sealed class PlayerConnectionHandler(
 #if STEREO
             if (game.Teams.Count() == 2 && game.Teams.All(t => t.Name != teamName))
             {
-                _ = this.RejectAsync("TeamsFull");
+                _ = this.RejectAsync("TeamFull");
                 return;
             }
 

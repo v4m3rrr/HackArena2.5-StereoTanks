@@ -111,7 +111,7 @@ internal class LobbyInitializer(Lobby lobby)
             Parent = lobby.BaseComponent,
             Transform =
             {
-                RelativeSize = new Vector2(0.7f, 0.42f),
+                RelativeSize = new Vector2(0.7f, 0.33f),
                 Alignment = Alignment.Center,
                 RelativeOffset = new Vector2(0.0f, 0.05f),
             },
@@ -120,10 +120,9 @@ internal class LobbyInitializer(Lobby lobby)
         var leftListBox = new TeamSlotPanel()
         {
             Parent = container,
-            Orientation = MonoRivUI.Orientation.Vertical,
             Transform =
             {
-                RelativePadding = new Vector4(0.01f),
+                RelativePadding = new Vector4(0.02f, 0f, 0.02f, 0.02f),
                 RelativeSize = new Vector2(0.49f, 1f),
                 Alignment = Alignment.Left,
             },
@@ -132,10 +131,9 @@ internal class LobbyInitializer(Lobby lobby)
         var rightListBox = new TeamSlotPanel()
         {
             Parent = container,
-            Orientation = MonoRivUI.Orientation.Vertical,
             Transform =
             {
-                RelativePadding = new Vector4(0.01f),
+                RelativePadding = new Vector4(0.02f, 0f, 0.02f, 0.02f),
                 RelativeSize = new Vector2(0.49f, 1f),
                 Alignment = Alignment.Right,
             },

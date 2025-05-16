@@ -42,10 +42,14 @@
 	<ConnectionRejectedReason>
 		<InvalidJoinCode>Nieprawidłowy kod dołączenia!</InvalidJoinCode>
 		<MissingNickname>Nazwa gracza jest wymagana!</MissingNickname>
+		<MissingTeamName>Nazwa drużyny jest wymagana!</MissingTeamName>
+		<InvalidTankType>Nieprawidłowy typ czołgu!</InvalidTankType>
 		<NicknameExists>Gracz o takiej nazwie już istnieje!</NicknameExists>
 		<InvalidUrlPath>Nieprawidłowa ścieżka URL!</InvalidUrlPath>
 		<GameFull>Pokój jest pełny!</GameFull>
 		<GameInProgress>Gra już trwa!</GameInProgress>
+		<TeamFull>Drużyna jest pełna!</TeamFull>
+		<TankTypeTaken>Typ czołgu jest już zajęty!</TankTypeTaken>
 		<TooManyFailedAttempts>Za dużo nieudanych prób! Spróbuj ponownie później.</TooManyFailedAttempts>
 	</ConnectionRejectedReason>
 
