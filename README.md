@@ -94,7 +94,8 @@ The server accepts several options that can be passed as flags. You can check wh
 ### Playing the Game as a Player
 
 To play the game as a player, select `JOIN` in the main menu and enter:
-- Your nickname.
+- Your team name.
+- Your tank type.
 - The join code (if set on the server).
 - The URL of the server. By default, if run locally, it should be `localhost:5000`.
 
