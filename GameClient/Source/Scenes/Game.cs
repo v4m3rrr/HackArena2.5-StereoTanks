@@ -200,7 +200,7 @@ internal class Game : Scene
 
         var payload = inputHandler.HandleInput();
 
-        if (ServerConnection.Data.IsSpectator && payload is ActionPayload)
+        if (ServerConnection.Data is { } serverData && serverData.IsSpectator && payload is ActionPayload)
         {
             return;
         }
@@ -439,6 +439,10 @@ internal class Game : Scene
         this.isReplayRunning = false;
         this.replayTime = TimeSpan.Zero;
         this.replayInputHandler.Reset();
+
+#if STEREO
+        this.updater.ResetTeamBarPanels();
+#endif
 
         if (Current is not GameEnd)
         {

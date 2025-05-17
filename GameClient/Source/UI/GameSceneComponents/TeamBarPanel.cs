@@ -98,16 +98,19 @@ internal class TeamBarPanel : AlignedListBox
         this.ForceUpdate();
     }
 
-    private void Reset()
+    /// <summary>
+    /// Resets the team bar panel.
+    /// </summary>
+    public void Reset()
     {
-        if (this.TeamBar is not null)
-        {
-            this.TeamBar.Parent = null;
-        }
-
         foreach (TeamPlayerBar playerBar in this.PlayerBars.ToList())
         {
             playerBar.Parent = null;
+        }
+
+        if (this.TeamBar is not null)
+        {
+            this.TeamBar.Parent = null;
         }
     }
 }

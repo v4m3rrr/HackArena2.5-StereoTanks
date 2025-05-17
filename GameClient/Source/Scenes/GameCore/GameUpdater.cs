@@ -183,6 +183,23 @@ internal class GameUpdater(GameComponents components, Dictionary<string, Player>
         });
     }
 
+    /// <summary>
+    /// Resets the team bar panels.
+    /// </summary>
+    public void ResetTeamBarPanels()
+    {
+        GameClientCore.InvokeOnMainThread(() =>
+        {
+            lock (components.Grid)
+            {
+                foreach (var teamBar in components.TeamBarPanels)
+                {
+                    teamBar.Reset();
+                }
+            }
+        });
+    }
+
 #else
 
     /// <summary>
