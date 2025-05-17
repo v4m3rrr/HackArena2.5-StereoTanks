@@ -76,6 +76,20 @@ internal class MatchResults : Scene
 
     private void UpdateScoreboard(ReplaySceneDisplayEventArgs args)
     {
+#if STEREO
+
+        List<MatchResultsTeam> teams = [];
+        foreach (var r in args.MatchResults!)
+        {
+            teams.Add(new MatchResultsTeam(
+                r["team_name"]!.ToString(),
+                (uint)r["color"]!,
+                (int)r["total_wins"]!));
+        }
+
+        this.components.Scoreboard.SetTeams(teams);
+#else
+
         List<MatchResultsPlayer> players = [];
         foreach (var r in args.MatchResults!)
         {
@@ -87,6 +101,8 @@ internal class MatchResults : Scene
         }
 
         this.components.Scoreboard.SetPlayers(players);
+
+#endif
     }
 
     private void UpdateMatchName(string? matchName)
@@ -102,7 +118,7 @@ internal class MatchResults : Scene
 
         foreach (var file in Directory.GetFiles(directory, "*.json"))
         {
-            if (file.EndsWith("_match_results.json"))
+            if (file.EndsWith("_match_results.json") || file.StartsWith('_'))
             {
                 continue;
             }

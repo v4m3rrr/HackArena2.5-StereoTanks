@@ -1,5 +1,7 @@
 ﻿namespace GameClient.Scenes.Replay.MatchResultsCore;
 
+#if !STEREO
+
 /// <summary>
 /// Represents the match results player.
 /// </summary>
@@ -8,3 +10,5 @@
 /// <param name="Points">The points of the player.</param>
 /// <param name="Kills">The kills of the player.</param>
 internal record class MatchResultsPlayer(string Nickname, uint Color, int Points, int Kills);
+
+#endif

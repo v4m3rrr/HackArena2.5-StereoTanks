@@ -161,7 +161,8 @@ internal class ChooseReplay : Scene
         foreach (var file in files)
         {
 #if HACKATHON
-            if (file!.EndsWith("_results.json"))
+            var filename = Path.GetFileName(file);
+            if (filename!.EndsWith("_results.json") || filename.StartsWith('_'))
             {
                 continue;
             }

@@ -116,9 +116,10 @@ internal class Lobby : Scene
 
     private async void Lobby_Showing(object? sender, SceneDisplayEventArgs? e)
     {
-        this.isReplay = e is ReplaySceneDisplayEventArgs;
+        var replayArgs = e as ReplaySceneDisplayEventArgs;
+        this.isReplay = replayArgs is not null;
 
-        this.components.ContinueButton.IsEnabled = this.isReplay;
+        this.components.ContinueButton.IsEnabled = replayArgs is not null && !replayArgs.ShowMode;
         this.components.LeaveButton.IsEnabled = !this.isReplay
 #if HACKATHON
             || (!(e as ReplaySceneDisplayEventArgs)?.ShowMode ?? true)

@@ -35,29 +35,41 @@ internal class Scoreboard : Component
         _ = new Text(font, Color.White * 0.8f)
         {
             Parent = this,
-            Value = "Points",
+            Value = "Wins",
             Case = TextCase.Upper,
             TextAlignment = Alignment.Center,
             Transform =
             {
                 RelativeSize = new Vector2(0.08f),
-                RelativeOffset = new Vector2(0.7f, -0.1f),
-            },
-        };
-
-        _ = new Text(font, Color.White * 0.8f)
-        {
-            Parent = this,
-            Value = "Kills",
-            Case = TextCase.Upper,
-            TextAlignment = Alignment.Center,
-            Transform =
-            {
-                RelativeSize = new Vector2(0.08f),
-                RelativeOffset = new Vector2(0.9f, -0.1f),
+                RelativeOffset = new Vector2(0.9f, 0.18f),
             },
         };
     }
+
+#if STEREO
+
+    /// <summary>
+    /// Sets the teams to display.
+    /// </summary>
+    /// <param name="teams">The teams to set.</param>
+    public void SetTeams(List<MatchResultsTeam> teams)
+    {
+        this.listBox.Clear();
+
+        for (int i = 0; i < teams.Count; i++)
+        {
+            _ = new TeamSlotPanel(teams[i])
+            {
+                Parent = this.listBox.ContentContainer,
+                Transform =
+                {
+                    RelativeSize = new Vector2(1.0f, 0.22f),
+                },
+            };
+        }
+    }
+
+#else
 
     /// <summary>
     /// Sets the players to display.
@@ -80,6 +92,8 @@ internal class Scoreboard : Component
             };
         }
     }
+
+#endif
 }
 
 #endif

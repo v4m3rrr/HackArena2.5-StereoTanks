@@ -51,7 +51,9 @@ internal class MatchResultsInitializer(MatchResults matchResults)
             {
                 Alignment = Alignment.Center,
                 RelativeSize = new Vector2(0.6f, 0.6f),
+#if !STEREO
                 RelativeOffset = new Vector2(0.0f, 0.1f),
+#endif
                 MinSize = new Point(620, 1),
             },
         };

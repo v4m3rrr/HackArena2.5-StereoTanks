@@ -1,4 +1,4 @@
-﻿#if HACKATHON && !STEREO
+﻿#if HACKATHON && STEREO
 
 using GameClient.Scenes.Replay.MatchResultsCore;
 using Microsoft.Xna.Framework;
@@ -7,33 +7,23 @@ using MonoRivUI;
 namespace GameClient.UI.MatchResultsSceneComponents;
 
 /// <summary>
-/// Represents a player slot panel.
+/// Represents a team slot panel.
 /// </summary>
 /// <remarks>
-/// The player slot panel displays the player's nickname,
+/// The team slot panel displays the team name,
 /// score on the match results screen.
 /// </remarks>
-internal class PlayerSlotPanel : Component
+internal class TeamSlotPanel : Component
 {
     private readonly RoundedSolidColor background;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PlayerSlotPanel"/> class.
+    /// Initializes a new instance of the <see cref="TeamSlotPanel"/> class.
     /// </summary>
-    /// <param name="player">The player to display.</param>
-    /// <param name="isQualified">A value indicating whether the player is qualified.</param>
-    public PlayerSlotPanel(MatchResultsPlayer player, bool isQualified)
-        : this(player)
+    /// <param name="team">The team to display.</param>
+    public TeamSlotPanel(MatchResultsTeam team)
     {
-        if (!isQualified)
-        {
-            this.background.Opacity = 0.15f;
-        }
-    }
-
-    private PlayerSlotPanel(MatchResultsPlayer player)
-    {
-        var color = new Color(player.Color);
+        var color = new Color(team.Color);
 
         this.background = new RoundedSolidColor(GameClientCore.ThemeColor, 20)
         {
@@ -48,7 +38,7 @@ internal class PlayerSlotPanel : Component
             Spacing = 8,
         };
 
-        var nickContainer = new Container()
+        var nameContainer = new Container()
         {
             Parent = this,
             Transform =
@@ -59,11 +49,11 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        // Nickname
+        // Team name
         _ = new Text(font, Color.White)
         {
-            Parent = nickContainer,
-            Value = player.Nickname,
+            Parent = nameContainer,
+            Value = team.TeamName,
             Case = TextCase.Upper,
             TextAlignment = Alignment.Left,
             TextShrink = TextShrinkMode.HeightAndWidth,
@@ -74,31 +64,17 @@ internal class PlayerSlotPanel : Component
             },
         };
 
-        // Points
+        // Rounds won
         _ = new Text(font, color)
         {
             Parent = this.background,
-            Value = player.Points.ToString(),
+            Value = team.RoundsWon.ToString(),
             TextAlignment = Alignment.Right,
             Transform =
             {
                 RelativeSize = new Vector2(0.9f, 0.6f),
                 Alignment = Alignment.Right,
-                RelativeOffset = new Vector2(-0.25f, 0.0f),
-            },
-        };
-
-        // Kills
-        _ = new Text(font, color)
-        {
-            Parent = this.background,
-            Value = player.Kills.ToString(),
-            TextAlignment = Alignment.Right,
-            Transform =
-            {
-                RelativeSize = new Vector2(0.9f, 0.6f),
-                Alignment = Alignment.Right,
-                RelativeOffset = new Vector2(-0.05f, 0.0f),
+                RelativeOffset = new Vector2(-0.06f, 0.0f),
             },
         };
     }

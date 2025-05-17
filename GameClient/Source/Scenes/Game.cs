@@ -355,6 +355,7 @@ internal class Game : Scene
                     this.replayGameStates = replay.GameStates;
                     this.updater.EnableGridComponent();
                     this.UpdateReplayTick(0);
+                    this.updater.UpdateMatchName(replay.LobbyData.ServerSettings.MatchName);
                     this.isReplayLoaded = true;
                 });
             }

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using GameLogic.Networking;
@@ -128,11 +128,26 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
                 var replayFilenameWithoutExtension = Path.GetFileNameWithoutExtension(replayFilename);
                 var replayFilenameExtension = Path.GetExtension(replayFilename);
 
+#if STEREO
+                var matchResultsFilename = "_output.json";
+#else
                 var matchResultsFilename = $"{replayFilenameWithoutExtension}_match_results.json";
+#endif
                 var matchResultsPath = PathUtils.GetAbsolutePath($"{replaysDirectory}/{matchResultsFilename}");
 
                 var matchResults = JObject.Parse(await File.ReadAllTextAsync(matchResultsPath));
+#if STEREO
+                foreach (var result in JObject.FromObject(matchResults["match_results"]!))
+                {
+                    if (replayFilename.StartsWith(result.Key))
+                    {
+                        this.MatchResults = (JArray)result.Value!;
+                        break;
+                    }
+                }
+#else
                 this.MatchResults = JArray.Parse(matchResults["match_results"]!.ToString())!;
+#endif
             }
             catch (Exception ex) when (ex is IOException or NullReferenceException)
             {
