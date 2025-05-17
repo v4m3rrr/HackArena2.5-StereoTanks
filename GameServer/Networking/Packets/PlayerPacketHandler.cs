@@ -71,7 +71,10 @@ internal sealed class PlayerPacketHandler(
         {
             if (player.IsHackathonBot)
             {
-                this.HackathonBotActions.AddOrUpdate(player, action, (_, _) => action);
+                lock (game)
+                {
+                    this.HackathonBotActions.AddOrUpdate(player, action, (_, _) => action);
+                }
             }
 
             lock (game)
@@ -145,9 +148,12 @@ internal sealed class PlayerPacketHandler(
                 break;
 
             case PacketType.GoTo:
-                if (this.goToService.TryResolve(player, packet, out var ctx, out responsePayload))
+                lock (game)
                 {
-                    action = () => this.goToService.Execute(ctx!);
+                    if (this.goToService.TryResolve(player, packet, out var ctx, out responsePayload))
+                    {
+                        action = () => this.goToService.Execute(ctx!);
+                    }
                 }
 
                 break;
