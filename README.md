@@ -1,15 +1,15 @@
-# MonoTanks
+# StereoTanks
 
-![Monotanks - MainMenu](.github/images/monotanks-mainmenu.png)
+![StereoTanks - MainMenu](.github/images/stereotanks-mainmenu.png)
 
-##  Game for HackArena 2.0
+##  Game for HackArena 2.5
 
-MonoTanks is a game developed for [HackArena 2.0](https://hackarena.pl/wydarzenia/hackarena2_0), organized by KN init. This repository contains the game server and the GUI client, written in C# using the [MonoGame](https://monogame.net/) framework. The game can be played by both humans and bots, for which API wrappers are provided in other repositories.
+StereoTanks is a game developed for [HackArena 2.5](https://hackarena.pl/wydarzenia/hackarena_2_5), organized by KN init. This repository contains the game server and the GUI client, written in C# using the [MonoGame](https://monogame.net/) framework. The game can be played by both humans and bots, for which API wrappers are provided in other repositories.
 
 The game is a simple tank battle where players control tanks and fight against each other on a 2D map. The goal is to get the highest score by collecting points, which are awarded for various actions,
 such as taking damage or having a captured zone. Players can move, rotate, shoot bullets, and use various secondary items like lasers, double bullets, radars, and mines.
 
-For a comprehensive guide to game mechanics, please refer to the [instruction manual](https://hackarena.pl/Assets/Game/HackArena%202.0%20-%20instrukcja.pdf).
+For a comprehensive guide to game mechanics, please refer to the [instruction manual](https://hackarena.pl/assets/instrukcja.pdf).
 
 
 ## Server
@@ -18,7 +18,7 @@ For a comprehensive guide to game mechanics, please refer to the [instruction ma
 
 #### Windows
 
-1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.5-StereoTanks/releases) page.
 2. Unzip the downloaded file.
 3. Run the server by double-clicking on the `GameServer.exe` file.
 4. It will start the server with default settings. To check the available settings, type in the terminal:
@@ -28,7 +28,7 @@ For a comprehensive guide to game mechanics, please refer to the [instruction ma
 
 #### Linux / macOS
 
-1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.5-StereoTanks/releases) page.
 2. Unzip the downloaded file.
 3. Add execute permissions to the server executable by running:
     ```bash
@@ -45,7 +45,7 @@ For a comprehensive guide to game mechanics, please refer to the [instruction ma
 
 #### Docker Container
 
-1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.5-StereoTanks/releases) page.
 2. Unzip the downloaded file.
 3. Run the Docker container with the following command:
     ```bash
@@ -74,13 +74,13 @@ The server accepts several options that can be passed as flags. You can check wh
 
 #### Windows
 
-1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.5-StereoTanks/releases) page.
 2. Unzip the downloaded file.
 3. Run the client by double-clicking on the `GameClient.exe` file.
 
 #### Linux / macOS
 
-1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.0-MonoTanks/releases) page.
+1. Download the appropriate zip file for your platform from the [releases](https://github.com/INIT-SGGW/HackArena2.5-StereoTanks/releases) page.
 2. Unzip the downloaded file.
 3. Add execute permissions to the client executable by running:
     ```bash
