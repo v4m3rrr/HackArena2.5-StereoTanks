@@ -85,15 +85,9 @@ internal class ReplayManager
 
         this.logger.Verbose("Replay - adding game state ({tick})...", tick);
 
-        GameStatePayload payload;
-        List<JsonConverter> converters;
-        lock (game)
-        {
-            payload = this.game.PayloadHelper.GetGameStatePayload(null, tick, gameStateId, out converters);
-        }
-
+        var payload = this.game.PayloadHelper.GetGameStatePayload(null, tick, gameStateId, out var converters);
         var serializer = PacketSerializer.GetSerializer(converters);
-        var gameState = JObject.FromObject(payload, serializer).ToString(Newtonsoft.Json.Formatting.None);
+        var gameState = JObject.FromObject(payload, serializer).ToString(Formatting.None);
 
         if (!this.isFirstState)
         {
