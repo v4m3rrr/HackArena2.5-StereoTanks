@@ -18,6 +18,8 @@ internal static class Program
     {
         var logger = ConfigureLogger();
 
+        RegisterGlobalExceptionHandlers(logger);
+
 #if STEREO
         logger.Information("Starting StereoTanks server...");
 #else
@@ -85,6 +87,22 @@ internal static class Program
             .WriteTo.File($"logs/{timestamp}.log")
             .CreateLogger();
     }
+
+    private static void RegisterGlobalExceptionHandlers(Serilog.Core.Logger logger)
+    {
+        AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+        {
+            var ex = e.ExceptionObject as Exception ?? new Exception("Unknown AppDomain exception");
+            logger.Fatal(ex, "Unhandled exception in AppDomain");
+        };
+
+        TaskScheduler.UnobservedTaskException += (sender, e) =>
+        {
+            logger.Fatal(e.Exception, "Unobserved task exception");
+            e.SetObserved();
+        };
+    }
+
 
     private static string GetVersion()
     {

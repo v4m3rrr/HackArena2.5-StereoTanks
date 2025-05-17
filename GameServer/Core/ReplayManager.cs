@@ -1,5 +1,7 @@
-﻿using System.IO.Compression;
+﻿using System.Collections.Generic;
+using System.IO.Compression;
 using GameLogic.Networking;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
 
@@ -83,7 +85,13 @@ internal class ReplayManager
 
         this.logger.Verbose("Replay - adding game state ({tick})...", tick);
 
-        var payload = this.game.PayloadHelper.GetGameStatePayload(null, tick, gameStateId, out var converters);
+        GameStatePayload payload;
+        List<JsonConverter> converters;
+        lock (game)
+        {
+            payload = this.game.PayloadHelper.GetGameStatePayload(null, tick, gameStateId, out converters);
+        }
+
         var serializer = PacketSerializer.GetSerializer(converters);
         var gameState = JObject.FromObject(payload, serializer).ToString(Newtonsoft.Json.Formatting.None);
 

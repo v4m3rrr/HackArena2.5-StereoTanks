@@ -47,7 +47,7 @@ internal sealed class GameTickLoop(GameInstance game, ILogger logger)
             lock (game)
             {
 #if HACKATHON
-                var actionList = game.PacketHandler.HackathonBotActions.ToList();
+                var actionList = game.PacketHandler.HackathonBotActions.Select(kvp => kvp).ToList();
                 actionList.Sort((x, y) => x.Key.Instance.Id.CompareTo(y.Key.Instance.Id));
                 var actions = actionList.Select(x => x.Value).ToArray();
                 this.random.Shuffle(actions);
