@@ -29,7 +29,10 @@ internal class RadarEffect : ISprite
     /// <param name="sprites">The sprites on the grid.</param>
     public RadarEffect(GameLogic.Tank tank, GridComponent grid, IEnumerable<ISprite> sprites)
     {
-        this.detectedSprites = GetDetectedSprites(tank, sprites);
+        this.detectedSprites = Scenes.Game.PlayerId is not null
+            ? []
+            : GetDetectedSprites(tank, sprites);
+
         this.grid = grid;
         this.Tank = tank;
 
