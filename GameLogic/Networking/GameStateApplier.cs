@@ -205,9 +205,20 @@ internal static class GameStateApplier
             if (existing is null)
             {
 #if STEREO && CLIENT
-                zoneSnapshot.Shares.NormalizedByTeam = zoneSnapshot.Shares.NormalizedByTeamName.ToDictionary(
-                    kvp => payload.Teams.First(t => t.Name == kvp.Key),
-                    kvp => kvp.Value);
+                var normalizedByTeam = new Dictionary<Team, float>();
+                foreach (var kvp in zoneSnapshot.Shares.NormalizedByTeamName)
+                {
+                    if (payload.Teams.FirstOrDefault(t => t.Name == kvp.Key) is Team team)
+                    {
+                        normalizedByTeam[team] = kvp.Value;
+                    }
+                    else
+                    {
+                        zoneSnapshot.Shares.NormalizedByTeamName.Remove(kvp.Key);
+                    }
+                }
+
+                zoneSnapshot.Shares.NormalizedByTeam = normalizedByTeam;
 #elif !STEREO
                 AttachZonePlayers(zoneSnapshot, payload.Players);
 #endif
