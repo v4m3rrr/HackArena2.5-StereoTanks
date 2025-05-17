@@ -156,7 +156,12 @@ internal class ChooseReplay : Scene
             .Concat(Directory.GetFiles(directory, "*.json"))
             .Concat(Directory.GetFiles(directory, "*.txt"))
             .Concat(Directory.GetFiles(directory, "*.zip"))
-            .Concat(Directory.GetFiles(directory, "*.tar.gz"));
+            .Concat(Directory.GetFiles(directory, "*.tar.gz")).ToList();
+
+#if STEREO
+        files.Sort();
+        files.Reverse();
+#endif
 
         foreach (var file in files)
         {

@@ -110,7 +110,8 @@ internal class ReplaySceneDisplayEventArgs(string absPath)
         var context = new GameSerializationContext.Spectator();
         converters = GameStatePayload.GetConverters(context);
         serializer = PacketSerializer.GetSerializer(converters);
-        this.GameStates = this.Data["gameStates"]!.ToObject<GameStatePayload[]>(serializer)!;
+        var task = Task.Run(() => this.GameStates = this.Data["gameStates"]!.ToObject<GameStatePayload[]>(serializer)!);
+        await task;
 
         converters = GameEndPayload.GetConverters();
         serializer = PacketSerializer.GetSerializer(converters);

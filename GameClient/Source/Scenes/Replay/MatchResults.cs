@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using GameClient.Scenes.GameCore;
@@ -116,9 +117,16 @@ internal class MatchResults : Scene
         var directory = PathUtils.GetAbsolutePath(ChooseReplay.ReplayDirectory);
         bool currentFound = false;
 
-        foreach (var file in Directory.GetFiles(directory, "*.json"))
+        var files = Directory.GetFiles(directory, "*.json").ToList();
+#if STEREO
+        files.Sort();
+        files.Reverse();
+#endif
+
+        foreach (var file in files)
         {
-            if (file.EndsWith("_match_results.json") || file.StartsWith('_'))
+            var filename = Path.GetFileName(file);
+            if (file.EndsWith("_match_results.json") || filename.StartsWith('_'))
             {
                 continue;
             }
