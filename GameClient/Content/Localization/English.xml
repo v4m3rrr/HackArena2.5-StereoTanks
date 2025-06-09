@@ -6,6 +6,7 @@
 	<Buttons>
 		<Ok>Ok</Ok>
 		<JoinGame>Join</JoinGame>
+		<SinglePlayer>Singleplayer</SinglePlayer>
 		<Settings>Settings</Settings>
 		<WatchReplay>Watch replay</WatchReplay>
 		<Exit>Exit</Exit>
@@ -29,6 +30,7 @@
 		<Nickname>Nickname</Nickname>
 		<TeamName>Team name</TeamName>
 		<TankType>Tank type</TankType>
+		<Difficulty>Difficulty</Difficulty>
 		<RoomCode>Room code</RoomCode>
 		<ServerAddress>Server address</ServerAddress>
 	</Labels>
@@ -60,6 +62,9 @@
 	<Other>
 		<Light>Light</Light>
 		<Heavy>Heavy</Heavy>
+		<Easy>Easy</Easy>
+		<Medium>Medium</Medium>
+		<Hard>Hard</Hard>
 		<Loading>Loading</Loading>
 		<Waiting>Waiting</Waiting>
 		<Connecting>Connecting</Connecting>

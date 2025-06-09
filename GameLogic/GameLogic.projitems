@@ -14,6 +14,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\StunBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\HealingBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)collisions\WallCollision.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)enums\Difficulty.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\WallType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)models\ZoneShares.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\ZoneSharesJsonConverter.cs" />

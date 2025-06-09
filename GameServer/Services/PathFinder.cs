@@ -36,19 +36,20 @@ internal class PathFinder
 
         // We have to clone bullets to simulate them
         // and avoid modifying the original game state.
-        for (int i = 0; i < gameState.Map.Tiles.Bullets.Count; i++)
-        {
-            var bullet = gameState.Map.Tiles.Bullets[i];
-            gameState.Map.Tiles.Bullets[i] = new Bullet(
-                bullet.Id,
-                bullet.X,
-                bullet.Y,
-                bullet.Direction,
-                bullet.Type,
-                bullet.Speed,
-                bullet.Damage,
-                bullet.ShooterId);
-        }
+        // Bylo ale sie zmylo
+        //for (int i = 0; i < gameState.Map.Tiles.Bullets.Count; i++)
+        //{
+        //    var bullet = gameState.Map.Tiles.Bullets[i];
+        //    gameState.Map.Tiles.Bullets[i] = new Bullet(
+        //        bullet.Id,
+        //        bullet.X,
+        //        bullet.Y,
+        //        bullet.Direction,
+        //        bullet.Type,
+        //        bullet.Speed,
+        //        bullet.Damage,
+        //        bullet.ShooterId);
+        //}
 
         GameStateApplier.ApplyToGrid(this.grid, gameState);
 
@@ -102,8 +103,8 @@ internal class PathFinder
             {
                 continue;
             }
-
-            this.SimulateBullets();
+            // było ale sie zmylo
+            //this.SimulateBullets();
 
             float currentPenalty = this.GetDangerPenalty(current.X, current.Y, penalties, current.Tick);
             var nextTick = current.Tick + 1;
@@ -213,10 +214,11 @@ internal class PathFinder
             penalty += tankPenalty * this.grid.Tanks.Count(t => t.X == x && t.Y == y && !t.Equals(this.tank));
         }
 
-        if (penalties.Bullet is float bulletPenalty)
-        {
-            penalty += bulletPenalty * this.grid.Bullets.Count(b => b.X == x && b.Y == y);
-        }
+        // Bylo ale sie zmylo
+        //if (penalties.Bullet is float bulletPenalty)
+        //{
+        //    penalty += bulletPenalty * this.grid.Bullets.Count(b => b.X == x && b.Y == y);
+        //}
 
         if (penalties.Mine is float minePenalty)
         {

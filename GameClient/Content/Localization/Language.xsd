@@ -10,6 +10,7 @@
 		<xs:sequence>
 			<xs:element name="Ok" type="xs:string"/>
 			<xs:element name="JoinGame" type="xs:string"/>
+			<xs:element name="SinglePlayer" type="xs:string"/>
 			<xs:element name="Settings" type="xs:string"/>
 			<xs:element name="WatchReplay" type="xs:string"/>
 			<xs:element name="Exit" type="xs:string"/>
@@ -35,6 +36,7 @@
 			<xs:element name="Nickname" type="xs:string"/>
 			<xs:element name="TeamName" type="xs:string"/>
 			<xs:element name="TankType" type="xs:string"/>
+			<xs:element name="Difficulty" type="xs:string"/>
 			<xs:element name="RoomCode" type="xs:string"/>
 			<xs:element name="ServerAddress" type="xs:string"/>
 		</xs:sequence>
@@ -74,6 +76,9 @@
 		<xs:sequence>
 			<xs:element name="Light" type="xs:string"/>
 			<xs:element name="Heavy" type="xs:string"/>
+			<xs:element name="Easy" type="xs:string"/>
+			<xs:element name="Medium" type="xs:string"/>
+			<xs:element name="Hard" type="xs:string"/>
 			<xs:element name="Loading" type="xs:string"/>
 			<xs:element name="Waiting" type="xs:string"/>
 			<xs:element name="Connecting" type="xs:string"/>

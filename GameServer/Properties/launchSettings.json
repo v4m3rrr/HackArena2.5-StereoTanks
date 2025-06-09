@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GameServer_Windows": {
+      "commandName": "Project",
+      "commandLineArgs": "--host *"
+    }
+  }
+}

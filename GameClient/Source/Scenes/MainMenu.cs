@@ -134,6 +134,9 @@ internal class MainMenu : Scene
             },
         };
 
+        var singlePlayerBtn = CreateButton(new LocalizedString("Buttons.SinglePlayer"), listBox, "single");
+        singlePlayerBtn.Clicked += (s, e) => Change<SinglePlayer>();
+
         var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join");
         joinRoomBtn.Clicked += (s, e) => Change<JoinRoom>();
 
