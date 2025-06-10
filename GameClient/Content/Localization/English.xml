@@ -7,6 +7,7 @@
 		<Ok>Ok</Ok>
 		<JoinGame>Join</JoinGame>
 		<SinglePlayer>Singleplayer</SinglePlayer>
+    <Play>Play</Play>
 		<Settings>Settings</Settings>
 		<WatchReplay>Watch replay</WatchReplay>
 		<Exit>Exit</Exit>

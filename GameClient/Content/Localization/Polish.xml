@@ -7,6 +7,7 @@
 		<Ok>Ok</Ok>
 		<JoinGame>Dołącz</JoinGame>
 		<SinglePlayer>Gra dla jednego gracza</SinglePlayer>
+    <Play>Graj</Play>
 		<Settings>Ustawienia</Settings>
 		<WatchReplay>Powtórki</WatchReplay>
 		<Exit>Wyjście</Exit>
@@ -30,6 +31,7 @@
 		<Nickname>Nazwa gracza</Nickname>
 		<TeamName>Nazwa drużyny</TeamName>
 		<TankType>Typ czołgu</TankType>
+    <Difficulty>Poziom trudności</Difficulty>
 		<RoomCode>Kod pokoju</RoomCode>
 		<ServerAddress>Adres serwera</ServerAddress>
 	</Labels>
@@ -61,6 +63,9 @@
 	<Other>
 		<Light>Lekki</Light>
 		<Heavy>Ciężki</Heavy>
+    <Easy>Łatwy</Easy>
+    <Medium>Średni</Medium>
+    <Hard>Trudny</Hard>
 		<Loading>Wczytywanie</Loading>
 		<Waiting>Oczekiwanie</Waiting>
 		<Connecting>Łączenie</Connecting>

@@ -7,6 +7,7 @@
 		<Ok>Ok</Ok>
 		<JoinGame>Rejoindre</JoinGame>
 		<SinglePlayer>Solo</SinglePlayer>
+    <Play>Jouer</Play>
 		<Settings>Paramètres</Settings>
 		<WatchReplay>Rediffusions</WatchReplay>
 		<Exit>Quitter</Exit>
@@ -30,6 +31,7 @@
 		<Nickname>Surnom</Nickname>
 		<TeamName>Nom de l'équipe</TeamName>
 		<TankType>Type de char</TankType>
+    <Difficulty>Niveau de difficulté</Difficulty>
 		<RoomCode>Code de la salle</RoomCode>
 		<ServerAddress>Adresse du serveur</ServerAddress>
 	</Labels>
@@ -61,6 +63,9 @@
 	<Other>
 		<Light>Léger</Light>
 		<Heavy>Lourd</Heavy>
+    <Easy>Facile</Easy>
+    <Medium>Moyen</Medium>
+    <Hard>Difficile</Hard>
 		<Loading>Chargement</Loading>
 		<Waiting>En attente</Waiting>
 		<Connecting>Connexion en cours</Connecting>

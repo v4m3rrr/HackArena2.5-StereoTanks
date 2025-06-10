@@ -7,6 +7,7 @@
 		<Ok>ОК</Ok>
 		<JoinGame>Присоединиться</JoinGame>
 		<SinglePlayer>Oдиночная игра</SinglePlayer>
+    <Play>Играть</Play>
 		<Settings>Настройки</Settings>
 		<WatchReplay>Смотреть повторы</WatchReplay>
 		<Exit>Выход</Exit>
@@ -30,6 +31,7 @@
 		<Nickname>Имя игрока</Nickname>
 		<TeamName>Имя команды</TeamName>
 		<TankType>Тип танка</TankType>
+    <Difficulty>Уровень сложности</Difficulty>
 		<RoomCode>Код комнаты</RoomCode>
 		<ServerAddress>Адрес сервера</ServerAddress>
 	</Labels>
@@ -61,6 +63,9 @@
 	<Other>
 		<Light>Легкий</Light>
 		<Heavy>Тяжёлый</Heavy>
+    <Easy>легкий</Easy>
+    <Medium>средний</Medium>
+    <Hard>сложный</Hard>
 		<Loading>Загрузка</Loading>
 		<Waiting>Ожидание</Waiting>
 		<Connecting>Подключение</Connecting>
