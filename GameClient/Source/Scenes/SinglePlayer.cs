@@ -151,6 +151,8 @@ internal class SinglePlayer : Scene
     private void JoinRoom_Showing(object? sender, SceneDisplayEventArgs? e)
     {
 #if STEREO
+        this.components.TankTypeSelector.SelectItem((item) => item.TValue == SinglePlayerData.TankType);
+        this.components.DifficultySelector.SelectItem((item) => item.TValue == SinglePlayerData.Difficulty);
 #else
         this.components.NicknameInput.SetText(JoinData.Nickname ?? string.Empty);
 #endif
@@ -159,11 +161,11 @@ internal class SinglePlayer : Scene
     private void JoinRoom_Hiding(object? sender, EventArgs? e)
     {
 #if STEREO
-        var teamName = this.components.TeamName;
-        SinglePlayerData.TeamName = string.IsNullOrWhiteSpace(teamName) ? null : teamName;
-
         var tankType = this.components.TankTypeSelector.SelectedItem?.TValue;
         SinglePlayerData.TankType = tankType ?? TankType.Light;
+
+        var difficulty = this.components.DifficultySelector.SelectedItem?.TValue;
+        SinglePlayerData.Difficulty = difficulty ?? Difficulty.Easy;
 #else
         var nickname = this.components.NicknameInput.Value;
         SinglePlayerData.Nickname = string.IsNullOrWhiteSpace(nickname) ? null : nickname;

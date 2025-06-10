@@ -58,6 +58,16 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
         return SinglePlayerData.TeamName ?? SinglePlayerData.DefaultTeamName;
     }
 
+    public TankType GetTankType()
+    {
+        return SinglePlayerData.DefaultTankType;
+    }
+
+    public Difficulty GetDifficulty()
+    {
+        return SinglePlayerData.DefaultDifficulty;
+    }
+
     /// <summary>
     /// Creates the base list box component.
     /// </summary>

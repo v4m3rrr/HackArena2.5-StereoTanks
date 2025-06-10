@@ -25,9 +25,11 @@ internal class SinglePlayerComponents
 #if STEREO
         this.TankTypeSection = initializer.CreateTankTypeSection(this.BaseListBox, new LocalizedString("Labels.TankType"));
         this.TankTypeSelector = this.TankTypeSection.GetDescendant<Selector<TankType>>()!;
+        this.TankTypeSelector.SelectItem((item) => item.TValue == initializer.GetTankType());
 
         this.DifficultySection = initializer.CreateDiffcultySection(this.BaseListBox, new LocalizedString("Labels.Difficulty"));
         this.DifficultySelector = this.DifficultySection.GetDescendant<Selector<Difficulty>>()!;
+        this.DifficultySelector.SelectItem((item) => item.TValue == initializer.GetDifficulty());
 #endif
 
         this.JoinButton = initializer.CreateJoinButton();

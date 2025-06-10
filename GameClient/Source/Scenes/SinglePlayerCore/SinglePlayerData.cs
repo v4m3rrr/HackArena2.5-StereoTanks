@@ -17,7 +17,9 @@ internal static class SinglePlayerData
 
     private const string FilePath = "connection.json";
 
-    public const string DefaultTeamName = "player";
+    public const string DefaultTeamName = "Player";
+    public const TankType DefaultTankType = TankType.Light;
+    public const Difficulty DefaultDifficulty = Difficulty.Easy;
 
 #if STEREO
 
@@ -67,6 +69,7 @@ internal static class SinglePlayerData
 #if STEREO
         TeamName = data.TeamName;
         TankType = data.TankType;
+        Difficulty = data.Difficulty;
 #else
         Nickname = data.Nickname;
 #endif
@@ -81,7 +84,7 @@ internal static class SinglePlayerData
     public static async Task Save()
     {
 #if STEREO
-        var data = new Data(TeamName, TankType, Address);
+        var data = new Data(TeamName, TankType, Difficulty, Address);
 #else
         var data = new Data(Nickname, Address);
 #endif
@@ -92,7 +95,7 @@ internal static class SinglePlayerData
     }
 
 #if STEREO
-    private record struct Data(string? TeamName, TankType TankType, string? Address);
+    private record struct Data(string? TeamName, TankType TankType, Difficulty Difficulty, string? Address);
 #else
     private record struct Data(string? Nickname, string? Address);
 #endif
