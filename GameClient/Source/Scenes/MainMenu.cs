@@ -136,7 +136,7 @@ internal class MainMenu : Scene
         var singlePlayerBtn = CreateButton(new LocalizedString("Buttons.SinglePlayer"), listBox, "single");
         singlePlayerBtn.Clicked += (s, e) => Change<SinglePlayer>();
 #endif
-        var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join");
+        var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "multi");
         joinRoomBtn.Clicked += (s, e) => Change<JoinRoom>();
 
         var watchReplayBtn = CreateButton(new LocalizedString("Buttons.WatchReplay"), listBox, "watch_replay");

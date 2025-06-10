@@ -281,7 +281,7 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
         };
 
         var text = new LocalizedString("Buttons.Play");
-        var iconPath = "Images/Icons/single.svg";
+        var iconPath = "Images/Icons/join.svg";
         var style = Styles.UI.GetButtonStyleWithIcon(text, iconPath, Alignment.Right);
         button.ApplyStyle(style);
 
