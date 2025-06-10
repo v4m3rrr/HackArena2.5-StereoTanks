@@ -20,14 +20,7 @@ internal class SinglePlayerComponents
         this.RoomText = initializer.CreateRoomText();
         this.BaseListBox = initializer.CreateBaseListBox();
         this.Address = initializer.GetAddress();
-
-#if STEREO
-        this.TeamNameSection = initializer.CreateSectionWithTextInput(this.BaseListBox, new LocalizedString("Labels.TeamName"), 24);
-        this.TeamNameInput = this.TeamNameSection.GetDescendant<TextInput>()!;
-#else
-        this.NicknameSection = initializer.CreateSectionWithTextInput(this.BaseListBox, new LocalizedString("Labels.Nickname"), 24);
-        this.NicknameInput = this.NicknameSection.GetDescendant<TextInput>()!;
-#endif
+        this.TeamName = initializer.GetTeamName();
 
 #if STEREO
         this.TankTypeSection = initializer.CreateTankTypeSection(this.BaseListBox, new LocalizedString("Labels.TankType"));
@@ -50,6 +43,11 @@ internal class SinglePlayerComponents
     /// Gets the address of local server.
     /// </summary>
     public string Address { get; }
+
+    /// <summary>
+    /// Gets the team name.
+    /// </summary>
+    public string TeamName { get; }
 
     /// <summary>
     /// Gets the base list box component.
@@ -105,21 +103,5 @@ internal class SinglePlayerComponents
     /// Gets the back button component.
     /// </summary>
     public Button<Container> BackButton { get; }
-
-#if STEREO
-
-    /// <summary>
-    /// Gets the team name text input component.
-    /// </summary>
-    public TextInput TeamNameInput { get; }
-
-#else
-
-    /// <summary>
-    /// Gets the nickname text input component.
-    /// </summary>
-    public TextInput NicknameInput { get; }
-
-#endif
 
 }

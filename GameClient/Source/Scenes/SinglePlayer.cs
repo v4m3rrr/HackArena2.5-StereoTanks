@@ -62,26 +62,20 @@ internal class SinglePlayer : Scene
 #endif
         };
 
+        var difficulty = this.components.DifficultySelector.SelectedItem?.TValue ?? Difficulty.Medium;
         // Create server local
-        string exePath = @"C:\Users\igoru\source\repos\v4m3rrr\HackArena2.5-StereoTanks\GameServer\bin\StereoDebug\Windows\x64\net8.0\GameServer.exe";
+        string serverExePath = @"C:\Users\igoru\source\repos\v4m3rrr\HackArena2.5-StereoTanks\HackArena2.5-StereoTanks\GameServer\bin\StereoDebug\Windows\x64\net8.0\GameServer.exe";
         string args = "--host *";
 
-        ProcessStartInfo startInfo = new ProcessStartInfo
+        RunProcess(serverExePath, args);
+        if (data.TankType == TankType.Light)
         {
-            FileName = exePath,
-            Arguments = args,
-            UseShellExecute = true, // Set to true if you need to open e.g. .bat or .txt with default app
-            CreateNoWindow = false,
-            Verb = "runas",
-        };
-
-        Process process = new Process
+            RunBots(difficulty, TankType.Heavy);
+        }
+        else
         {
-            StartInfo = startInfo,
-        };
-
-        process.Start();
-        process.WaitForExit();
+            RunBots(difficulty, TankType.Light);
+        }
 
         await Join(data);
     }
@@ -109,6 +103,43 @@ internal class SinglePlayer : Scene
     {
         var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
         textures.ToList().ForEach(x => x.Load());
+    }
+
+    // The process should be stored in so array to later manage them
+    private static void RunProcess(string exePath, string args)
+    {
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = exePath,
+            Arguments = args,
+            UseShellExecute = true, // Set to true if you need to open e.g. .bat or .txt with default app
+            CreateNoWindow = false,
+            Verb = "runas",
+        };
+        Process process = new Process
+        {
+            StartInfo = startInfo,
+        };
+        process.Start();
+    }
+
+    // The process should be stored in so array to later manage them
+    private static void RunBots(Difficulty difficulty, TankType typeOfTeammate)
+    {
+        string exeBotPath = "docker";
+        switch (difficulty)
+        {
+            case Difficulty.Easy:
+                break;
+            case Difficulty.Medium:
+                break;
+            case Difficulty.Hard:
+                break;
+        }
+
+        RunProcess(exeBotPath, "run --rm wrapper --host host.docker.internal --team-name Bots --tank-type heavy");
+        RunProcess(exeBotPath, "run --rm wrapper --host host.docker.internal --team-name Bots --tank-type light");
+        RunProcess(exeBotPath, $"run --rm wrapper --host host.docker.internal --team-name Player --tank-type {typeOfTeammate.ToString().ToLower()}");
     }
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)
@@ -155,8 +186,6 @@ internal class SinglePlayer : Scene
     private void JoinRoom_Showing(object? sender, SceneDisplayEventArgs? e)
     {
 #if STEREO
-        this.components.TeamNameInput.SetText(SinglePlayerData.TeamName ?? string.Empty);
-        this.components.TankTypeSelector.SelectItem((item) => item.TValue == SinglePlayerData.TankType);
 #else
         this.components.NicknameInput.SetText(JoinData.Nickname ?? string.Empty);
 #endif
@@ -165,7 +194,7 @@ internal class SinglePlayer : Scene
     private void JoinRoom_Hiding(object? sender, EventArgs? e)
     {
 #if STEREO
-        var teamName = this.components.TeamNameInput.Value;
+        var teamName = this.components.TeamName;
         SinglePlayerData.TeamName = string.IsNullOrWhiteSpace(teamName) ? null : teamName;
 
         var tankType = this.components.TankTypeSelector.SelectedItem?.TValue;
@@ -182,19 +211,12 @@ internal class SinglePlayer : Scene
 
     private string GetTeamName()
     {
-        return this.components.TeamNameSection.GetDescendant<TextInput>()!.Value;
+        return this.components.TeamName;
     }
 
     private TankType GetTankType()
     {
         return this.components.TankTypeSelector.SelectedItem!.TValue;
-    }
-
-#else
-
-    private string GetNickname()
-    {
-        return this.components.NicknameSection.GetDescendant<TextInput>()!.Value;
     }
 
 #endif

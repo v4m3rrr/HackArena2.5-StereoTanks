@@ -53,6 +53,11 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
         return SinglePlayerData.Address ?? SinglePlayerData.DefaultAddress;
     }
 
+    public string GetTeamName()
+    {
+        return SinglePlayerData.TeamName ?? SinglePlayerData.DefaultTeamName;
+    }
+
     /// <summary>
     /// Creates the base list box component.
     /// </summary>

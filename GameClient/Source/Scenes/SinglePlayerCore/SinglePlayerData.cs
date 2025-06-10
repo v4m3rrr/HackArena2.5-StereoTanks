@@ -17,6 +17,8 @@ internal static class SinglePlayerData
 
     private const string FilePath = "connection.json";
 
+    public const string DefaultTeamName = "player";
+
 #if STEREO
 
     /// <summary>
