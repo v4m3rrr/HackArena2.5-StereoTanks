@@ -13,9 +13,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\DoubleBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\StunBulletAbility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Abilities\HealingBulletAbility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\Bot.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)collisions\WallCollision.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)enums\Difficulty.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enums\WallType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)managers\Server.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)models\ZoneShares.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Networking\JsonConverters\GameState\ZoneSharesJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)networking\payloads\action\CaptureZonePayload.cs" />
@@ -166,6 +168,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)Models\Turrets\" />
     <Folder Include="$(MSBuildThisFileDirectory)Core\" />
     <Folder Include="$(MSBuildThisFileDirectory)Networking\Payloads\Action\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Managers\" />
     <Folder Include="$(MSBuildThisFileDirectory)Systems\Effects\" />
     <Folder Include="$(MSBuildThisFileDirectory)Systems\Scoring\" />
     <Folder Include="$(MSBuildThisFileDirectory)Zones\StateSystems\" />

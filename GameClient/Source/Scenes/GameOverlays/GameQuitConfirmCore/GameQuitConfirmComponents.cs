@@ -24,6 +24,10 @@ internal class GameQuitConfirmComponents
             async () =>
             {
                 await ServerConnection.CloseAsync("Leave match");
+#if STEREO
+                GameClient.GameClientCore.Bots.ForEach(x => x.Stop());
+                GameClient.GameClientCore.Server?.Stop();
+#endif
                 Scene.HideOverlay<GameQuitConfirm>();
                 Scene.Change<MainMenu>();
             });

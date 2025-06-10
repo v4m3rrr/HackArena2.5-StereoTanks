@@ -25,6 +25,11 @@ public static class Program
             if (ServerConnection.IsConnected)
             {
                 await ServerConnection.CloseAsync("Client exited");
+#if STEREO
+
+                GameClient.GameClientCore.Bots.ForEach(x => x.Stop());
+                GameClient.GameClientCore.Server?.Stop();
+#endif
             }
         };
 

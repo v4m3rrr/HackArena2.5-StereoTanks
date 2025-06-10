@@ -92,6 +92,10 @@ internal class LobbyInitializer(Lobby lobby)
         button.Clicked += (s, e) =>
         {
             _ = ServerConnection.CloseAsync("Leave lobby");
+#if STEREO
+            GameClient.GameClientCore.Bots.ForEach(x => x.Stop());
+            GameClient.GameClientCore.Server?.Stop();
+#endif
             Scene.Change<MainMenu>();
         };
 

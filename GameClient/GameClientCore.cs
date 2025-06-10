@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using GameClient.Networking;
+using GameLogic;
 using GameLogic.Networking;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -55,6 +56,12 @@ public class GameClientCore : Game
 
         this.Content.RootDirectory = "Content";
         this.IsMouseVisible = true;
+
+        AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+        {
+            Server?.Stop();
+            Bots.ForEach(x => x.Stop());
+        };
     }
 
     /// <summary>
@@ -80,6 +87,18 @@ public class GameClientCore : Game
     /// Gets the instance of the game client.
     /// </summary>
     public static GameClientCore Instance { get; private set; } = default!;
+
+#if STEREO
+    /// <summary>
+    /// Gets the list of bots in the game.
+    /// </summary>
+    public static List<Bot> Bots { get; } = new();
+
+    /// <summary>
+    /// Gets or sets the server instance for the game.
+    /// </summary>
+    public static Server Server { get; set; } = new();
+#endif
 
     /// <summary>
     /// Gets a value indicating whether the game is in debug mode.

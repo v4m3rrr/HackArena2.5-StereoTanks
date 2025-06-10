@@ -62,20 +62,22 @@ internal class SinglePlayer : Scene
 #endif
         };
 
-        var difficulty = this.components.DifficultySelector.SelectedItem?.TValue ?? Difficulty.Medium;
-        // Create server local
-        string serverExePath = @"C:\Users\igoru\source\repos\v4m3rrr\HackArena2.5-StereoTanks\HackArena2.5-StereoTanks\GameServer\bin\StereoDebug\Windows\x64\net8.0\GameServer.exe";
-        string args = "--host *";
+        var difficulty = this.components.DifficultySelector.SelectedItem?.TValue ?? Difficulty.Easy;
 
-        RunProcess(serverExePath, args);
-        if (data.TankType == TankType.Light)
+        GameClientCore.Bots.Add(new Bot("Bots", TankType.Heavy, difficulty));
+        GameClientCore.Bots.Add(new Bot("Bots", TankType.Light, difficulty));
+
+        if (this.GetTankType() == TankType.Heavy)
         {
-            RunBots(difficulty, TankType.Heavy);
+            GameClientCore.Bots.Add(new Bot(this.GetTeamName(), TankType.Light, difficulty));
         }
         else
         {
-            RunBots(difficulty, TankType.Light);
+            GameClientCore.Bots.Add(new Bot(this.GetTeamName(), TankType.Heavy, difficulty));
         }
+
+        GameClientCore.Server.Start();
+        GameClientCore.Bots.ForEach(b => b.Start());
 
         await Join(data);
     }
@@ -103,43 +105,6 @@ internal class SinglePlayer : Scene
     {
         var textures = this.BaseComponent.GetAllDescendants<TextureComponent>();
         textures.ToList().ForEach(x => x.Load());
-    }
-
-    // The process should be stored in so array to later manage them
-    private static void RunProcess(string exePath, string args)
-    {
-        ProcessStartInfo startInfo = new ProcessStartInfo
-        {
-            FileName = exePath,
-            Arguments = args,
-            UseShellExecute = true, // Set to true if you need to open e.g. .bat or .txt with default app
-            CreateNoWindow = false,
-            Verb = "runas",
-        };
-        Process process = new Process
-        {
-            StartInfo = startInfo,
-        };
-        process.Start();
-    }
-
-    // The process should be stored in so array to later manage them
-    private static void RunBots(Difficulty difficulty, TankType typeOfTeammate)
-    {
-        string exeBotPath = "docker";
-        switch (difficulty)
-        {
-            case Difficulty.Easy:
-                break;
-            case Difficulty.Medium:
-                break;
-            case Difficulty.Hard:
-                break;
-        }
-
-        RunProcess(exeBotPath, "run --rm wrapper --host host.docker.internal --team-name Bots --tank-type heavy");
-        RunProcess(exeBotPath, "run --rm wrapper --host host.docker.internal --team-name Bots --tank-type light");
-        RunProcess(exeBotPath, $"run --rm wrapper --host host.docker.internal --team-name Player --tank-type {typeOfTeammate.ToString().ToLower()}");
     }
 
     private static void UpdateMainMenuBackgroundEffectRotation(GameTime gameTime)

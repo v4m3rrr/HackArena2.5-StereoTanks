@@ -421,6 +421,10 @@ internal class Game : Scene
         if (ServerConnection.IsConnected)
         {
             await ServerConnection.CloseAsync();
+#if STEREO
+            GameClient.GameClientCore.Bots.ForEach(x => x.Stop());
+            GameClient.GameClientCore.Server?.Stop();
+#endif
         }
 
         ServerConnection.MessageReceived -= this.Connection_MessageReceived;

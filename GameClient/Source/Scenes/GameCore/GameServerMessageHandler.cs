@@ -35,6 +35,11 @@ internal static class GameServerMessageHandler
 
         Scene.ChangeToPreviousOrDefault<MainMenu>();
         await ServerConnection.CloseAsync();
+
+#if STEREO
+        GameClient.GameClientCore.Bots.ForEach(x => x.Stop());
+        GameClient.GameClientCore.Server?.Stop();
+#endif
     }
 
     /// <summary>

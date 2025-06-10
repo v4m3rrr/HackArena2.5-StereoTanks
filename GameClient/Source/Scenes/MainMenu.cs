@@ -133,10 +133,10 @@ internal class MainMenu : Scene
                 RelativeOffset = new Vector2(0.06f, 0.08f),
             },
         };
-
+#if STEREO
         var singlePlayerBtn = CreateButton(new LocalizedString("Buttons.SinglePlayer"), listBox, "single");
         singlePlayerBtn.Clicked += (s, e) => Change<SinglePlayer>();
-
+#endif
         var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "join");
         joinRoomBtn.Clicked += (s, e) => Change<JoinRoom>();
 
