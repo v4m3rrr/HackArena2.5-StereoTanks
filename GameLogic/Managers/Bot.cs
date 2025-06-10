@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace GameLogic;
 
 public class Bot
 {
-    private const string ExePath = "docker";
+    // For now only hard mode
 
     private readonly TankType tankType;
     private readonly string teamName;
@@ -19,11 +20,12 @@ public class Bot
         this.difficulty = difficulty;
     }
 
-    public void Start()
+    public async Task Start()
     {
+        await Task.Delay(500); // Wait for the server to start who cares i dont
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
-            FileName = ExePath,
+            FileName = GetExePath(this.difficulty, this.teamName),
             Arguments = GetCommand(this.difficulty, this.teamName, this.tankType.ToString().ToLower()),
             UseShellExecute = false,
 #if DEBUG
@@ -50,18 +52,23 @@ public class Bot
         }
     }
 
+    private static string GetExePath(Difficulty difficulty, string teamName)
+    {
+        return $@"..\..\..\..\..\..\Bots\{difficulty.ToString()}\main.exe";
+    }
+
     private static string GetCommand(Difficulty difficulty, string teamName, string tankType)
     {
         switch (difficulty)
         {
             case Difficulty.Easy:
-                return $"run --rm wrapper --host host.docker.internal --team-name {teamName} --tank-type {tankType}";
+                return $"--team-name {teamName} --tank-type {tankType}";
             case Difficulty.Medium:
-                return $"run --rm wrapper --host host.docker.internal --team-name {teamName} --tank-type {tankType}";
+                return $"--team-name {teamName} --tank-type {tankType}";
             case Difficulty.Hard:
-                return $"run --rm wrapper --host host.docker.internal --team-name {teamName} --tank-type {tankType}";
+                return $"--team-name {teamName} --tank-type {tankType}";
         }
 
-        return $"run --rm wrapper --host host.docker.internal --team-name {teamName} --tank-type {tankType}";
+        return $"--team-name {teamName} --tank-type {tankType}";
     }
 }

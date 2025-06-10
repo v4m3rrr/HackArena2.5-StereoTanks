@@ -9,7 +9,8 @@ public class Server
 #else
     private const string ExePath = @"..\..\..\..\..\..\GameServer\bin\StereoRelease\Windows\x64\net8.0\GameServer.exe";
 #endif
-    private const string Arguments = "--host *";
+    //private const string Arguments = "--host *";
+    private const string Arguments = "";
 
     private Process? process;
 

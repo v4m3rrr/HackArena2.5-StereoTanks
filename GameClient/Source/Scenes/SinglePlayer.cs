@@ -77,7 +77,10 @@ internal class SinglePlayer : Scene
         }
 
         GameClientCore.Server.Start();
-        GameClientCore.Bots.ForEach(b => b.Start());
+        foreach (var bot in GameClientCore.Bots)
+        {
+            await bot.Start(); // Stop any previous bots before starting new ones
+        }
 
         await Join(data);
     }
