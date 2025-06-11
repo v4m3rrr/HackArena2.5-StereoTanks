@@ -135,6 +135,9 @@ internal class MainMenu : Scene
 #if STEREO
         var singlePlayerBtn = CreateButton(new LocalizedString("Buttons.SinglePlayer"), listBox, "single");
         singlePlayerBtn.Clicked += (s, e) => Change<SinglePlayer>();
+
+        var coopBtn = CreateButton(new LocalizedString("Buttons.SinglePlayer"), listBox, "single");
+        coopBtn.Clicked += (s, e) => Change<Coop>();
 #endif
         var joinRoomBtn = CreateButton(new LocalizedString("Buttons.JoinGame"), listBox, "multi");
         joinRoomBtn.Clicked += (s, e) => Change<JoinRoom>();

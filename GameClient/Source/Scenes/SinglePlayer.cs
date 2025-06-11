@@ -64,19 +64,24 @@ internal class SinglePlayer : Scene
 
         var difficulty = this.components.DifficultySelector.SelectedItem?.TValue ?? Difficulty.Easy;
 
-        GameClientCore.Bots.Add(new Bot("Bots", TankType.Heavy, difficulty));
-        GameClientCore.Bots.Add(new Bot("Bots", TankType.Light, difficulty));
+        string input = this.GetAddress();
+        string[] parts = input.Split(':');
+        string host = parts[0];
+        string port = parts.Length > 1 ? parts[1] : "";
+
+        GameClientCore.Bots.Add(new Bot("Bots", TankType.Heavy, difficulty,host,port));
+        GameClientCore.Bots.Add(new Bot("Bots", TankType.Light, difficulty,host,port));
 
         if (this.GetTankType() == TankType.Heavy)
         {
-            GameClientCore.Bots.Add(new Bot(this.GetTeamName(), TankType.Light, difficulty));
+            GameClientCore.Bots.Add(new Bot(this.GetTeamName(), TankType.Light, difficulty,host,port));
         }
         else
         {
-            GameClientCore.Bots.Add(new Bot(this.GetTeamName(), TankType.Heavy, difficulty));
+            GameClientCore.Bots.Add(new Bot(this.GetTeamName(), TankType.Heavy, difficulty, host, port));
         }
 
-        GameClientCore.Server.Start();
+        GameClientCore.Server.Start(host, port);
         foreach (var bot in GameClientCore.Bots)
         {
             await bot.Start(); // Stop any previous bots before starting new ones

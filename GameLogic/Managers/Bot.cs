@@ -10,14 +10,18 @@ public class Bot
     private readonly TankType tankType;
     private readonly string teamName;
     private readonly Difficulty difficulty;
+    private readonly string host = "localhost";
+    private readonly string port = "5000";
 
     private Process? process;
 
-    public Bot(string teamName, TankType tankType, Difficulty difficulty)
+    public Bot(string teamName, TankType tankType, Difficulty difficulty, string host, string port)
     {
         this.teamName = teamName;
         this.tankType = tankType;
         this.difficulty = difficulty;
+        this.host = host;
+        this.port = port;
     }
 
     public async Task Start()
@@ -26,7 +30,7 @@ public class Bot
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
             FileName = GetExePath(this.difficulty, this.teamName),
-            Arguments = GetCommand(this.difficulty, this.teamName, this.tankType.ToString().ToLower()),
+            Arguments = GetCommand(this.difficulty, this.teamName, this.tankType.ToString().ToLower(), this.host, this.port),
             UseShellExecute = false,
 #if DEBUG
             CreateNoWindow = false,
@@ -57,18 +61,8 @@ public class Bot
         return $@"..\..\..\..\..\..\Bots\{difficulty.ToString()}\main.exe";
     }
 
-    private static string GetCommand(Difficulty difficulty, string teamName, string tankType)
+    private static string GetCommand(Difficulty difficulty, string teamName, string tankType, string host, string port)
     {
-        switch (difficulty)
-        {
-            case Difficulty.Easy:
-                return $"--team-name {teamName} --tank-type {tankType}";
-            case Difficulty.Medium:
-                return $"--team-name {teamName} --tank-type {tankType}";
-            case Difficulty.Hard:
-                return $"--team-name {teamName} --tank-type {tankType}";
-        }
-
-        return $"--team-name {teamName} --tank-type {tankType}";
+        return $"--team-name {teamName} --tank-type {tankType} --host {host} --port {port}";
     }
 }

@@ -10,21 +10,22 @@ public class Server
     private const string ExePath = @"..\..\..\..\..\..\GameServer\bin\StereoRelease\Windows\x64\net8.0\GameServer.exe";
 #endif
     //private const string Arguments = "--host *";
-    private const string Arguments = "";
+    private const string Arguments = "--host ";
 
     private Process? process;
 
-    public void Start()
+    public void Start(string host, string port)
     {
+
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
             FileName = ExePath,
-            Arguments = Arguments,
+            Arguments = Arguments + host + " --port " + port,
             UseShellExecute = false,
 #if DEBUG
             CreateNoWindow = false,
 #else
-            CreateNoWindow = true,  
+            CreateNoWindow = true,
 #endif
             //Verb = "runas",
         };
