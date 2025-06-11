@@ -87,7 +87,7 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
             {
                 Alignment = Alignment.Center,
 #if STEREO
-                RelativeSize = new Vector2(0.6f, 0.45f),
+                RelativeSize = new Vector2(0.6f, 0.3f),
 #else
                 RelativeSize = new Vector2(0.6f, 0.4f),
 #endif
@@ -226,7 +226,7 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
         {
             Parent = inputBackground,
             ActiveContainerAlignment = Alignment.Center,
-            RelativeHeight = 2f,
+            RelativeHeight = 3f,
             CloseAfterSelect = true,
             Transform =
             {
