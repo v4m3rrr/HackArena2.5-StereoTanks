@@ -125,7 +125,7 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
             },
         };
 
-        var style = Styles.JoinRoom.GetSectionStyleWithTextInput(name, charLimit);
+        var style = Styles.SingleRoom.GetSectionStyleWithTextInput(name, charLimit);
         container.ApplyStyle(style);
 
         return container;
@@ -146,11 +146,12 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
             Parent = listBox.ContentContainer,
             Transform =
             {
-                RelativePadding = new Vector4(0.03f, 0.2f, 0.03f, 0.2f),
+                RelativeSize = new Vector2(0.1f, 0.1f),
+                RelativePadding = new Vector4(0.03f, 0.30f, 0.03f, 0.10f),
             },
         };
 
-        var style = Styles.JoinRoom.GetSectionStyle(name);
+        var style = Styles.SingleRoom.GetSectionStyle(name);
         container.ApplyStyle(style);
 
         var inputBackground = container.GetChild<SolidColor>();
@@ -210,11 +211,11 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
             Parent = listBox.ContentContainer,
             Transform =
             {
-                RelativePadding = new Vector4(0.03f, 0.2f, 0.03f, 0.2f),
+                RelativePadding = new Vector4(0.03f, 0.10f, 0.03f, 0.30f),
             },
         };
 
-        var style = Styles.JoinRoom.GetSectionStyle(name);
+        var style = Styles.SingleRoom.GetSectionStyle(name);
         container.ApplyStyle(style);
 
         var inputBackground = container.GetChild<SolidColor>();
