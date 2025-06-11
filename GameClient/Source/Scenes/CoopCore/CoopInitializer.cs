@@ -30,7 +30,7 @@ internal class CoopInitializer(Coop coop)
             Parent = coop.BaseComponent,
 
             // Should be LocalizedString()
-            Value = new LocalizedString("Singleplayer"),
+            Value = new LocalizedString("Labels.CoopRoom"),
             Case = TextCase.Upper,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
             Transform =

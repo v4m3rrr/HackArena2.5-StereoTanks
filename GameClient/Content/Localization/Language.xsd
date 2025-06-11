@@ -11,6 +11,7 @@
 			<xs:element name="Ok" type="xs:string"/>
 			<xs:element name="JoinGame" type="xs:string"/>
 			<xs:element name="SinglePlayer" type="xs:string"/>
+			<xs:element name="Cooperation" type="xs:string"/>
 			<xs:element name="Play" type="xs:string"/>
 			<xs:element name="Settings" type="xs:string"/>
 			<xs:element name="WatchReplay" type="xs:string"/>
@@ -33,6 +34,8 @@
 			<xs:element name="DisplayModeWindowed" type="xs:string"/>
 			<xs:element name="DisplayModeFullScreen" type="xs:string"/>
 			<xs:element name="DisplayModeBorderless" type="xs:string"/>
+			<xs:element name="SingleplayerRoom" type="xs:string"/>
+			<xs:element name="CoopRoom" type="xs:string"/>
 			<xs:element name="JoinRoom" type="xs:string"/>
 			<xs:element name="Nickname" type="xs:string"/>
 			<xs:element name="TeamName" type="xs:string"/>

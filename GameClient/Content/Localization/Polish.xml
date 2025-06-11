@@ -7,6 +7,7 @@
 		<Ok>Ok</Ok>
 		<JoinGame>Dołącz</JoinGame>
 		<SinglePlayer>Gra dla jednego gracza</SinglePlayer>
+    <Cooperation>Kooperacja</Cooperation>
     <Play>Graj</Play>
 		<Settings>Ustawienia</Settings>
 		<WatchReplay>Powtórki</WatchReplay>
@@ -27,6 +28,8 @@
 		<DisplayModeWindowed>Okienkowy</DisplayModeWindowed>
 		<DisplayModeFullScreen>Pełny ekran</DisplayModeFullScreen>
 		<DisplayModeBorderless>Bezramkowy</DisplayModeBorderless>
+    <SingleplayerRoom>Gra dla jednego gracza</SingleplayerRoom>
+    <CoopRoom>Kooperacja</CoopRoom>
 		<JoinRoom>Dołącz do pokoju</JoinRoom>
 		<Nickname>Nazwa gracza</Nickname>
 		<TeamName>Nazwa drużyny</TeamName>

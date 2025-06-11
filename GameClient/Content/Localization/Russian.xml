@@ -7,6 +7,7 @@
 		<Ok>ОК</Ok>
 		<JoinGame>Присоединиться</JoinGame>
 		<SinglePlayer>Oдиночная игра</SinglePlayer>
+    <Cooperation>Кооперация</Cooperation>
     <Play>Играть</Play>
 		<Settings>Настройки</Settings>
 		<WatchReplay>Смотреть повторы</WatchReplay>
@@ -27,6 +28,8 @@
 		<DisplayModeWindowed>Оконный</DisplayModeWindowed>
 		<DisplayModeFullScreen>Полноэкранный</DisplayModeFullScreen>
 		<DisplayModeBorderless>Безрамочный режим</DisplayModeBorderless>
+    <SingleplayerRoom>Однопользовательская игра</SingleplayerRoom>
+    <CoopRoom>Кооперация</CoopRoom>
 		<JoinRoom>Присоединиться к комнате</JoinRoom>
 		<Nickname>Имя игрока</Nickname>
 		<TeamName>Имя команды</TeamName>

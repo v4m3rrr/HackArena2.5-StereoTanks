@@ -29,7 +29,7 @@ internal class SinglePlayerInitializer(SinglePlayer singlePlayer)
             Parent = singlePlayer.BaseComponent,
 
             // Should be LocalizedString()
-            Value = new LocalizedString("Singleplayer"),
+            Value = new LocalizedString("Labels.SingleplayerRoom"),
             Case = TextCase.Upper,
             AdjustTransformSizeToText = AdjustSizeOption.HeightAndWidth,
             Transform =
