@@ -125,11 +125,12 @@ internal class MainMenu : Scene
         var listBox = new ListBox
         {
             Parent = baseComponent,
+            Spacing = 5,
             Transform =
             {
-                RelativeSize = new Vector2(0.4f, 0.42f),
+                RelativeSize = new Vector2(0.4f, 0.52f),
                 Alignment = Alignment.Left,
-                RelativeOffset = new Vector2(0.06f, 0.18f),
+                RelativeOffset = new Vector2(0.06f, 0.19f),
             },
         };
 #if STEREO
@@ -413,7 +414,7 @@ internal class MainMenu : Scene
             Parent = listbox.ContentContainer,
             Transform =
             {
-                RelativeSize = new Vector2(1, 0.20f),
+                RelativeSize = new Vector2(1, 0.14f),
             },
         };
 
